@@ -10,9 +10,9 @@
                     <span class="material-symbols-rounded text-base">verified_user</span>
                     <span>Регистрация</span>
                 </div>
-                <div>
-                    <h1 class="text-3xl font-semibold tracking-tight text-slate-900">Получите PIN в Telegram</h1>
-                    <p class="text-sm text-slate-600">Отправим одноразовый PIN в чат с ботом, после чего вы сможете войти.</p>
+                <div class="space-y-1">
+                    <h1 class="text-3xl font-semibold tracking-tight text-slate-900">Код из Telegram + данные</h1>
+                    <p class="text-sm text-slate-600">Сначала подтвердите одноразовый код (5 цифр), затем заполните профиль и PIN.</p>
                 </div>
             </div>
             <?php if (!empty($botUsername)): ?>
@@ -50,37 +50,104 @@
             </div>
         <?php endif; ?>
 
-        <form method="POST" action="/?page=register" class="grid gap-5">
-            <div class="grid gap-1.5">
-                <label for="phone" class="text-sm font-semibold text-slate-800">Телефон</label>
-                <input
-                    type="text"
-                    id="phone"
-                    name="phone"
-                    class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-base font-medium text-slate-900 shadow-inner shadow-slate-100 outline-none transition focus:border-rose-400 focus:ring-2 focus:ring-rose-100"
-                    placeholder="+7 (999) 123-45-67"
-                    required
-                    inputmode="tel"
-                >
-            </div>
-            <button
-                type="submit"
-                class="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-4 py-3 text-base font-semibold text-white shadow-lg shadow-emerald-200 transition hover:shadow-xl hover:shadow-emerald-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-500"
-            >
-                <span class="material-symbols-rounded text-base">send</span>
-                Отправить PIN в Telegram
-            </button>
-            <div class="grid gap-3 rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 text-sm text-slate-700 shadow-inner shadow-slate-100">
-                <div class="flex items-center gap-2 font-semibold text-slate-900">
-                    <span class="material-symbols-rounded text-base text-rose-500">info</span>
-                    Как это работает
+        <?php if (($stage ?? 'code') === 'code'): ?>
+            <form method="POST" action="/?page=register" class="grid gap-5">
+                <input type="hidden" name="step" value="verify_code">
+                <div class="grid gap-1.5">
+                    <label for="code" class="text-sm font-semibold text-slate-800">Код из Telegram</label>
+                    <input
+                        type="text"
+                        id="code"
+                        name="code"
+                        maxlength="5"
+                        pattern="\d{5}"
+                        class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-base font-medium text-slate-900 shadow-inner shadow-slate-100 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+                        placeholder="12345"
+                        required
+                        inputmode="numeric"
+                    >
                 </div>
-                <ol class="grid gap-2 pl-4 text-sm list-decimal marker:text-rose-500">
-                    <li>Нажмите «Перейти к боту» и отправьте свой телефон боту.</li>
-                    <li>Запросите PIN — мы отправим его в Telegram.</li>
-                    <li>Вернитесь на сайт и войдите с PIN на <a class="font-semibold text-rose-600 hover:text-rose-700" href="/?page=login">странице входа</a>.</li>
-                </ol>
-            </div>
-        </form>
+                <div class="grid gap-3 rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 text-sm text-slate-700 shadow-inner shadow-slate-100">
+                    <div class="flex items-center gap-2 font-semibold text-slate-900">
+                        <span class="material-symbols-rounded text-base text-rose-500">info</span>
+                        Как получить код
+                    </div>
+                    <ol class="grid gap-2 pl-4 text-sm list-decimal marker:text-rose-500">
+                        <li>Нажмите «Перейти к боту» и отправьте свой телефон.</li>
+                        <li>Бот пришлёт одноразовый код из 5 цифр.</li>
+                        <li>Введите этот код здесь, чтобы открыть форму регистрации.</li>
+                    </ol>
+                    <div class="flex flex-wrap gap-2">
+                        <a
+                            href="https://t.me/<?php echo htmlspecialchars($botUsername ?? '', ENT_QUOTES, 'UTF-8'); ?>"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="inline-flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-800 transition hover:bg-emerald-100"
+                        >
+                            <span class="material-symbols-rounded text-base">send</span>
+                            Получить код в Telegram
+                        </a>
+                    </div>
+                </div>
+                <button
+                    type="submit"
+                    class="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-4 py-3 text-base font-semibold text-white shadow-lg shadow-emerald-200 transition hover:shadow-xl hover:shadow-emerald-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-500"
+                >
+                    <span class="material-symbols-rounded text-base">key</span>
+                    Подтвердить код
+                </button>
+            </form>
+        <?php else: ?>
+            <form method="POST" action="/?page=register" class="grid gap-5">
+                <input type="hidden" name="step" value="complete_registration">
+                <div class="grid gap-1.5">
+                    <label for="name" class="text-sm font-semibold text-slate-800">Имя</label>
+                    <input
+                        type="text"
+                        id="name"
+                        name="name"
+                        class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-base font-medium text-slate-900 shadow-inner shadow-slate-100 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+                        placeholder="Как к вам обращаться"
+                        required
+                        value="<?php echo htmlspecialchars($prefillName ?? '', ENT_QUOTES, 'UTF-8'); ?>"
+                    >
+                </div>
+                <div class="grid gap-1.5">
+                    <label for="phone" class="text-sm font-semibold text-slate-800">Телефон</label>
+                    <input
+                        type="text"
+                        id="phone"
+                        name="phone"
+                        class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-base font-medium text-slate-900 shadow-inner shadow-slate-100 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+                        placeholder="+7 (999) 123-45-67"
+                        required
+                        inputmode="tel"
+                        value="<?php echo htmlspecialchars($prefillPhone ?? '', ENT_QUOTES, 'UTF-8'); ?>"
+                    >
+                </div>
+                <div class="grid gap-1.5">
+                    <label for="pin" class="text-sm font-semibold text-slate-800">PIN для входа (4 цифры)</label>
+                    <input
+                        type="password"
+                        id="pin"
+                        name="pin"
+                        maxlength="4"
+                        minlength="4"
+                        pattern="\d{4}"
+                        class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-base font-medium text-slate-900 shadow-inner shadow-slate-100 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+                        placeholder="••••"
+                        required
+                        inputmode="numeric"
+                    >
+                </div>
+                <button
+                    type="submit"
+                    class="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-4 py-3 text-base font-semibold text-white shadow-lg shadow-emerald-200 transition hover:shadow-xl hover:shadow-emerald-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-500"
+                >
+                    <span class="material-symbols-rounded text-base">check_circle</span>
+                    Завершить регистрацию
+                </button>
+            </form>
+        <?php endif; ?>
     </div>
 </section>

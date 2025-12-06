@@ -6,6 +6,7 @@ class AuthController extends Controller
     private User $userModel;
     private Logger $logger;
     private Analytics $analytics;
+    private VerificationCode $verificationModel;
     private ?Telegram $telegram = null;
     private const MAX_FAILED_ATTEMPTS = 5;
     private const LOCK_MINUTES = 15;
@@ -16,6 +17,7 @@ class AuthController extends Controller
         $this->userModel = new User();
         $this->logger = new Logger();
         $this->analytics = new Analytics();
+        $this->verificationModel = new VerificationCode();
 
         if (TG_BOT_TOKEN !== '') {
             $this->telegram = new Telegram(TG_BOT_TOKEN);
@@ -75,32 +77,104 @@ class AuthController extends Controller
     {
         $errors = [];
         $successMessage = '';
+        $stage = 'code';
+        $prefillName = '';
+        $prefillPhone = '';
+
+        $sessionVerification = Session::get('register_verification');
+        if ($sessionVerification) {
+            $stage = 'details';
+            [$prefillName, $prefillPhone] = $this->getPrefillData($sessionVerification);
+        }
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $phone = trim($_POST['phone'] ?? '');
+            $step = $_POST['step'] ?? 'verify_code';
 
-            if ($phone === '') {
-                $errors[] = 'Укажите номер телефона.';
-            } else {
-                $normalizedPhone = $this->normalisePhone($phone);
-                $user = $this->userModel->findByPhone($normalizedPhone);
+            if ($step === 'verify_code') {
+                $code = trim($_POST['code'] ?? '');
 
-                $pin = $this->generatePin();
-                $pinHash = password_hash($pin, PASSWORD_DEFAULT);
-
-                if ($user) {
-                    $this->userModel->updatePin((int) $user['id'], $pinHash);
-                    $user = $this->userModel->findById((int) $user['id']);
+                if (!preg_match('/^\d{5}$/', $code)) {
+                    $errors[] = 'Введите 5-значный код из Telegram.';
                 } else {
-                    $userId = $this->userModel->create($normalizedPhone, $pinHash);
-                    $user = $this->userModel->findById($userId);
-                    $this->logger->logEvent('WEB_USER_RESERVED', ['user_id' => $userId, 'phone' => $normalizedPhone]);
+                    $verification = $this->verificationModel->consumeValidCode($code, 'register');
+
+                    if (!$verification) {
+                        $errors[] = 'Код не найден или устарел. Запросите новый в Telegram.';
+                    } else {
+                        $data = [
+                            'chat_id' => (int) $verification['chat_id'],
+                            'username' => $verification['username'] ?? null,
+                            'user_id' => $verification['user_id'] ? (int) $verification['user_id'] : null,
+                            'phone' => $verification['phone'] ?? '',
+                            'name' => $verification['name'] ?? '',
+                        ];
+                        Session::set('register_verification', $data);
+                        $sessionVerification = $data;
+                        $stage = 'details';
+                        [$prefillName, $prefillPhone] = $this->getPrefillData($sessionVerification);
+                        $successMessage = 'Код подтверждён. Заполните данные профиля.';
+                    }
                 }
+            } elseif ($step === 'complete_registration') {
+                $verification = Session::get('register_verification');
 
-                if ($user && $this->sendPinToTelegram($user, $pin, 'Регистрация')) {
-                    $successMessage = 'PIN-код отправлен в Telegram. Откройте чат с ботом и проверьте сообщения.';
+                if (!$verification) {
+                    $errors[] = 'Сначала подтвердите код из Telegram.';
+                    $stage = 'code';
                 } else {
-                    $errors[] = 'Не удалось отправить PIN. Убедитесь, что вы запустили нашего Telegram-бота и поделились телефоном.';
+                    $name = trim($_POST['name'] ?? '');
+                    $phone = trim($_POST['phone'] ?? '');
+                    $pin = trim($_POST['pin'] ?? '');
+
+                    if ($name === '') {
+                        $errors[] = 'Укажите ваше имя.';
+                    }
+
+                    if ($phone === '') {
+                        $errors[] = 'Укажите номер телефона.';
+                    }
+
+                    if (!preg_match('/^\d{4}$/', $pin)) {
+                        $errors[] = 'PIN должен состоять из 4 цифр.';
+                    }
+
+                    if (empty($errors)) {
+                        $normalizedPhone = $this->normalisePhone($phone);
+                        $pinHash = password_hash($pin, PASSWORD_DEFAULT);
+                        $chatId = (int) $verification['chat_id'];
+                        $username = $verification['username'] ?? null;
+                        $userId = $verification['user_id'] ?? null;
+
+                        $existingUser = null;
+                        if ($userId) {
+                            $existingUser = $this->userModel->findById((int) $userId);
+                        }
+
+                        if (!$existingUser) {
+                            $existingUser = $this->userModel->findByPhone($normalizedPhone);
+                        }
+
+                        if ($existingUser) {
+                            $this->userModel->updateProfileAndPin((int) $existingUser['id'], $name, $normalizedPhone, $pinHash, $chatId, $username);
+                            $userId = (int) $existingUser['id'];
+                            $this->logger->logEvent('WEB_USER_UPDATED', ['user_id' => $userId, 'phone' => $normalizedPhone]);
+                        } else {
+                            $userId = $this->userModel->create($normalizedPhone, $pinHash, $chatId, $username, $name);
+                            $this->logger->logEvent('WEB_USER_REGISTERED', ['user_id' => $userId, 'phone' => $normalizedPhone]);
+                        }
+
+                        $this->userModel->resetFailedAttempts($userId);
+                        $this->analytics->track('registration_complete', ['user_id' => $userId]);
+                        Session::remove('register_verification');
+
+                        Auth::login($userId);
+                        header('Location: /?page=account');
+                        exit;
+                    } else {
+                        $stage = 'details';
+                        $prefillName = $name;
+                        $prefillPhone = $phone;
+                    }
                 }
             }
         }
@@ -109,6 +183,9 @@ class AuthController extends Controller
             'errors' => $errors,
             'successMessage' => $successMessage,
             'botUsername' => TG_BOT_USERNAME,
+            'stage' => $stage,
+            'prefillName' => $prefillName,
+            'prefillPhone' => $prefillPhone,
         ]);
     }
 
@@ -116,28 +193,77 @@ class AuthController extends Controller
     {
         $errors = [];
         $successMessage = '';
+        $stage = 'code';
+
+        if (Session::get('recover_verification')) {
+            $stage = 'reset';
+        }
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $phone = trim($_POST['phone'] ?? '');
+            $step = $_POST['step'] ?? 'verify_code';
 
-            if ($phone === '') {
-                $errors[] = 'Укажите номер телефона.';
-            } else {
-                $normalizedPhone = $this->normalisePhone($phone);
-                $user = $this->userModel->findByPhone($normalizedPhone);
+            if ($step === 'verify_code') {
+                $code = trim($_POST['code'] ?? '');
 
-                if (!$user) {
-                    $errors[] = 'Пользователь не найден. Сначала зарегистрируйтесь через Telegram.';
+                if (!preg_match('/^\d{5}$/', $code)) {
+                    $errors[] = 'Введите 5-значный код из Telegram.';
                 } else {
-                    $pin = $this->generatePin();
-                    $pinHash = password_hash($pin, PASSWORD_DEFAULT);
-                    $this->userModel->updatePin((int) $user['id'], $pinHash);
-                    $user = $this->userModel->findById((int) $user['id']);
+                    $verification = $this->verificationModel->consumeValidCode($code, 'recover');
 
-                    if ($this->sendPinToTelegram($user, $pin, 'Восстановление PIN')) {
-                        $successMessage = 'Мы отправили новый PIN в ваш Telegram. Проверьте диалог с ботом.';
+                    if (!$verification || empty($verification['user_id'])) {
+                        $errors[] = 'Код не найден или устарел. Запросите новый в Telegram.';
                     } else {
-                        $errors[] = 'Не удалось отправить PIN. Запустите бота и повторите попытку.';
+                        Session::set('recover_verification', [
+                            'chat_id' => (int) $verification['chat_id'],
+                            'user_id' => (int) $verification['user_id'],
+                            'username' => $verification['username'] ?? null,
+                        ]);
+                        $stage = 'reset';
+                        $successMessage = 'Код подтверждён. Задайте новый PIN.';
+                    }
+                }
+            } elseif ($step === 'update_pin') {
+                $verification = Session::get('recover_verification');
+
+                if (!$verification) {
+                    $errors[] = 'Сначала подтвердите код из Telegram.';
+                    $stage = 'code';
+                } else {
+                    $pin = trim($_POST['pin'] ?? '');
+                    $pinConfirm = trim($_POST['pin_confirm'] ?? '');
+
+                    if (!preg_match('/^\d{4}$/', $pin)) {
+                        $errors[] = 'PIN должен состоять из 4 цифр.';
+                    }
+
+                    if ($pin !== $pinConfirm) {
+                        $errors[] = 'PIN и подтверждение не совпадают.';
+                    }
+
+                    if (empty($errors)) {
+                        $user = $this->userModel->findById((int) $verification['user_id']);
+
+                        if (!$user) {
+                            $errors[] = 'Пользователь не найден.';
+                            $stage = 'code';
+                        } else {
+                            $pinHash = password_hash($pin, PASSWORD_DEFAULT);
+                            $this->userModel->updatePin((int) $verification['user_id'], $pinHash);
+                            $this->userModel->resetFailedAttempts((int) $verification['user_id']);
+
+                            if (!empty($verification['chat_id'])) {
+                                $this->userModel->linkTelegram((int) $verification['user_id'], (int) $verification['chat_id'], $verification['username'] ?? null);
+                            }
+
+                            $this->logger->logEvent('PIN_RECOVERED', ['user_id' => $verification['user_id']]);
+                            $this->analytics->track('pin_recovered', ['user_id' => $verification['user_id']]);
+
+                            Session::remove('recover_verification');
+                            $stage = 'code';
+                            $successMessage = 'PIN обновлён. Войдите с новым кодом.';
+                        }
+                    } else {
+                        $stage = 'reset';
                     }
                 }
             }
@@ -147,6 +273,7 @@ class AuthController extends Controller
             'errors' => $errors,
             'successMessage' => $successMessage,
             'botUsername' => TG_BOT_USERNAME,
+            'stage' => $stage,
         ]);
     }
 
@@ -186,29 +313,20 @@ class AuthController extends Controller
         return '+' . $digits;
     }
 
-    private function generatePin(): string
+    private function getPrefillData(array $verification): array
     {
-        return str_pad((string) random_int(0, 9999), 4, '0', STR_PAD_LEFT);
-    }
+        $prefillName = trim($verification['name'] ?? '');
+        $prefillPhone = trim($verification['phone'] ?? '');
 
-    private function sendPinToTelegram(array $user, string $pin, string $reason): bool
-    {
-        if (!$this->telegram || empty($user['telegram_chat_id'])) {
-            return false;
+        if (!empty($verification['user_id'])) {
+            $user = $this->userModel->findById((int) $verification['user_id']);
+
+            if ($user) {
+                $prefillName = $user['name'] ?? $prefillName;
+                $prefillPhone = $user['phone'] ?? $prefillPhone;
+            }
         }
 
-        $message = "Ваш PIN: {$pin}. Введите его на сайте Bunch flowers.";
-        $this->telegram->sendMessage((int) $user['telegram_chat_id'], $message);
-
-        $this->logger->logEvent('WEB_PIN_SENT', [
-            'user_id' => $user['id'],
-            'reason' => $reason,
-        ]);
-        $this->analytics->track('pin_sent', [
-            'user_id' => $user['id'],
-            'reason' => $reason,
-        ]);
-
-        return true;
+        return [$prefillName, $prefillPhone];
     }
 }
