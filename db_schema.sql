@@ -14,6 +14,8 @@ SET FOREIGN_KEY_CHECKS = 0;
 
 -- Очистка существующих таблиц (если есть)
 DROP TABLE IF EXISTS telegram_pin_logs;
+DROP TABLE IF EXISTS user_notification_settings;
+DROP TABLE IF EXISTS notification_types;
 DROP TABLE IF EXISTS subscriptions;
 DROP TABLE IF EXISTS order_items;
 DROP TABLE IF EXISTS orders;
@@ -306,7 +308,59 @@ CREATE TABLE subscriptions (
   COLLATE=utf8mb4_unicode_ci;
 
 -- =========================
--- 8. Логи работы с PIN в Telegram (опционально)
+-- 8. Настройки уведомлений и типы рассылок
+-- =========================
+
+CREATE TABLE notification_types (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+
+  code VARCHAR(64) NOT NULL UNIQUE,            -- системный код (order_updates, bonus_updates и т.д.)
+  title VARCHAR(150) NOT NULL,
+  description VARCHAR(255) NULL,
+
+  sort_order INT NOT NULL DEFAULT 0,           -- сортировка в админке и в интерфейсе
+  channel ENUM('push', 'sms', 'email', 'telegram', 'system') NOT NULL DEFAULT 'system',
+
+  is_active TINYINT(1) NOT NULL DEFAULT 1,
+
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_unicode_ci;
+
+INSERT INTO notification_types (code, title, description, sort_order, channel) VALUES
+  ('order_updates',   'Уведомления о моих заказах',           'Статусы заказов, изменение времени доставки', 10, 'push'),
+  ('bonus_updates',   'Начисление бонусных баллов',           'Баллы за покупки и их срок действия',         20, 'push'),
+  ('promo_updates',   'Акционные товары',                     'Новые акции и спецпредложения',               30, 'push'),
+  ('holiday_reminders','Напоминания о заказах к праздникам',   'Подборки к важным датам',                     40, 'email'),
+  ('system_updates',  'Системные уведомления',                'Технические события и безопасность',          50, 'system');
+
+CREATE TABLE user_notification_settings (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+
+  user_id INT UNSIGNED NOT NULL,
+  CONSTRAINT fk_user_notification_settings_user
+    FOREIGN KEY (user_id) REFERENCES users(id)
+    ON DELETE CASCADE,
+
+  notification_type_id INT UNSIGNED NOT NULL,
+  CONSTRAINT fk_user_notification_settings_type
+    FOREIGN KEY (notification_type_id) REFERENCES notification_types(id)
+    ON DELETE CASCADE,
+
+  is_enabled TINYINT(1) NOT NULL DEFAULT 1,
+  preferred_channel ENUM('push', 'sms', 'email', 'telegram', 'system') NOT NULL DEFAULT 'push',
+  last_changed_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+  UNIQUE KEY uniq_user_notification (user_id, notification_type_id)
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_unicode_ci;
+
+-- =========================
+-- 9. Логи работы с PIN в Telegram (опционально)
 -- =========================
 
 CREATE TABLE telegram_pin_logs (
