@@ -30,5 +30,6 @@ $router->get('account', [AccountController::class, 'index']);
 $router->get('login', [AuthController::class, 'login']);
 $router->get('register', [AuthController::class, 'register']);
 $router->get('admin', [AdminController::class, 'index']);
+$router->post('login', [AuthController::class, 'login']);
 
 $router->dispatch($page, $_SERVER['REQUEST_METHOD']);
