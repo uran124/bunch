@@ -19,6 +19,7 @@ spl_autoload_register(function (string $class): void {
 $unknownLogger = new Logger('telegram_unknown.log');
 $appLogger = new Logger();
 $analytics = new Analytics();
+$verificationModel = new VerificationCode();
 
 if (!isset($_GET['secret']) || $_GET['secret'] !== TG_WEBHOOK_SECRET) {
     http_response_code(403);
@@ -58,19 +59,19 @@ if ($text === '/start') {
     exit;
 }
 
-if (mb_stripos($text, 'регистрация') !== false) {
-    requestPhone($telegram, $chatId);
+if (mb_stripos($text, 'восстановить pin') !== false || mb_stripos($text, 'восстановить пин') !== false) {
+    handleRecoveryCode($telegram, $userModel, $verificationModel, $chatId, $username, $appLogger, $analytics);
     exit;
 }
 
-if (mb_stripos($text, 'восстановить pin') !== false) {
-    handlePinReset($telegram, $userModel, $chatId, $username, $appLogger, $analytics);
+if (mb_stripos($text, 'получить код') !== false || mb_stripos($text, 'регистрация') !== false) {
+    requestPhone($telegram, $chatId);
     exit;
 }
 
 if ($contact || ($text !== '' && preg_match('/^\+?\d{5,}$/', $text))) {
     $phone = $contact['phone_number'] ?? $text;
-    handleRegistration($telegram, $userModel, $chatId, $username, $phone, $appLogger, $analytics);
+    handleRegistrationCode($telegram, $userModel, $verificationModel, $chatId, $username, $phone, $appLogger, $analytics, $contact);
     exit;
 }
 
@@ -81,7 +82,7 @@ function sendStartMenu(Telegram $telegram, int $chatId): void
     $keyboard = [
         'keyboard' => [
             [
-                ['text' => 'Регистрация/Вход', 'request_contact' => false],
+                ['text' => 'Получить код', 'request_contact' => false],
             ],
             [
                 ['text' => 'Восстановить PIN', 'request_contact' => false],
@@ -108,60 +109,70 @@ function requestPhone(Telegram $telegram, int $chatId): void
         'one_time_keyboard' => true,
     ];
 
-    $telegram->sendMessage($chatId, 'Для входа отправьте номер телефона.', [
+    $telegram->sendMessage($chatId, 'Отправьте свой номер, и я вышлю одноразовый код из 5 цифр для сайта.', [
         'reply_markup' => json_encode($keyboard, JSON_UNESCAPED_UNICODE),
     ]);
 }
 
-function handleRegistration(
+function handleRegistrationCode(
     Telegram $telegram,
     User $userModel,
+    VerificationCode $verificationModel,
     int $chatId,
     ?string $username,
     string $phone,
     Logger $logger,
-    Analytics $analytics
-): void
-{
+    Analytics $analytics,
+    ?array $contact = null
+): void {
     $phone = normalisePhone($phone);
-    $pin = str_pad((string) random_int(0, 9999), 4, '0', STR_PAD_LEFT);
-    $pinHash = password_hash($pin, PASSWORD_DEFAULT);
 
     $existing = $userModel->findByPhone($phone);
+    $userId = $existing ? (int) $existing['id'] : null;
+    $name = null;
 
-    if ($existing) {
-        $userModel->updatePin((int) $existing['id'], $pinHash);
-        $userModel->linkTelegram((int) $existing['id'], $chatId, $username);
-        $logger->logEvent('TG_PIN_RESET', ['user_id' => $existing['id'], 'chat_id' => $chatId]);
-        $analytics->track('pin_reset', ['user_id' => $existing['id']]);
-    } else {
-        $userId = $userModel->create($phone, $pinHash, $chatId, $username);
-        $logger->logEvent('TG_USER_REGISTERED', ['user_id' => $userId, 'phone' => $phone]);
+    if ($contact) {
+        $firstName = trim($contact['first_name'] ?? '');
+        $lastName = trim($contact['last_name'] ?? '');
+        $name = trim($firstName . ' ' . $lastName) ?: null;
     }
 
-    $message = "Ваш PIN: {$pin}. Используйте его для входа на сайте.";
-    $telegram->sendMessage($chatId, $message);
+    if ($existing) {
+        $userModel->linkTelegram((int) $existing['id'], $chatId, $username);
+    }
+
+    $code = $verificationModel->createCode($chatId, 'register', $phone, $userId, $username, $name);
+
+    $telegram->sendMessage($chatId, "Ваш код для регистрации на сайте: {$code}\nВведите его в форме и продолжите заполнение профиля.");
+
+    $logger->logEvent('TG_REG_CODE_SENT', ['user_id' => $userId, 'chat_id' => $chatId, 'phone' => $phone]);
+    $analytics->track('tg_code_sent', ['purpose' => 'register', 'user_id' => $userId]);
 }
 
-function handlePinReset(Telegram $telegram, User $userModel, int $chatId, ?string $username, Logger $logger, Analytics $analytics): void
-{
+function handleRecoveryCode(
+    Telegram $telegram,
+    User $userModel,
+    VerificationCode $verificationModel,
+    int $chatId,
+    ?string $username,
+    Logger $logger,
+    Analytics $analytics
+): void {
     $user = $userModel->findByTelegramChatId($chatId);
 
     if (!$user) {
-        $telegram->sendMessage($chatId, 'Пользователь не найден. Отправьте телефон через "Регистрация/Вход".');
+        $telegram->sendMessage($chatId, 'Пользователь не найден. Сначала получите код и привяжите номер телефона.');
         return;
     }
 
-    $pin = str_pad((string) random_int(0, 9999), 4, '0', STR_PAD_LEFT);
-    $pinHash = password_hash($pin, PASSWORD_DEFAULT);
+    $code = $verificationModel->createCode($chatId, 'recover', $user['phone'], (int) $user['id'], $username, $user['name'] ?? null);
 
-    $userModel->updatePin((int) $user['id'], $pinHash);
     $userModel->linkTelegram((int) $user['id'], $chatId, $username);
 
-    $logger->logEvent('TG_PIN_RESET', ['user_id' => $user['id'], 'chat_id' => $chatId]);
-    $analytics->track('pin_reset', ['user_id' => $user['id']]);
+    $logger->logEvent('TG_RECOVERY_CODE_SENT', ['user_id' => $user['id'], 'chat_id' => $chatId]);
+    $analytics->track('tg_code_sent', ['purpose' => 'recover', 'user_id' => $user['id']]);
 
-    $telegram->sendMessage($chatId, "Новый PIN: {$pin}");
+    $telegram->sendMessage($chatId, "Код для смены PIN: {$code}\nВведите его на странице восстановления на сайте.");
 }
 
 function normalisePhone(string $phone): string
