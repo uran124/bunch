@@ -1,9 +1,11 @@
+<?php $pageMeta = $pageMeta ?? []; ?>
+
 <section class="flex flex-col gap-6">
     <div class="flex flex-wrap items-start justify-between gap-4">
         <div class="space-y-2">
             <p class="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">Администрирование</p>
-            <h1 class="text-3xl font-semibold text-slate-900">Панель управления</h1>
-            <p class="max-w-2xl text-base text-slate-500">Быстрый доступ к ключевым разделам сайта и операционным настройкам. Комбинируйте действия, чтобы ускорить ежедневные процессы.</p>
+            <h1 class="text-3xl font-semibold text-slate-900"><?php echo htmlspecialchars($pageMeta['h1'] ?? 'Панель управления', ENT_QUOTES, 'UTF-8'); ?></h1>
+            <p class="max-w-2xl text-base text-slate-500"><?php echo htmlspecialchars($pageMeta['description'] ?? 'Быстрый доступ к ключевым разделам сайта и операционным настройкам.', ENT_QUOTES, 'UTF-8'); ?></p>
         </div>
         <div class="flex flex-wrap items-center gap-3">
             <button class="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-rose-200 transition hover:-translate-y-0.5 hover:shadow-xl">

@@ -3,7 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bunch flowers — панель</title>
+    <?php $pageMeta = $pageMeta ?? []; ?>
+    <?php $pageTitle = $pageMeta['title'] ?? 'Bunch flowers — панель'; ?>
+    <?php $pageDescription = $pageMeta['description'] ?? 'Панель управления Bunch flowers.'; ?>
+    <title><?php echo htmlspecialchars($pageTitle, ENT_QUOTES, 'UTF-8'); ?></title>
+    <meta name="description" content="<?php echo htmlspecialchars($pageDescription, ENT_QUOTES, 'UTF-8'); ?>">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
@@ -17,9 +21,9 @@
             <div>
                 <div class="flex items-center gap-2 text-lg font-semibold tracking-tight text-slate-900">
                     <span class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-rose-100 text-rose-600 shadow-sm">BF</span>
-                    <span>Bunch flowers</span>
+                    <span><?php echo htmlspecialchars($pageMeta['headerTitle'] ?? 'Bunch flowers', ENT_QUOTES, 'UTF-8'); ?></span>
                 </div>
-                <p class="text-sm text-slate-500">Панель управления</p>
+                <p class="text-sm text-slate-500"><?php echo htmlspecialchars($pageMeta['headerSubtitle'] ?? 'Панель управления', ENT_QUOTES, 'UTF-8'); ?></p>
             </div>
             <div class="hidden items-center gap-3 sm:flex">
                 <button class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
@@ -42,10 +46,10 @@
 
     <footer class="border-t border-slate-200 bg-white/90 backdrop-blur">
         <div class="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-4 text-sm text-slate-500">
-            <span>© <?php echo date('Y'); ?> Bunch flowers</span>
+            <span><?php echo htmlspecialchars($pageMeta['footerLeft'] ?? ('© ' . date('Y') . ' Bunch flowers'), ENT_QUOTES, 'UTF-8'); ?></span>
             <span class="inline-flex items-center gap-2">
                 <span class="material-symbols-rounded text-base text-emerald-500">schedule</span>
-                Красноярск · Asia/Krasnoyarsk
+                <?php echo htmlspecialchars($pageMeta['footerRight'] ?? 'Красноярск · Asia/Krasnoyarsk', ENT_QUOTES, 'UTF-8'); ?>
             </span>
         </div>
     </footer>
