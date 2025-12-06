@@ -69,13 +69,16 @@ if (mb_stripos($text, 'получить код') !== false || mb_stripos($text, 
     exit;
 }
 
-if ($contact || ($text !== '' && preg_match('/^\+?\d{5,}$/', $text))) {
-    $phone = $contact['phone_number'] ?? $text;
+$phoneFromText = $text !== '' ? extractPhoneFromText($text) : null;
+
+if ($contact || $phoneFromText) {
+    $phone = $contact['phone_number'] ?? $phoneFromText;
     handleRegistrationCode($telegram, $userModel, $verificationModel, $chatId, $username, $phone, $appLogger, $analytics, $contact);
     exit;
 }
 
 $unknownLogger->logRaw(date('c') . ' unhandled message: ' . $input);
+$telegram->sendMessage($chatId, 'Не понял запрос. Нажмите «Получить код» или отправьте номер телефона (можно с пробелами).');
 
 function sendStartMenu(Telegram $telegram, int $chatId): void
 {
@@ -179,10 +182,17 @@ function handleRecoveryCode(
 
 function normalisePhone(string $phone): string
 {
-    $digits = preg_replace('/\D+/', '', $phone);
+    $normalized = extractPhoneFromText($phone);
 
-    if ($digits === null) {
-        return $phone;
+    return $normalized ?? $phone;
+}
+
+function extractPhoneFromText(string $text): ?string
+{
+    $digits = preg_replace('/\D+/', '', $text);
+
+    if ($digits === null || $digits === '' || strlen($digits) < 5) {
+        return null;
     }
 
     if (strlen($digits) === 11 && str_starts_with($digits, '8')) {
