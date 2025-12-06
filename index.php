@@ -19,7 +19,10 @@ spl_autoload_register(function (string $class): void {
 $router = new Router();
 
 $page = $_GET['page'] ?? trim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/');
-$page = $page === '' ? 'home' : $page;
+
+if ($page === '' || $page === 'index' || $page === 'index.php') {
+    $page = 'home';
+}
 
 $router->get('home', [HomeController::class, 'index']);
 $router->get('catalog', [ProductController::class, 'catalog']);
