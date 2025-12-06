@@ -33,7 +33,10 @@ $router->get('orders', [OrdersController::class, 'index']);
 $router->get('account', [AccountController::class, 'index']);
 $router->get('login', [AuthController::class, 'login']);
 $router->get('register', [AuthController::class, 'register']);
+$router->get('recover', [AuthController::class, 'recover']);
 $router->get('admin', [AdminController::class, 'index']);
 $router->post('login', [AuthController::class, 'login']);
+$router->post('register', [AuthController::class, 'register']);
+$router->post('recover', [AuthController::class, 'recover']);
 
 $router->dispatch($page, $_SERVER['REQUEST_METHOD']);
