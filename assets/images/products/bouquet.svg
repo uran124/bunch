@@ -1,0 +1,19 @@
+sed -n '1,200p' app/controllers/AccountController.php
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="480" viewBox="0 0 640 480">
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#fef2f2" />
+      <stop offset="100%" stop-color="#e0f2fe" />
+    </linearGradient>
+  </defs>
+  <rect width="640" height="480" fill="url(#bg)" />
+  <circle cx="180" cy="220" r="120" fill="#fb7185" opacity="0.15" />
+  <circle cx="420" cy="200" r="140" fill="#22d3ee" opacity="0.12" />
+  <g transform="translate(200 140)" fill="none" stroke="#111827" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M70 180c-12-34-6-74 24-104 30-30 70-36 104-24-12 34-6 74-24 104-30 30-70 36-104 24Z" fill="#fce7f3" stroke="#fb7185"/>
+    <path d="M96 62c4-20 16-38 32-50 20 12 34 32 38 56" stroke="#fb7185"/>
+    <path d="M108 90c-14-18-34-30-54-34-8 22-6 48 6 68" stroke="#22c55e"/>
+    <path d="M126 120c18-14 30-34 34-54 22-8 48-6 68 6-4 20-16 38-32 50" stroke="#2563eb"/>
+  </g>
+  <text x="320" y="430" text-anchor="middle" font-family="'Manrope',Arial,sans-serif" font-size="38" fill="#0f172a" opacity="0.8">Bunch flowers</text>
+</svg>
