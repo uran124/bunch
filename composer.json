@@ -1,0 +1,22 @@
+{
+    "name": "bunchflowers/app",
+    "description": "Bunch flowers PWA backend",
+    "type": "project",
+    "require": {},
+    "autoload": {
+        "classmap": [
+            "app/core",
+            "app/controllers",
+            "app/models"
+        ],
+        "files": [
+            "config.php"
+        ]
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.6"
+    },
+    "scripts": {
+        "test": "phpunit --colors=always"
+    }
+}
