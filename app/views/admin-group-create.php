@@ -81,20 +81,27 @@
                     <div class="space-y-1">
                         <div class="text-base font-semibold text-slate-900"><?php echo htmlspecialchars($user['name'], ENT_QUOTES, 'UTF-8'); ?></div>
                         <div class="text-sm text-slate-500">Телефон: <?php echo htmlspecialchars($user['phone'], ENT_QUOTES, 'UTF-8'); ?></div>
-                        <div class="text-xs text-slate-400">Последний заказ: <?php echo htmlspecialchars($user['lastOrder'], ENT_QUOTES, 'UTF-8'); ?></div>
+                        <div class="text-xs text-slate-400">Последний заказ: <?php echo htmlspecialchars($user['lastOrderText'], ENT_QUOTES, 'UTF-8'); ?></div>
                     </div>
                     <div class="flex items-center gap-3">
                         <span class="inline-flex items-center gap-2 rounded-full bg-slate-50 px-3 py-1 text-sm font-semibold text-slate-700 ring-1 ring-slate-200">
                             <span class="material-symbols-rounded text-base text-emerald-500">event_available</span>
-                            Доставок: 12
+                            Доставок: <?php echo (int) $user['deliveries']; ?>
                         </span>
-                        <span class="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-sm font-semibold text-emerald-700 ring-1 ring-emerald-200">
-                            <span class="material-symbols-rounded text-base">verified</span>
-                            Активен
-                        </span>
+                        <?php if ($user['active']): ?>
+                            <span class="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-sm font-semibold text-emerald-700 ring-1 ring-emerald-200">
+                                <span class="material-symbols-rounded text-base">verified</span>
+                                Активен
+                            </span>
+                        <?php else: ?>
+                            <span class="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-sm font-semibold text-slate-700 ring-1 ring-slate-200">
+                                <span class="material-symbols-rounded text-base">schedule</span>
+                                Не активен
+                            </span>
+                        <?php endif; ?>
                     </div>
                     <label class="relative inline-flex h-10 w-24 cursor-pointer items-center gap-2 rounded-lg bg-slate-50 px-2 ring-1 ring-slate-200">
-                        <input type="checkbox" class="peer sr-only" checked>
+                        <input type="checkbox" class="peer sr-only" <?php echo $user['active'] ? 'checked' : ''; ?>>
                         <span class="text-xs font-semibold text-slate-600">Добавить</span>
                         <span class="ml-auto inline-flex h-8 w-14 items-center rounded-full bg-slate-200">
                             <span class="ml-1 h-7 w-7 rounded-full bg-white shadow-sm transition peer-checked:translate-x-6 peer-checked:shadow-md"></span>
@@ -119,11 +126,13 @@
 
         groupUserList.querySelectorAll('article').forEach((card) => {
             const userPhone = card.dataset.phone || '';
-            const lastOrder = new Date(card.dataset.lastOrder);
+            const lastOrderRaw = card.dataset.lastOrder || '';
+            const lastOrder = lastOrderRaw ? new Date(lastOrderRaw) : null;
+            const hasValidDate = lastOrder && !Number.isNaN(lastOrder.getTime());
 
             const phoneMatches = phoneDigits === '' || userPhone.includes(phoneDigits);
-            const afterFrom = !dateFrom || lastOrder >= dateFrom;
-            const beforeTo = !dateTo || lastOrder <= dateTo;
+            const afterFrom = !dateFrom || !hasValidDate || lastOrder >= dateFrom;
+            const beforeTo = !dateTo || !hasValidDate || lastOrder <= dateTo;
 
             card.style.display = phoneMatches && afterFrom && beforeTo ? '' : 'none';
         });

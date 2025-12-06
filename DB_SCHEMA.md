@@ -34,6 +34,8 @@ CREATE TABLE users (
   name  VARCHAR(100) NULL,
   email VARCHAR(100) NULL,
 
+  is_active TINYINT(1) NOT NULL DEFAULT 1, -- флаг активности для CRM/рассылок
+
   pin_hash VARCHAR(255) NOT NULL,          -- password_hash(pin)
   pin_updated_at DATETIME NULL,            -- когда PIN в последний раз меняли
 

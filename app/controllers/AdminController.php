@@ -95,7 +95,8 @@ class AdminController extends Controller
             'footerRight' => 'Фильтрация по дате последних заказов',
         ];
 
-        $users = $this->getUserFixtures();
+        $userModel = new User();
+        $users = $userModel->getAdminList();
 
         $this->render('admin-users', [
             'pageMeta' => $pageMeta,
@@ -169,7 +170,8 @@ class AdminController extends Controller
             'footerRight' => 'Выберите клиентов и сохраните группу',
         ];
 
-        $users = array_filter($this->getUserFixtures(), static function ($user) {
+        $userModel = new User();
+        $users = array_filter($userModel->getAdminList(), static function ($user) {
             return $user['active'] === true;
         });
 

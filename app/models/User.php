@@ -74,6 +74,44 @@ class User extends Model
         $stmt->execute(['id' => $userId]);
     }
 
+    public function getAdminList(): array
+    {
+        $sql = <<<'SQL'
+SELECT
+    u.id,
+    u.name,
+    u.phone,
+    COALESCE(u.is_active, 1) AS is_active,
+    u.telegram_chat_id,
+    MAX(o.created_at) AS last_order_at,
+    COUNT(o.id) AS deliveries
+FROM users u
+LEFT JOIN orders o ON o.user_id = u.id
+GROUP BY u.id, u.name, u.phone, u.is_active, u.telegram_chat_id
+ORDER BY COALESCE(MAX(o.created_at), u.created_at) DESC
+SQL;
+
+        $stmt = $this->db->query($sql);
+        $rows = $stmt->fetchAll();
+
+        return array_map(static function (array $row): array {
+            $lastOrderRaw = $row['last_order_at'];
+            $lastOrderDate = $lastOrderRaw ? new DateTime($lastOrderRaw) : null;
+            $lastOrder = $lastOrderDate ? $lastOrderDate->format('Y-m-d') : '';
+
+            return [
+                'id' => (int) $row['id'],
+                'name' => $row['name'] ?? 'Без имени',
+                'phone' => $row['phone'],
+                'active' => (bool) $row['is_active'],
+                'lastOrder' => $lastOrder,
+                'lastOrderText' => $lastOrder ?: 'Нет заказов',
+                'deliveries' => (int) $row['deliveries'],
+                'newsletter' => $row['telegram_chat_id'] ? 'TG бот' : '—',
+            ];
+        }, $rows);
+    }
+
     public function updateProfileAndPin(
         int $userId,
         string $name,

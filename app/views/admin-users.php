@@ -77,16 +77,16 @@
                             <?php echo htmlspecialchars($user['name'], ENT_QUOTES, 'UTF-8'); ?>
                         </a>
                         <div class="text-sm text-slate-500">Телефон: <?php echo htmlspecialchars($user['phone'], ENT_QUOTES, 'UTF-8'); ?></div>
-                        <div class="text-xs text-slate-400">Последний заказ: <?php echo htmlspecialchars($user['lastOrder'], ENT_QUOTES, 'UTF-8'); ?></div>
+                        <div class="text-xs text-slate-400">Последний заказ: <?php echo htmlspecialchars($user['lastOrderText'], ENT_QUOTES, 'UTF-8'); ?></div>
                     </div>
                     <div class="flex items-center gap-3">
                         <span class="inline-flex items-center gap-2 rounded-full bg-slate-50 px-3 py-1 text-sm font-semibold text-slate-700 ring-1 ring-slate-200">
                             <span class="material-symbols-rounded text-base text-emerald-500">event_available</span>
-                            Доставок: 12
+                            Доставок: <?php echo (int) $user['deliveries']; ?>
                         </span>
                         <span class="inline-flex items-center gap-2 rounded-full bg-rose-50 px-3 py-1 text-sm font-semibold text-rose-700 ring-1 ring-rose-200">
                             <span class="material-symbols-rounded text-base">notifications_active</span>
-                            Рассылки: TG бот
+                            Рассылки: <?php echo htmlspecialchars($user['newsletter'], ENT_QUOTES, 'UTF-8'); ?>
                         </span>
                     </div>
                     <label class="relative inline-flex h-10 w-16 cursor-pointer items-center">
@@ -114,11 +114,13 @@
 
         userList.querySelectorAll('article').forEach((card) => {
             const userPhone = card.dataset.phone || '';
-            const lastOrder = new Date(card.dataset.lastOrder);
+            const lastOrderRaw = card.dataset.lastOrder || '';
+            const lastOrder = lastOrderRaw ? new Date(lastOrderRaw) : null;
+            const hasValidDate = lastOrder && !Number.isNaN(lastOrder.getTime());
 
             const phoneMatches = phoneDigits === '' || userPhone.includes(phoneDigits);
-            const afterFrom = !dateFrom || lastOrder >= dateFrom;
-            const beforeTo = !dateTo || lastOrder <= dateTo;
+            const afterFrom = !dateFrom || !hasValidDate || lastOrder >= dateFrom;
+            const beforeTo = !dateTo || !hasValidDate || lastOrder <= dateTo;
 
             card.style.display = phoneMatches && afterFrom && beforeTo ? '' : 'none';
         });
