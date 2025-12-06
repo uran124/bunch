@@ -1,18 +1,18 @@
 <section class="relative overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-slate-100">
-    <div class="absolute inset-0 -z-10 bg-gradient-to-br from-emerald-50 via-white to-rose-50"></div>
-    <div class="absolute -left-24 top-10 h-56 w-56 rounded-full bg-emerald-100 opacity-40 blur-3xl"></div>
+    <div class="absolute inset-0 -z-10 bg-gradient-to-br from-sky-50 via-white to-rose-50"></div>
+    <div class="absolute -left-24 -top-16 h-56 w-56 rounded-full bg-sky-100 opacity-50 blur-3xl"></div>
     <div class="absolute -right-16 bottom-0 h-64 w-64 rounded-full bg-rose-100 opacity-50 blur-3xl"></div>
 
     <div class="flex flex-col gap-8 px-5 py-8 sm:px-8">
         <header class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div class="space-y-2">
-                <div class="inline-flex items-center gap-2 rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800">
-                    <span class="material-symbols-rounded text-base">verified_user</span>
-                    <span>Регистрация</span>
+                <div class="inline-flex items-center gap-2 rounded-full bg-sky-100 px-3 py-1 text-xs font-semibold text-sky-800">
+                    <span class="material-symbols-rounded text-base">lock_reset</span>
+                    <span>Восстановление</span>
                 </div>
                 <div>
-                    <h1 class="text-3xl font-semibold tracking-tight text-slate-900">Получите PIN в Telegram</h1>
-                    <p class="text-sm text-slate-600">Отправим одноразовый PIN в чат с ботом, после чего вы сможете войти.</p>
+                    <h1 class="text-3xl font-semibold tracking-tight text-slate-900">Сброс PIN-кода</h1>
+                    <p class="text-sm text-slate-600">Мы отправим новый PIN в чат с ботом. Убедитесь, что он запущен.</p>
                 </div>
             </div>
             <?php if (!empty($botUsername)): ?>
@@ -23,7 +23,7 @@
                     rel="noopener noreferrer"
                 >
                     <span class="material-symbols-rounded text-base">smart_toy</span>
-                    <span>Перейти к боту</span>
+                    <span>Открыть бота</span>
                 </a>
             <?php endif; ?>
         </header>
@@ -50,7 +50,7 @@
             </div>
         <?php endif; ?>
 
-        <form method="POST" action="/?page=register" class="grid gap-5">
+        <form method="POST" action="/?page=recover" class="grid gap-5">
             <div class="grid gap-1.5">
                 <label for="phone" class="text-sm font-semibold text-slate-800">Телефон</label>
                 <input
@@ -65,22 +65,14 @@
             </div>
             <button
                 type="submit"
-                class="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-4 py-3 text-base font-semibold text-white shadow-lg shadow-emerald-200 transition hover:shadow-xl hover:shadow-emerald-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-500"
+                class="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-sky-500 to-rose-500 px-4 py-3 text-base font-semibold text-white shadow-lg shadow-sky-200 transition hover:shadow-xl hover:shadow-rose-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-500"
             >
-                <span class="material-symbols-rounded text-base">send</span>
-                Отправить PIN в Telegram
+                <span class="material-symbols-rounded text-base">restart_alt</span>
+                Отправить новый PIN в Telegram
             </button>
-            <div class="grid gap-3 rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 text-sm text-slate-700 shadow-inner shadow-slate-100">
-                <div class="flex items-center gap-2 font-semibold text-slate-900">
-                    <span class="material-symbols-rounded text-base text-rose-500">info</span>
-                    Как это работает
-                </div>
-                <ol class="grid gap-2 pl-4 text-sm list-decimal marker:text-rose-500">
-                    <li>Нажмите «Перейти к боту» и отправьте свой телефон боту.</li>
-                    <li>Запросите PIN — мы отправим его в Telegram.</li>
-                    <li>Вернитесь на сайт и войдите с PIN на <a class="font-semibold text-rose-600 hover:text-rose-700" href="/?page=login">странице входа</a>.</li>
-                </ol>
-            </div>
+            <p class="text-center text-sm text-slate-600">
+                Уже получили код? <a class="font-semibold text-rose-600 hover:text-rose-700" href="/?page=login">Войти</a>
+            </p>
         </form>
     </div>
 </section>
