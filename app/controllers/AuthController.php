@@ -8,6 +8,7 @@ class AuthController extends Controller
     private Analytics $analytics;
     private VerificationCode $verificationModel;
     private ?Telegram $telegram = null;
+    private string $botUsername = '';
     private const MAX_FAILED_ATTEMPTS = 5;
     private const LOCK_MINUTES = 15;
 
@@ -18,6 +19,7 @@ class AuthController extends Controller
         $this->logger = new Logger();
         $this->analytics = new Analytics();
         $this->verificationModel = new VerificationCode();
+        $this->botUsername = ltrim(trim(TG_BOT_USERNAME), '@');
 
         if (TG_BOT_TOKEN !== '') {
             $this->telegram = new Telegram(TG_BOT_TOKEN);
@@ -69,7 +71,7 @@ class AuthController extends Controller
 
         $this->render('login', [
             'errors' => $errors,
-            'botUsername' => TG_BOT_USERNAME,
+            'botUsername' => $this->botUsername,
         ]);
     }
 
@@ -182,7 +184,7 @@ class AuthController extends Controller
         $this->render('register', [
             'errors' => $errors,
             'successMessage' => $successMessage,
-            'botUsername' => TG_BOT_USERNAME,
+            'botUsername' => $this->botUsername,
             'stage' => $stage,
             'prefillName' => $prefillName,
             'prefillPhone' => $prefillPhone,
@@ -272,7 +274,7 @@ class AuthController extends Controller
         $this->render('recover', [
             'errors' => $errors,
             'successMessage' => $successMessage,
-            'botUsername' => TG_BOT_USERNAME,
+            'botUsername' => $this->botUsername,
             'stage' => $stage,
         ]);
     }
