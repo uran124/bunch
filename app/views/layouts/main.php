@@ -19,6 +19,8 @@
         <?php echo $content; ?>
     </main>
 
+    <?php include __DIR__ . '/../partials/bottom-nav.php'; ?>
+
     <footer class="app-footer">
         <span>© <?php echo date('Y'); ?> Bunch flowers</span>
         <span class="footer-status">Красноярск · Asia/Krasnoyarsk</span>
