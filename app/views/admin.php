@@ -63,10 +63,14 @@
                                     <div class="text-sm font-semibold text-slate-900"><?php echo htmlspecialchars($item['label'], ENT_QUOTES, 'UTF-8'); ?></div>
                                     <div class="text-sm text-slate-500"><?php echo htmlspecialchars($item['description'], ENT_QUOTES, 'UTF-8'); ?></div>
                                 </div>
-                                <button class="inline-flex h-10 items-center gap-2 rounded-lg bg-white px-3 text-sm font-semibold text-rose-600 shadow-sm ring-1 ring-rose-100 transition hover:-translate-y-0.5 hover:bg-rose-50">
+                                <?php $href = $item['href'] ?? '#'; ?>
+                                <a
+                                    class="inline-flex h-10 items-center gap-2 rounded-lg bg-white px-3 text-sm font-semibold text-rose-600 shadow-sm ring-1 ring-rose-100 transition hover:-translate-y-0.5 hover:bg-rose-50"
+                                    href="<?php echo htmlspecialchars($href, ENT_QUOTES, 'UTF-8'); ?>"
+                                >
                                     <span class="material-symbols-rounded text-base">open_in_new</span>
                                     Открыть
-                                </button>
+                                </a>
                             </div>
                         </li>
                     <?php endforeach; ?>
