@@ -73,8 +73,8 @@
                         Как получить код
                     </div>
                     <ol class="grid gap-2 pl-4 text-sm list-decimal marker:text-rose-500">
-                        <li>Нажмите «Перейти к боту» и отправьте свой телефон.</li>
-                        <li>Бот пришлёт одноразовый код из 5 цифр.</li>
+                        <li>Нажмите «Перейти к боту» и запустите бота кнопкой /start.</li>
+                        <li>Бот сразу пришлёт одноразовый код из 5 цифр и подтянет ваше имя из Telegram.</li>
                         <li>Введите этот код здесь, чтобы открыть форму регистрации.</li>
                     </ol>
                     <div class="flex flex-wrap gap-2">
@@ -101,7 +101,7 @@
             <form method="POST" action="/?page=register" class="grid gap-5">
                 <input type="hidden" name="step" value="complete_registration">
                 <div class="grid gap-1.5">
-                    <label for="name" class="text-sm font-semibold text-slate-800">Имя</label>
+                    <label for="name" class="text-sm font-semibold text-slate-800">Имя (из Telegram, можно изменить)</label>
                     <input
                         type="text"
                         id="name"
@@ -126,19 +126,33 @@
                     >
                 </div>
                 <div class="grid gap-1.5">
-                    <label for="pin" class="text-sm font-semibold text-slate-800">PIN для входа (4 цифры)</label>
+                    <label for="email" class="text-sm font-semibold text-slate-800">Электронная почта (необязательно)</label>
                     <input
-                        type="password"
-                        id="pin"
-                        name="pin"
-                        maxlength="4"
-                        minlength="4"
-                        pattern="\d{4}"
+                        type="email"
+                        id="email"
+                        name="email"
                         class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-base font-medium text-slate-900 shadow-inner shadow-slate-100 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
-                        placeholder="••••"
-                        required
-                        inputmode="numeric"
+                        placeholder="you@example.com"
+                        value="<?php echo htmlspecialchars($prefillEmail ?? '', ENT_QUOTES, 'UTF-8'); ?>"
                     >
+                </div>
+                <div class="grid gap-1.5">
+                    <label class="text-sm font-semibold text-slate-800">PIN для входа (4 цифры)</label>
+                    <div class="grid grid-cols-4 gap-3">
+                        <?php for ($i = 1; $i <= 4; $i++): ?>
+                            <input
+                                type="password"
+                                name="pin_<?php echo $i; ?>"
+                                inputmode="numeric"
+                                pattern="\d"
+                                maxlength="1"
+                                class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-center text-lg font-semibold text-slate-900 shadow-inner shadow-slate-100 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+                                aria-label="Цифра PIN <?php echo $i; ?>"
+                                required
+                            >
+                        <?php endfor; ?>
+                    </div>
+                    <p class="text-xs text-slate-500">Каждую цифру вводите в отдельное поле.</p>
                 </div>
                 <button
                     type="submit"
@@ -148,6 +162,25 @@
                     Завершить регистрацию
                 </button>
             </form>
+            <script>
+                const pinInputs = Array.from(document.querySelectorAll('input[name^="pin_"]'));
+
+                pinInputs.forEach((input, index) => {
+                    input.addEventListener('input', () => {
+                        input.value = input.value.replace(/\D+/g, '').slice(0, 1);
+
+                        if (input.value && index < pinInputs.length - 1) {
+                            pinInputs[index + 1].focus();
+                        }
+                    });
+
+                    input.addEventListener('keydown', (event) => {
+                        if (event.key === 'Backspace' && !input.value && index > 0) {
+                            pinInputs[index - 1].focus();
+                        }
+                    });
+                });
+            </script>
         <?php endif; ?>
     </div>
 </section>

@@ -82,11 +82,12 @@ class AuthController extends Controller
         $stage = 'code';
         $prefillName = '';
         $prefillPhone = '';
+        $prefillEmail = '';
 
         $sessionVerification = Session::get('register_verification');
         if ($sessionVerification) {
             $stage = 'details';
-            [$prefillName, $prefillPhone] = $this->getPrefillData($sessionVerification);
+            [$prefillName, $prefillPhone, $prefillEmail] = $this->getPrefillData($sessionVerification);
         }
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -113,7 +114,7 @@ class AuthController extends Controller
                         Session::set('register_verification', $data);
                         $sessionVerification = $data;
                         $stage = 'details';
-                        [$prefillName, $prefillPhone] = $this->getPrefillData($sessionVerification);
+                        [$prefillName, $prefillPhone, $prefillEmail] = $this->getPrefillData($sessionVerification);
                         $successMessage = 'Код подтверждён. Заполните данные профиля.';
                     }
                 }
@@ -126,7 +127,8 @@ class AuthController extends Controller
                 } else {
                     $name = trim($_POST['name'] ?? '');
                     $phone = trim($_POST['phone'] ?? '');
-                    $pin = trim($_POST['pin'] ?? '');
+                    $email = trim($_POST['email'] ?? '');
+                    $pin = $this->collectPin($_POST);
 
                     if ($name === '') {
                         $errors[] = 'Укажите ваше имя.';
@@ -134,6 +136,10 @@ class AuthController extends Controller
 
                     if ($phone === '') {
                         $errors[] = 'Укажите номер телефона.';
+                    }
+
+                    if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                        $errors[] = 'Укажите корректный email или оставьте поле пустым.';
                     }
 
                     if (!preg_match('/^\d{4}$/', $pin)) {
@@ -157,11 +163,11 @@ class AuthController extends Controller
                         }
 
                         if ($existingUser) {
-                            $this->userModel->updateProfileAndPin((int) $existingUser['id'], $name, $normalizedPhone, $pinHash, $chatId, $username);
+                            $this->userModel->updateProfileAndPin((int) $existingUser['id'], $name, $normalizedPhone, $pinHash, $email, $chatId, $username);
                             $userId = (int) $existingUser['id'];
                             $this->logger->logEvent('WEB_USER_UPDATED', ['user_id' => $userId, 'phone' => $normalizedPhone]);
                         } else {
-                            $userId = $this->userModel->create($normalizedPhone, $pinHash, $chatId, $username, $name);
+                            $userId = $this->userModel->create($normalizedPhone, $pinHash, $email, $chatId, $username, $name);
                             $this->logger->logEvent('WEB_USER_REGISTERED', ['user_id' => $userId, 'phone' => $normalizedPhone]);
                         }
 
@@ -176,6 +182,7 @@ class AuthController extends Controller
                         $stage = 'details';
                         $prefillName = $name;
                         $prefillPhone = $phone;
+                        $prefillEmail = $email;
                     }
                 }
             }
@@ -188,6 +195,7 @@ class AuthController extends Controller
             'stage' => $stage,
             'prefillName' => $prefillName,
             'prefillPhone' => $prefillPhone,
+            'prefillEmail' => $prefillEmail,
         ]);
     }
 
@@ -319,6 +327,7 @@ class AuthController extends Controller
     {
         $prefillName = trim($verification['name'] ?? '');
         $prefillPhone = trim($verification['phone'] ?? '');
+        $prefillEmail = '';
 
         if (!empty($verification['user_id'])) {
             $user = $this->userModel->findById((int) $verification['user_id']);
@@ -326,9 +335,22 @@ class AuthController extends Controller
             if ($user) {
                 $prefillName = $user['name'] ?? $prefillName;
                 $prefillPhone = $user['phone'] ?? $prefillPhone;
+                $prefillEmail = $user['email'] ?? $prefillEmail;
             }
         }
 
-        return [$prefillName, $prefillPhone];
+        return [$prefillName, $prefillPhone, $prefillEmail];
+    }
+
+    private function collectPin(array $payload): string
+    {
+        $digits = [
+            trim($payload['pin_1'] ?? ''),
+            trim($payload['pin_2'] ?? ''),
+            trim($payload['pin_3'] ?? ''),
+            trim($payload['pin_4'] ?? ''),
+        ];
+
+        return implode('', $digits);
     }
 }
