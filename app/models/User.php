@@ -21,12 +21,13 @@ class User extends Model
         return $user ?: null;
     }
 
-    public function create(string $phone, string $pinHash, ?int $chatId = null, ?string $username = null, ?string $name = null): int
+    public function create(string $phone, string $pinHash, ?string $email = null, ?int $chatId = null, ?string $username = null, ?string $name = null): int
     {
-        $stmt = $this->db->prepare('INSERT INTO users (phone, name, pin_hash, pin_updated_at, telegram_chat_id, telegram_username, created_at, updated_at) VALUES (:phone, :name, :pin_hash, :pin_updated_at, :chat_id, :username, NOW(), NOW())');
+        $stmt = $this->db->prepare('INSERT INTO users (phone, name, email, pin_hash, pin_updated_at, telegram_chat_id, telegram_username, created_at, updated_at) VALUES (:phone, :name, :email, :pin_hash, :pin_updated_at, :chat_id, :username, NOW(), NOW())');
         $stmt->execute([
             'phone' => $phone,
             'name' => $name,
+            'email' => $email,
             'pin_hash' => $pinHash,
             'pin_updated_at' => date('Y-m-d H:i:s'),
             'chat_id' => $chatId,
@@ -78,16 +79,18 @@ class User extends Model
         string $name,
         string $phone,
         string $pinHash,
+        ?string $email = null,
         ?int $chatId = null,
         ?string $username = null
     ): void {
         $stmt = $this->db->prepare(
-            'UPDATE users SET name = :name, phone = :phone, pin_hash = :pin_hash, pin_updated_at = :updated_at, telegram_chat_id = :chat_id, telegram_username = :username, updated_at = NOW() WHERE id = :id'
+            'UPDATE users SET name = :name, phone = :phone, email = :email, pin_hash = :pin_hash, pin_updated_at = :updated_at, telegram_chat_id = :chat_id, telegram_username = :username, updated_at = NOW() WHERE id = :id'
         );
 
         $stmt->execute([
             'name' => $name,
             'phone' => $phone,
+            'email' => $email,
             'pin_hash' => $pinHash,
             'updated_at' => date('Y-m-d H:i:s'),
             'chat_id' => $chatId,

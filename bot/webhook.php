@@ -43,6 +43,9 @@ if (!$message) {
 
 $chatId = $message['chat']['id'] ?? null;
 $username = $message['from']['username'] ?? null;
+$fromFirstName = trim($message['from']['first_name'] ?? '');
+$fromLastName = trim($message['from']['last_name'] ?? '');
+$fromName = trim($fromFirstName . ' ' . $fromLastName) ?: null;
 $text = trim($message['text'] ?? '');
 $contact = $message['contact'] ?? null;
 
@@ -55,7 +58,7 @@ $telegram = new Telegram(TG_BOT_TOKEN);
 $userModel = new User();
 
 if ($text === '/start') {
-    sendStartMenu($telegram, $chatId);
+    handleRegistrationCode($telegram, $userModel, $verificationModel, $chatId, $username, null, $appLogger, $analytics, $contact, $fromName);
     exit;
 }
 
@@ -65,7 +68,7 @@ if (mb_stripos($text, 'восстановить pin') !== false || mb_stripos($t
 }
 
 if (mb_stripos($text, 'получить код') !== false || mb_stripos($text, 'регистрация') !== false) {
-    handleRegistrationCode($telegram, $userModel, $verificationModel, $chatId, $username, null, $appLogger, $analytics);
+    handleRegistrationCode($telegram, $userModel, $verificationModel, $chatId, $username, null, $appLogger, $analytics, null, $fromName);
     exit;
 }
 
@@ -73,32 +76,12 @@ $phoneFromText = $text !== '' ? extractPhoneFromText($text) : null;
 
 if ($contact || $phoneFromText) {
     $phone = $contact['phone_number'] ?? $phoneFromText;
-    handleRegistrationCode($telegram, $userModel, $verificationModel, $chatId, $username, $phone, $appLogger, $analytics, $contact);
+    handleRegistrationCode($telegram, $userModel, $verificationModel, $chatId, $username, $phone, $appLogger, $analytics, $contact, $fromName);
     exit;
 }
 
 $unknownLogger->logRaw(date('c') . ' unhandled message: ' . $input);
 $telegram->sendMessage($chatId, 'Не понял запрос. Нажмите «Получить код» или отправьте номер телефона (можно с пробелами).');
-
-function sendStartMenu(Telegram $telegram, int $chatId): void
-{
-    $keyboard = [
-        'keyboard' => [
-            [
-                ['text' => 'Получить код', 'request_contact' => false],
-            ],
-            [
-                ['text' => 'Восстановить PIN', 'request_contact' => false],
-            ],
-        ],
-        'resize_keyboard' => true,
-        'one_time_keyboard' => true,
-    ];
-
-    $telegram->sendMessage($chatId, "Выберите действие", [
-        'reply_markup' => json_encode($keyboard, JSON_UNESCAPED_UNICODE),
-    ]);
-}
 
 function requestPhone(Telegram $telegram, int $chatId): void
 {
@@ -126,7 +109,8 @@ function handleRegistrationCode(
     ?string $phone,
     Logger $logger,
     Analytics $analytics,
-    ?array $contact = null
+    ?array $contact = null,
+    ?string $fallbackName = null
 ): void {
     $phone = $phone ? normalisePhone($phone) : null;
 
@@ -138,6 +122,10 @@ function handleRegistrationCode(
         $firstName = trim($contact['first_name'] ?? '');
         $lastName = trim($contact['last_name'] ?? '');
         $name = trim($firstName . ' ' . $lastName) ?: null;
+    }
+
+    if (!$name && $fallbackName) {
+        $name = $fallbackName;
     }
 
     if ($existing) {
