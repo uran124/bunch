@@ -65,7 +65,7 @@ if (mb_stripos($text, 'восстановить pin') !== false || mb_stripos($t
 }
 
 if (mb_stripos($text, 'получить код') !== false || mb_stripos($text, 'регистрация') !== false) {
-    requestPhone($telegram, $chatId);
+    handleRegistrationCode($telegram, $userModel, $verificationModel, $chatId, $username, null, $appLogger, $analytics);
     exit;
 }
 
@@ -120,16 +120,16 @@ function handleRegistrationCode(
     VerificationCode $verificationModel,
     int $chatId,
     ?string $username,
-    string $phone,
+    ?string $phone,
     Logger $logger,
     Analytics $analytics,
     ?array $contact = null
 ): void {
-    $phone = normalisePhone($phone);
+    $phone = $phone ? normalisePhone($phone) : null;
 
-    $existing = $userModel->findByPhone($phone);
+    $existing = $phone ? $userModel->findByPhone($phone) : $userModel->findByTelegramChatId($chatId);
     $userId = $existing ? (int) $existing['id'] : null;
-    $name = null;
+    $name = $existing['name'] ?? null;
 
     if ($contact) {
         $firstName = trim($contact['first_name'] ?? '');
@@ -141,7 +141,9 @@ function handleRegistrationCode(
         $userModel->linkTelegram((int) $existing['id'], $chatId, $username);
     }
 
-    $code = $verificationModel->createCode($chatId, 'register', $phone, $userId, $username, $name);
+    $codePhone = $phone ?? ($existing['phone'] ?? null);
+
+    $code = $verificationModel->createCode($chatId, 'register', $codePhone, $userId, $username, $name);
 
     $telegram->sendMessage($chatId, "Ваш код для регистрации на сайте: {$code}\nВведите его в форме и продолжите заполнение профиля.");
 
