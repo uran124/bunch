@@ -17,7 +17,7 @@ class AdminController extends Controller
                     [
                         'label' => 'Рассылки',
                         'description' => 'E-mail, push и SMS кампании через телеграм-бота',
-                        'href' => '/?page=admin-group-create',
+                        'href' => '/?page=admin-broadcast',
                     ],
                     [
                         'label' => 'Уведомления',
@@ -177,7 +177,38 @@ class AdminController extends Controller
 
         $this->render('admin-group-create', [
             'pageMeta' => $pageMeta,
+            'groups' => $this->getGroupFixtures(),
             'users' => array_values($users),
+        ]);
+    }
+
+    public function broadcasts(): void
+    {
+        $pageMeta = [
+            'title' => 'Рассылки — админ-панель Bunch',
+            'description' => 'Создавайте сообщения, выбирайте группы и планируйте отправку.',
+            'h1' => 'Рассылки',
+            'headerTitle' => 'Bunch Admin',
+            'headerSubtitle' => 'Кампании через телеграм-бота',
+            'footerLeft' => 'Рассылаем только согласившимся клиентам',
+            'footerRight' => 'Планирование по местному времени',
+        ];
+
+        $groups = $this->getGroupFixtures();
+        $messages = $this->getBroadcastMessages();
+
+        $perPage = 20;
+        $currentPage = max(1, (int) ($_GET['p'] ?? 1));
+        $totalPages = max(1, (int) ceil(count($messages) / $perPage));
+        $currentPage = min($currentPage, $totalPages);
+        $messagesPage = array_slice($messages, ($currentPage - 1) * $perPage, $perPage);
+
+        $this->render('admin-broadcast', [
+            'pageMeta' => $pageMeta,
+            'groups' => $groups,
+            'messages' => $messagesPage,
+            'totalPages' => $totalPages,
+            'currentPage' => $currentPage,
         ]);
     }
 
@@ -197,6 +228,253 @@ class AdminController extends Controller
             ['id' => 11, 'name' => 'Полина Сергеева', 'phone' => '+7 902 010-22-33', 'active' => true, 'lastOrder' => '2024-05-13'],
             ['id' => 12, 'name' => 'Дмитрий Богданов', 'phone' => '+7 933 666-44-22', 'active' => false, 'lastOrder' => '2024-04-28'],
             ['id' => 13, 'name' => 'Алина Галкина', 'phone' => '+7 905 345-67-89', 'active' => true, 'lastOrder' => '2024-05-31'],
+        ];
+    }
+
+    private function getGroupFixtures(): array
+    {
+        return [
+            [
+                'id' => 1,
+                'name' => 'VIP клиенты / TG',
+                'members' => 34,
+                'channels' => ['Телеграм', 'SMS'],
+                'description' => 'Покупают чаще 1 раза в месяц',
+            ],
+            [
+                'id' => 2,
+                'name' => 'Корпоративные клиенты',
+                'members' => 12,
+                'channels' => ['Телеграм'],
+                'description' => 'Отправляем предложения по букетам для офисов',
+            ],
+            [
+                'id' => 3,
+                'name' => 'Новые подписчики',
+                'members' => 58,
+                'channels' => ['Телеграм', 'Email'],
+                'description' => 'Получают приветственные цепочки',
+            ],
+            [
+                'id' => 4,
+                'name' => 'Забывшие корзину',
+                'members' => 19,
+                'channels' => ['Телеграм'],
+                'description' => 'Напоминания об оставленных товарах',
+            ],
+        ];
+    }
+
+    private function getBroadcastMessages(): array
+    {
+        return [
+            [
+                'id' => 101,
+                'title' => 'Новая коллекция пионов',
+                'groups' => ['VIP клиенты / TG', 'Новые подписчики'],
+                'status' => 'scheduled',
+                'sendAt' => '2024-06-15 10:00',
+                'createdAt' => '2024-06-12 09:20',
+                'recipients' => 82,
+            ],
+            [
+                'id' => 102,
+                'title' => 'Скидка 15% на корпоративные заказы',
+                'groups' => ['Корпоративные клиенты'],
+                'status' => 'sent',
+                'sendAt' => '2024-06-10 14:00',
+                'createdAt' => '2024-06-09 18:40',
+                'recipients' => 12,
+            ],
+            [
+                'id' => 103,
+                'title' => 'Промокод на доставку',
+                'groups' => ['Новые подписчики', 'Забывшие корзину'],
+                'status' => 'sent',
+                'sendAt' => '2024-06-08 11:30',
+                'createdAt' => '2024-06-07 16:05',
+                'recipients' => 70,
+            ],
+            [
+                'id' => 104,
+                'title' => 'Обновления по подпискам',
+                'groups' => ['VIP клиенты / TG'],
+                'status' => 'scheduled',
+                'sendAt' => '2024-06-20 09:15',
+                'createdAt' => '2024-06-12 12:10',
+                'recipients' => 34,
+            ],
+            [
+                'id' => 105,
+                'title' => 'Распродажа ленточек',
+                'groups' => ['Забывшие корзину'],
+                'status' => 'sent',
+                'sendAt' => '2024-06-05 17:45',
+                'createdAt' => '2024-06-04 10:00',
+                'recipients' => 19,
+            ],
+            [
+                'id' => 106,
+                'title' => 'Праздничные наборы',
+                'groups' => ['VIP клиенты / TG', 'Корпоративные клиенты'],
+                'status' => 'sent',
+                'sendAt' => '2024-05-30 09:00',
+                'createdAt' => '2024-05-28 13:00',
+                'recipients' => 46,
+            ],
+            [
+                'id' => 107,
+                'title' => 'Проверяем адреса доставки',
+                'groups' => ['Новые подписчики'],
+                'status' => 'sent',
+                'sendAt' => '2024-05-25 15:30',
+                'createdAt' => '2024-05-24 17:45',
+                'recipients' => 58,
+            ],
+            [
+                'id' => 108,
+                'title' => 'Активность перед праздниками',
+                'groups' => ['VIP клиенты / TG', 'Корпоративные клиенты', 'Забывшие корзину'],
+                'status' => 'sent',
+                'sendAt' => '2024-05-20 08:30',
+                'createdAt' => '2024-05-19 12:50',
+                'recipients' => 65,
+            ],
+            [
+                'id' => 109,
+                'title' => 'Соберите букет в конструкторе',
+                'groups' => ['Новые подписчики'],
+                'status' => 'sent',
+                'sendAt' => '2024-05-12 09:15',
+                'createdAt' => '2024-05-11 11:00',
+                'recipients' => 58,
+            ],
+            [
+                'id' => 110,
+                'title' => 'Двойные бонусы за отзывы',
+                'groups' => ['VIP клиенты / TG'],
+                'status' => 'sent',
+                'sendAt' => '2024-05-05 18:00',
+                'createdAt' => '2024-05-04 09:40',
+                'recipients' => 34,
+            ],
+            [
+                'id' => 111,
+                'title' => 'Приветствие новой аудитории',
+                'groups' => ['Новые подписчики'],
+                'status' => 'sent',
+                'sendAt' => '2024-04-28 13:00',
+                'createdAt' => '2024-04-27 10:10',
+                'recipients' => 62,
+            ],
+            [
+                'id' => 112,
+                'title' => 'Обновления по доставке в новые районы',
+                'groups' => ['Забывшие корзину', 'VIP клиенты / TG'],
+                'status' => 'sent',
+                'sendAt' => '2024-04-20 16:20',
+                'createdAt' => '2024-04-19 14:00',
+                'recipients' => 45,
+            ],
+            [
+                'id' => 113,
+                'title' => 'Весенние коллекции готовы',
+                'groups' => ['Корпоративные клиенты'],
+                'status' => 'sent',
+                'sendAt' => '2024-04-10 10:00',
+                'createdAt' => '2024-04-08 09:45',
+                'recipients' => 12,
+            ],
+            [
+                'id' => 114,
+                'title' => 'Напоминание об опте',
+                'groups' => ['Корпоративные клиенты'],
+                'status' => 'sent',
+                'sendAt' => '2024-04-02 11:00',
+                'createdAt' => '2024-04-01 15:10',
+                'recipients' => 12,
+            ],
+            [
+                'id' => 115,
+                'title' => 'Праздничные открытки в подарок',
+                'groups' => ['Новые подписчики', 'VIP клиенты / TG'],
+                'status' => 'sent',
+                'sendAt' => '2024-03-25 17:00',
+                'createdAt' => '2024-03-24 12:00',
+                'recipients' => 92,
+            ],
+            [
+                'id' => 116,
+                'title' => 'Важное об изменении условий доставки',
+                'groups' => ['Забывшие корзину'],
+                'status' => 'sent',
+                'sendAt' => '2024-03-18 14:30',
+                'createdAt' => '2024-03-17 10:50',
+                'recipients' => 19,
+            ],
+            [
+                'id' => 117,
+                'title' => 'Комбо-наборы к 8 марта',
+                'groups' => ['VIP клиенты / TG', 'Корпоративные клиенты'],
+                'status' => 'sent',
+                'sendAt' => '2024-03-05 09:00',
+                'createdAt' => '2024-03-03 13:30',
+                'recipients' => 52,
+            ],
+            [
+                'id' => 118,
+                'title' => 'Актуальные контакты для связи',
+                'groups' => ['Новые подписчики'],
+                'status' => 'sent',
+                'sendAt' => '2024-02-27 11:30',
+                'createdAt' => '2024-02-26 09:15',
+                'recipients' => 60,
+            ],
+            [
+                'id' => 119,
+                'title' => 'Подборка идей для подарков',
+                'groups' => ['VIP клиенты / TG'],
+                'status' => 'sent',
+                'sendAt' => '2024-02-18 10:00',
+                'createdAt' => '2024-02-17 08:40',
+                'recipients' => 34,
+            ],
+            [
+                'id' => 120,
+                'title' => 'Промокод на первую доставку',
+                'groups' => ['Новые подписчики'],
+                'status' => 'sent',
+                'sendAt' => '2024-02-10 12:00',
+                'createdAt' => '2024-02-09 10:30',
+                'recipients' => 58,
+            ],
+            [
+                'id' => 121,
+                'title' => 'Подтверждаем подписку на рассылки',
+                'groups' => ['Новые подписчики'],
+                'status' => 'sent',
+                'sendAt' => '2024-01-30 13:00',
+                'createdAt' => '2024-01-29 09:50',
+                'recipients' => 55,
+            ],
+            [
+                'id' => 122,
+                'title' => 'Итоги года и бонусы',
+                'groups' => ['VIP клиенты / TG', 'Корпоративные клиенты'],
+                'status' => 'sent',
+                'sendAt' => '2024-01-15 10:00',
+                'createdAt' => '2024-01-14 14:00',
+                'recipients' => 50,
+            ],
+            [
+                'id' => 123,
+                'title' => 'Запускаем чат с флористом',
+                'groups' => ['VIP клиенты / TG'],
+                'status' => 'sent',
+                'sendAt' => '2024-01-05 18:30',
+                'createdAt' => '2024-01-04 11:10',
+                'recipients' => 34,
+            ],
         ];
     }
 

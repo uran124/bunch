@@ -37,6 +37,7 @@ $router->get('recover', [AuthController::class, 'recover']);
 $router->get('admin', [AdminController::class, 'index']);
 $router->get('admin-users', [AdminController::class, 'users']);
 $router->get('admin-user', [AdminController::class, 'user']);
+$router->get('admin-broadcast', [AdminController::class, 'broadcasts']);
 $router->get('admin-group-create', [AdminController::class, 'groupCreate']);
 $router->post('login', [AuthController::class, 'login']);
 $router->post('register', [AuthController::class, 'register']);
