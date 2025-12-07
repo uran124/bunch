@@ -51,18 +51,24 @@ class AdminController extends Controller
                 ],
             ],
             [
-                'title' => 'Подписки',
-                'items' => [
-                    ['label' => 'Периоды', 'description' => 'Сроки, расписания и продления'],
-                    ['label' => 'Настройка скидок', 'description' => 'Уровни лояльности и акции'],
-                ],
-            ],
-            [
                 'title' => 'Заказы',
                 'items' => [
-                    ['label' => 'Товары', 'description' => 'Разовые покупки и статусы'],
-                    ['label' => 'Подписки', 'description' => 'Регулярные доставки и паузы'],
-                    ['label' => 'Мелкий опт', 'description' => 'Групповые заказы и лимиты'],
+                    [
+                        'label' => 'Товары',
+                        'description' => 'Разовые покупки и статусы',
+                        'href' => '/?page=admin-orders-one-time',
+                    ],
+                    [
+                        'label' => 'Подписки',
+                        'description' => 'Регулярные доставки, паузы и скидки по периодичности',
+                        'cta' => 'Настройка подписок',
+                        'href' => '/?page=admin-orders-subscriptions',
+                    ],
+                    [
+                        'label' => 'Мелкий опт',
+                        'description' => 'Групповые заказы и лимиты',
+                        'href' => '/?page=admin-orders-wholesale',
+                    ],
                 ],
             ],
             [
@@ -300,6 +306,65 @@ class AdminController extends Controller
             'pageMeta' => $pageMeta,
             'supplies' => $supplies,
             'reservations' => $this->getSupplyReservations(),
+        ]);
+    }
+
+    public function ordersOneTime(): void
+    {
+        $pageMeta = [
+            'title' => 'Заказы · разовые покупки — админ-панель Bunch',
+            'description' => 'Контроль статусов разовых заказов, оплат и доставки.',
+            'h1' => 'Заказы (разовые)',
+            'headerTitle' => 'Bunch Admin',
+            'headerSubtitle' => 'Заказы · Разовые покупки',
+        ];
+
+        $this->render('admin-orders-one-time', [
+            'pageMeta' => $pageMeta,
+            'orders' => $this->getOneTimeOrders(),
+            'filters' => [
+                'status' => ['Все', 'Новый', 'В доставке', 'Доставлен', 'Отменён'],
+                'payment' => ['Все', 'Оплачен', 'Ожидает', 'Возврат'],
+            ],
+        ]);
+    }
+
+    public function ordersSubscriptions(): void
+    {
+        $pageMeta = [
+            'title' => 'Подписки · настройки скидок — админ-панель Bunch',
+            'description' => 'Периодичность, скидки по поставкам и статусы подписок.',
+            'h1' => 'Подписки',
+            'headerTitle' => 'Bunch Admin',
+            'headerSubtitle' => 'Заказы · Подписки',
+        ];
+
+        $this->render('admin-orders-subscriptions', [
+            'pageMeta' => $pageMeta,
+            'subscriptions' => $this->getSubscriptionOrders(),
+            'periods' => ['Еженедельно', 'Раз в 2 недели', 'Ежемесячно'],
+            'discountTiers' => $this->getSubscriptionDiscounts(),
+        ]);
+    }
+
+    public function ordersWholesale(): void
+    {
+        $pageMeta = [
+            'title' => 'Мелкий опт — админ-панель Bunch',
+            'description' => 'Групповые заказы, лимиты по поставкам и статусы оплат.',
+            'h1' => 'Мелкий опт',
+            'headerTitle' => 'Bunch Admin',
+            'headerSubtitle' => 'Заказы · Мелкий опт',
+        ];
+
+        $this->render('admin-orders-wholesale', [
+            'pageMeta' => $pageMeta,
+            'wholesaleOrders' => $this->getWholesaleOrders(),
+            'limits' => [
+                'packsAvailable' => 180,
+                'reserved' => 62,
+                'pendingInvoices' => 5,
+            ],
         ]);
     }
 
@@ -755,6 +820,49 @@ class AdminController extends Controller
             ['supply' => 'Эквадор · Freedom', 'client' => 'ИП Флора', 'packs' => 6, 'status' => 'Подтверждено', 'date' => '2024-06-13'],
             ['supply' => 'Колумбия · Cappuccino', 'client' => 'Салон «Лаванда»', 'packs' => 4, 'status' => 'Ожидает оплаты', 'date' => '2024-06-14'],
             ['supply' => 'Стендинг · Эвкалипт', 'client' => 'Retail 24', 'packs' => 8, 'status' => 'Отгружено', 'date' => '2024-06-10'],
+        ];
+    }
+
+    private function getOneTimeOrders(): array
+    {
+        return [
+            ['number' => 'B-3012', 'customer' => 'Анна Соколова', 'sum' => '2 350 ₽', 'status' => 'Новый', 'payment' => 'Ожидает', 'delivery' => '12.06, 14:00', 'channel' => 'Сайт'],
+            ['number' => 'B-3011', 'customer' => 'ИП Флора', 'sum' => '7 480 ₽', 'status' => 'В доставке', 'payment' => 'Оплачен', 'delivery' => '12.06, 18:00', 'channel' => 'Корзина'],
+            ['number' => 'B-3010', 'customer' => 'Ольга Смирнова', 'sum' => '1 980 ₽', 'status' => 'Доставлен', 'payment' => 'Оплачен', 'delivery' => '11.06, 16:00', 'channel' => 'Сайт'],
+            ['number' => 'B-3009', 'customer' => 'Retail 24', 'sum' => '4 120 ₽', 'status' => 'Отменён', 'payment' => 'Возврат', 'delivery' => '—', 'channel' => 'Менеджер'],
+            ['number' => 'B-3008', 'customer' => 'Артем Якубов', 'sum' => '3 550 ₽', 'status' => 'Доставлен', 'payment' => 'Оплачен', 'delivery' => '10.06, 13:00', 'channel' => 'Сайт'],
+            ['number' => 'B-3007', 'customer' => 'ООО «Астра»', 'sum' => '12 400 ₽', 'status' => 'В доставке', 'payment' => 'Оплачен', 'delivery' => '12.06, 09:00', 'channel' => 'Менеджер'],
+        ];
+    }
+
+    private function getSubscriptionOrders(): array
+    {
+        return [
+            ['plan' => 'Еженедельно', 'customer' => 'Мария Кузнецова', 'nextDelivery' => '13.06, 11:00', 'discount' => '-5%', 'status' => 'Активна', 'sku' => 'Букет «Нежность»'],
+            ['plan' => 'Раз в 2 недели', 'customer' => 'ООО «Астра»', 'nextDelivery' => '20.06, 10:00', 'discount' => '-7%', 'status' => 'Активна', 'sku' => 'Моно-букет «Эвкалипт»'],
+            ['plan' => 'Ежемесячно', 'customer' => 'Илья Петров', 'nextDelivery' => '05.07, 15:00', 'discount' => '-10%', 'status' => 'Пауза', 'sku' => 'Букет «Сезонный»'],
+            ['plan' => 'Еженедельно', 'customer' => 'Корп. клиент «Retail 24»', 'nextDelivery' => '15.06, 09:30', 'discount' => '-6%', 'status' => 'Активна', 'sku' => 'Композиция «Офис»'],
+        ];
+    }
+
+    private function getSubscriptionDiscounts(): array
+    {
+        return [
+            ['step' => '2-й букет', 'discount' => '-3%', 'comment' => 'Фиксированный % на вторую доставку'],
+            ['step' => '3-й букет', 'discount' => '-5%', 'comment' => 'Рост скидки при удержании подписки'],
+            ['step' => '4-й букет', 'discount' => '-7%', 'comment' => 'Дополнительный стимул без промокодов'],
+            ['step' => '5-й и далее', 'discount' => '-10%', 'comment' => 'Максимальная скидка для долгих подписок'],
+        ];
+    }
+
+    private function getWholesaleOrders(): array
+    {
+        return [
+            ['client' => 'Retail 24', 'packs' => 24, 'sum' => '48 600 ₽', 'status' => 'Ожидает оплату', 'supply' => 'Эквадор · Freedom', 'date' => '12.06'],
+            ['client' => 'ООО «Астра»', 'packs' => 16, 'sum' => '32 800 ₽', 'status' => 'Подтверждено', 'supply' => 'Колумбия · Cappuccino', 'date' => '14.06'],
+            ['client' => 'Салон «Лаванда»', 'packs' => 8, 'sum' => '15 200 ₽', 'status' => 'Отгружено', 'supply' => 'Стендинг · Эвкалипт', 'date' => '10.06'],
+            ['client' => 'ИП Флора', 'packs' => 12, 'sum' => '22 400 ₽', 'status' => 'Резерв', 'supply' => 'Эквадор · Freedom', 'date' => '13.06'],
+            ['client' => 'ООО «Букет»', 'packs' => 20, 'sum' => '38 500 ₽', 'status' => 'В работе', 'supply' => 'Стендинг · Эвкалипт', 'date' => '15.06'],
         ];
     }
 
