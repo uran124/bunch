@@ -121,12 +121,12 @@ class AdminController extends Controller
     {
         $pageMeta = [
             'title' => 'Пользователи — админ-панель Bunch',
-            'description' => 'Список клиентов, поиск по телефону и активности заказов.',
+            'description' => 'Список клиентов и быстрая проверка активности.',
             'h1' => 'Пользователи',
             'headerTitle' => 'Bunch Admin',
-            'headerSubtitle' => 'Контакты и группы для рассылок',
+            'headerSubtitle' => 'Контакты и статусы',
             'footerLeft' => 'Управление пользователями Bunch',
-            'footerRight' => 'Фильтрация по дате последних заказов',
+            'footerRight' => 'Изменение активности без перезагрузки',
         ];
 
         $userModel = new User();
@@ -136,6 +136,34 @@ class AdminController extends Controller
             'pageMeta' => $pageMeta,
             'users' => $users,
         ]);
+    }
+
+    public function toggleUserActive(): void
+    {
+        header('Content-Type: application/json');
+
+        $payload = json_decode(file_get_contents('php://input'), true);
+        $userId = isset($payload['userId']) ? (int) $payload['userId'] : 0;
+        $active = isset($payload['active']) ? (bool) $payload['active'] : null;
+
+        if ($userId <= 0 || $active === null) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'Некорректные данные']);
+            return;
+        }
+
+        $userModel = new User();
+        $user = $userModel->findById($userId);
+
+        if (!$user) {
+            http_response_code(404);
+            echo json_encode(['success' => false, 'message' => 'Пользователь не найден']);
+            return;
+        }
+
+        $userModel->setActive($userId, $active);
+
+        echo json_encode(['success' => true]);
     }
 
     public function user(): void
@@ -194,12 +222,15 @@ class AdminController extends Controller
 
     public function groupCreate(): void
     {
+        $groupModel = new BroadcastGroup();
+        $groupModel->ensureSystemGroup();
+
         $pageMeta = [
             'title' => 'Создать группу рассылки — админ-панель Bunch',
-            'description' => 'Соберите активных клиентов в группу для рассылки через телеграм-бота.',
-            'h1' => 'Создать группу',
+            'description' => 'Соберите активных клиентов в группу для рассылки.',
+            'h1' => 'Группы для рассылки',
             'headerTitle' => 'Bunch Admin',
-            'headerSubtitle' => 'Группы для рассылок',
+            'headerSubtitle' => 'Управление группами',
             'footerLeft' => 'Рассылки идут через телеграм-бота',
             'footerRight' => 'Выберите клиентов и сохраните группу',
         ];
@@ -209,15 +240,59 @@ class AdminController extends Controller
             return $user['active'] === true;
         });
 
+        $selectedGroupId = isset($_GET['group']) ? (int) $_GET['group'] : null;
+
         $this->render('admin-group-create', [
             'pageMeta' => $pageMeta,
-            'groups' => $this->getGroupFixtures(),
+            'groups' => $groupModel->editableWithCounts(),
             'users' => array_values($users),
+            'memberships' => $groupModel->membershipMap(),
+            'selectedGroupId' => $selectedGroupId,
+            'message' => $_GET['message'] ?? null,
         ]);
+    }
+
+    public function saveGroup(): void
+    {
+        $groupModel = new BroadcastGroup();
+        $groupModel->ensureSystemGroup();
+
+        $groupId = isset($_POST['group_id']) && $_POST['group_id'] !== '' ? (int) $_POST['group_id'] : null;
+        $name = trim($_POST['name'] ?? '');
+        $description = trim($_POST['description'] ?? '');
+        $userIds = array_map('intval', $_POST['users'] ?? []);
+
+        if ($groupId !== null) {
+            $existing = $groupModel->find($groupId);
+
+            if (!$existing || $existing['is_system']) {
+                header('Location: /?page=admin-group-create&message=not-found');
+                return;
+            }
+
+            $finalName = $name !== '' ? $name : 'Группа ' . $groupId;
+            $groupModel->update($groupId, $finalName, $description);
+            $groupModel->syncMembers($groupId, $userIds);
+            $targetId = $groupId;
+        } else {
+            $initialName = $name !== '' ? $name : 'Группа';
+            $newGroupId = $groupModel->create($initialName, $description, false);
+            $finalName = $name !== '' ? $name : 'Группа ' . $newGroupId;
+            if ($finalName !== $initialName) {
+                $groupModel->update($newGroupId, $finalName, $description);
+            }
+            $groupModel->syncMembers($newGroupId, $userIds);
+            $targetId = $newGroupId;
+        }
+
+        header('Location: /?page=admin-group-create&group=' . $targetId . '&message=saved');
     }
 
     public function broadcasts(): void
     {
+        $groupModel = new BroadcastGroup();
+        $groupModel->ensureSystemGroup();
+
         $pageMeta = [
             'title' => 'Рассылки — админ-панель Bunch',
             'description' => 'Создавайте сообщения, выбирайте группы и планируйте отправку.',
@@ -228,22 +303,53 @@ class AdminController extends Controller
             'footerRight' => 'Планирование по местному времени',
         ];
 
-        $groups = $this->getGroupFixtures();
-        $messages = $this->getBroadcastMessages();
+        $groups = $groupModel->allWithCounts();
 
         $perPage = 20;
         $currentPage = max(1, (int) ($_GET['p'] ?? 1));
-        $totalPages = max(1, (int) ceil(count($messages) / $perPage));
-        $currentPage = min($currentPage, $totalPages);
-        $messagesPage = array_slice($messages, ($currentPage - 1) * $perPage, $perPage);
+
+        $broadcastModel = new BroadcastMessage();
+        $pagination = $broadcastModel->paginate($currentPage, $perPage);
 
         $this->render('admin-broadcast', [
             'pageMeta' => $pageMeta,
             'groups' => $groups,
-            'messages' => $messagesPage,
-            'totalPages' => $totalPages,
-            'currentPage' => $currentPage,
+            'messages' => $pagination['messages'],
+            'totalPages' => $pagination['totalPages'],
+            'currentPage' => $pagination['currentPage'],
+            'message' => $_GET['message'] ?? null,
         ]);
+    }
+
+    public function createBroadcast(): void
+    {
+        $groupModel = new BroadcastGroup();
+        $systemGroup = $groupModel->ensureSystemGroup();
+
+        $body = trim($_POST['body'] ?? '');
+        $groupIds = array_map('intval', $_POST['groups'] ?? []);
+        if (empty($groupIds)) {
+            $groupIds = [$systemGroup['id']];
+        }
+
+        $date = trim($_POST['send_date'] ?? '');
+        $time = trim($_POST['send_time'] ?? '');
+
+        $sendAt = null;
+        if ($date !== '') {
+            $sendAtString = $date . ' ' . ($time !== '' ? $time : '00:00:00');
+            $sendAt = new DateTimeImmutable($sendAtString);
+        }
+
+        if ($body === '') {
+            header('Location: /?page=admin-broadcast&message=body-required');
+            return;
+        }
+
+        $broadcastModel = new BroadcastMessage();
+        $broadcastModel->create($body, $sendAt, $groupIds);
+
+        header('Location: /?page=admin-broadcast&message=created');
     }
 
     public function catalogProducts(): void

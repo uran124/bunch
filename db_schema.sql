@@ -24,6 +24,10 @@ DROP TABLE IF EXISTS carts;
 DROP TABLE IF EXISTS user_addresses;
 DROP TABLE IF EXISTS promos;
 DROP TABLE IF EXISTS products;
+DROP TABLE IF EXISTS broadcast_message_groups;
+DROP TABLE IF EXISTS broadcast_messages;
+DROP TABLE IF EXISTS broadcast_group_users;
+DROP TABLE IF EXISTS broadcast_groups;
 DROP TABLE IF EXISTS users;
 
 -- =========================
@@ -173,7 +177,85 @@ CREATE TABLE promos (
   COLLATE=utf8mb4_unicode_ci;
 
 -- =========================
--- 5. Таблицы корзины (опционально)
+-- 5. Таблицы групп рассылки
+-- =========================
+
+CREATE TABLE broadcast_groups (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+
+  name VARCHAR(150) NOT NULL,
+  description TEXT NULL,
+  is_system TINYINT(1) NOT NULL DEFAULT 0,
+
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    ON UPDATE CURRENT_TIMESTAMP,
+
+  UNIQUE KEY uk_broadcast_groups_name (name)
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE broadcast_group_users (
+  group_id INT UNSIGNED NOT NULL,
+  user_id INT UNSIGNED NOT NULL,
+  added_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+  CONSTRAINT fk_broadcast_group_users_group
+    FOREIGN KEY (group_id) REFERENCES broadcast_groups(id)
+    ON DELETE CASCADE,
+
+  CONSTRAINT fk_broadcast_group_users_user
+    FOREIGN KEY (user_id) REFERENCES users(id)
+    ON DELETE CASCADE,
+
+  PRIMARY KEY (group_id, user_id)
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE broadcast_messages (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+
+  body TEXT NOT NULL,
+  send_at DATETIME NULL,
+  status ENUM('scheduled', 'sent') NOT NULL DEFAULT 'scheduled',
+
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE broadcast_message_groups (
+  broadcast_id INT UNSIGNED NOT NULL,
+  group_id INT UNSIGNED NOT NULL,
+
+  CONSTRAINT fk_broadcast_message_groups_broadcast
+    FOREIGN KEY (broadcast_id) REFERENCES broadcast_messages(id)
+    ON DELETE CASCADE,
+
+  CONSTRAINT fk_broadcast_message_groups_group
+    FOREIGN KEY (group_id) REFERENCES broadcast_groups(id)
+    ON DELETE CASCADE,
+
+  PRIMARY KEY (broadcast_id, group_id)
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_unicode_ci;
+
+INSERT INTO broadcast_groups (id, name, description, is_system, created_at, updated_at)
+VALUES (1, 'Всем', 'Все активные пользователи', 1, NOW(), NOW())
+ON DUPLICATE KEY UPDATE
+  name = VALUES(name),
+  description = VALUES(description),
+  is_system = VALUES(is_system);
+
+ALTER TABLE broadcast_groups AUTO_INCREMENT = 2;
+
+-- =========================
+-- 6. Таблицы корзины (опционально)
 -- =========================
 
 CREATE TABLE carts (
@@ -217,7 +299,7 @@ CREATE TABLE cart_items (
   COLLATE=utf8mb4_unicode_ci;
 
 -- =========================
--- 6. Таблицы заказов
+-- 7. Таблицы заказов
 -- =========================
 
 CREATE TABLE orders (
@@ -273,7 +355,7 @@ CREATE TABLE order_items (
   COLLATE=utf8mb4_unicode_ci;
 
 -- =========================
--- 7. Таблица подписок
+-- 8. Таблица подписок
 -- =========================
 
 CREATE TABLE subscriptions (
@@ -310,7 +392,7 @@ CREATE TABLE subscriptions (
   COLLATE=utf8mb4_unicode_ci;
 
 -- =========================
--- 8. Настройки уведомлений и типы рассылок
+-- 9. Настройки уведомлений и типы рассылок
 -- =========================
 
 CREATE TABLE notification_types (
@@ -362,7 +444,7 @@ CREATE TABLE user_notification_settings (
   COLLATE=utf8mb4_unicode_ci;
 
 -- =========================
--- 9. Логи работы с PIN в Telegram (опционально)
+-- 10. Логи работы с PIN в Telegram (опционально)
 -- =========================
 
 CREATE TABLE telegram_pin_logs (

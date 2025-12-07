@@ -166,7 +166,81 @@ CREATE TABLE promos (
 
 ---
 
-## 6. Таблицы корзины (если храним в БД)
+## 6. Таблицы групп и рассылок
+
+Группы пользователей для выбора получателей и истории рассылок.
+
+```sql
+CREATE TABLE broadcast_groups (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+
+  name VARCHAR(150) NOT NULL,
+  description TEXT NULL,
+  is_system TINYINT(1) NOT NULL DEFAULT 0,
+
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    ON UPDATE CURRENT_TIMESTAMP,
+
+  UNIQUE KEY uk_broadcast_groups_name (name)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE broadcast_group_users (
+  group_id INT UNSIGNED NOT NULL,
+  user_id INT UNSIGNED NOT NULL,
+  added_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+  CONSTRAINT fk_broadcast_group_users_group
+    FOREIGN KEY (group_id) REFERENCES broadcast_groups(id)
+    ON DELETE CASCADE,
+
+  CONSTRAINT fk_broadcast_group_users_user
+    FOREIGN KEY (user_id) REFERENCES users(id)
+    ON DELETE CASCADE,
+
+  PRIMARY KEY (group_id, user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE broadcast_messages (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+
+  body TEXT NOT NULL,
+  send_at DATETIME NULL,
+  status ENUM('scheduled', 'sent') NOT NULL DEFAULT 'scheduled',
+
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE broadcast_message_groups (
+  broadcast_id INT UNSIGNED NOT NULL,
+  group_id INT UNSIGNED NOT NULL,
+
+  CONSTRAINT fk_broadcast_message_groups_broadcast
+    FOREIGN KEY (broadcast_id) REFERENCES broadcast_messages(id)
+    ON DELETE CASCADE,
+
+  CONSTRAINT fk_broadcast_message_groups_group
+    FOREIGN KEY (group_id) REFERENCES broadcast_groups(id)
+    ON DELETE CASCADE,
+
+  PRIMARY KEY (broadcast_id, group_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT INTO broadcast_groups (id, name, description, is_system, created_at, updated_at)
+VALUES (1, 'Всем', 'Все активные пользователи', 1, NOW(), NOW())
+ON DUPLICATE KEY UPDATE
+  name = VALUES(name),
+  description = VALUES(description),
+  is_system = VALUES(is_system);
+
+ALTER TABLE broadcast_groups AUTO_INCREMENT = 2;
+```
+
+---
+
+## 7. Таблицы корзины (если храним в БД)
 
 Для начала можно хранить корзину в сессии.  
 Если нужна сохранённая корзина (например, между устройствами) — можно использовать таблицы ниже.
@@ -211,7 +285,7 @@ CREATE TABLE cart_items (
 
 ---
 
-## 7. Таблицы заказов
+## 8. Таблицы заказов
 
 Заказ = слепок корзины + выбранный адрес/получатель на момент оформления.
 
@@ -270,7 +344,7 @@ CREATE TABLE order_items (
 
 ---
 
-## 8. Таблица подписок `subscriptions`
+## 9. Таблица подписок `subscriptions`
 
 Подписка на регулярную доставку букетов.
 
@@ -314,7 +388,7 @@ CREATE TABLE subscriptions (
 
 ---
 
-## 9. Таблица для связки с Telegram (опционально)
+## 10. Таблица для связки с Telegram (опционально)
 
 Если нужно хранить логи выдачи PIN, можно завести отдельную таблицу:
 
@@ -336,7 +410,7 @@ CREATE TABLE telegram_pin_logs (
 
 ---
 
-## 10. Индексы и производительность (минимальный набор)
+## 11. Индексы и производительность (минимальный набор)
 
 - `users.phone` — UNIQUE.
 - `user_addresses.user_id` + `is_primary`.
@@ -347,7 +421,7 @@ CREATE TABLE telegram_pin_logs (
 
 ---
 
-## 11. Инициализация и сиды
+## 12. Инициализация и сиды
 
 Для быстрого запуска проекта полезно иметь:
 

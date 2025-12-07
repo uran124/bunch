@@ -1,16 +1,15 @@
 <?php /** @var array $users */ ?>
+<?php /** @var array $groups */ ?>
+<?php /** @var array $memberships */ ?>
 <?php $pageMeta = $pageMeta ?? []; ?>
+<?php $selectedGroupId = $selectedGroupId ?? null; ?>
 
 <section class="flex flex-col gap-6">
     <header class="flex flex-wrap items-start justify-between gap-4">
         <div class="space-y-2">
             <p class="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">Рассылки</p>
-            <h1 class="text-3xl font-semibold text-slate-900"><?php echo htmlspecialchars($pageMeta['h1'] ?? 'Создать группу', ENT_QUOTES, 'UTF-8'); ?></h1>
-            <p class="max-w-2xl text-base text-slate-500">Соберите активных пользователей в группу и отправляйте рассылки через телеграм-бота.</p>
-            <div class="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-sm font-semibold text-emerald-700 ring-1 ring-emerald-200">
-                <span class="material-symbols-rounded text-base">bolt</span>
-                Уведомления уходят моментально
-            </div>
+            <h1 class="text-3xl font-semibold text-slate-900"><?php echo htmlspecialchars($pageMeta['h1'] ?? 'Группы для рассылки', ENT_QUOTES, 'UTF-8'); ?></h1>
+            <p class="text-sm text-slate-500">Выберите группу или соберите новую и сохраните список участников.</p>
         </div>
         <div class="flex flex-wrap items-center gap-3">
             <a
@@ -30,157 +29,158 @@
         </div>
     </header>
 
-    <div class="grid gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-rose-50/60 ring-1 ring-transparent">
-        <div class="space-y-3">
-            <p class="text-sm font-semibold text-slate-700">Сохраненные группы</p>
-            <div class="grid gap-3 lg:grid-cols-2">
-                <?php foreach ($groups as $group): ?>
-                    <article class="rounded-xl border border-slate-100 bg-slate-50 p-4">
-                        <div class="flex items-start justify-between gap-3">
-                            <div class="space-y-1">
-                                <h2 class="text-base font-semibold text-slate-900"><?php echo htmlspecialchars($group['name'], ENT_QUOTES, 'UTF-8'); ?></h2>
-                                <p class="text-sm text-slate-600"><?php echo htmlspecialchars($group['description'], ENT_QUOTES, 'UTF-8'); ?></p>
-                                <div class="flex flex-wrap gap-2 text-xs text-slate-600">
-                                    <span class="inline-flex items-center gap-1 rounded-full bg-white px-3 py-1 font-semibold ring-1 ring-slate-200">
-                                        <span class="material-symbols-rounded text-base text-emerald-500">diversity_3</span>
-                                        <?php echo (int) $group['members']; ?> участников
-                                    </span>
-                                    <?php foreach ($group['channels'] as $channel): ?>
-                                        <span class="inline-flex items-center gap-1 rounded-full bg-white px-3 py-1 font-semibold ring-1 ring-slate-200">
-                                            <span class="material-symbols-rounded text-base text-rose-500">wifi</span>
-                                            <?php echo htmlspecialchars($channel, ENT_QUOTES, 'UTF-8'); ?>
-                                        </span>
-                                    <?php endforeach; ?>
-                                </div>
-                            </div>
-                            <button class="inline-flex items-center gap-2 rounded-lg bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm ring-1 ring-slate-200">
-                                <span class="material-symbols-rounded text-base">edit</span>
-                                Редактировать
-                            </button>
-                        </div>
-                    </article>
-                <?php endforeach; ?>
-            </div>
+    <?php if (!empty($message) && $message === 'saved'): ?>
+        <div class="rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 shadow-sm">
+            Группа сохранена.
         </div>
+    <?php elseif (!empty($message) && $message === 'not-found'): ?>
+        <div class="rounded-xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm text-rose-800 shadow-sm">
+            Не удалось найти выбранную группу.
+        </div>
+    <?php endif; ?>
 
-        <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+    <form method="post" action="/?page=admin-group-create" class="grid gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-rose-50/60 ring-1 ring-transparent">
+        <input type="hidden" name="group_id" id="group-id" value="<?php echo $selectedGroupId ? (int) $selectedGroupId : ''; ?>">
+
+        <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             <label class="flex flex-col gap-2">
                 <span class="text-sm font-semibold text-slate-700">Название группы</span>
                 <input
+                    id="group-name"
+                    name="name"
                     type="text"
-                    value="VIP клиенты / TG"
-                    class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-sm focus:border-rose-300 focus:outline-none focus:ring-2 focus:ring-rose-200"
-                >
-                <span class="text-xs text-slate-500">Можно менять в любой момент.</span>
-            </label>
-            <label class="flex flex-col gap-2">
-                <span class="text-sm font-semibold text-slate-700">Дата последнего заказа с</span>
-                <input
-                    id="group-date-from"
-                    type="date"
+                    value=""
+                    placeholder="Например, VIP клиенты"
                     class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-sm focus:border-rose-300 focus:outline-none focus:ring-2 focus:ring-rose-200"
                 >
             </label>
-            <label class="flex flex-col gap-2">
-                <span class="text-sm font-semibold text-slate-700">Дата последнего заказа до</span>
-                <input
-                    id="group-date-to"
-                    type="date"
+            <label class="flex flex-col gap-2 sm:col-span-2 lg:col-span-2">
+                <span class="text-sm font-semibold text-slate-700">Описание</span>
+                <textarea
+                    id="group-description"
+                    name="description"
+                    rows="2"
+                    placeholder="Коротко о том, кому отправляем сообщения"
                     class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-sm focus:border-rose-300 focus:outline-none focus:ring-2 focus:ring-rose-200"
-                >
-            </label>
-            <label class="flex flex-col gap-2">
-                <span class="text-sm font-semibold text-slate-700">Телефон</span>
-                <input
-                    id="group-phone-filter"
-                    type="search"
-                    placeholder="Например, 900 или 55"
-                    class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-sm focus:border-rose-300 focus:outline-none focus:ring-2 focus:ring-rose-200"
-                >
-                <span class="text-xs text-slate-500">Фильтр сокращает список мгновенно.</span>
+                ></textarea>
             </label>
         </div>
 
-        <div class="flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-600">
-            <div class="flex items-center gap-2">
-                <span class="material-symbols-rounded text-base text-rose-500">smart_toy</span>
-                Рассылки отправляются через телеграм-бота. Добавляйте только активных пользователей.
+        <div class="grid gap-3 lg:grid-cols-[1fr_2fr]">
+            <div class="space-y-3">
+                <div class="flex items-center justify-between">
+                    <p class="text-sm font-semibold text-slate-700">Группы</p>
+                    <button type="button" id="reset-selection" class="text-xs font-semibold text-rose-600 hover:text-rose-700">Создать новую</button>
+                </div>
+                <div class="grid gap-3 lg:grid-cols-1">
+                    <?php foreach ($groups as $group): ?>
+                        <article
+                            class="cursor-pointer rounded-xl border border-slate-100 bg-slate-50 p-4 transition hover:-translate-y-0.5 hover:shadow-sm"
+                            data-group-id="<?php echo (int) $group['id']; ?>"
+                        >
+                            <div class="flex items-center justify-between gap-3">
+                                <h2 class="text-base font-semibold text-slate-900"><?php echo htmlspecialchars($group['name'], ENT_QUOTES, 'UTF-8'); ?></h2>
+                                <span class="text-sm font-semibold text-slate-600"><?php echo (int) $group['members']; ?> уч.</span>
+                            </div>
+                            <p class="mt-1 text-sm text-slate-600"><?php echo htmlspecialchars($group['description'] ?? '', ENT_QUOTES, 'UTF-8'); ?></p>
+                        </article>
+                    <?php endforeach; ?>
+                </div>
             </div>
-            <button class="inline-flex items-center gap-2 rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-rose-200 transition hover:-translate-y-0.5 hover:shadow-xl">
-                <span class="material-symbols-rounded text-base">save</span>
-                Сохранить группу
-            </button>
-        </div>
 
-        <div id="group-user-list" class="divide-y divide-slate-100">
-            <?php foreach ($users as $user): ?>
-                <article
-                    class="grid gap-3 py-4 sm:grid-cols-[1.4fr_1fr_auto] sm:items-center"
-                    data-phone="<?php echo htmlspecialchars(preg_replace('/\D+/', '', $user['phone']), ENT_QUOTES, 'UTF-8'); ?>"
-                    data-last-order="<?php echo htmlspecialchars($user['lastOrder'], ENT_QUOTES, 'UTF-8'); ?>"
-                >
-                    <div class="space-y-1">
-                        <div class="text-base font-semibold text-slate-900"><?php echo htmlspecialchars($user['name'], ENT_QUOTES, 'UTF-8'); ?></div>
-                        <div class="text-sm text-slate-500">Телефон: <?php echo htmlspecialchars($user['phone'], ENT_QUOTES, 'UTF-8'); ?></div>
-                        <div class="text-xs text-slate-400">Последний заказ: <?php echo htmlspecialchars($user['lastOrderText'], ENT_QUOTES, 'UTF-8'); ?></div>
-                    </div>
-                    <div class="flex items-center gap-3">
-                        <span class="inline-flex items-center gap-2 rounded-full bg-slate-50 px-3 py-1 text-sm font-semibold text-slate-700 ring-1 ring-slate-200">
-                            <span class="material-symbols-rounded text-base text-emerald-500">event_available</span>
-                            Доставок: <?php echo (int) $user['deliveries']; ?>
-                        </span>
-                        <?php if ($user['active']): ?>
-                            <span class="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-sm font-semibold text-emerald-700 ring-1 ring-emerald-200">
-                                <span class="material-symbols-rounded text-base">verified</span>
-                                Активен
-                            </span>
-                        <?php else: ?>
-                            <span class="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-sm font-semibold text-slate-700 ring-1 ring-slate-200">
-                                <span class="material-symbols-rounded text-base">schedule</span>
-                                Не активен
-                            </span>
-                        <?php endif; ?>
-                    </div>
-                    <label class="relative inline-flex h-10 w-24 cursor-pointer items-center gap-2 rounded-lg bg-slate-50 px-2 ring-1 ring-slate-200">
-                        <input type="checkbox" class="peer sr-only" <?php echo $user['active'] ? 'checked' : ''; ?>>
-                        <span class="text-xs font-semibold text-slate-600">Добавить</span>
-                        <span class="ml-auto inline-flex h-8 w-14 items-center rounded-full bg-slate-200">
-                            <span class="ml-1 h-7 w-7 rounded-full bg-white shadow-sm transition peer-checked:translate-x-6 peer-checked:shadow-md"></span>
-                        </span>
-                    </label>
-                </article>
-            <?php endforeach; ?>
+            <div class="space-y-3">
+                <div class="flex items-center justify-between">
+                    <p class="text-sm font-semibold text-slate-700">Пользователи</p>
+                    <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-rose-200 transition hover:-translate-y-0.5 hover:shadow-xl">
+                        <span class="material-symbols-rounded text-base">save</span>
+                        Сохранить группу
+                    </button>
+                </div>
+                <div id="group-user-list" class="divide-y divide-slate-100 rounded-xl border border-slate-100 bg-slate-50">
+                    <?php foreach ($users as $user): ?>
+                        <article class="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
+                            <div class="space-y-1">
+                                <div class="text-base font-semibold text-slate-900"><?php echo htmlspecialchars($user['name'], ENT_QUOTES, 'UTF-8'); ?></div>
+                                <div class="text-sm text-slate-500"><?php echo htmlspecialchars($user['phone'], ENT_QUOTES, 'UTF-8'); ?></div>
+                            </div>
+                            <label class="relative inline-flex h-9 w-20 cursor-pointer items-center rounded-lg bg-white px-2 shadow-sm ring-1 ring-slate-200">
+                                <input
+                                    type="checkbox"
+                                    class="peer sr-only group-user-toggle"
+                                    name="users[]"
+                                    value="<?php echo (int) $user['id']; ?>"
+                                    data-user-id="<?php echo (int) $user['id']; ?>"
+                                >
+                                <span class="text-xs font-semibold text-slate-600">В группе</span>
+                                <span class="ml-auto inline-flex h-7 w-7 items-center justify-center rounded-full bg-slate-200 transition peer-checked:bg-emerald-500">
+                                    <span class="h-4 w-4 rounded-full bg-white shadow-sm transition peer-checked:translate-x-0.5"></span>
+                                </span>
+                            </label>
+                        </article>
+                    <?php endforeach; ?>
+                </div>
+            </div>
         </div>
-    </div>
+    </form>
 </section>
 
+<div
+    id="group-meta"
+    data-membership='<?php echo json_encode($memberships ?? [], JSON_HEX_APOS | JSON_UNESCAPED_UNICODE); ?>'
+    data-groups='<?php echo json_encode($groups ?? [], JSON_HEX_APOS | JSON_UNESCAPED_UNICODE); ?>'
+    data-selected-id="<?php echo $selectedGroupId ? (int) $selectedGroupId : ''; ?>"
+></div>
+
 <script>
-    const groupPhoneInput = document.getElementById('group-phone-filter');
-    const groupDateFromInput = document.getElementById('group-date-from');
-    const groupDateToInput = document.getElementById('group-date-to');
-    const groupUserList = document.getElementById('group-user-list');
+    const metaNode = document.getElementById('group-meta');
+    const membership = metaNode.dataset.membership ? JSON.parse(metaNode.dataset.membership) : {};
+    const groups = metaNode.dataset.groups ? JSON.parse(metaNode.dataset.groups) : [];
+    const groupsMap = groups.reduce((acc, group) => {
+        acc[group.id] = group;
+        return acc;
+    }, {});
 
-    function filterGroupUsers() {
-        const phoneDigits = (groupPhoneInput.value || '').replace(/\D+/g, '');
-        const dateFrom = groupDateFromInput.value ? new Date(groupDateFromInput.value) : null;
-        const dateTo = groupDateToInput.value ? new Date(groupDateToInput.value) : null;
+    const groupIdInput = document.getElementById('group-id');
+    const groupNameInput = document.getElementById('group-name');
+    const groupDescriptionInput = document.getElementById('group-description');
+    const groupCards = document.querySelectorAll('[data-group-id]');
+    const userToggles = document.querySelectorAll('.group-user-toggle');
+    const resetButton = document.getElementById('reset-selection');
 
-        groupUserList.querySelectorAll('article').forEach((card) => {
-            const userPhone = card.dataset.phone || '';
-            const lastOrderRaw = card.dataset.lastOrder || '';
-            const lastOrder = lastOrderRaw ? new Date(lastOrderRaw) : null;
-            const hasValidDate = lastOrder && !Number.isNaN(lastOrder.getTime());
+    function applySelection(groupId) {
+        groupIdInput.value = groupId || '';
 
-            const phoneMatches = phoneDigits === '' || userPhone.includes(phoneDigits);
-            const afterFrom = !dateFrom || !hasValidDate || lastOrder >= dateFrom;
-            const beforeTo = !dateTo || !hasValidDate || lastOrder <= dateTo;
+        groupCards.forEach((card) => {
+            const isActive = Number(card.dataset.groupId) === groupId;
+            card.classList.toggle('ring-2', isActive);
+            card.classList.toggle('ring-rose-200', isActive);
+            card.classList.toggle('bg-white', isActive);
+        });
 
-            card.style.display = phoneMatches && afterFrom && beforeTo ? '' : 'none';
+        const group = groupsMap[groupId] || null;
+        groupNameInput.value = group ? group.name : '';
+        groupDescriptionInput.value = group ? (group.description || '') : '';
+
+        const members = group ? (membership[groupId] || []) : [];
+        userToggles.forEach((toggle) => {
+            const userId = Number(toggle.dataset.userId);
+            toggle.checked = group ? members.includes(userId) : false;
         });
     }
 
-    [groupPhoneInput, groupDateFromInput, groupDateToInput].forEach((input) => {
-        input.addEventListener('input', filterGroupUsers);
-        input.addEventListener('change', filterGroupUsers);
+    groupCards.forEach((card) => {
+        card.addEventListener('click', () => {
+            applySelection(Number(card.dataset.groupId));
+        });
     });
+
+    resetButton.addEventListener('click', () => {
+        applySelection(null);
+        groupNameInput.focus();
+    });
+
+    const initialGroupId = metaNode.dataset.selectedId ? Number(metaNode.dataset.selectedId) : null;
+    if (initialGroupId) {
+        applySelection(initialGroupId);
+    }
 </script>

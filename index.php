@@ -52,5 +52,8 @@ $router->get('admin-content-sections', [AdminController::class, 'contentSections
 $router->post('login', [AuthController::class, 'login']);
 $router->post('register', [AuthController::class, 'register']);
 $router->post('recover', [AuthController::class, 'recover']);
+$router->post('admin-users-toggle', [AdminController::class, 'toggleUserActive']);
+$router->post('admin-group-create', [AdminController::class, 'saveGroup']);
+$router->post('admin-broadcast', [AdminController::class, 'createBroadcast']);
 
 $router->dispatch($page, $_SERVER['REQUEST_METHOD']);
