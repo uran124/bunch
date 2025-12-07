@@ -82,9 +82,21 @@ class AdminController extends Controller
             [
                 'title' => 'Контент',
                 'items' => [
-                    ['label' => 'Статичный контент', 'description' => 'Блоки страниц и SEO-тексты'],
-                    ['label' => 'Товары', 'description' => 'Фото, описания и атрибуты'],
-                    ['label' => 'Разделы сайта', 'description' => 'Навигация и лендинги'],
+                    [
+                        'label' => 'Статичный контент',
+                        'description' => 'Блоки страниц и SEO-тексты',
+                        'href' => '/?page=admin-content-static',
+                    ],
+                    [
+                        'label' => 'Товары',
+                        'description' => 'Фото, описания и атрибуты',
+                        'href' => '/?page=admin-content-products',
+                    ],
+                    [
+                        'label' => 'Разделы сайта',
+                        'description' => 'Навигация и лендинги',
+                        'href' => '/?page=admin-content-sections',
+                    ],
                 ],
             ],
         ];
@@ -365,6 +377,61 @@ class AdminController extends Controller
                 'reserved' => 62,
                 'pendingInvoices' => 5,
             ],
+        ]);
+    }
+
+    public function contentStatic(): void
+    {
+        $pageMeta = [
+            'title' => 'Статичный контент — админ-панель Bunch',
+            'description' => 'Блоки страниц, SEO-тексты и ответы на часто задаваемые вопросы.',
+            'h1' => 'Статичные страницы',
+            'headerTitle' => 'Bunch Admin',
+            'headerSubtitle' => 'Контент · Статичные страницы',
+        ];
+
+        $this->render('admin-content-static', [
+            'pageMeta' => $pageMeta,
+            'pages' => $this->getStaticContentPages(),
+            'faqs' => $this->getStaticFaqBlocks(),
+        ]);
+    }
+
+    public function contentProducts(): void
+    {
+        $pageMeta = [
+            'title' => 'Контент товаров — админ-панель Bunch',
+            'description' => 'Фото, описания и рекомендации для карточек товаров.',
+            'h1' => 'Контент для товаров',
+            'headerTitle' => 'Bunch Admin',
+            'headerSubtitle' => 'Контент · Товарные карточки',
+        ];
+
+        $this->render('admin-content-products', [
+            'pageMeta' => $pageMeta,
+            'products' => $this->getProductContentPages(),
+            'attachments' => [
+                'photoPresets' => 18,
+                'descriptionTemplates' => 9,
+                'attributes' => 12,
+            ],
+        ]);
+    }
+
+    public function contentSections(): void
+    {
+        $pageMeta = [
+            'title' => 'Разделы сайта — админ-панель Bunch',
+            'description' => 'Навигация, лендинги и ярлыки для мобильного приложения.',
+            'h1' => 'Разделы сайта',
+            'headerTitle' => 'Bunch Admin',
+            'headerSubtitle' => 'Контент · Структура сайта',
+        ];
+
+        $this->render('admin-content-sections', [
+            'pageMeta' => $pageMeta,
+            'sections' => $this->getSiteSections(),
+            'landingBlocks' => $this->getLandingPages(),
         ]);
     }
 
@@ -890,5 +957,129 @@ class AdminController extends Controller
             $order['customer_id'] = $userId;
             return $order;
         }, $templateOrders);
+    }
+
+    private function getStaticContentPages(): array
+    {
+        return [
+            [
+                'id' => 1,
+                'title' => 'Главная страница',
+                'slug' => '/',
+                'blocks' => 9,
+                'seo' => 'Тайтл и описание заполнены',
+                'updatedAt' => '2024-05-31 18:20',
+                'status' => 'Опубликовано',
+            ],
+            [
+                'id' => 2,
+                'title' => 'Доставка и оплата',
+                'slug' => '/delivery',
+                'blocks' => 6,
+                'seo' => 'Мета-теги готовы',
+                'updatedAt' => '2024-05-29 11:40',
+                'status' => 'Черновик',
+            ],
+            [
+                'id' => 3,
+                'title' => 'FAQ',
+                'slug' => '/faq',
+                'blocks' => 12,
+                'seo' => 'Добавить H1',
+                'updatedAt' => '2024-05-25 09:10',
+                'status' => 'Опубликовано',
+            ],
+            [
+                'id' => 4,
+                'title' => 'О сервисе',
+                'slug' => '/about',
+                'blocks' => 8,
+                'seo' => 'Заполнить alt у фото',
+                'updatedAt' => '2024-05-22 15:05',
+                'status' => 'Опубликовано',
+            ],
+        ];
+    }
+
+    private function getStaticFaqBlocks(): array
+    {
+        return [
+            ['question' => 'Как оформить доставку в день заказа?', 'status' => 'Опубликован', 'updatedAt' => '2024-05-30'],
+            ['question' => 'Какие способы оплаты доступны?', 'status' => 'Опубликован', 'updatedAt' => '2024-05-28'],
+            ['question' => 'Как работает подписка на цветы?', 'status' => 'Черновик', 'updatedAt' => '2024-05-26'],
+            ['question' => 'Возвраты и отмены', 'status' => 'Опубликован', 'updatedAt' => '2024-05-20'],
+        ];
+    }
+
+    private function getProductContentPages(): array
+    {
+        return [
+            [
+                'id' => 101,
+                'name' => 'Freedom · Роза Эквадор',
+                'photos' => 6,
+                'seo' => 'Тайтл, H1 и описание заполнены',
+                'updatedAt' => '2024-05-31',
+                'owner' => 'Екатерина',
+            ],
+            [
+                'id' => 102,
+                'name' => 'Пион Королева Ночь',
+                'photos' => 4,
+                'seo' => 'Нужен alt у фото',
+                'updatedAt' => '2024-05-29',
+                'owner' => 'Мария',
+            ],
+            [
+                'id' => 103,
+                'name' => 'Эвкалипт николи',
+                'photos' => 5,
+                'seo' => 'Добавить блок «композиции»',
+                'updatedAt' => '2024-05-27',
+                'owner' => 'Сергей',
+            ],
+            [
+                'id' => 104,
+                'name' => 'Коробки с цветами',
+                'photos' => 8,
+                'seo' => 'Заполнен сниппет для рекламы',
+                'updatedAt' => '2024-05-25',
+                'owner' => 'Илья',
+            ],
+        ];
+    }
+
+    private function getSiteSections(): array
+    {
+        return [
+            [
+                'title' => 'Главная навигация',
+                'items' => ['Каталог', 'Подписка', 'Акции', 'Мелкий опт'],
+                'status' => 'Активно',
+                'updatedAt' => '2024-06-01 10:00',
+            ],
+            [
+                'title' => 'Футер',
+                'items' => ['О сервисе', 'FAQ', 'Доставка', 'Контакты'],
+                'status' => 'Активно',
+                'updatedAt' => '2024-05-29 14:20',
+            ],
+            [
+                'title' => 'Быстрые ссылки в приложении',
+                'items' => ['Повторить заказ', 'Рекомендации', 'Подарочные карты'],
+                'status' => 'Скрыто',
+                'updatedAt' => '2024-05-27 09:15',
+            ],
+        ];
+    }
+
+    private function getLandingPages(): array
+    {
+        return [
+            ['title' => 'Свадебные букеты', 'slug' => '/wedding', 'traffic' => '12% конверсии', 'status' => 'Опубликован'],
+            ['title' => 'Цветы к корпоративу', 'slug' => '/corporate', 'traffic' => '8% конверсии', 'status' => 'Опубликован'],
+            ['title' => 'Подарочные сертификаты', 'slug' => '/gift-cards', 'traffic' => 'Тестируется', 'status' => 'Черновик'],
+            ['title' => 'Еженедельные подборки', 'slug' => '/weekly-picks', 'traffic' => '5% конверсии', 'status' => 'Опубликован'],
+        ];
     }
 }
