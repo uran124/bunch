@@ -112,6 +112,15 @@ SQL;
         }, $rows);
     }
 
+    public function setActive(int $userId, bool $isActive): void
+    {
+        $stmt = $this->db->prepare('UPDATE users SET is_active = :is_active, updated_at = NOW() WHERE id = :id');
+        $stmt->execute([
+            'id' => $userId,
+            'is_active' => $isActive ? 1 : 0,
+        ]);
+    }
+
     public function updateProfileAndPin(
         int $userId,
         string $name,

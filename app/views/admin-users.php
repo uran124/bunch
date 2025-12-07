@@ -6,7 +6,7 @@
         <div class="space-y-2">
             <p class="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">Пользователи</p>
             <h1 class="text-3xl font-semibold text-slate-900"><?php echo htmlspecialchars($pageMeta['h1'] ?? 'Пользователи', ENT_QUOTES, 'UTF-8'); ?></h1>
-            <p class="max-w-2xl text-base text-slate-500">Поиск по телефону в режиме реального времени и фильтр по дате последнего заказа.</p>
+            <p class="text-sm text-slate-500">Имя, телефон и быстрый переключатель активности.</p>
         </div>
         <div class="flex flex-wrap items-center gap-3">
             <a
@@ -15,13 +15,6 @@
             >
                 <span class="material-symbols-rounded text-base">send</span>
                 Рассылки
-            </a>
-            <a
-                href="/?page=admin-group-create"
-                class="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-rose-200 transition hover:-translate-y-0.5 hover:shadow-xl"
-            >
-                <span class="material-symbols-rounded text-base">group_add</span>
-                Создать группу
             </a>
             <a
                 href="/?page=admin"
@@ -33,74 +26,23 @@
         </div>
     </header>
 
-    <div class="grid gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-rose-50/60 ring-1 ring-transparent">
-        <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <label class="flex flex-col gap-2">
-                <span class="text-sm font-semibold text-slate-700">Телефон</span>
-                <input
-                    id="user-phone-filter"
-                    type="search"
-                    placeholder="Например, 900 или 55"
-                    class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-sm focus:border-rose-300 focus:outline-none focus:ring-2 focus:ring-rose-200"
-                >
-                <span class="text-xs text-slate-500">Список автоматически сокращается по совпадению цифр.</span>
-            </label>
-            <label class="flex flex-col gap-2">
-                <span class="text-sm font-semibold text-slate-700">Дата последнего заказа с</span>
-                <input
-                    id="user-date-from"
-                    type="date"
-                    class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-sm focus:border-rose-300 focus:outline-none focus:ring-2 focus:ring-rose-200"
-                >
-            </label>
-            <label class="flex flex-col gap-2">
-                <span class="text-sm font-semibold text-slate-700">Дата последнего заказа до</span>
-                <input
-                    id="user-date-to"
-                    type="date"
-                    class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-sm focus:border-rose-300 focus:outline-none focus:ring-2 focus:ring-rose-200"
-                >
-            </label>
-            <div class="flex items-end">
-                <div class="w-full rounded-xl border border-dashed border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-                    <span class="material-symbols-rounded mr-2 align-middle text-base">auto_awesome</span>
-                    Фильтры работают без перезагрузки страницы.
-                </div>
-            </div>
-        </div>
-
-        <div id="user-list" class="divide-y divide-slate-100">
+    <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div class="divide-y divide-slate-100">
             <?php foreach ($users as $user): ?>
-                <article
-                    class="grid gap-3 py-4 sm:grid-cols-[1.4fr_1fr_auto] sm:items-center"
-                    data-phone="<?php echo htmlspecialchars(preg_replace('/\D+/', '', $user['phone']), ENT_QUOTES, 'UTF-8'); ?>"
-                    data-last-order="<?php echo htmlspecialchars($user['lastOrder'], ENT_QUOTES, 'UTF-8'); ?>"
-                >
-                    <div class="space-y-1">
-                        <a
-                            href="/?page=admin-user&id=<?php echo (int) $user['id']; ?>"
-                            class="text-base font-semibold text-rose-700 hover:text-rose-800"
+                <article class="flex flex-wrap items-center justify-between gap-3 py-3" data-user-card="<?php echo (int) $user['id']; ?>">
+                    <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-4">
+                        <span class="text-base font-semibold text-slate-900"><?php echo htmlspecialchars($user['name'] ?? 'Без имени', ENT_QUOTES, 'UTF-8'); ?></span>
+                        <span class="text-sm text-slate-500"><?php echo htmlspecialchars($user['phone'], ENT_QUOTES, 'UTF-8'); ?></span>
+                    </div>
+                    <label class="relative inline-flex h-9 w-16 cursor-pointer items-center" aria-label="Активность пользователя">
+                        <input
+                            type="checkbox"
+                            class="peer sr-only user-active-toggle"
+                            data-user-id="<?php echo (int) $user['id']; ?>"
+                            <?php echo $user['active'] ? 'checked' : ''; ?>
                         >
-                            <?php echo htmlspecialchars($user['name'], ENT_QUOTES, 'UTF-8'); ?>
-                        </a>
-                        <div class="text-sm text-slate-500">Телефон: <?php echo htmlspecialchars($user['phone'], ENT_QUOTES, 'UTF-8'); ?></div>
-                        <div class="text-xs text-slate-400">Последний заказ: <?php echo htmlspecialchars($user['lastOrderText'], ENT_QUOTES, 'UTF-8'); ?></div>
-                    </div>
-                    <div class="flex items-center gap-3">
-                        <span class="inline-flex items-center gap-2 rounded-full bg-slate-50 px-3 py-1 text-sm font-semibold text-slate-700 ring-1 ring-slate-200">
-                            <span class="material-symbols-rounded text-base text-emerald-500">event_available</span>
-                            Доставок: <?php echo (int) $user['deliveries']; ?>
-                        </span>
-                        <span class="inline-flex items-center gap-2 rounded-full bg-rose-50 px-3 py-1 text-sm font-semibold text-rose-700 ring-1 ring-rose-200">
-                            <span class="material-symbols-rounded text-base">notifications_active</span>
-                            Рассылки: <?php echo htmlspecialchars($user['newsletter'], ENT_QUOTES, 'UTF-8'); ?>
-                        </span>
-                    </div>
-                    <label class="relative inline-flex h-10 w-16 cursor-pointer items-center">
-                        <input type="checkbox" class="peer sr-only" <?php echo $user['active'] ? 'checked' : ''; ?>>
                         <span class="absolute inset-0 rounded-full bg-slate-200 transition peer-checked:bg-emerald-500"></span>
-                        <span class="absolute left-1 top-1 h-8 w-8 rounded-full bg-white shadow-sm transition peer-checked:translate-x-6 peer-checked:shadow-md"></span>
-                        <span class="sr-only">Активность</span>
+                        <span class="absolute left-1 top-1 h-7 w-7 rounded-full bg-white shadow-sm transition peer-checked:translate-x-7 peer-checked:shadow-md"></span>
                     </label>
                 </article>
             <?php endforeach; ?>
@@ -109,32 +51,29 @@
 </section>
 
 <script>
-    const phoneInput = document.getElementById('user-phone-filter');
-    const dateFromInput = document.getElementById('user-date-from');
-    const dateToInput = document.getElementById('user-date-to');
-    const userList = document.getElementById('user-list');
+    document.querySelectorAll('.user-active-toggle').forEach((checkbox) => {
+        checkbox.addEventListener('change', async () => {
+            const userId = Number(checkbox.dataset.userId);
+            const isActive = checkbox.checked;
+            checkbox.disabled = true;
 
-    function filterUsers() {
-        const phoneDigits = (phoneInput.value || '').replace(/\D+/g, '');
-        const dateFrom = dateFromInput.value ? new Date(dateFromInput.value) : null;
-        const dateTo = dateToInput.value ? new Date(dateToInput.value) : null;
+            try {
+                const response = await fetch('/?page=admin-users-toggle', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ userId, active: isActive }),
+                });
 
-        userList.querySelectorAll('article').forEach((card) => {
-            const userPhone = card.dataset.phone || '';
-            const lastOrderRaw = card.dataset.lastOrder || '';
-            const lastOrder = lastOrderRaw ? new Date(lastOrderRaw) : null;
-            const hasValidDate = lastOrder && !Number.isNaN(lastOrder.getTime());
-
-            const phoneMatches = phoneDigits === '' || userPhone.includes(phoneDigits);
-            const afterFrom = !dateFrom || !hasValidDate || lastOrder >= dateFrom;
-            const beforeTo = !dateTo || !hasValidDate || lastOrder <= dateTo;
-
-            card.style.display = phoneMatches && afterFrom && beforeTo ? '' : 'none';
+                if (!response.ok) {
+                    checkbox.checked = !isActive;
+                }
+            } catch (error) {
+                checkbox.checked = !isActive;
+            } finally {
+                checkbox.disabled = false;
+            }
         });
-    }
-
-    [phoneInput, dateFromInput, dateToInput].forEach((input) => {
-        input.addEventListener('input', filterUsers);
-        input.addEventListener('change', filterUsers);
     });
 </script>
