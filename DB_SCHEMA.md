@@ -410,7 +410,65 @@ CREATE TABLE telegram_pin_logs (
 
 ---
 
-## 11. Индексы и производительность (минимальный набор)
+## 11. Таблица `supplies`
+
+Расписание поставок для стендинга и разовых закупок. Для стендинга `periodicity` — `weekly` или `biweekly`, а ближайшая дата поставки рассчитывается от `first_delivery_date` (при наличии `skip_date` текущая поставка пропускается). Для разовой поставки `periodicity = 'single'`, дата берётся из `planned_delivery_date`.
+
+```sql
+CREATE TABLE supplies (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+
+  is_standing TINYINT(1) NOT NULL DEFAULT 0,                   -- 1 — стендинг, 0 — разовая поставка
+  photo_url VARCHAR(255) NULL,
+  flower_name VARCHAR(120) NOT NULL,
+  variety VARCHAR(120) NOT NULL,
+  country VARCHAR(80) NULL,
+
+  packs_total INT UNSIGNED NOT NULL,
+  packs_reserved INT UNSIGNED NOT NULL DEFAULT 0,              -- подписки, предзаказы и мелкий опт
+  stems_per_pack INT UNSIGNED NOT NULL,
+  stem_height_cm INT UNSIGNED NULL,
+  stem_weight_g INT UNSIGNED NULL,
+
+  periodicity ENUM('weekly', 'biweekly', 'single') NOT NULL DEFAULT 'single',
+  first_delivery_date DATE NULL,
+  planned_delivery_date DATE NULL,
+  actual_delivery_date DATE NULL,
+  allow_small_wholesale TINYINT(1) NOT NULL DEFAULT 0,
+  skip_date DATE NULL,
+
+  has_product_card TINYINT(1) NOT NULL DEFAULT 0,              -- создана карточка товара
+  has_wholesale_card TINYINT(1) NOT NULL DEFAULT 0,            -- создана карточка мелкого опта
+
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+```
+
+Пример сидов:
+
+```sql
+INSERT INTO supplies (
+  is_standing, photo_url, flower_name, variety, country,
+  packs_total, packs_reserved, stems_per_pack, stem_height_cm, stem_weight_g,
+  periodicity, first_delivery_date, planned_delivery_date, actual_delivery_date,
+  allow_small_wholesale, skip_date, has_product_card, has_wholesale_card
+) VALUES
+  (1, 'https://cdn.bunch.test/rhodos.jpg', 'Роза', 'Rhodos', 'Эквадор',
+   60, 10, 25, 50, 45, 'weekly', '2024-12-05', '2024-12-05', NULL,
+   1, NULL, 1, 1),
+  (1, 'https://cdn.bunch.test/eucalyptus.jpg', 'Эвкалипт', 'Cinerea', 'Россия',
+   80, 14, 15, 40, 28, 'biweekly', '2024-12-10', '2024-12-10', '2024-12-24',
+   1, '2024-12-31', 0, 1),
+  (0, 'https://cdn.bunch.test/chrysanthemum.jpg', 'Хризантема', 'Altaj', 'Колумбия',
+   32, 4, 10, 32, 18, 'single', '2024-12-09', '2024-12-09', NULL,
+   1, NULL, 0, 0);
+```
+
+---
+
+## 12. Индексы и производительность (минимальный набор)
 
 - `users.phone` — UNIQUE.
 - `user_addresses.user_id` + `is_primary`.
@@ -421,7 +479,7 @@ CREATE TABLE telegram_pin_logs (
 
 ---
 
-## 12. Инициализация и сиды
+## 13. Инициализация и сиды
 
 Для быстрого запуска проекта полезно иметь:
 

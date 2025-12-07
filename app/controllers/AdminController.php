@@ -363,9 +363,12 @@ class AdminController extends Controller
             'headerSubtitle' => 'Каталог · Поставки и атрибуты',
         ];
 
+        $supplyModel = new Supply();
+        $supplyOptions = array_column($supplyModel->getAdminList(), 'flower_name');
+
         $filters = [
             'active' => ['Все', 'Активные', 'Неактивные'],
-            'supplies' => array_column($this->getSupplyFixtures(), 'title'),
+            'supplies' => $supplyOptions,
         ];
 
         $this->render('admin-products', [
@@ -413,19 +416,86 @@ class AdminController extends Controller
     {
         $pageMeta = [
             'title' => 'Поставки — админ-панель Bunch',
-            'description' => 'Управление расписанием поставок, сортами и мелким оптом.',
+            'description' => 'Планирование поставок, создание карточек товаров и мелкого опта.',
             'h1' => 'Поставки',
             'headerTitle' => 'Bunch Admin',
             'headerSubtitle' => 'Каталог · Поставки и брони',
         ];
 
-        $supplies = $this->getSupplyFixtures();
+        $supplyModel = new Supply();
+        $supplies = $supplyModel->getAdminList();
 
         $this->render('admin-supplies', [
             'pageMeta' => $pageMeta,
             'supplies' => $supplies,
-            'reservations' => $this->getSupplyReservations(),
+            'message' => $_GET['status'] ?? null,
         ]);
+    }
+
+    public function createStandingSupply(): void
+    {
+        $firstDelivery = trim($_POST['first_delivery_date'] ?? '');
+        $actualDelivery = trim($_POST['actual_delivery_date'] ?? '');
+        $skipDate = trim($_POST['skip_date'] ?? '');
+
+        $payload = [
+            'photo_url' => trim($_POST['photo_url'] ?? ''),
+            'flower_name' => trim($_POST['flower_name'] ?? ''),
+            'variety' => trim($_POST['variety'] ?? ''),
+            'country' => trim($_POST['country'] ?? ''),
+            'packs_total' => (int) ($_POST['packs_total'] ?? 0),
+            'stems_per_pack' => (int) ($_POST['stems_per_pack'] ?? 0),
+            'stem_height_cm' => (int) ($_POST['stem_height_cm'] ?? 0),
+            'stem_weight_g' => (int) ($_POST['stem_weight_g'] ?? 0),
+            'periodicity' => $_POST['periodicity'] === 'biweekly' ? 'biweekly' : 'weekly',
+            'first_delivery_date' => $firstDelivery !== '' ? $firstDelivery : null,
+            'planned_delivery_date' => $firstDelivery !== '' ? $firstDelivery : null,
+            'actual_delivery_date' => $actualDelivery !== '' ? $actualDelivery : null,
+            'allow_small_wholesale' => isset($_POST['allow_small_wholesale']) ? 1 : 0,
+            'skip_date' => $skipDate !== '' ? $skipDate : null,
+            'packs_reserved' => 0,
+        ];
+
+        if ($payload['flower_name'] === '' || $payload['variety'] === '' || !$payload['packs_total'] || !$payload['stems_per_pack'] || empty($payload['first_delivery_date'])) {
+            header('Location: /?page=admin-supplies&status=error');
+            return;
+        }
+
+        $supplyModel = new Supply();
+        $supplyModel->createStanding($payload);
+
+        header('Location: /?page=admin-supplies&status=created');
+    }
+
+    public function createSingleSupply(): void
+    {
+        $plannedDelivery = trim($_POST['planned_delivery_date'] ?? '');
+        $actualDelivery = trim($_POST['actual_delivery_date'] ?? '');
+
+        $payload = [
+            'photo_url' => trim($_POST['photo_url'] ?? ''),
+            'flower_name' => trim($_POST['flower_name'] ?? ''),
+            'variety' => trim($_POST['variety'] ?? ''),
+            'country' => trim($_POST['country'] ?? ''),
+            'packs_total' => (int) ($_POST['packs_total'] ?? 0),
+            'stems_per_pack' => (int) ($_POST['stems_per_pack'] ?? 0),
+            'stem_height_cm' => (int) ($_POST['stem_height_cm'] ?? 0),
+            'stem_weight_g' => (int) ($_POST['stem_weight_g'] ?? 0),
+            'planned_delivery_date' => $plannedDelivery !== '' ? $plannedDelivery : null,
+            'actual_delivery_date' => $actualDelivery !== '' ? $actualDelivery : null,
+            'allow_small_wholesale' => isset($_POST['allow_small_wholesale']) ? 1 : 0,
+            'packs_reserved' => 0,
+        ];
+
+        if ($payload['flower_name'] === '' || $payload['variety'] === '' || !$payload['packs_total'] || !$payload['stems_per_pack'] || empty($payload['planned_delivery_date'])) {
+            header('Location: /?page=admin-supplies&status=error');
+            return;
+        }
+
+        $supplyModel = new Supply();
+        $supplyModel->createOneTime($payload);
+
+        header('Location: /?page=admin-supplies&status=created');
     }
 
     public function ordersOneTime(): void
@@ -933,69 +1003,6 @@ class AdminController extends Controller
         ];
     }
 
-    private function getSupplyFixtures(): array
-    {
-        return [
-            [
-                'id' => 201,
-                'title' => 'Эквадор · Freedom',
-                'date' => '2024-06-18',
-                'sort' => 'Freedom',
-                'color' => 'Красный',
-                'height' => '50 см',
-                'weight' => '45 г',
-                'country' => 'Эквадор',
-                'packsTotal' => 60,
-                'packsAvailable' => 38,
-                'packSize' => 25,
-                'smallWholesale' => true,
-                'isStanding' => false,
-                'status' => 'Планируется',
-            ],
-            [
-                'id' => 202,
-                'title' => 'Колумбия · Cappuccino',
-                'date' => '2024-06-20',
-                'sort' => 'Cappuccino',
-                'color' => 'Капучино',
-                'height' => '45 см',
-                'weight' => '38 г',
-                'country' => 'Колумбия',
-                'packsTotal' => 40,
-                'packsAvailable' => 32,
-                'packSize' => 20,
-                'smallWholesale' => true,
-                'isStanding' => false,
-                'status' => 'Планируется',
-            ],
-            [
-                'id' => 203,
-                'title' => 'Стендинг · Эвкалипт',
-                'date' => 'Еженедельно (вторник)',
-                'sort' => 'Cinerea',
-                'color' => 'Серебристый',
-                'height' => '40 см',
-                'weight' => '28 г',
-                'country' => 'Россия',
-                'packsTotal' => 80,
-                'packsAvailable' => 62,
-                'packSize' => 15,
-                'smallWholesale' => true,
-                'isStanding' => true,
-                'status' => 'В работе',
-            ],
-        ];
-    }
-
-    private function getSupplyReservations(): array
-    {
-        return [
-            ['supply' => 'Эквадор · Freedom', 'client' => 'ООО «Астра»', 'packs' => 10, 'status' => 'Забронировано', 'date' => '2024-06-12'],
-            ['supply' => 'Эквадор · Freedom', 'client' => 'ИП Флора', 'packs' => 6, 'status' => 'Подтверждено', 'date' => '2024-06-13'],
-            ['supply' => 'Колумбия · Cappuccino', 'client' => 'Салон «Лаванда»', 'packs' => 4, 'status' => 'Ожидает оплаты', 'date' => '2024-06-14'],
-            ['supply' => 'Стендинг · Эвкалипт', 'client' => 'Retail 24', 'packs' => 8, 'status' => 'Отгружено', 'date' => '2024-06-10'],
-        ];
-    }
 
     private function getOneTimeOrders(): array
     {
