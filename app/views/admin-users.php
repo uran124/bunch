@@ -10,6 +10,13 @@
         </div>
         <div class="flex flex-wrap items-center gap-3">
             <a
+                href="/?page=admin-broadcast"
+                class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+            >
+                <span class="material-symbols-rounded text-base">send</span>
+                Рассылки
+            </a>
+            <a
                 href="/?page=admin-group-create"
                 class="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-rose-200 transition hover:-translate-y-0.5 hover:shadow-xl"
             >
