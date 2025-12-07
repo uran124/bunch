@@ -57,5 +57,11 @@ $router->post('admin-group-create', [AdminController::class, 'saveGroup']);
 $router->post('admin-broadcast', [AdminController::class, 'createBroadcast']);
 $router->post('admin-supply-standing', [AdminController::class, 'createStandingSupply']);
 $router->post('admin-supply-single', [AdminController::class, 'createSingleSupply']);
+$router->post('admin-attribute-save', [AdminController::class, 'saveAttribute']);
+$router->post('admin-attribute-delete', [AdminController::class, 'deleteAttribute']);
+$router->post('admin-attribute-value-save', [AdminController::class, 'saveAttributeValue']);
+$router->post('admin-attribute-value-delete', [AdminController::class, 'deleteAttributeValue']);
+$router->post('admin-product-save', [AdminController::class, 'saveProduct']);
+$router->post('admin-product-delete', [AdminController::class, 'deleteProduct']);
 
 $router->dispatch($page, $_SERVER['REQUEST_METHOD']);
