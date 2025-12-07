@@ -19,10 +19,6 @@ class AdminController extends Controller
                         'description' => 'E-mail, push и SMS кампании через телеграм-бота',
                         'href' => '/?page=admin-broadcast',
                     ],
-                    [
-                        'label' => 'Уведомления',
-                        'description' => 'Триггеры и шаблоны сообщений',
-                    ],
                 ],
             ],
             [
@@ -347,7 +343,12 @@ class AdminController extends Controller
         }
 
         $broadcastModel = new BroadcastMessage();
-        $broadcastModel->create($body, $sendAt, $groupIds);
+        $messageId = $broadcastModel->create($body, $sendAt, $groupIds);
+
+        $shouldSendNow = $sendAt === null || $sendAt <= new DateTimeImmutable();
+        if ($shouldSendNow) {
+            $broadcastModel->sendNow($messageId, $body, $groupIds);
+        }
 
         header('Location: /?page=admin-broadcast&message=created');
     }
