@@ -22,6 +22,31 @@ class BroadcastMessage extends Model
         return $messageId;
     }
 
+    public function sendNow(int $messageId, string $body, array $groupIds): void
+    {
+        if (TG_BOT_TOKEN === '') {
+            (new Logger('telegram_errors.log'))->logRaw(date('c') . ' missing TG_BOT_TOKEN for broadcast ' . $messageId);
+
+            return;
+        }
+
+        $chatIds = $this->collectRecipientChatIds($groupIds);
+
+        if (empty($chatIds)) {
+            (new Logger('telegram_errors.log'))->logRaw(date('c') . ' no recipients for broadcast ' . $messageId);
+
+            return;
+        }
+
+        $telegram = new Telegram(TG_BOT_TOKEN);
+
+        foreach ($chatIds as $chatId) {
+            $telegram->sendMessage($chatId, $body);
+        }
+
+        $this->markAsSent($messageId);
+    }
+
     public function paginate(int $page, int $perPage): array
     {
         $page = max(1, $page);
@@ -73,6 +98,15 @@ class BroadcastMessage extends Model
         $sendDate = new DateTimeImmutable($sendAt);
 
         return $sendDate > new DateTimeImmutable() ? 'scheduled' : 'sent';
+    }
+
+    private function markAsSent(int $messageId): void
+    {
+        $stmt = $this->db->prepare('UPDATE broadcast_messages SET status = :status, updated_at = NOW() WHERE id = :id');
+        $stmt->execute([
+            'status' => 'sent',
+            'id' => $messageId,
+        ]);
     }
 
     private function attachGroups(int $messageId, array $groupIds): void
@@ -138,5 +172,41 @@ class BroadcastMessage extends Model
         $stmt->execute($groupIds);
 
         return (int) $stmt->fetchColumn();
+    }
+
+    private function collectRecipientChatIds(array $groupIds): array
+    {
+        $groupIds = array_values(array_unique(array_map('intval', $groupIds)));
+
+        if (empty($groupIds)) {
+            return [];
+        }
+
+        if ($this->hasSystemGroup($groupIds)) {
+            $stmt = $this->db->query('SELECT telegram_chat_id FROM users WHERE is_active = 1 AND telegram_chat_id IS NOT NULL');
+
+            return array_values(array_unique(array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN))));
+        }
+
+        $placeholders = implode(',', array_fill(0, count($groupIds), '?'));
+
+        $sql = 'SELECT DISTINCT u.telegram_chat_id FROM users u INNER JOIN broadcast_group_users bgu ON bgu.user_id = u.id WHERE u.is_active = 1 AND u.telegram_chat_id IS NOT NULL AND bgu.group_id IN (' . $placeholders . ')';
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($groupIds);
+
+        return array_values(array_unique(array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN))));
+    }
+
+    private function hasSystemGroup(array $groupIds): bool
+    {
+        if (empty($groupIds)) {
+            return false;
+        }
+
+        $placeholders = implode(',', array_fill(0, count($groupIds), '?'));
+        $stmt = $this->db->prepare('SELECT COUNT(*) FROM broadcast_groups WHERE is_system = 1 AND id IN (' . $placeholders . ')');
+        $stmt->execute($groupIds);
+
+        return (int) $stmt->fetchColumn() > 0;
     }
 }
