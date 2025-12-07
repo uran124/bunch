@@ -18,4 +18,166 @@ class Product extends Model
         $row = $stmt->fetch();
         return $row ?: null;
     }
+
+    public function getAdminList(): array
+    {
+        $sql = "SELECT p.*, s.flower_name, s.variety, s.country AS supply_country, s.stem_height_cm AS supply_height, s.stem_weight_g AS supply_weight, s.photo_url AS supply_photo, s.id AS supply_id FROM {$this->table} p LEFT JOIN supplies s ON p.supply_id = s.id ORDER BY p.created_at DESC";
+        $stmt = $this->db->query($sql);
+        $products = $stmt->fetchAll();
+
+        foreach ($products as &$product) {
+            $product['price_tiers'] = $this->getPriceTiers((int) $product['id']);
+            $product['attribute_ids'] = $this->getAttributeIds((int) $product['id']);
+        }
+
+        return $products;
+    }
+
+    public function getWithRelations(int $id): ?array
+    {
+        $stmt = $this->db->prepare("SELECT * FROM {$this->table} WHERE id = :id LIMIT 1");
+        $stmt->execute(['id' => $id]);
+        $row = $stmt->fetch();
+
+        if (!$row) {
+            return null;
+        }
+
+        $row['price_tiers'] = $this->getPriceTiers($id);
+        $row['attribute_ids'] = $this->getAttributeIds($id);
+
+        return $row;
+    }
+
+    public function createFromSupply(array $payload): int
+    {
+        $slug = $this->generateSlug($payload['name']);
+
+        $sql = "INSERT INTO {$this->table} (supply_id, name, slug, description, price, article, photo_url, stem_height_cm, stem_weight_g, country, is_base, is_active, sort_order) VALUES (:supply_id, :name, :slug, :description, :price, :article, :photo_url, :stem_height_cm, :stem_weight_g, :country, :is_base, :is_active, :sort_order)";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([
+            'supply_id' => $payload['supply_id'],
+            'name' => $payload['name'],
+            'slug' => $slug,
+            'description' => $payload['description'],
+            'price' => $payload['price'],
+            'article' => $payload['article'],
+            'photo_url' => $payload['photo_url'],
+            'stem_height_cm' => $payload['stem_height_cm'],
+            'stem_weight_g' => $payload['stem_weight_g'],
+            'country' => $payload['country'],
+            'is_base' => $payload['is_base'],
+            'is_active' => $payload['is_active'],
+            'sort_order' => $payload['sort_order'],
+        ]);
+
+        return (int) $this->db->lastInsertId();
+    }
+
+    public function updateProduct(int $id, array $payload): void
+    {
+        $sql = "UPDATE {$this->table} SET supply_id = :supply_id, name = :name, description = :description, price = :price, article = :article, photo_url = :photo_url, stem_height_cm = :stem_height_cm, stem_weight_g = :stem_weight_g, country = :country, is_active = :is_active WHERE id = :id";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([
+            'supply_id' => $payload['supply_id'],
+            'name' => $payload['name'],
+            'description' => $payload['description'],
+            'price' => $payload['price'],
+            'article' => $payload['article'],
+            'photo_url' => $payload['photo_url'],
+            'stem_height_cm' => $payload['stem_height_cm'],
+            'stem_weight_g' => $payload['stem_weight_g'],
+            'country' => $payload['country'],
+            'is_active' => $payload['is_active'],
+            'id' => $id,
+        ]);
+    }
+
+    public function deleteProduct(int $id): void
+    {
+        $stmt = $this->db->prepare("DELETE FROM {$this->table} WHERE id = :id");
+        $stmt->execute(['id' => $id]);
+    }
+
+    public function setAttributes(int $productId, array $attributeIds): void
+    {
+        $this->db->prepare('DELETE FROM product_attributes WHERE product_id = :product_id')->execute(['product_id' => $productId]);
+
+        if (!$attributeIds) {
+            return;
+        }
+
+        $stmt = $this->db->prepare('INSERT INTO product_attributes (product_id, attribute_id) VALUES (:product_id, :attribute_id)');
+
+        foreach ($attributeIds as $attributeId) {
+            $stmt->execute([
+                'product_id' => $productId,
+                'attribute_id' => $attributeId,
+            ]);
+        }
+    }
+
+    public function setPriceTiers(int $productId, array $tiers): void
+    {
+        $this->db->prepare('DELETE FROM product_price_tiers WHERE product_id = :product_id')->execute(['product_id' => $productId]);
+
+        if (!$tiers) {
+            return;
+        }
+
+        $stmt = $this->db->prepare('INSERT INTO product_price_tiers (product_id, min_qty, price) VALUES (:product_id, :min_qty, :price)');
+
+        foreach ($tiers as $tier) {
+            $stmt->execute([
+                'product_id' => $productId,
+                'min_qty' => $tier['min_qty'],
+                'price' => $tier['price'],
+            ]);
+        }
+    }
+
+    public function getPriceTiers(int $productId): array
+    {
+        $stmt = $this->db->prepare('SELECT min_qty, price FROM product_price_tiers WHERE product_id = :product_id ORDER BY min_qty ASC');
+        $stmt->execute(['product_id' => $productId]);
+
+        return $stmt->fetchAll();
+    }
+
+    public function getAttributeIds(int $productId): array
+    {
+        $stmt = $this->db->prepare('SELECT attribute_id FROM product_attributes WHERE product_id = :product_id');
+        $stmt->execute(['product_id' => $productId]);
+
+        return array_column($stmt->fetchAll(), 'attribute_id');
+    }
+
+    private function generateSlug(string $name): string
+    {
+        $slug = strtolower(trim(preg_replace('/[^A-Za-zА-Яа-я0-9]+/u', '-', $name), '-'));
+
+        if ($slug === '') {
+            $slug = 'product';
+        }
+
+        $candidate = $slug;
+        $counter = 1;
+
+        while ($this->slugExists($candidate)) {
+            $candidate = $slug . '-' . $counter;
+            $counter++;
+        }
+
+        return $candidate;
+    }
+
+    private function slugExists(string $slug): bool
+    {
+        $stmt = $this->db->prepare("SELECT COUNT(*) FROM {$this->table} WHERE slug = :slug");
+        $stmt->execute(['slug' => $slug]);
+
+        return (bool) $stmt->fetchColumn();
+    }
 }

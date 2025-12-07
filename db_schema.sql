@@ -21,6 +21,10 @@ DROP TABLE IF EXISTS order_items;
 DROP TABLE IF EXISTS orders;
 DROP TABLE IF EXISTS cart_items;
 DROP TABLE IF EXISTS carts;
+DROP TABLE IF EXISTS product_price_tiers;
+DROP TABLE IF EXISTS product_attributes;
+DROP TABLE IF EXISTS attribute_values;
+DROP TABLE IF EXISTS attributes;
 DROP TABLE IF EXISTS user_addresses;
 DROP TABLE IF EXISTS promos;
 DROP TABLE IF EXISTS products;
@@ -135,10 +139,18 @@ CREATE TABLE user_addresses (
 CREATE TABLE products (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
-  name        VARCHAR(150) NOT NULL,      -- название для клиента
+  supply_id INT UNSIGNED NULL,             -- привязка к поставке
+
+  name        VARCHAR(150) NOT NULL,       -- название для клиента (из поставки)
   slug        VARCHAR(150) NOT NULL UNIQUE,
-  description TEXT NULL,                  -- описание (без раскрытия страны/сорта)
-  price       DECIMAL(10,2) NOT NULL,     -- цена за единицу (например, 89.00)
+  description TEXT NULL,                   -- описание (без раскрытия страны/сорта)
+  price       DECIMAL(10,2) NOT NULL,      -- базовая цена за единицу
+  article     VARCHAR(64) NULL,            -- артикул для склада/витрины
+  photo_url   VARCHAR(255) NULL,           -- основное фото товара
+
+  stem_height_cm INT UNSIGNED NULL,        -- ростовка из поставки
+  stem_weight_g  INT UNSIGNED NULL,        -- вес стебля из поставки
+  country       VARCHAR(80) NULL,          -- страна происхождения из поставки
 
   is_base     TINYINT(1) NOT NULL DEFAULT 0, -- базовый продукт (массовая роза)
   is_active   TINYINT(1) NOT NULL DEFAULT 1,
@@ -147,7 +159,9 @@ CREATE TABLE products (
 
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-    ON UPDATE CURRENT_TIMESTAMP
+    ON UPDATE CURRENT_TIMESTAMP,
+
+  INDEX idx_products_supply (supply_id)
 ) ENGINE=InnoDB
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_unicode_ci;
@@ -499,6 +513,86 @@ CREATE TABLE supplies (
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_unicode_ci;
 
+-- =========================
+-- 12. Атрибуты каталога и варианты
+-- =========================
+
+CREATE TABLE attributes (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+
+  name VARCHAR(120) NOT NULL,
+  description TEXT NULL,
+  type ENUM('selector', 'toggle', 'color', 'text', 'number') NOT NULL DEFAULT 'selector',
+  is_active TINYINT(1) NOT NULL DEFAULT 1,
+
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    ON UPDATE CURRENT_TIMESTAMP,
+
+  UNIQUE KEY uk_attributes_name (name)
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE attribute_values (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+
+  attribute_id INT UNSIGNED NOT NULL,
+  CONSTRAINT fk_attribute_values_attribute
+    FOREIGN KEY (attribute_id) REFERENCES attributes(id)
+    ON DELETE CASCADE,
+
+  value VARCHAR(150) NOT NULL,
+  price_delta DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+  photo_url VARCHAR(255) NULL,
+  is_active TINYINT(1) NOT NULL DEFAULT 1,
+  sort_order INT NOT NULL DEFAULT 0,
+
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    ON UPDATE CURRENT_TIMESTAMP,
+
+  INDEX idx_attribute_values_attribute (attribute_id)
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE product_attributes (
+  product_id INT UNSIGNED NOT NULL,
+  CONSTRAINT fk_product_attributes_product
+    FOREIGN KEY (product_id) REFERENCES products(id)
+    ON DELETE CASCADE,
+
+  attribute_id INT UNSIGNED NOT NULL,
+  CONSTRAINT fk_product_attributes_attribute
+    FOREIGN KEY (attribute_id) REFERENCES attributes(id)
+    ON DELETE CASCADE,
+
+  PRIMARY KEY (product_id, attribute_id)
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE product_price_tiers (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+
+  product_id INT UNSIGNED NOT NULL,
+  CONSTRAINT fk_product_price_tiers_product
+    FOREIGN KEY (product_id) REFERENCES products(id)
+    ON DELETE CASCADE,
+
+  min_qty INT UNSIGNED NOT NULL DEFAULT 1,
+  price DECIMAL(10,2) NOT NULL,
+
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    ON UPDATE CURRENT_TIMESTAMP,
+
+  INDEX idx_product_price_tiers_product (product_id)
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_unicode_ci;
+
 INSERT INTO supplies (
   is_standing, photo_url, flower_name, variety, country,
   packs_total, packs_reserved, stems_per_pack, stem_height_cm, stem_weight_g,
@@ -514,5 +608,35 @@ INSERT INTO supplies (
   (0, 'https://cdn.bunch.test/chrysanthemum.jpg', 'Хризантема', 'Altaj', 'Колумбия',
    32, 4, 10, 32, 18, 'single', '2024-12-09', '2024-12-09', NULL,
    1, NULL, 0, 0);
+
+INSERT INTO attributes (name, description, type, is_active) VALUES
+  ('Высота стебля', 'Ростовка в сантиметрах', 'selector', 1),
+  ('Вид оформления', 'Обёртка и дополнительный декор', 'toggle', 1),
+  ('Цвет ленты', 'Дополнительный цветной акцент', 'color', 0);
+
+INSERT INTO attribute_values (attribute_id, value, price_delta, photo_url, is_active, sort_order) VALUES
+  (1, '40 см', 0.00, 'https://cdn.bunch.test/stem-40.jpg', 1, 1),
+  (1, '50 см', 10.00, 'https://cdn.bunch.test/stem-50.jpg', 1, 2),
+  (1, '60 см', 20.00, 'https://cdn.bunch.test/stem-60.jpg', 0, 3),
+  (2, 'Без оформления', 0.00, 'https://cdn.bunch.test/plain.jpg', 1, 1),
+  (2, 'В крафте', 30.00, 'https://cdn.bunch.test/kraft.jpg', 1, 2),
+  (2, 'Подарочная упаковка', 70.00, 'https://cdn.bunch.test/gift.jpg', 1, 3),
+  (3, 'Бордовая лента', 0.00, 'https://cdn.bunch.test/ribbon-red.jpg', 1, 1),
+  (3, 'Бежевая лента', 0.00, 'https://cdn.bunch.test/ribbon-beige.jpg', 1, 2);
+
+INSERT INTO products (supply_id, name, slug, description, price, article, photo_url, stem_height_cm, stem_weight_g, country, is_base, is_active, sort_order)
+VALUES
+  (1, 'Роза Rhodos', 'roza-rhodos', 'Классическая роза из стендинга, идеально для срезки.', 89.00, 'RHD-001', 'https://cdn.bunch.test/rhodos-card.jpg', 50, 45, 'Эквадор', 0, 1, 10),
+  (2, 'Эвкалипт Cinerea', 'evkalipt-cinerea', 'Ароматный эвкалипт для букетов и декора.', 55.00, 'EVC-010', 'https://cdn.bunch.test/eucalyptus-card.jpg', 40, 28, 'Россия', 0, 1, 20);
+
+INSERT INTO product_attributes (product_id, attribute_id) VALUES
+  (1, 1),
+  (1, 2),
+  (2, 2);
+
+INSERT INTO product_price_tiers (product_id, min_qty, price) VALUES
+  (1, 15, 82.00),
+  (1, 25, 78.00),
+  (2, 20, 48.50);
 
 SET FOREIGN_KEY_CHECKS = 1;

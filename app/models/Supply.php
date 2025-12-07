@@ -13,6 +13,15 @@ class Supply extends Model
         return array_map(fn(array $row) => $this->appendDerivedFields($row), $rows);
     }
 
+    public function findById(int $id): ?array
+    {
+        $stmt = $this->db->prepare("SELECT * FROM {$this->table} WHERE id = :id LIMIT 1");
+        $stmt->execute(['id' => $id]);
+        $row = $stmt->fetch();
+
+        return $row ? $this->appendDerivedFields($row) : null;
+    }
+
     public function createStanding(array $data): int
     {
         $sql = "INSERT INTO {$this->table} (is_standing, photo_url, flower_name, variety, country, packs_total, stems_per_pack, stem_height_cm, stem_weight_g, periodicity, first_delivery_date, planned_delivery_date, actual_delivery_date, allow_small_wholesale, skip_date, packs_reserved) VALUES (:is_standing, :photo_url, :flower_name, :variety, :country, :packs_total, :stems_per_pack, :stem_height_cm, :stem_weight_g, :periodicity, :first_delivery_date, :planned_delivery_date, :actual_delivery_date, :allow_small_wholesale, :skip_date, :packs_reserved)";

@@ -356,7 +356,7 @@ class AdminController extends Controller
     public function catalogProducts(): void
     {
         $pageMeta = [
-            'title' => 'Товары каталога — админ-панель Bunch',
+            'title' => 'Товары — админ-панель Bunch',
             'description' => 'Карточки товаров с привязкой к поставкам, атрибутами и ценами.',
             'h1' => 'Товары',
             'headerTitle' => 'Bunch Admin',
@@ -364,7 +364,12 @@ class AdminController extends Controller
         ];
 
         $supplyModel = new Supply();
-        $supplyOptions = array_column($supplyModel->getAdminList(), 'flower_name');
+        $supplies = $supplyModel->getAdminList();
+
+        $attributeModel = new Attribute();
+        $productModel = new Product();
+
+        $supplyOptions = array_column($supplies, 'flower_name');
 
         $filters = [
             'active' => ['Все', 'Активные', 'Неактивные'],
@@ -373,9 +378,96 @@ class AdminController extends Controller
 
         $this->render('admin-products', [
             'pageMeta' => $pageMeta,
-            'products' => $this->getProductFixtures(),
+            'products' => $productModel->getAdminList(),
             'filters' => $filters,
+            'supplies' => $supplies,
+            'attributes' => $attributeModel->getAllWithValues(),
+            'editingProduct' => isset($_GET['edit_id']) ? $productModel->getWithRelations((int) $_GET['edit_id']) : null,
+            'message' => $_GET['status'] ?? null,
         ]);
+    }
+
+    public function saveProduct(): void
+    {
+        $productId = (int) ($_POST['product_id'] ?? 0);
+        $supplyId = (int) ($_POST['supply_id'] ?? 0);
+        $article = trim($_POST['article'] ?? '');
+        $photoUrl = trim($_POST['photo_url'] ?? '');
+        $price = (float) ($_POST['price'] ?? 0);
+        $active = isset($_POST['is_active']) ? 1 : 0;
+
+        $tierQty = $_POST['tier_min_qty'] ?? [];
+        $tierPrice = $_POST['tier_price'] ?? [];
+        $attributeIds = array_filter(array_map('intval', $_POST['attribute_ids'] ?? []));
+
+        $supplyModel = new Supply();
+        $supply = $supplyModel->findById($supplyId);
+
+        if (!$supply || $price <= 0) {
+            header('Location: /?page=admin-products&status=error');
+            return;
+        }
+
+        $name = trim($supply['flower_name'] . ' ' . $supply['variety']);
+        $description = sprintf(
+            'Страна: %s. Высота стебля: %s см. Вес стебля: %s г.',
+            $supply['country'] ?? '—',
+            $supply['stem_height_cm'] ?? '—',
+            $supply['stem_weight_g'] ?? '—'
+        );
+
+        $payload = [
+            'supply_id' => $supplyId,
+            'name' => $name,
+            'description' => $description,
+            'price' => $price,
+            'article' => $article !== '' ? $article : null,
+            'photo_url' => $photoUrl !== '' ? $photoUrl : null,
+            'stem_height_cm' => $supply['stem_height_cm'] ?? null,
+            'stem_weight_g' => $supply['stem_weight_g'] ?? null,
+            'country' => $supply['country'] ?? null,
+            'is_base' => 0,
+            'is_active' => $active,
+            'sort_order' => 0,
+        ];
+
+        $productModel = new Product();
+
+        if ($productId > 0) {
+            $productModel->updateProduct($productId, $payload);
+        } else {
+            $productId = $productModel->createFromSupply($payload);
+        }
+
+        $tiers = [];
+        foreach ($tierQty as $index => $qty) {
+            $minQty = (int) $qty;
+            $priceValue = isset($tierPrice[$index]) ? (float) $tierPrice[$index] : 0;
+
+            if ($minQty > 0 && $priceValue > 0) {
+                $tiers[] = ['min_qty' => $minQty, 'price' => $priceValue];
+            }
+        }
+
+        $productModel->setPriceTiers($productId, $tiers);
+        $productModel->setAttributes($productId, $attributeIds);
+
+        header('Location: /?page=admin-products&status=saved');
+    }
+
+    public function deleteProduct(): void
+    {
+        $productId = (int) ($_POST['product_id'] ?? 0);
+
+        if ($productId <= 0) {
+            header('Location: /?page=admin-products&status=error');
+            return;
+        }
+
+        $productModel = new Product();
+        $productModel->deleteProduct($productId);
+
+        header('Location: /?page=admin-products&status=deleted');
     }
 
     public function catalogPromos(): void
@@ -404,12 +496,100 @@ class AdminController extends Controller
             'headerSubtitle' => 'Каталог · Атрибуты и варианты',
         ];
 
-        $attributes = $this->getAttributeFixtures();
+        $attributeModel = new Attribute();
+        $attributes = $attributeModel->getAllWithValues();
 
         $this->render('admin-attributes', [
             'pageMeta' => $pageMeta,
             'attributes' => $attributes,
+            'message' => $_GET['status'] ?? null,
         ]);
+    }
+
+    public function saveAttribute(): void
+    {
+        $id = (int) ($_POST['id'] ?? 0);
+        $name = trim($_POST['name'] ?? '');
+        $description = trim($_POST['description'] ?? '');
+        $type = $_POST['type'] ?? 'selector';
+        $isActive = isset($_POST['is_active']) ? 1 : 0;
+
+        if ($name === '') {
+            header('Location: /?page=admin-attributes&status=error');
+            return;
+        }
+
+        $attributeModel = new Attribute();
+        $attributeModel->save([
+            'id' => $id,
+            'name' => $name,
+            'description' => $description !== '' ? $description : null,
+            'type' => $type,
+            'is_active' => $isActive,
+        ]);
+
+        header('Location: /?page=admin-attributes&status=saved');
+    }
+
+    public function deleteAttribute(): void
+    {
+        $id = (int) ($_POST['id'] ?? 0);
+
+        if ($id <= 0) {
+            header('Location: /?page=admin-attributes&status=error');
+            return;
+        }
+
+        $attributeModel = new Attribute();
+        $attributeModel->delete($id);
+
+        header('Location: /?page=admin-attributes&status=deleted');
+    }
+
+    public function saveAttributeValue(): void
+    {
+        $id = (int) ($_POST['id'] ?? 0);
+        $attributeId = (int) ($_POST['attribute_id'] ?? 0);
+        $value = trim($_POST['value'] ?? '');
+        $priceDelta = (float) ($_POST['price_delta'] ?? 0);
+        $photoUrl = trim($_POST['photo_url'] ?? '');
+        $isActive = isset($_POST['is_active']) ? 1 : 0;
+        $sortOrder = (int) ($_POST['sort_order'] ?? 0);
+
+        if ($attributeId <= 0 || $value === '') {
+            header('Location: /?page=admin-attributes&status=error');
+            return;
+        }
+
+        $attributeModel = new Attribute();
+        $attributeModel->saveValue([
+            'id' => $id,
+            'attribute_id' => $attributeId,
+            'value' => $value,
+            'price_delta' => $priceDelta,
+            'photo_url' => $photoUrl !== '' ? $photoUrl : null,
+            'is_active' => $isActive,
+            'sort_order' => $sortOrder,
+        ]);
+
+        header('Location: /?page=admin-attributes&status=saved#attribute-' . $attributeId);
+    }
+
+    public function deleteAttributeValue(): void
+    {
+        $id = (int) ($_POST['id'] ?? 0);
+        $attributeId = (int) ($_POST['attribute_id'] ?? 0);
+
+        if ($id <= 0) {
+            header('Location: /?page=admin-attributes&status=error');
+            return;
+        }
+
+        $attributeModel = new Attribute();
+        $attributeModel->deleteValue($id);
+
+        $anchor = $attributeId > 0 ? '#attribute-' . $attributeId : '';
+        header('Location: /?page=admin-attributes&status=deleted' . $anchor);
     }
 
     public function catalogSupplies(): void
