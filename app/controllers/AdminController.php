@@ -28,10 +28,26 @@ class AdminController extends Controller
             [
                 'title' => 'Каталог',
                 'items' => [
-                    ['label' => 'Товары', 'description' => 'Карточки, цены и наличие'],
-                    ['label' => 'Варианты оформления', 'description' => 'Упаковка, ленты, открытки'],
-                    ['label' => 'Мелкий опт', 'description' => 'Пакеты поштучной продажи'],
-                    ['label' => 'Поставки', 'description' => 'Планирование и приёмка'],
+                    [
+                        'label' => 'Товары',
+                        'description' => 'Карточки товаров из поставок: характеристики, атрибуты, фото и цены',
+                        'href' => '/?page=admin-products',
+                    ],
+                    [
+                        'label' => 'Акции',
+                        'description' => 'Спецпредложения и акционные товары без привязки к поставкам',
+                        'href' => '/?page=admin-promos',
+                    ],
+                    [
+                        'label' => 'Атрибуты',
+                        'description' => 'Высота стебля, виды оформления и другие варианты с ценой и фото',
+                        'href' => '/?page=admin-attributes',
+                    ],
+                    [
+                        'label' => 'Поставки',
+                        'description' => 'Еженедельные поставки: сорт, страна, пачки, даты и бронирование под мелкий опт',
+                        'href' => '/?page=admin-supplies',
+                    ],
                 ],
             ],
             [
@@ -209,6 +225,81 @@ class AdminController extends Controller
             'messages' => $messagesPage,
             'totalPages' => $totalPages,
             'currentPage' => $currentPage,
+        ]);
+    }
+
+    public function catalogProducts(): void
+    {
+        $pageMeta = [
+            'title' => 'Товары каталога — админ-панель Bunch',
+            'description' => 'Карточки товаров с привязкой к поставкам, атрибутами и ценами.',
+            'h1' => 'Товары',
+            'headerTitle' => 'Bunch Admin',
+            'headerSubtitle' => 'Каталог · Поставки и атрибуты',
+        ];
+
+        $filters = [
+            'active' => ['Все', 'Активные', 'Неактивные'],
+            'supplies' => array_column($this->getSupplyFixtures(), 'title'),
+        ];
+
+        $this->render('admin-products', [
+            'pageMeta' => $pageMeta,
+            'products' => $this->getProductFixtures(),
+            'filters' => $filters,
+        ]);
+    }
+
+    public function catalogPromos(): void
+    {
+        $pageMeta = [
+            'title' => 'Акции — админ-панель Bunch',
+            'description' => 'Акционные товары без обязательной привязки к поставке.',
+            'h1' => 'Акции',
+            'headerTitle' => 'Bunch Admin',
+            'headerSubtitle' => 'Каталог · Спецпредложения',
+        ];
+
+        $this->render('admin-promos', [
+            'pageMeta' => $pageMeta,
+            'promos' => $this->getPromoFixtures(),
+        ]);
+    }
+
+    public function catalogAttributes(): void
+    {
+        $pageMeta = [
+            'title' => 'Атрибуты — админ-панель Bunch',
+            'description' => 'Варианты оформления и параметры, влияющие на цену и фото.',
+            'h1' => 'Атрибуты',
+            'headerTitle' => 'Bunch Admin',
+            'headerSubtitle' => 'Каталог · Атрибуты и варианты',
+        ];
+
+        $attributes = $this->getAttributeFixtures();
+
+        $this->render('admin-attributes', [
+            'pageMeta' => $pageMeta,
+            'attributes' => $attributes,
+        ]);
+    }
+
+    public function catalogSupplies(): void
+    {
+        $pageMeta = [
+            'title' => 'Поставки — админ-панель Bunch',
+            'description' => 'Управление расписанием поставок, сортами и мелким оптом.',
+            'h1' => 'Поставки',
+            'headerTitle' => 'Bunch Admin',
+            'headerSubtitle' => 'Каталог · Поставки и брони',
+        ];
+
+        $supplies = $this->getSupplyFixtures();
+
+        $this->render('admin-supplies', [
+            'pageMeta' => $pageMeta,
+            'supplies' => $supplies,
+            'reservations' => $this->getSupplyReservations(),
         ]);
     }
 
@@ -475,6 +566,195 @@ class AdminController extends Controller
                 'createdAt' => '2024-01-04 11:10',
                 'recipients' => 34,
             ],
+        ];
+    }
+
+    private function getProductFixtures(): array
+    {
+        return [
+            [
+                'id' => 501,
+                'name' => 'Роза Freedom',
+                'supply' => 'Поставка: Эквадор · 18.06',
+                'active' => true,
+                'hasAttributes' => true,
+                'price' => '189 ₽',
+                'createdAt' => '2024-06-10',
+                'updatedAt' => '2024-06-12',
+                'color' => 'Красный',
+                'height' => '50 см',
+            ],
+            [
+                'id' => 502,
+                'name' => 'Гвоздика Cappuccino',
+                'supply' => 'Поставка: Колумбия · 20.06',
+                'active' => true,
+                'hasAttributes' => false,
+                'price' => '129 ₽',
+                'createdAt' => '2024-06-11',
+                'updatedAt' => '2024-06-11',
+                'color' => 'Капучино',
+                'height' => '45 см',
+            ],
+            [
+                'id' => 503,
+                'name' => 'Пион Coral Charm',
+                'supply' => 'Поставка: Голландия · 25.06',
+                'active' => false,
+                'hasAttributes' => true,
+                'price' => '289 ₽',
+                'createdAt' => '2024-06-05',
+                'updatedAt' => '2024-06-09',
+                'color' => 'Корал',
+                'height' => '60 см',
+            ],
+            [
+                'id' => 504,
+                'name' => 'Эвкалипт Cinerea',
+                'supply' => 'Поставка: Стендинг · еженедельно',
+                'active' => true,
+                'hasAttributes' => false,
+                'price' => '59 ₽',
+                'createdAt' => '2024-05-29',
+                'updatedAt' => '2024-06-01',
+                'color' => 'Серебристый',
+                'height' => '40 см',
+            ],
+        ];
+    }
+
+    private function getPromoFixtures(): array
+    {
+        return [
+            [
+                'id' => 801,
+                'title' => 'Флеш-распродажа 6 часов',
+                'type' => 'sale',
+                'price' => '75 ₽',
+                'active' => true,
+                'period' => '14.06 10:00 — 14.06 16:00',
+                'product' => 'Роза Freedom',
+            ],
+            [
+                'id' => 802,
+                'title' => 'Аукцион на пион Coral Charm',
+                'type' => 'auction',
+                'price' => 'Старт 250 ₽',
+                'active' => true,
+                'period' => '15.06 12:00 — 15.06 20:00',
+                'product' => 'Пион Coral Charm',
+            ],
+            [
+                'id' => 803,
+                'title' => 'Лотерея «Заберите стендинг»',
+                'type' => 'lottery',
+                'price' => '0 ₽',
+                'active' => false,
+                'period' => '01.06 — 07.06',
+                'product' => null,
+            ],
+        ];
+    }
+
+    private function getAttributeFixtures(): array
+    {
+        return [
+            [
+                'id' => 301,
+                'name' => 'Высота стебля',
+                'type' => 'selector',
+                'active' => true,
+                'values' => [
+                    ['name' => '40 см', 'priceDelta' => '+0 ₽', 'photo' => 'photo-40.jpg', 'active' => true],
+                    ['name' => '50 см', 'priceDelta' => '+10 ₽', 'photo' => 'photo-50.jpg', 'active' => true],
+                    ['name' => '60 см', 'priceDelta' => '+20 ₽', 'photo' => 'photo-60.jpg', 'active' => false],
+                ],
+            ],
+            [
+                'id' => 302,
+                'name' => 'Вид оформления',
+                'type' => 'toggle',
+                'active' => true,
+                'values' => [
+                    ['name' => 'Без оформления', 'priceDelta' => '+0 ₽', 'photo' => 'plain.jpg', 'active' => true],
+                    ['name' => 'В крафте', 'priceDelta' => '+30 ₽', 'photo' => 'kraft.jpg', 'active' => true],
+                    ['name' => 'Подарочная упаковка', 'priceDelta' => '+70 ₽', 'photo' => 'gift.jpg', 'active' => true],
+                ],
+            ],
+            [
+                'id' => 303,
+                'name' => 'Цвет ленты',
+                'type' => 'color',
+                'active' => false,
+                'values' => [
+                    ['name' => 'Бордовая', 'priceDelta' => '+0 ₽', 'photo' => 'ribbon-red.jpg', 'active' => true],
+                    ['name' => 'Бежевая', 'priceDelta' => '+0 ₽', 'photo' => 'ribbon-beige.jpg', 'active' => true],
+                ],
+            ],
+        ];
+    }
+
+    private function getSupplyFixtures(): array
+    {
+        return [
+            [
+                'id' => 201,
+                'title' => 'Эквадор · Freedom',
+                'date' => '2024-06-18',
+                'sort' => 'Freedom',
+                'color' => 'Красный',
+                'height' => '50 см',
+                'weight' => '45 г',
+                'country' => 'Эквадор',
+                'packsTotal' => 60,
+                'packsAvailable' => 38,
+                'packSize' => 25,
+                'smallWholesale' => true,
+                'isStanding' => false,
+                'status' => 'Планируется',
+            ],
+            [
+                'id' => 202,
+                'title' => 'Колумбия · Cappuccino',
+                'date' => '2024-06-20',
+                'sort' => 'Cappuccino',
+                'color' => 'Капучино',
+                'height' => '45 см',
+                'weight' => '38 г',
+                'country' => 'Колумбия',
+                'packsTotal' => 40,
+                'packsAvailable' => 32,
+                'packSize' => 20,
+                'smallWholesale' => true,
+                'isStanding' => false,
+                'status' => 'Планируется',
+            ],
+            [
+                'id' => 203,
+                'title' => 'Стендинг · Эвкалипт',
+                'date' => 'Еженедельно (вторник)',
+                'sort' => 'Cinerea',
+                'color' => 'Серебристый',
+                'height' => '40 см',
+                'weight' => '28 г',
+                'country' => 'Россия',
+                'packsTotal' => 80,
+                'packsAvailable' => 62,
+                'packSize' => 15,
+                'smallWholesale' => true,
+                'isStanding' => true,
+                'status' => 'В работе',
+            ],
+        ];
+    }
+
+    private function getSupplyReservations(): array
+    {
+        return [
+            ['supply' => 'Эквадор · Freedom', 'client' => 'ООО «Астра»', 'packs' => 10, 'status' => 'Забронировано', 'date' => '2024-06-12'],
+            ['supply' => 'Эквадор · Freedom', 'client' => 'ИП Флора', 'packs' => 6, 'status' => 'Подтверждено', 'date' => '2024-06-13'],
+            ['supply' => 'Колумбия · Cappuccino', 'client' => 'Салон «Лаванда»', 'packs' => 4, 'status' => 'Ожидает оплаты', 'date' => '2024-06-14'],
+            ['supply' => 'Стендинг · Эвкалипт', 'client' => 'Retail 24', 'packs' => 8, 'status' => 'Отгружено', 'date' => '2024-06-10'],
         ];
     }
 
