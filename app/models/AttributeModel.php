@@ -1,7 +1,7 @@
 <?php
-// app/models/Attribute.php
+// app/models/AttributeModel.php
 
-class Attribute extends Model
+class AttributeModel extends Model
 {
     private string $attributesTable = 'attributes';
     private string $valuesTable = 'attribute_values';

@@ -366,7 +366,7 @@ class AdminController extends Controller
         $supplyModel = new Supply();
         $supplies = $supplyModel->getAdminList();
 
-        $attributeModel = new Attribute();
+        $attributeModel = new AttributeModel();
         $productModel = new Product();
 
         $supplyOptions = array_column($supplies, 'flower_name');
@@ -496,7 +496,7 @@ class AdminController extends Controller
             'headerSubtitle' => 'Каталог · Атрибуты и варианты',
         ];
 
-        $attributeModel = new Attribute();
+        $attributeModel = new AttributeModel();
         $attributes = $attributeModel->getAllWithValues();
 
         $this->render('admin-attributes', [
@@ -519,7 +519,7 @@ class AdminController extends Controller
             return;
         }
 
-        $attributeModel = new Attribute();
+        $attributeModel = new AttributeModel();
         $attributeModel->save([
             'id' => $id,
             'name' => $name,
@@ -540,7 +540,7 @@ class AdminController extends Controller
             return;
         }
 
-        $attributeModel = new Attribute();
+        $attributeModel = new AttributeModel();
         $attributeModel->delete($id);
 
         header('Location: /?page=admin-attributes&status=deleted');
@@ -561,7 +561,7 @@ class AdminController extends Controller
             return;
         }
 
-        $attributeModel = new Attribute();
+        $attributeModel = new AttributeModel();
         $attributeModel->saveValue([
             'id' => $id,
             'attribute_id' => $attributeId,
@@ -585,7 +585,7 @@ class AdminController extends Controller
             return;
         }
 
-        $attributeModel = new Attribute();
+        $attributeModel = new AttributeModel();
         $attributeModel->deleteValue($id);
 
         $anchor = $attributeId > 0 ? '#attribute-' . $attributeId : '';
