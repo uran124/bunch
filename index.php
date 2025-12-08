@@ -16,6 +16,8 @@ spl_autoload_register(function (string $class): void {
     }
 });
 
+Session::start();
+
 $router = new Router();
 
 $page = $_GET['page'] ?? trim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/');
@@ -63,5 +65,17 @@ $router->post('admin-attribute-value-save', [AdminController::class, 'saveAttrib
 $router->post('admin-attribute-value-delete', [AdminController::class, 'deleteAttributeValue']);
 $router->post('admin-product-save', [AdminController::class, 'saveProduct']);
 $router->post('admin-product-delete', [AdminController::class, 'deleteProduct']);
+
+$publicPages = ['login', 'register', 'recover'];
+
+if (!Auth::check() && !in_array($page, $publicPages, true)) {
+    header('Location: /?page=login');
+    exit;
+}
+
+if (Auth::check() && in_array($page, $publicPages, true)) {
+    header('Location: /?page=home');
+    exit;
+}
 
 $router->dispatch($page, $_SERVER['REQUEST_METHOD']);
