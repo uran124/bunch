@@ -123,7 +123,7 @@
                         <div class="flex items-center justify-between text-sm font-semibold text-slate-800">
                             <span>Заказ <?php echo htmlspecialchars($activeOrder['number'], ENT_QUOTES, 'UTF-8'); ?></span>
                             <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-600">
-                                В пути
+                                <?php echo htmlspecialchars($activeOrder['statusLabel'], ENT_QUOTES, 'UTF-8'); ?>
                             </span>
                         </div>
                         <div class="flex items-center gap-4">
@@ -136,8 +136,8 @@
                             </div>
                             <div class="flex flex-1 flex-col justify-between gap-1 text-sm text-slate-700">
                                 <p class="font-semibold text-slate-900"><?php echo htmlspecialchars($activeOrder['item']['name'], ENT_QUOTES, 'UTF-8'); ?></p>
-                                <p class="text-slate-600">×<?php echo (int) $activeOrder['item']['qty']; ?> · <?php echo htmlspecialchars($activeOrder['item']['price'], ENT_QUOTES, 'UTF-8'); ?></p>
-                                <p class="font-semibold text-slate-900">Сумма: <?php echo htmlspecialchars($activeOrder['item']['price'], ENT_QUOTES, 'UTF-8'); ?></p>
+                                <p class="text-slate-600">×<?php echo (int) $activeOrder['item']['qty']; ?> · <?php echo htmlspecialchars($activeOrder['item']['unitPrice'] ?? $activeOrder['item']['price'], ENT_QUOTES, 'UTF-8'); ?></p>
+                                <p class="font-semibold text-slate-900">Сумма: <?php echo htmlspecialchars($activeOrder['total'], ENT_QUOTES, 'UTF-8'); ?></p>
                             </div>
                         </div>
                         <div class="flex items-center gap-2 text-sm text-slate-700">
@@ -147,7 +147,7 @@
                             <?php if ($activeOrder['delivery_type'] === 'pickup'): ?>
                                 <span>Самовывоз</span>
                             <?php else: ?>
-                                <span>Доставка: <?php echo htmlspecialchars($activeOrder['delivery_address'], ENT_QUOTES, 'UTF-8'); ?></span>
+                                <span>Доставка: <?php echo htmlspecialchars($activeOrder['delivery_address'] ?? 'Адрес уточняется', ENT_QUOTES, 'UTF-8'); ?></span>
                             <?php endif; ?>
                         </div>
                     </div>
@@ -242,7 +242,7 @@
                     <div class="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3">
                         <span class="inline-flex items-center gap-2 font-semibold text-slate-800">
                             <span class="material-symbols-rounded text-base text-emerald-500">check</span>
-                            Последний вход: 6 декабря, 09:12
+                            Последний вход: <?php echo htmlspecialchars($lastLogin, ENT_QUOTES, 'UTF-8'); ?>
                         </span>
                         <a class="text-rose-600 hover:text-rose-700" href="/?page=login">Выйти</a>
                     </div>
