@@ -26,9 +26,6 @@
         </div>
     <?php else: ?>
         <div class="relative">
-            <div class="absolute inset-y-0 left-0 w-16 bg-gradient-to-r from-slate-50 to-transparent pointer-events-none"></div>
-            <div class="absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-slate-50 to-transparent pointer-events-none"></div>
-
             <div class="flex snap-x gap-4 overflow-x-auto px-2 pb-4 pt-1 md:px-1" aria-label="Лента товаров">
                 <?php foreach ($products as $product): ?>
                     <?php
@@ -73,18 +70,11 @@
                                     <span class="material-symbols-rounded text-4xl">image</span>
                                 </div>
                             <?php endif; ?>
-                            <div class="absolute left-4 top-4 inline-flex items-center gap-2 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-slate-700 shadow-sm backdrop-blur">
-                                <span class="material-symbols-rounded text-base text-rose-500">swipe</span>
-                                Свайпайте влево/вправо
-                            </div>
                         </div>
 
                         <div class="space-y-6 px-5 pb-6 pt-5">
                             <div class="space-y-2">
                                 <h2 class="text-2xl font-semibold leading-tight text-slate-900"><?php echo htmlspecialchars($displayName, ENT_QUOTES, 'UTF-8'); ?></h2>
-                                <?php if (!empty($product['supply_country'])): ?>
-                                    <p class="text-sm font-semibold uppercase tracking-wide text-slate-500"><?php echo htmlspecialchars($product['supply_country'], ENT_QUOTES, 'UTF-8'); ?></p>
-                                <?php endif; ?>
                             </div>
 
                             <div class="space-y-3 rounded-2xl bg-slate-50 p-4">
@@ -126,10 +116,6 @@
                                                     <span class="material-symbols-rounded text-base text-rose-500">sell</span>
                                                     <?php echo htmlspecialchars($attribute['name'], ENT_QUOTES, 'UTF-8'); ?>
                                                 </span>
-                                                <span class="inline-flex items-center gap-1 rounded-full bg-white px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                                                    <span class="material-symbols-rounded text-base text-emerald-500">task_alt</span>
-                                                    <?php echo ($attribute['applies_to'] ?? 'stem') === 'bouquet' ? 'к букету' : 'к стеблю'; ?>
-                                                </span>
                                             </div>
                                             <?php if (!empty($attribute['description'])): ?>
                                                 <p class="text-xs text-slate-500"><?php echo htmlspecialchars($attribute['description'], ENT_QUOTES, 'UTF-8'); ?></p>
@@ -145,13 +131,11 @@
                                                         data-attr-id="<?php echo (int) $attribute['id']; ?>"
                                                         data-price-delta="<?php echo $priceDelta; ?>"
                                                         class="inline-flex items-center gap-2 whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600"
-                                                        aria-label="<?php echo htmlspecialchars($attribute['name'] . ': ' . $value['value'], ENT_QUOTES, 'UTF-8'); ?>"
-                                                    >
+                                                    aria-label="<?php echo htmlspecialchars($attribute['name'] . ': ' . $value['value'], ENT_QUOTES, 'UTF-8'); ?>"
+                                                >
                                                         <span class="text-sm font-semibold text-slate-800"><?php echo htmlspecialchars($value['value'], ENT_QUOTES, 'UTF-8'); ?></span>
                                                         <?php if ($priceDelta != '0.00'): ?>
                                                             <span class="text-xs font-semibold text-rose-600">+<?php echo $priceDelta; ?> ₽</span>
-                                                        <?php else: ?>
-                                                            <span class="text-xs font-semibold text-emerald-600">без наценки</span>
                                                         <?php endif; ?>
                                                     </button>
                                                 <?php endforeach; ?>
@@ -161,22 +145,13 @@
                                 </div>
                             <?php endif; ?>
 
-                            <div class="space-y-3 rounded-2xl border border-slate-200 bg-gradient-to-br from-white to-rose-50/40 p-4 shadow-inner shadow-rose-100/60">
-                                <div class="flex items-center justify-between text-sm font-semibold text-slate-700">
-                                    <span class="text-sm font-semibold text-slate-400 line-through" data-base-price-total>—</span>
-                                    <span class="text-2xl font-bold text-rose-600" data-actual-price>—</span>
-                                </div>
-                                <p class="text-xs text-slate-500">Финальная стоимость учитывает объём, скидку и наценку атрибутов с учётом того, относится ли опция к стеблю или ко всему букету.</p>
-                            </div>
-
-                            <div class="grid gap-3 sm:grid-cols-[1fr_auto]">
-                                <button type="button" data-qty-increase class="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-800 shadow-sm transition hover:-translate-y-0.5 hover:border-rose-200 hover:text-rose-600">
-                                    <span class="material-symbols-rounded text-base">add</span>
-                                    Добавить стебель
-                                </button>
+                            <div class="flex flex-wrap items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-inner shadow-rose-100/60">
+                                <span class="text-sm font-semibold text-slate-400 line-through" data-base-price-total>—</span>
+                                <span class="flex-1 text-center text-2xl font-bold text-rose-600" data-actual-price>—</span>
                                 <button type="button" class="inline-flex items-center justify-center gap-2 rounded-2xl bg-rose-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-rose-200 transition hover:-translate-y-0.5 hover:bg-rose-700">
+                                    <span class="sm:hidden">+</span>
                                     <span class="material-symbols-rounded text-base">shopping_cart</span>
-                                    В корзину
+                                    <span class="hidden sm:inline">В корзину</span>
                                 </button>
                             </div>
                         </div>
