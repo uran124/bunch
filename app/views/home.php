@@ -3,8 +3,8 @@
 /** @var array $pageMeta */
 ?>
 
-<div class="space-y-6 sm:space-y-8">
-    <section class="space-y-2">
+<div class="space-y-0 sm:space-y-8">
+    <section class="hidden space-y-2">
         <p class="hidden text-xs uppercase tracking-[0.2em] text-slate-500 sm:block">Главная</p>
         <div class="flex items-center justify-between">
             <h1 class="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">Свежая подборка</h1>
@@ -120,7 +120,7 @@
                                             data-applies-to="<?php echo htmlspecialchars($attribute['applies_to'] ?? 'stem', ENT_QUOTES, 'UTF-8'); ?>"
                                             data-selected-delta="0"
                                         >
-                                            <div class="flex items-center justify-between gap-2 text-sm font-semibold text-slate-800">
+                                            <div class="hidden flex items-center justify-between gap-2 text-sm font-semibold text-slate-800">
                                                 <span class="inline-flex items-center gap-2">
                                                     <span class="material-symbols-rounded text-base text-rose-500">sell</span>
                                                     <?php echo htmlspecialchars($attribute['name'], ENT_QUOTES, 'UTF-8'); ?>
