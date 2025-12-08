@@ -56,12 +56,13 @@ class AttributeModel extends Model
     {
         if (!empty($data['id'])) {
             $stmt = $this->db->prepare(
-                "UPDATE {$this->attributesTable} SET name = :name, description = :description, type = :type, is_active = :is_active WHERE id = :id"
+                "UPDATE {$this->attributesTable} SET name = :name, description = :description, type = :type, applies_to = :applies_to, is_active = :is_active WHERE id = :id"
             );
             $stmt->execute([
                 'name' => $data['name'],
                 'description' => $data['description'],
                 'type' => $data['type'],
+                'applies_to' => $data['applies_to'],
                 'is_active' => $data['is_active'],
                 'id' => $data['id'],
             ]);
@@ -70,12 +71,13 @@ class AttributeModel extends Model
         }
 
         $stmt = $this->db->prepare(
-            "INSERT INTO {$this->attributesTable} (name, description, type, is_active) VALUES (:name, :description, :type, :is_active)"
+            "INSERT INTO {$this->attributesTable} (name, description, type, applies_to, is_active) VALUES (:name, :description, :type, :applies_to, :is_active)"
         );
         $stmt->execute([
             'name' => $data['name'],
             'description' => $data['description'],
             'type' => $data['type'],
+            'applies_to' => $data['applies_to'],
             'is_active' => $data['is_active'],
         ]);
 
