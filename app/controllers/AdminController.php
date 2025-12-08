@@ -512,6 +512,7 @@ class AdminController extends Controller
         $name = trim($_POST['name'] ?? '');
         $description = trim($_POST['description'] ?? '');
         $type = $_POST['type'] ?? 'selector';
+        $appliesTo = $_POST['applies_to'] ?? 'stem';
         $isActive = isset($_POST['is_active']) ? 1 : 0;
 
         if ($name === '') {
@@ -525,6 +526,7 @@ class AdminController extends Controller
             'name' => $name,
             'description' => $description !== '' ? $description : null,
             'type' => $type,
+            'applies_to' => $appliesTo === 'bouquet' ? 'bouquet' : 'stem',
             'is_active' => $isActive,
         ]);
 

@@ -523,6 +523,7 @@ CREATE TABLE attributes (
   name VARCHAR(120) NOT NULL,
   description TEXT NULL,
   type ENUM('selector', 'toggle', 'color', 'text', 'number') NOT NULL DEFAULT 'selector',
+  applies_to ENUM('stem', 'bouquet') NOT NULL DEFAULT 'stem',
   is_active TINYINT(1) NOT NULL DEFAULT 1,
 
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -609,10 +610,10 @@ INSERT INTO supplies (
    32, 4, 10, 32, 18, 'single', '2024-12-09', '2024-12-09', NULL,
    1, NULL, 0, 0);
 
-INSERT INTO attributes (name, description, type, is_active) VALUES
-  ('Высота стебля', 'Ростовка в сантиметрах', 'selector', 1),
-  ('Вид оформления', 'Обёртка и дополнительный декор', 'toggle', 1),
-  ('Цвет ленты', 'Дополнительный цветной акцент', 'color', 0);
+INSERT INTO attributes (name, description, type, applies_to, is_active) VALUES
+  ('Высота стебля', 'Ростовка в сантиметрах', 'selector', 'stem', 1),
+  ('Вид оформления', 'Обёртка и дополнительный декор', 'toggle', 'bouquet', 1),
+  ('Цвет ленты', 'Дополнительный цветной акцент', 'color', 'bouquet', 0);
 
 INSERT INTO attribute_values (attribute_id, value, price_delta, photo_url, is_active, sort_order) VALUES
   (1, '40 см', 0.00, 'https://cdn.bunch.test/stem-40.jpg', 1, 1),

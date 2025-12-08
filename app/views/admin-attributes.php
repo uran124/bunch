@@ -35,17 +35,19 @@
         <div class="space-y-3">
             <p class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Справочник атрибутов</p>
             <div class="overflow-hidden rounded-xl border border-slate-200">
-                <div class="grid grid-cols-[80px_1.6fr_1fr_1fr] items-center gap-3 border-b border-slate-100 bg-slate-50 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <div class="grid grid-cols-[80px_1.4fr_1fr_1fr_1fr] items-center gap-3 border-b border-slate-100 bg-slate-50 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
                     <span>ID</span>
                     <span>Название</span>
                     <span>Тип</span>
+                    <span>Относится</span>
                     <span class="text-right">Активность</span>
                 </div>
                 <?php foreach ($attributes as $attribute): ?>
-                    <article class="grid grid-cols-[80px_1.6fr_1fr_1fr] items-center gap-3 border-b border-slate-100 px-4 py-3 last:border-b-0">
+                    <article class="grid grid-cols-[80px_1.4fr_1fr_1fr_1fr] items-center gap-3 border-b border-slate-100 px-4 py-3 last:border-b-0">
                         <div class="text-sm font-semibold text-slate-900">#<?php echo (int) $attribute['id']; ?></div>
                         <div class="text-base font-semibold text-slate-900"><?php echo htmlspecialchars($attribute['name'], ENT_QUOTES, 'UTF-8'); ?></div>
                         <div class="text-sm text-slate-700"><?php echo htmlspecialchars($attribute['type'], ENT_QUOTES, 'UTF-8'); ?></div>
+                        <div class="text-sm text-slate-700"><?php echo $attribute['applies_to'] === 'bouquet' ? 'к букету' : 'к стеблю'; ?></div>
                         <div class="flex items-center justify-end gap-2">
                             <label class="relative inline-flex h-8 w-14 cursor-not-allowed items-center opacity-60">
                                 <input type="checkbox" class="peer sr-only" <?php echo ($attribute['is_active'] ?? 0) ? 'checked' : ''; ?> disabled>
@@ -82,6 +84,13 @@
                         <option value="color">color</option>
                         <option value="text">text</option>
                         <option value="number">number</option>
+                    </select>
+                </label>
+                <label class="flex flex-col gap-1 text-sm font-semibold text-slate-700">
+                    Относится к
+                    <select name="applies_to" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 shadow-sm">
+                        <option value="stem">стеблю (умножать на количество)</option>
+                        <option value="bouquet">букету (фиксированная цена)</option>
                     </select>
                 </label>
                 <label class="flex flex-col gap-1 text-sm font-semibold text-slate-700 sm:col-span-2">
@@ -136,6 +145,13 @@
                                         </select>
                                     </label>
                                 </div>
+                                <label class="flex flex-col gap-1 text-sm font-semibold text-slate-700">
+                                    Относится к
+                                    <select name="applies_to" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 shadow-sm">
+                                        <option value="stem" <?php echo ($attribute['applies_to'] ?? 'stem') === 'stem' ? 'selected' : ''; ?>>стеблю (умножать на количество)</option>
+                                        <option value="bouquet" <?php echo ($attribute['applies_to'] ?? '') === 'bouquet' ? 'selected' : ''; ?>>букету (фиксированная цена)</option>
+                                    </select>
+                                </label>
                                 <label class="flex flex-col gap-1 text-sm font-semibold text-slate-700">
                                     Описание
                                     <textarea name="description" rows="2" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 shadow-sm" placeholder="Комментарий для менеджеров"><?php echo htmlspecialchars($attribute['description'] ?? '', ENT_QUOTES, 'UTF-8'); ?></textarea>

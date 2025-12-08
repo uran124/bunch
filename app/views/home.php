@@ -36,6 +36,23 @@
                     $priceTiersJson = htmlspecialchars(json_encode($product['price_tiers'], JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8');
                     $basePrice = number_format((float) $product['price'], 2, '.', '');
                     $height = $product['stem_height_cm'] ?? $product['supply_stem_height_cm'] ?? null;
+                    $flower = $product['supply_flower_name'] ?? $product['name'];
+                    $variety = $product['supply_variety'] ?? '';
+                    $titleParts = [];
+
+                    if ($flower) {
+                        $titleParts[] = mb_strtolower($flower, 'UTF-8');
+                    }
+
+                    if ($variety) {
+                        $titleParts[] = $variety;
+                    }
+
+                    if ($height) {
+                        $titleParts[] = $height . 'см';
+                    }
+
+                    $displayName = $titleParts ? implode(' ', $titleParts) : $product['name'];
                     ?>
                     <article
                         id="<?php echo $cardId; ?>"
@@ -63,31 +80,11 @@
                         </div>
 
                         <div class="space-y-6 px-5 pb-6 pt-5">
-                            <div class="flex items-start justify-between gap-3">
-                                <div class="space-y-1">
-                                    <p class="text-xs uppercase tracking-[0.18em] text-slate-400">Товар</p>
-                                    <h2 class="text-xl font-bold leading-tight text-slate-900"><?php echo htmlspecialchars($product['name'], ENT_QUOTES, 'UTF-8'); ?></h2>
-                                    <p class="text-sm text-slate-600">
-                                        <?php if (!empty($product['supply_variety'])): ?>
-                                            <span class="font-semibold text-slate-800"><?php echo htmlspecialchars($product['supply_variety'], ENT_QUOTES, 'UTF-8'); ?></span>
-                                        <?php endif; ?>
-                                        <?php if ($height): ?>
-                                            <span class="ml-2 inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-700">
-                                                <span class="material-symbols-rounded text-base">straighten</span>
-                                                <?php echo htmlspecialchars($height, ENT_QUOTES, 'UTF-8'); ?> см
-                                            </span>
-                                        <?php endif; ?>
-                                    </p>
-                                </div>
-                                <div class="rounded-2xl bg-emerald-50 px-3 py-2 text-right text-xs font-semibold text-emerald-700">
-                                    <p class="flex items-center justify-end gap-1">
-                                        <span class="material-symbols-rounded text-base">task_alt</span>
-                                        Готов к заказу
-                                    </p>
-                                    <?php if (!empty($product['supply_country'])): ?>
-                                        <p class="mt-1 text-[11px] uppercase tracking-wide text-emerald-600/80">Страна: <?php echo htmlspecialchars($product['supply_country'], ENT_QUOTES, 'UTF-8'); ?></p>
-                                    <?php endif; ?>
-                                </div>
+                            <div class="space-y-2">
+                                <h2 class="text-2xl font-semibold leading-tight text-slate-900"><?php echo htmlspecialchars($displayName, ENT_QUOTES, 'UTF-8'); ?></h2>
+                                <?php if (!empty($product['supply_country'])): ?>
+                                    <p class="text-sm font-semibold uppercase tracking-wide text-slate-500"><?php echo htmlspecialchars($product['supply_country'], ENT_QUOTES, 'UTF-8'); ?></p>
+                                <?php endif; ?>
                             </div>
 
                             <div class="space-y-3 rounded-2xl bg-slate-50 p-4">
@@ -116,80 +113,70 @@
 
                             <?php if (!empty($product['attributes'])): ?>
                                 <div class="space-y-3">
-                                    <div class="flex items-center gap-2 text-sm font-semibold text-slate-800">
-                                        <span class="material-symbols-rounded text-base text-rose-500">tune</span>
-                                        Атрибуты товара
-                                    </div>
-                                    <div class="space-y-3">
-                                        <?php foreach ($product['attributes'] as $attribute): ?>
-                                            <div
-                                                class="space-y-2"
-                                                data-attribute-group
-                                                data-attribute-id="<?php echo (int) $attribute['id']; ?>"
-                                                data-selected-delta="0"
-                                            >
-                                                <div class="flex items-center justify-between text-sm font-semibold text-slate-700">
-                                                    <span><?php echo htmlspecialchars($attribute['name'], ENT_QUOTES, 'UTF-8'); ?></span>
-                                                    <?php if (!empty($attribute['description'])): ?>
-                                                        <span class="text-xs font-medium text-slate-400"><?php echo htmlspecialchars($attribute['description'], ENT_QUOTES, 'UTF-8'); ?></span>
-                                                    <?php endif; ?>
-                                                </div>
-                                                <div class="no-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1">
-                                                    <?php foreach ($attribute['values'] as $value): ?>
-                                                        <?php
-                                                        $priceDelta = number_format((float) $value['price_delta'], 2, '.', '');
-                                                        $valueId = 'attr-' . $attribute['id'] . '-' . $value['id'];
-                                                        ?>
-                                                        <button
-                                                            type="button"
-                                                            data-attr-option
-                                                            data-attr-id="<?php echo (int) $attribute['id']; ?>"
-                                                            data-price-delta="<?php echo $priceDelta; ?>"
-                                                            class="inline-flex items-center gap-2 whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600"
-                                                            aria-label="<?php echo htmlspecialchars($attribute['name'] . ': ' . $value['value'], ENT_QUOTES, 'UTF-8'); ?>"
-                                                        >
-                                                            <span class="material-symbols-rounded text-base text-slate-400">sell</span>
-                                                            <span class="text-sm font-semibold text-slate-800"><?php echo htmlspecialchars($value['value'], ENT_QUOTES, 'UTF-8'); ?></span>
-                                                            <?php if ($priceDelta != '0.00'): ?>
-                                                                <span class="text-xs font-semibold text-rose-600">+<?php echo $priceDelta; ?> ₽</span>
-                                                            <?php else: ?>
-                                                                <span class="text-xs font-semibold text-emerald-600">без наценки</span>
-                                                            <?php endif; ?>
-                                                        </button>
-                                                    <?php endforeach; ?>
-                                                </div>
+                                    <?php foreach ($product['attributes'] as $attribute): ?>
+                                        <div
+                                            class="space-y-2 rounded-2xl border border-slate-100 bg-slate-50 p-3"
+                                            data-attribute-group
+                                            data-attribute-id="<?php echo (int) $attribute['id']; ?>"
+                                            data-applies-to="<?php echo htmlspecialchars($attribute['applies_to'] ?? 'stem', ENT_QUOTES, 'UTF-8'); ?>"
+                                            data-selected-delta="0"
+                                        >
+                                            <div class="flex items-center justify-between gap-2 text-sm font-semibold text-slate-800">
+                                                <span class="inline-flex items-center gap-2">
+                                                    <span class="material-symbols-rounded text-base text-rose-500">sell</span>
+                                                    <?php echo htmlspecialchars($attribute['name'], ENT_QUOTES, 'UTF-8'); ?>
+                                                </span>
+                                                <span class="inline-flex items-center gap-1 rounded-full bg-white px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                                                    <span class="material-symbols-rounded text-base text-emerald-500">task_alt</span>
+                                                    <?php echo ($attribute['applies_to'] ?? 'stem') === 'bouquet' ? 'к букету' : 'к стеблю'; ?>
+                                                </span>
                                             </div>
-                                        <?php endforeach; ?>
-                                    </div>
+                                            <?php if (!empty($attribute['description'])): ?>
+                                                <p class="text-xs text-slate-500"><?php echo htmlspecialchars($attribute['description'], ENT_QUOTES, 'UTF-8'); ?></p>
+                                            <?php endif; ?>
+                                            <div class="no-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1">
+                                                <?php foreach ($attribute['values'] as $value): ?>
+                                                    <?php
+                                                    $priceDelta = number_format((float) $value['price_delta'], 2, '.', '');
+                                                    ?>
+                                                    <button
+                                                        type="button"
+                                                        data-attr-option
+                                                        data-attr-id="<?php echo (int) $attribute['id']; ?>"
+                                                        data-price-delta="<?php echo $priceDelta; ?>"
+                                                        class="inline-flex items-center gap-2 whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600"
+                                                        aria-label="<?php echo htmlspecialchars($attribute['name'] . ': ' . $value['value'], ENT_QUOTES, 'UTF-8'); ?>"
+                                                    >
+                                                        <span class="text-sm font-semibold text-slate-800"><?php echo htmlspecialchars($value['value'], ENT_QUOTES, 'UTF-8'); ?></span>
+                                                        <?php if ($priceDelta != '0.00'): ?>
+                                                            <span class="text-xs font-semibold text-rose-600">+<?php echo $priceDelta; ?> ₽</span>
+                                                        <?php else: ?>
+                                                            <span class="text-xs font-semibold text-emerald-600">без наценки</span>
+                                                        <?php endif; ?>
+                                                    </button>
+                                                <?php endforeach; ?>
+                                            </div>
+                                        </div>
+                                    <?php endforeach; ?>
                                 </div>
                             <?php endif; ?>
 
-                            <div class="space-y-2 rounded-2xl border border-slate-200 bg-gradient-to-br from-white to-rose-50/40 p-4 shadow-inner shadow-rose-100/60">
+                            <div class="space-y-3 rounded-2xl border border-slate-200 bg-gradient-to-br from-white to-rose-50/40 p-4 shadow-inner shadow-rose-100/60">
                                 <div class="flex items-center justify-between text-sm font-semibold text-slate-700">
-                                    <span class="inline-flex items-center gap-2">
-                                        <span class="material-symbols-rounded text-base">payments</span>
-                                        Обычная цена
-                                    </span>
-                                    <span data-base-price-total class="text-lg font-bold text-slate-900">—</span>
+                                    <span class="text-sm font-semibold text-slate-400 line-through" data-base-price-total>—</span>
+                                    <span class="text-2xl font-bold text-rose-600" data-actual-price>—</span>
                                 </div>
-                                <div class="flex items-center justify-between text-base font-bold text-rose-600">
-                                    <span class="inline-flex items-center gap-2">
-                                        <span class="material-symbols-rounded text-xl">local_atm</span>
-                                        Фактическая цена
-                                    </span>
-                                    <span data-actual-price class="text-2xl">—</span>
-                                </div>
-                                <p class="text-xs text-slate-500">Фактическая стоимость учитывает выбранное количество, скидки за объём и наценку атрибутов.</p>
+                                <p class="text-xs text-slate-500">Финальная стоимость учитывает объём, скидку и наценку атрибутов с учётом того, относится ли опция к стеблю или ко всему букету.</p>
                             </div>
 
-                            <div class="grid gap-3 sm:grid-cols-2">
-                                <button class="inline-flex items-center justify-center gap-2 rounded-2xl bg-rose-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-rose-200 transition hover:-translate-y-0.5 hover:bg-rose-700">
-                                    <span class="material-symbols-rounded text-base">local_shipping</span>
-                                    Доставка
+                            <div class="grid gap-3 sm:grid-cols-[1fr_auto]">
+                                <button type="button" data-qty-increase class="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-800 shadow-sm transition hover:-translate-y-0.5 hover:border-rose-200 hover:text-rose-600">
+                                    <span class="material-symbols-rounded text-base">add</span>
+                                    Добавить стебель
                                 </button>
-                                <button class="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-800 shadow-sm transition hover:-translate-y-0.5 hover:border-rose-200 hover:text-rose-600">
-                                    <span class="material-symbols-rounded text-base">storefront</span>
-                                    Самовывоз
+                                <button type="button" class="inline-flex items-center justify-center gap-2 rounded-2xl bg-rose-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-rose-200 transition hover:-translate-y-0.5 hover:bg-rose-700">
+                                    <span class="material-symbols-rounded text-base">shopping_cart</span>
+                                    В корзину
                                 </button>
                             </div>
                         </div>
@@ -300,12 +287,22 @@
         const quantity = Number(qtyInput?.value || 1);
         const unitPrice = getUnitPrice(basePrice, tiers, quantity);
 
-        const attributeDelta = Array.from(card.querySelectorAll('[data-attribute-group]')).reduce((sum, group) => {
-            return sum + Number(group.dataset.selectedDelta || 0);
-        }, 0);
+        const deltas = Array.from(card.querySelectorAll('[data-attribute-group]')).reduce(
+            (acc, group) => {
+                const scope = group.dataset.appliesTo === 'bouquet' ? 'bouquet' : 'stem';
+                const delta = Number(group.dataset.selectedDelta || 0);
+                if (scope === 'bouquet') {
+                    acc.bouquet += delta;
+                } else {
+                    acc.stem += delta;
+                }
+                return acc;
+            },
+            { stem: 0, bouquet: 0 }
+        );
 
-        const baseTotal = unitPrice * quantity;
-        const actualTotal = (unitPrice + attributeDelta) * quantity;
+        const baseTotal = basePrice * quantity;
+        const actualTotal = (unitPrice + deltas.stem) * quantity + deltas.bouquet;
 
         if (qtyValue) qtyValue.textContent = quantity.toString();
         if (basePriceTarget) basePriceTarget.textContent = formatMoney(baseTotal);
@@ -319,6 +316,16 @@
         const qtyInput = card.querySelector('[data-qty]');
         if (qtyInput) {
             qtyInput.addEventListener('input', () => updateCardTotals(card));
+        }
+
+        const qtyIncrease = card.querySelector('[data-qty-increase]');
+        if (qtyIncrease && qtyInput) {
+            qtyIncrease.addEventListener('click', () => {
+                const current = Number(qtyInput.value || 1);
+                const next = Math.min(current + 1, Number(qtyInput.max || 101));
+                qtyInput.value = next.toString();
+                updateCardTotals(card);
+            });
         }
 
         card.querySelectorAll('[data-attr-option]').forEach((option) => {
