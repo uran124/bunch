@@ -37,7 +37,7 @@
         </div>
     </header>
 
-    <main class="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 px-4 py-8">
+    <main class="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-4 px-3 py-3 sm:gap-6 sm:px-4 sm:py-8">
         <?php echo $content; ?>
     </main>
 

@@ -3,17 +3,17 @@
 /** @var array $pageMeta */
 ?>
 
-<div class="space-y-8">
+<div class="space-y-6 sm:space-y-8">
     <section class="space-y-2">
-        <p class="text-sm uppercase tracking-[0.2em] text-slate-500">Главная</p>
+        <p class="hidden text-xs uppercase tracking-[0.2em] text-slate-500 sm:block">Главная</p>
         <div class="flex items-center justify-between">
-            <h1 class="text-2xl font-bold tracking-tight text-slate-900">Свежая подборка</h1>
-            <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-emerald-600">
+            <h1 class="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">Свежая подборка</h1>
+            <span class="hidden items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-emerald-600 sm:inline-flex">
                 <span class="material-symbols-rounded text-base">local_florist</span>
                 Выбор дня
             </span>
         </div>
-        <p class="text-sm text-slate-600">Прокручивайте карточки влево и вправо, выбирайте количество и оформление, а затем оформляйте доставку или самовывоз.</p>
+        <p class="hidden text-sm text-slate-600 sm:block">Прокручивайте карточки влево и вправо, выбирайте количество и оформление, а затем оформляйте доставку или самовывоз.</p>
     </section>
 
     <?php if (empty($products)): ?>
@@ -26,7 +26,7 @@
         </div>
     <?php else: ?>
         <div class="relative">
-            <div class="flex snap-x gap-4 overflow-x-auto px-2 pb-4 pt-1 md:px-1" aria-label="Лента товаров">
+            <div class="flex snap-x gap-4 overflow-x-auto px-0 pb-20 pt-1 md:px-1" aria-label="Лента товаров">
                 <?php foreach ($products as $product): ?>
                     <?php
                     $cardId = 'product-card-' . $product['id'];
@@ -72,18 +72,27 @@
                             <?php endif; ?>
                         </div>
 
-                        <div class="space-y-6 px-5 pb-6 pt-5">
-                            <div class="space-y-2">
-                                <h2 class="text-2xl font-semibold leading-tight text-slate-900"><?php echo htmlspecialchars($displayName, ENT_QUOTES, 'UTF-8'); ?></h2>
+                        <div class="space-y-0 px-2 pb-6 pt-2 md:space-y-6 md:px-5 md:pt-5">
+                            <div class="space-y-1 md:space-y-2">
+                                <h2 class="text-lg font-semibold leading-snug text-slate-900 md:text-2xl"><?php echo htmlspecialchars($displayName, ENT_QUOTES, 'UTF-8'); ?></h2>
                             </div>
 
-                            <div class="space-y-3 rounded-2xl bg-slate-50 p-4">
-                                <div class="flex items-center justify-between text-sm font-semibold text-slate-700">
+                            <div class="space-y-2 rounded-2xl bg-slate-50 p-3 md:space-y-3 md:p-4">
+                                <div class="flex items-center justify-between text-xs font-semibold text-slate-700 md:text-sm">
                                     <span class="inline-flex items-center gap-2">
                                         <span class="material-symbols-rounded text-base">stacked_bar_chart</span>
                                         Количество стеблей
                                     </span>
-                                    <span data-qty-value class="rounded-lg bg-white px-3 py-1 text-xs font-bold text-slate-900 shadow-inner">1</span>
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        max="101"
+                                        step="1"
+                                        value="1"
+                                        inputmode="numeric"
+                                        data-qty-value
+                                        class="w-20 rounded-lg bg-white px-3 py-2 text-lg font-bold text-slate-900 shadow-inner shadow-rose-100/60 text-center md:text-xl"
+                                    >
                                 </div>
                                 <input
                                     type="range"
@@ -94,7 +103,7 @@
                                     data-qty
                                     class="range-slider h-2 w-full appearance-none rounded-full bg-slate-200 accent-rose-500"
                                 >
-                                <div class="flex justify-between text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                                <div class="hidden justify-between text-[11px] font-semibold uppercase tracking-wide text-slate-400 md:flex">
                                     <span>1</span>
                                     <span>50</span>
                                     <span>101</span>
@@ -145,11 +154,18 @@
                                 </div>
                             <?php endif; ?>
 
-                            <div class="flex flex-wrap items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-inner shadow-rose-100/60">
+                            <div class="flex items-center justify-between gap-3 rounded-2xl bg-white px-3 py-2 shadow-sm md:hidden">
+                                <span class="text-lg font-bold text-rose-600" data-actual-price>—</span>
+                                <button type="button" class="inline-flex items-center justify-center gap-2 rounded-xl bg-rose-600 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-white shadow-md shadow-rose-200 transition hover:-translate-y-0.5 hover:bg-rose-700">
+                                    <span class="material-symbols-rounded text-base">shopping_cart</span>
+                                    В корзину
+                                </button>
+                            </div>
+
+                            <div class="hidden flex-wrap items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-inner shadow-rose-100/60 md:flex">
                                 <span class="text-sm font-semibold text-slate-400 line-through" data-base-price-total>—</span>
                                 <span class="flex-1 text-center text-2xl font-bold text-rose-600" data-actual-price>—</span>
                                 <button type="button" class="inline-flex items-center justify-center gap-2 rounded-2xl bg-rose-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-rose-200 transition hover:-translate-y-0.5 hover:bg-rose-700">
-                                    <span class="sm:hidden">+</span>
                                     <span class="material-symbols-rounded text-base">shopping_cart</span>
                                     <span class="hidden sm:inline">В корзину</span>
                                 </button>
@@ -227,6 +243,11 @@
         return unitPrice;
     }
 
+    function clampQuantity(value, min, max) {
+        const numeric = Number.isFinite(value) ? value : min;
+        return Math.min(Math.max(numeric, min), max);
+    }
+
     function selectDefaultAttributes(card) {
         card.querySelectorAll('[data-attribute-group]').forEach((group) => {
             const firstOption = group.querySelector('[data-attr-option]');
@@ -256,10 +277,12 @@
         const tiers = JSON.parse(card.dataset.priceTiers || '[]');
         const qtyInput = card.querySelector('[data-qty]');
         const qtyValue = card.querySelector('[data-qty-value]');
-        const basePriceTarget = card.querySelector('[data-base-price-total]');
-        const actualPriceTarget = card.querySelector('[data-actual-price]');
+        const basePriceTargets = card.querySelectorAll('[data-base-price-total]');
+        const actualPriceTargets = card.querySelectorAll('[data-actual-price]');
 
-        const quantity = Number(qtyInput?.value || 1);
+        const minQty = Number(qtyInput?.min || qtyValue?.min || 1);
+        const maxQty = Number(qtyInput?.max || qtyValue?.max || 101);
+        const quantity = clampQuantity(Number(qtyValue?.value || qtyInput?.value || minQty), minQty, maxQty);
         const unitPrice = getUnitPrice(basePrice, tiers, quantity);
 
         const deltas = Array.from(card.querySelectorAll('[data-attribute-group]')).reduce(
@@ -279,9 +302,14 @@
         const baseTotal = basePrice * quantity;
         const actualTotal = (unitPrice + deltas.stem) * quantity + deltas.bouquet;
 
-        if (qtyValue) qtyValue.textContent = quantity.toString();
-        if (basePriceTarget) basePriceTarget.textContent = formatMoney(baseTotal);
-        if (actualPriceTarget) actualPriceTarget.textContent = formatMoney(actualTotal);
+        if (qtyInput) qtyInput.value = quantity.toString();
+        if (qtyValue) qtyValue.value = quantity.toString();
+        basePriceTargets.forEach((target) => {
+            target.textContent = formatMoney(baseTotal);
+        });
+        actualPriceTargets.forEach((target) => {
+            target.textContent = formatMoney(actualTotal);
+        });
     }
 
     document.querySelectorAll('[data-product-card]').forEach((card) => {
@@ -289,8 +317,27 @@
         updateCardTotals(card);
 
         const qtyInput = card.querySelector('[data-qty]');
+        const qtyValueInput = card.querySelector('[data-qty-value]');
         if (qtyInput) {
-            qtyInput.addEventListener('input', () => updateCardTotals(card));
+            qtyInput.addEventListener('input', () => {
+                const min = Number(qtyInput.min || qtyValueInput?.min || 1);
+                const max = Number(qtyInput.max || qtyValueInput?.max || 101);
+                const quantity = clampQuantity(Number(qtyInput.value || min), min, max);
+                qtyInput.value = quantity.toString();
+                if (qtyValueInput) qtyValueInput.value = quantity.toString();
+                updateCardTotals(card);
+            });
+        }
+
+        if (qtyValueInput) {
+            qtyValueInput.addEventListener('input', () => {
+                const min = Number(qtyValueInput.min || qtyInput?.min || 1);
+                const max = Number(qtyValueInput.max || qtyInput?.max || 101);
+                const quantity = clampQuantity(Number(qtyValueInput.value || min), min, max);
+                qtyValueInput.value = quantity.toString();
+                if (qtyInput) qtyInput.value = quantity.toString();
+                updateCardTotals(card);
+            });
         }
 
         const qtyIncrease = card.querySelector('[data-qty-increase]');
@@ -299,6 +346,7 @@
                 const current = Number(qtyInput.value || 1);
                 const next = Math.min(current + 1, Number(qtyInput.max || 101));
                 qtyInput.value = next.toString();
+                if (qtyValueInput) qtyValueInput.value = next.toString();
                 updateCardTotals(card);
             });
         }
