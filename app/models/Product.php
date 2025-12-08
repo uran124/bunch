@@ -7,7 +7,9 @@ class Product extends Model
 
     public function getAll(): array
     {
-        $stmt = $this->db->query("SELECT * FROM {$this->table} WHERE is_active = 1 ORDER BY sort_order ASC");
+        $sql = "SELECT p.*, s.variety AS supply_variety, s.flower_name AS supply_flower_name, s.country AS supply_country, s.stem_height_cm AS supply_stem_height_cm FROM {$this->table} p LEFT JOIN supplies s ON p.supply_id = s.id WHERE p.is_active = 1 ORDER BY p.sort_order ASC";
+
+        $stmt = $this->db->query($sql);
         return $stmt->fetchAll();
     }
 

@@ -44,14 +44,26 @@
 
     <?php include __DIR__ . '/../partials/bottom-nav.php'; ?>
 
-    <footer class="border-t border-slate-200 bg-white/90 backdrop-blur">
-        <div class="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-4 text-sm text-slate-500">
-            <span><?php echo htmlspecialchars($pageMeta['footerLeft'] ?? ('© ' . date('Y') . ' Bunch flowers'), ENT_QUOTES, 'UTF-8'); ?></span>
-            <span class="inline-flex items-center gap-2">
-                <span class="material-symbols-rounded text-base text-emerald-500">schedule</span>
-                <?php echo htmlspecialchars($pageMeta['footerRight'] ?? 'Красноярск · Asia/Krasnoyarsk', ENT_QUOTES, 'UTF-8'); ?>
-            </span>
-        </div>
-    </footer>
+    <?php
+    $footerLeft = trim((string) ($pageMeta['footerLeft'] ?? ''));
+    $footerRight = trim((string) ($pageMeta['footerRight'] ?? ''));
+    ?>
+
+    <?php if ($footerLeft !== '' || $footerRight !== ''): ?>
+        <footer class="border-t border-slate-200 bg-white/90 backdrop-blur">
+            <div class="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-4 text-sm text-slate-500">
+                <?php if ($footerLeft !== ''): ?>
+                    <span><?php echo htmlspecialchars($footerLeft, ENT_QUOTES, 'UTF-8'); ?></span>
+                <?php endif; ?>
+
+                <?php if ($footerRight !== ''): ?>
+                    <span class="inline-flex items-center gap-2">
+                        <span class="material-symbols-rounded text-base text-emerald-500">schedule</span>
+                        <?php echo htmlspecialchars($footerRight, ENT_QUOTES, 'UTF-8'); ?>
+                    </span>
+                <?php endif; ?>
+            </div>
+        </footer>
+    <?php endif; ?>
 </body>
 </html>
