@@ -17,7 +17,7 @@
 </head>
 <body class="min-h-screen bg-slate-50 text-slate-900 antialiased font-[\"Manrope\",system-ui,sans-serif]">
     <header class="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur">
-        <div class="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-4">
+        <div class="mx-auto flex w-full max-w-6xl items-center justify-between px-3 py-2">
             <div>
                 <div class="flex items-center gap-2 text-lg font-semibold tracking-tight text-slate-900">
                     <span class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-rose-100 text-rose-600 shadow-sm">BF</span>
