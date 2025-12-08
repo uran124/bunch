@@ -396,6 +396,11 @@ class AdminController extends Controller
         $price = (float) ($_POST['price'] ?? 0);
         $active = isset($_POST['is_active']) ? 1 : 0;
 
+        $uploadedPhoto = $this->handlePhotoUpload('photo_file', 'product');
+        if ($uploadedPhoto) {
+            $photoUrl = $uploadedPhoto;
+        }
+
         $tierQty = $_POST['tier_min_qty'] ?? [];
         $tierPrice = $_POST['tier_price'] ?? [];
         $attributeIds = array_filter(array_map('intval', $_POST['attribute_ids'] ?? []));
@@ -558,6 +563,11 @@ class AdminController extends Controller
         $isActive = isset($_POST['is_active']) ? 1 : 0;
         $sortOrder = (int) ($_POST['sort_order'] ?? 0);
 
+        $uploadedPhoto = $this->handlePhotoUpload('photo_file', 'attribute');
+        if ($uploadedPhoto) {
+            $photoUrl = $uploadedPhoto;
+        }
+
         if ($attributeId <= 0 || $value === '') {
             header('Location: /?page=admin-attributes&status=error');
             return;
@@ -592,6 +602,17 @@ class AdminController extends Controller
 
         $anchor = $attributeId > 0 ? '#attribute-' . $attributeId : '';
         header('Location: /?page=admin-attributes&status=deleted' . $anchor);
+    }
+
+    private function handlePhotoUpload(string $fieldName, string $prefix): ?string
+    {
+        if (empty($_FILES[$fieldName])) {
+            return null;
+        }
+
+        $uploader = new ImageUploader();
+
+        return $uploader->upload($_FILES[$fieldName], $prefix);
     }
 
     public function catalogSupplies(): void
@@ -638,6 +659,11 @@ class AdminController extends Controller
             'packs_reserved' => 0,
         ];
 
+        $uploadedPhoto = $this->handlePhotoUpload('photo_file_standing', 'supply');
+        if ($uploadedPhoto) {
+            $payload['photo_url'] = $uploadedPhoto;
+        }
+
         if ($payload['flower_name'] === '' || $payload['variety'] === '' || !$payload['packs_total'] || !$payload['stems_per_pack'] || empty($payload['first_delivery_date'])) {
             header('Location: /?page=admin-supplies&status=error');
             return;
@@ -668,6 +694,11 @@ class AdminController extends Controller
             'allow_small_wholesale' => isset($_POST['allow_small_wholesale']) ? 1 : 0,
             'packs_reserved' => 0,
         ];
+
+        $uploadedPhoto = $this->handlePhotoUpload('photo_file_single', 'supply');
+        if ($uploadedPhoto) {
+            $payload['photo_url'] = $uploadedPhoto;
+        }
 
         if ($payload['flower_name'] === '' || $payload['variety'] === '' || !$payload['packs_total'] || !$payload['stems_per_pack'] || empty($payload['planned_delivery_date'])) {
             header('Location: /?page=admin-supplies&status=error');
