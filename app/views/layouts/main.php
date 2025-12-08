@@ -21,9 +21,8 @@
             <div>
                 <div class="flex items-center gap-2 text-lg font-semibold tracking-tight text-slate-900">
                     <span class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-rose-100 text-rose-600 shadow-sm">BF</span>
-                    <span><?php echo htmlspecialchars($pageMeta['headerTitle'] ?? 'Bunch flowers', ENT_QUOTES, 'UTF-8'); ?></span>
+                    <span class="sr-only"><?php echo htmlspecialchars($pageMeta['headerTitle'] ?? 'Bunch flowers', ENT_QUOTES, 'UTF-8'); ?></span>
                 </div>
-                <p class="text-sm text-slate-500"><?php echo htmlspecialchars($pageMeta['headerSubtitle'] ?? 'Панель управления', ENT_QUOTES, 'UTF-8'); ?></p>
             </div>
             <div class="hidden items-center gap-3 sm:flex">
                 <button class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
