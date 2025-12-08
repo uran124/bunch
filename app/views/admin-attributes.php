@@ -175,7 +175,7 @@
                     </form>
                     <div class="mt-4 space-y-2">
                         <?php foreach ($attribute['values'] as $value): ?>
-                            <form action="/?page=admin-attribute-value-save" method="post" class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700">
+                            <form action="/?page=admin-attribute-value-save" method="post" enctype="multipart/form-data" class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700">
                                 <input type="hidden" name="attribute_id" value="<?php echo $attributeId; ?>">
                                 <input type="hidden" name="id" value="<?php echo (int) $value['id']; ?>">
                                 <div class="grid gap-2 sm:grid-cols-[1.4fr_1fr_1fr_80px] sm:items-center">
@@ -196,6 +196,11 @@
                                         <input name="sort_order" type="number" value="<?php echo (int) $value['sort_order']; ?>" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 shadow-sm">
                                     </label>
                                 </div>
+                                <label class="mt-2 flex flex-col gap-1 font-semibold text-slate-700">
+                                    Загрузить фото
+                                    <input name="photo_file" type="file" accept="image/*" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 shadow-sm">
+                                    <span class="text-xs font-normal text-slate-500">Обрежем до квадрата и сохраним в WebP.</span>
+                                </label>
                                 <div class="mt-2 flex flex-wrap items-center justify-between gap-2">
                                     <label class="relative inline-flex h-7 w-12 cursor-pointer items-center">
                                         <input type="checkbox" name="is_active" class="peer sr-only" <?php echo ($value['is_active'] ?? 0) ? 'checked' : ''; ?>>
@@ -220,7 +225,7 @@
                                 <input type="hidden" name="attribute_id" value="<?php echo $attributeId; ?>">
                             </form>
                         <?php endforeach; ?>
-                        <form action="/?page=admin-attribute-value-save" method="post" class="rounded-lg border border-dashed border-emerald-200 bg-white px-3 py-3 text-sm text-slate-700">
+                        <form action="/?page=admin-attribute-value-save" method="post" enctype="multipart/form-data" class="rounded-lg border border-dashed border-emerald-200 bg-white px-3 py-3 text-sm text-slate-700">
                             <input type="hidden" name="attribute_id" value="<?php echo $attributeId; ?>">
                             <p class="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-600">Добавить вариант</p>
                             <div class="grid gap-2 sm:grid-cols-[1.4fr_1fr_1fr_80px] sm:items-center">
@@ -241,6 +246,11 @@
                                     <input name="sort_order" type="number" value="0" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 shadow-sm">
                                 </label>
                             </div>
+                            <label class="mt-2 flex flex-col gap-1 font-semibold text-slate-700">
+                                Загрузить фото
+                                <input name="photo_file" type="file" accept="image/*" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 shadow-sm">
+                                <span class="text-xs font-normal text-slate-500">Изображение обрежется до квадрата и сохранится в WebP.</span>
+                            </label>
                             <div class="mt-2 flex flex-wrap items-center justify-between gap-2">
                                 <label class="relative inline-flex h-7 w-12 cursor-pointer items-center">
                                     <input type="checkbox" name="is_active" class="peer sr-only" checked>

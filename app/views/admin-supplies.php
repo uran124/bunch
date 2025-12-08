@@ -42,7 +42,7 @@
     <?php endif; ?>
 
     <div class="grid gap-5 lg:grid-cols-2">
-        <form id="standing-form" action="/?page=admin-supply-standing" method="post" class="space-y-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-rose-50/60 ring-1 ring-transparent">
+        <form id="standing-form" action="/?page=admin-supply-standing" method="post" enctype="multipart/form-data" class="space-y-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-rose-50/60 ring-1 ring-transparent">
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Стендинг</p>
@@ -55,6 +55,11 @@
                 <label class="flex flex-col gap-2 text-sm font-semibold text-slate-700">
                     Фото (URL)
                     <input name="photo_url" type="text" class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-sm focus:border-rose-300 focus:outline-none focus:ring-2 focus:ring-rose-200" placeholder="https://...">
+                </label>
+                <label class="flex flex-col gap-2 text-sm font-semibold text-slate-700">
+                    Загрузить фото
+                    <input name="photo_file_standing" type="file" accept="image/*" class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-sm focus:border-rose-300 focus:outline-none focus:ring-2 focus:ring-rose-200">
+                    <span class="text-xs font-normal text-slate-500">Изображение обрежется до квадрата и сохранится в WebP.</span>
                 </label>
                 <label class="flex flex-col gap-2 text-sm font-semibold text-slate-700">
                     Название цветка
@@ -116,7 +121,7 @@
             </div>
         </form>
 
-        <form id="single-form" action="/?page=admin-supply-single" method="post" class="space-y-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-rose-50/60 ring-1 ring-transparent">
+        <form id="single-form" action="/?page=admin-supply-single" method="post" enctype="multipart/form-data" class="space-y-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-rose-50/60 ring-1 ring-transparent">
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Разовая поставка</p>
@@ -129,6 +134,11 @@
                 <label class="flex flex-col gap-2 text-sm font-semibold text-slate-700">
                     Фото (URL)
                     <input name="photo_url" type="text" class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-sm focus:border-rose-300 focus:outline-none focus:ring-2 focus:ring-rose-200" placeholder="https://...">
+                </label>
+                <label class="flex flex-col gap-2 text-sm font-semibold text-slate-700">
+                    Загрузить фото
+                    <input name="photo_file_single" type="file" accept="image/*" class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-sm focus:border-rose-300 focus:outline-none focus:ring-2 focus:ring-rose-200">
+                    <span class="text-xs font-normal text-slate-500">Изображение обрежется до квадрата и сохранится в WebP.</span>
                 </label>
                 <label class="flex flex-col gap-2 text-sm font-semibold text-slate-700">
                     Название цветка
