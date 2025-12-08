@@ -58,12 +58,20 @@ class AccountController extends Controller
             'system_updates' => true,
         ];
 
+        $pageMeta = [
+            'title' => 'Личный кабинет — Bunch flowers',
+            'description' => 'Управляйте профилем, адресами, заказами и подписками.',
+            'headerTitle' => 'Bunch flowers',
+            'headerSubtitle' => 'Профиль',
+        ];
+
         $this->render('account', compact(
             'user',
             'addresses',
             'activeOrder',
             'activeSubscription',
-            'notificationSettings'
+            'notificationSettings',
+            'pageMeta'
         ));
     }
 }
