@@ -168,6 +168,37 @@ class Product extends Model
         return array_column($stmt->fetchAll(), 'attribute_id');
     }
 
+    public function getAttributesWithValues(int $productId): array
+    {
+        $sql = 'SELECT a.* FROM attributes a JOIN product_attributes pa ON pa.attribute_id = a.id WHERE pa.product_id = :product_id AND a.is_active = 1 ORDER BY a.name ASC';
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute(['product_id' => $productId]);
+        $attributes = $stmt->fetchAll();
+
+        if (!$attributes) {
+            return [];
+        }
+
+        $attributeIds = array_column($attributes, 'id');
+        $placeholders = implode(',', array_fill(0, count($attributeIds), '?'));
+        $valuesStmt = $this->db->prepare(
+            "SELECT * FROM attribute_values WHERE attribute_id IN ($placeholders) AND is_active = 1 ORDER BY sort_order ASC, id ASC"
+        );
+        $valuesStmt->execute($attributeIds);
+        $values = $valuesStmt->fetchAll();
+
+        $grouped = [];
+        foreach ($values as $value) {
+            $grouped[$value['attribute_id']][] = $value;
+        }
+
+        foreach ($attributes as &$attribute) {
+            $attribute['values'] = $grouped[$attribute['id']] ?? [];
+        }
+
+        return $attributes;
+    }
+
     private function generateSlug(string $name): string
     {
         $slug = strtolower(trim(preg_replace('/[^A-Za-zА-Яа-я0-9]+/u', '-', $name), '-'));
