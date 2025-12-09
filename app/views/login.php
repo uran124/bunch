@@ -10,22 +10,7 @@
                     <span class="material-symbols-rounded text-base">lock</span>
                     <span>Вход в панель</span>
                 </div>
-                <div>
-                    <h1 class="text-3xl font-semibold tracking-tight text-slate-900">С возвращением!</h1>
-                    <p class="text-sm text-slate-600">Используйте номер телефона и PIN-код из Telegram, чтобы войти.</p>
-                </div>
             </div>
-            <?php if (!empty($botUsername)): ?>
-                <a
-                    href="https://t.me/<?php echo htmlspecialchars($botUsername, ENT_QUOTES, 'UTF-8'); ?>"
-                    class="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-slate-900/10 transition hover:-translate-y-0.5 hover:shadow-xl"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                >
-                    <span class="material-symbols-rounded text-base">smart_toy</span>
-                    <span>Открыть бота</span>
-                </a>
-            <?php endif; ?>
         </header>
 
         <?php if (!empty($errors)): ?>
@@ -41,46 +26,138 @@
             </div>
         <?php endif; ?>
 
-        <form method="POST" action="/?page=login" class="grid gap-5">
-            <div class="grid gap-1.5">
-                <label for="phone" class="text-sm font-semibold text-slate-800">Телефон</label>
+        <form method="POST" action="/?page=login" class="grid gap-5" id="login-form">
+            <div class="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-inner shadow-slate-100">
                 <input
-                    type="text"
+                    type="tel"
                     id="phone"
                     name="phone"
-                    class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-base font-medium text-slate-900 shadow-inner shadow-slate-100 outline-none transition focus:border-rose-400 focus:ring-2 focus:ring-rose-100"
-                    placeholder="+7 (999) 123-45-67"
+                    class="w-full bg-transparent text-lg font-semibold text-slate-900 outline-none placeholder:text-slate-400"
+                    placeholder="+7 ___ ___-__-__"
                     required
                     inputmode="tel"
+                    autocomplete="tel"
                 >
             </div>
-            <div class="grid gap-1.5">
-                <div class="flex items-center justify-between text-sm font-semibold text-slate-800">
-                    <label for="pin">PIN</label>
-                    <a href="/?page=recover" class="text-rose-600 hover:text-rose-700">Забыли PIN?</a>
+            <div class="grid gap-3">
+                <div class="flex items-center gap-2 text-sm font-semibold text-slate-800">
+                    <span class="material-symbols-rounded text-base">key</span>
+                    <span>PIN</span>
                 </div>
-                <input
-                    type="password"
-                    id="pin"
-                    name="pin"
-                    maxlength="4"
-                    minlength="4"
-                    class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-base font-medium text-slate-900 shadow-inner shadow-slate-100 outline-none transition focus:border-rose-400 focus:ring-2 focus:ring-rose-100"
-                    placeholder="••••"
-                    required
-                    inputmode="numeric"
-                >
+                <div class="grid grid-cols-4 gap-3" id="pin-inputs">
+                    <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="w-full rounded-xl border border-slate-200 bg-white py-3 text-center text-xl font-semibold text-slate-900 shadow-inner shadow-slate-100 outline-none transition focus:border-rose-400 focus:ring-2 focus:ring-rose-100" aria-label="Первая цифра PIN">
+                    <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="w-full rounded-xl border border-slate-200 bg-white py-3 text-center text-xl font-semibold text-slate-900 shadow-inner shadow-slate-100 outline-none transition focus:border-rose-400 focus:ring-2 focus:ring-rose-100" aria-label="Вторая цифра PIN">
+                    <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="w-full rounded-xl border border-slate-200 bg-white py-3 text-center text-xl font-semibold text-slate-900 shadow-inner shadow-slate-100 outline-none transition focus:border-rose-400 focus:ring-2 focus:ring-rose-100" aria-label="Третья цифра PIN">
+                    <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="w-full rounded-xl border border-slate-200 bg-white py-3 text-center text-xl font-semibold text-slate-900 shadow-inner shadow-slate-100 outline-none transition focus:border-rose-400 focus:ring-2 focus:ring-rose-100" aria-label="Четвертая цифра PIN">
+                </div>
+                <input type="hidden" name="pin" id="pin" required minlength="4" maxlength="4">
             </div>
-            <button
-                type="submit"
-                class="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-rose-500 to-rose-600 px-4 py-3 text-base font-semibold text-white shadow-lg shadow-rose-200 transition hover:shadow-xl hover:shadow-rose-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-500"
-            >
-                <span class="material-symbols-rounded text-base">login</span>
-                Войти
-            </button>
-            <p class="text-center text-sm text-slate-600">
-                Нет аккаунта? <a class="font-semibold text-rose-600 hover:text-rose-700" href="/?page=register">Зарегистрироваться</a>
-            </p>
+            <div class="grid grid-cols-2 gap-3 text-sm font-semibold">
+                <a href="/?page=recover" class="inline-flex items-center justify-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-2 text-rose-700 transition hover:border-rose-300 hover:bg-rose-100">
+                    <span class="material-symbols-rounded text-base">lock_open</span>
+                    Забыли PIN?
+                </a>
+                <a href="/?page=register" class="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-slate-800 transition hover:border-rose-300 hover:bg-rose-50">
+                    <span class="material-symbols-rounded text-base">how_to_reg</span>
+                    Регистрация
+                </a>
+            </div>
         </form>
     </div>
 </section>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const phoneInput = document.getElementById('phone');
+        const pinInputs = Array.from(document.querySelectorAll('#pin-inputs input'));
+        const hiddenPin = document.getElementById('pin');
+        const form = document.getElementById('login-form');
+
+        const formatPhone = (value) => {
+            const digits = value.replace(/\D/g, '');
+            const withoutPrefix = digits.startsWith('7') ? digits.slice(1) : digits;
+            const limited = withoutPrefix.slice(0, 10);
+            const parts = [];
+
+            if (limited.length > 0) {
+                parts.push(limited.slice(0, 3));
+            }
+            if (limited.length > 3) {
+                parts.push(limited.slice(3, 6));
+            }
+            if (limited.length > 6) {
+                parts.push(limited.slice(6, 8));
+            }
+            if (limited.length > 8) {
+                parts.push(limited.slice(8, 10));
+            }
+
+            let formatted = '+7 ';
+            if (parts.length > 0) {
+                formatted += parts[0];
+            }
+            if (parts.length > 1) {
+                formatted += ' ' + parts[1];
+            }
+            if (parts.length > 2) {
+                formatted += '-' + parts[2];
+            }
+            if (parts.length > 3) {
+                formatted += '-' + parts[3];
+            }
+
+            return { formatted, digits: limited };
+        };
+
+        const setPhoneValue = (value) => {
+            const { formatted, digits } = formatPhone(value);
+            phoneInput.value = formatted;
+
+            if (digits.length === 10) {
+                pinInputs[0].focus();
+            }
+        };
+
+        phoneInput.addEventListener('focus', () => {
+            if (!phoneInput.value.trim()) {
+                setPhoneValue('+7 ');
+            }
+            requestAnimationFrame(() => {
+                phoneInput.setSelectionRange(phoneInput.value.length, phoneInput.value.length);
+            });
+        });
+
+        phoneInput.addEventListener('input', () => {
+            setPhoneValue(phoneInput.value);
+        });
+
+        phoneInput.addEventListener('keydown', (event) => {
+            if (phoneInput.selectionStart <= 3 && ['Backspace', 'Delete'].includes(event.key)) {
+                event.preventDefault();
+            }
+        });
+
+        const updateHiddenPin = () => {
+            hiddenPin.value = pinInputs.map((input) => input.value).join('');
+            if (hiddenPin.value.length === 4) {
+                form.requestSubmit();
+            }
+        };
+
+        pinInputs.forEach((input, index) => {
+            input.addEventListener('input', () => {
+                input.value = input.value.replace(/\D/g, '').slice(0, 1);
+                if (input.value && index < pinInputs.length - 1) {
+                    pinInputs[index + 1].focus();
+                }
+                updateHiddenPin();
+            });
+
+            input.addEventListener('keydown', (event) => {
+                if (event.key === 'Backspace' && !input.value && index > 0) {
+                    pinInputs[index - 1].focus();
+                }
+            });
+        });
+    });
+</script>
