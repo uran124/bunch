@@ -11,15 +11,11 @@
         <div class="space-y-1">
             <p class="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.08em] text-rose-600">
                 <span class="material-symbols-rounded text-base">history</span>
-                Заказы и подписки
+                <h1> Заказы и подписки </h1>
             </p>
-            <h1 class="text-3xl font-semibold tracking-tight text-slate-900">Мои заказы</h1>
-            <p class="text-sm text-slate-600">Активные подписки и заказы закреплены сверху. Ниже — выполненные, загружаемые по 10 штук.</p>
+
         </div>
-        <span class="inline-flex items-center gap-2 self-start rounded-xl bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm ring-1 ring-slate-200">
-            <span class="material-symbols-rounded text-base text-emerald-500">database</span>
-            Данные из базы
-        </span>
+
     </header>
 
     <?php if (!empty($activeSubscriptions) || !empty($activeOrders)): ?>
