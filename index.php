@@ -32,6 +32,7 @@ $router->get('cart', [CartController::class, 'index']);
 $router->get('subscription', [SubscriptionController::class, 'index']);
 $router->get('promo', [PromoController::class, 'index']);
 $router->get('orders', [OrdersController::class, 'index']);
+$router->get('orders-history', [OrdersController::class, 'history']);
 $router->get('account', [AccountController::class, 'index']);
 $router->get('login', [AuthController::class, 'login']);
 $router->get('register', [AuthController::class, 'register']);
