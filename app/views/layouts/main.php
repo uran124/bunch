@@ -19,7 +19,7 @@
 $currentPage = $_GET['page'] ?? trim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/') ?: 'home';
 ?>
 <body
-    class="min-h-screen bg-slate-50 text-slate-900 antialiased font-[\"Manrope\",system-ui,sans-serif] flex flex-col pb-[calc(4.5rem+env(safe-area-inset-bottom))]"
+    class="min-h-screen bg-slate-50 text-slate-900 antialiased font-[\"Manrope\",system-ui,sans-serif] flex flex-col pb-[calc(6.5rem+env(safe-area-inset-bottom))]"
     data-page="<?php echo htmlspecialchars($currentPage, ENT_QUOTES, 'UTF-8'); ?>"
 >
     <header class="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur">
