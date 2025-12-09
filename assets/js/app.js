@@ -668,6 +668,204 @@ function initOrdersHistory() {
     }
 }
 
+async function updateNotificationSettings(payload) {
+    const response = await fetch('/?page=account-notifications', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+        },
+        body: JSON.stringify({ notifications: payload }),
+    });
+
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok || !data.ok) {
+        throw new Error(data.error || 'Не удалось обновить уведомления');
+    }
+}
+
+function initNotificationToggles() {
+    const toggles = Array.from(document.querySelectorAll('[data-notification-toggle]'));
+    if (!toggles.length) return;
+
+    const status = document.querySelector('[data-notification-status]');
+
+    const collect = () => {
+        const payload = {};
+        toggles.forEach((toggle) => {
+            const code = toggle.dataset.notificationToggle;
+            if (!code) return;
+            payload[code] = toggle.disabled ? true : toggle.checked;
+        });
+        return payload;
+    };
+
+    const showStatus = (message) => {
+        if (!status) return;
+        status.textContent = message;
+        status.classList.remove('hidden');
+        setTimeout(() => status.classList.add('hidden'), 2500);
+    };
+
+    toggles.forEach((toggle) => {
+        if (toggle.disabled) return;
+
+        toggle.addEventListener('change', async () => {
+            try {
+                await updateNotificationSettings(collect());
+                showStatus('Настройки обновлены.');
+            } catch (error) {
+                toggle.checked = !toggle.checked;
+                alert(error.message || 'Не удалось сохранить настройку');
+            }
+        });
+    });
+}
+
+async function submitPinChange(pin, pinConfirm) {
+    const response = await fetch('/?page=account-pin', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+        },
+        body: JSON.stringify({ pin, pin_confirm: pinConfirm }),
+    });
+
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok || !data.ok) {
+        throw new Error(data.error || 'Не удалось обновить PIN');
+    }
+}
+
+function initPinModal() {
+    const modal = document.querySelector('[data-pin-modal]');
+    const openers = document.querySelectorAll('[data-open-pin-modal]');
+    if (!modal || !openers.length) return;
+
+    const inputs = Array.from(modal.querySelectorAll('[data-pin-input]'));
+    const success = modal.querySelector('[data-pin-success]');
+    const errorBox = modal.querySelector('[data-pin-error]');
+    const closeButtons = modal.querySelectorAll('[data-close-pin-modal]');
+    let saving = false;
+
+    const setMessage = (type, text = '') => {
+        if (success) success.classList.add('hidden');
+        if (errorBox) errorBox.classList.add('hidden');
+
+        if (type === 'success' && success) {
+            success.textContent = text;
+            success.classList.remove('hidden');
+        }
+
+        if (type === 'error' && errorBox) {
+            errorBox.textContent = text;
+            errorBox.classList.remove('hidden');
+        }
+    };
+
+    const orderedInputs = (group) =>
+        inputs
+            .filter((input) => input.dataset.pinGroup === group)
+            .sort((a, b) => Number(a.dataset.pinIndex || 0) - Number(b.dataset.pinIndex || 0));
+
+    const reset = () => {
+        inputs.forEach((input) => {
+            input.value = '';
+        });
+        setMessage(null);
+    };
+
+    const open = () => {
+        reset();
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        const first = orderedInputs('new')[0];
+        first?.focus();
+    };
+
+    const close = () => {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    };
+
+    const collect = (group) => orderedInputs(group).map((input) => input.value.trim()).join('');
+
+    const maybeSubmit = async () => {
+        const pin = collect('new');
+        const pinConfirm = collect('confirm');
+
+        if (pin.length !== 4 || pinConfirm.length !== 4) {
+            return;
+        }
+
+        setMessage(null);
+        saving = true;
+
+        try {
+            await submitPinChange(pin, pinConfirm);
+            setMessage('success', 'PIN обновлен.');
+            setTimeout(() => {
+                close();
+            }, 700);
+        } catch (error) {
+            setMessage('error', error.message || 'Не удалось сохранить PIN');
+        } finally {
+            saving = false;
+        }
+    };
+
+    inputs.forEach((input) => {
+        input.addEventListener('input', () => {
+            const cleaned = (input.value || '').replace(/\D/g, '').slice(-1);
+            input.value = cleaned;
+
+            const group = input.dataset.pinGroup;
+            const index = Number(input.dataset.pinIndex || 0);
+
+            if (cleaned !== '') {
+                if (group === 'new' && index === 3) {
+                    orderedInputs('confirm')[0]?.focus();
+                } else {
+                    const next = orderedInputs(group)[index + 1];
+                    next?.focus();
+                }
+            }
+
+            if (!saving && collect('new').length === 4 && collect('confirm').length === 4) {
+                maybeSubmit();
+            }
+        });
+
+        input.addEventListener('keydown', (event) => {
+            if (event.key !== 'Backspace') return;
+            if (input.value !== '') return;
+
+            const group = input.dataset.pinGroup;
+            const index = Number(input.dataset.pinIndex || 0);
+            const prev = orderedInputs(group)[index - 1];
+            prev?.focus();
+        });
+    });
+
+    openers.forEach((button) => button.addEventListener('click', open));
+    closeButtons.forEach((button) => button.addEventListener('click', close));
+    modal.addEventListener('click', (event) => {
+        if (event.target === modal) {
+            close();
+        }
+    });
+}
+
+function initAccountPage() {
+    initNotificationToggles();
+    initPinModal();
+}
+
+if (pageId === 'account') {
+    initAccountPage();
+}
+
 if (pageId === 'orders') {
     initOrdersHistory();
 }

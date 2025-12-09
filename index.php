@@ -35,6 +35,7 @@ $router->get('orders', [OrdersController::class, 'index']);
 $router->get('orders-history', [OrdersController::class, 'history']);
 $router->get('account', [AccountController::class, 'index']);
 $router->get('login', [AuthController::class, 'login']);
+$router->get('logout', [AuthController::class, 'logout']);
 $router->get('register', [AuthController::class, 'register']);
 $router->get('recover', [AuthController::class, 'recover']);
 $router->get('admin', [AdminController::class, 'index']);
@@ -69,6 +70,8 @@ $router->post('admin-product-delete', [AdminController::class, 'deleteProduct'])
 $router->post('cart-add', [CartController::class, 'add']);
 $router->post('cart-update', [CartController::class, 'update']);
 $router->post('cart-remove', [CartController::class, 'remove']);
+$router->post('account-notifications', [AccountController::class, 'updateNotifications']);
+$router->post('account-pin', [AccountController::class, 'updatePin']);
 
 $publicPages = ['login', 'register', 'recover'];
 

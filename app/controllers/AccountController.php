@@ -8,6 +8,7 @@ class AccountController extends Controller
     private Order $orderModel;
     private Subscription $subscriptionModel;
     private NotificationSetting $notificationSettingModel;
+    private Logger $logger;
 
     public function __construct()
     {
@@ -16,6 +17,7 @@ class AccountController extends Controller
         $this->orderModel = new Order();
         $this->subscriptionModel = new Subscription();
         $this->notificationSettingModel = new NotificationSetting();
+        $this->logger = new Logger();
     }
 
     public function index()
@@ -36,13 +38,17 @@ class AccountController extends Controller
 
         $addresses = $this->addressModel->getByUserId($userId);
 
-        $activeOrderRow = $this->orderModel->getLatestActiveForUser($userId);
-        $activeOrder = $this->mapOrderToView($activeOrderRow);
+        $activeOrdersRaw = $this->orderModel->getActiveOrdersForUser($userId);
+        $activeOrders = array_map([$this, 'mapOrderToView'], $activeOrdersRaw);
+        $activeOrder = $activeOrders[0] ?? null;
 
-        $activeSubscriptionRow = $this->subscriptionModel->getActiveForUser($userId);
-        $activeSubscription = $this->mapSubscriptionToView($activeSubscriptionRow);
+        $activeSubscriptionsRaw = $this->subscriptionModel->getActiveListForUser($userId);
+        $activeSubscriptions = $this->mapSubscriptionsToView($activeSubscriptionsRaw);
+        $activeSubscription = $activeSubscriptions[0] ?? null;
 
-        $notificationSettings = $this->notificationSettingModel->getSettingsForUser($userId);
+        $notificationOptions = $this->getNotificationOptions();
+        $this->notificationSettingModel->syncTypes($notificationOptions);
+        $notificationSettings = $this->notificationSettingModel->getSettingsForUser($userId, $notificationOptions);
 
         $pageMeta = [
             'title' => 'Личный кабинет — Bunch flowers',
@@ -53,6 +59,10 @@ class AccountController extends Controller
 
         $lastLogin = $this->formatDateTime($userRow['updated_at'] ?? $userRow['created_at'] ?? null);
 
+        $cart = new Cart();
+        $cartShortcut = $this->buildCartShortcut($cart->getItems());
+        $ordersLink = '/?page=orders';
+
         $this->render('account', compact(
             'user',
             'addresses',
@@ -60,8 +70,78 @@ class AccountController extends Controller
             'activeSubscription',
             'notificationSettings',
             'pageMeta',
-            'lastLogin'
+            'lastLogin',
+            'activeOrders',
+            'activeSubscriptions',
+            'cartShortcut',
+            'ordersLink',
+            'notificationOptions'
         ));
+    }
+
+    public function updateNotifications(): void
+    {
+        header('Content-Type: application/json');
+
+        $userId = Auth::userId();
+        if (!$userId) {
+            http_response_code(401);
+            echo json_encode(['error' => 'Требуется вход в аккаунт']);
+            return;
+        }
+
+        $payload = json_decode(file_get_contents('php://input'), true) ?: $_POST;
+        $notifications = $payload['notifications'] ?? [];
+
+        $options = $this->getNotificationOptions();
+        $this->notificationSettingModel->syncTypes($options);
+
+        $preferences = [];
+        foreach ($options as $option) {
+            $code = $option['code'];
+            $locked = !empty($option['locked']);
+            $default = (bool) ($option['default'] ?? true);
+            $preferences[$code] = $locked ? true : (bool) ($notifications[$code] ?? $default);
+        }
+
+        $this->notificationSettingModel->updateSettingsForUser($userId, $preferences);
+
+        echo json_encode(['ok' => true]);
+    }
+
+    public function updatePin(): void
+    {
+        header('Content-Type: application/json');
+
+        $userId = Auth::userId();
+        if (!$userId) {
+            http_response_code(401);
+            echo json_encode(['error' => 'Требуется вход в аккаунт']);
+            return;
+        }
+
+        $payload = json_decode(file_get_contents('php://input'), true) ?: $_POST;
+        $pin = $this->collectPinInput($payload, 'pin');
+        $pinConfirm = $this->collectPinInput($payload, 'pin_confirm');
+
+        if (!preg_match('/^\d{4}$/', $pin)) {
+            http_response_code(422);
+            echo json_encode(['error' => 'PIN должен состоять из 4 цифр.']);
+            return;
+        }
+
+        if ($pin !== $pinConfirm) {
+            http_response_code(422);
+            echo json_encode(['error' => 'PIN и подтверждение не совпадают.']);
+            return;
+        }
+
+        $pinHash = password_hash($pin, PASSWORD_DEFAULT);
+        $this->userModel->updatePin($userId, $pinHash);
+        $this->userModel->resetFailedAttempts($userId);
+        $this->logger->logEvent('WEB_PIN_UPDATED', ['user_id' => $userId]);
+
+        echo json_encode(['ok' => true]);
     }
 
     private function mapOrderToView(?array $order): ?array
@@ -74,6 +154,7 @@ class AccountController extends Controller
         $itemTotal = $firstItem ? (float) $firstItem['price'] * (int) $firstItem['qty'] : $order['total_amount'];
 
         return [
+            'id' => $order['id'],
             'number' => '№' . str_pad((string) $order['id'], 4, '0', STR_PAD_LEFT),
             'datetime' => $this->formatDateTime($order['created_at']),
             'delivery_type' => $order['delivery_type'],
@@ -103,7 +184,17 @@ class AccountController extends Controller
             'qty' => $subscription['qty'],
             'discount' => '—',
             'total' => $this->formatPrice($subscription['product_price'] * $subscription['qty']),
+            'nextDelivery' => $this->formatDate($subscription['next_delivery_date'] ?? null),
         ];
+    }
+
+    private function mapSubscriptionsToView(array $subscriptions): array
+    {
+        return array_map(function (array $subscription): array {
+            $base = $this->mapSubscriptionToView($subscription) ?? [];
+            $base['id'] = $subscription['id'];
+            return $base;
+        }, $subscriptions);
     }
 
     private function formatPrice(float $amount): string
@@ -120,6 +211,20 @@ class AccountController extends Controller
         try {
             $dt = new DateTime($dateTime);
             return $dt->format('d.m.Y, H:i');
+        } catch (Exception $e) {
+            return '—';
+        }
+    }
+
+    private function formatDate(?string $date): string
+    {
+        if (!$date) {
+            return '—';
+        }
+
+        try {
+            $dt = new DateTime($date);
+            return $dt->format('d.m.Y');
         } catch (Exception $e) {
             return '—';
         }
@@ -145,5 +250,90 @@ class AccountController extends Controller
             'cancelled' => 'Отменен',
             default => 'В обработке',
         };
+    }
+
+    private function collectPinInput(array $payload, string $field): string
+    {
+        $raw = $payload[$field] ?? '';
+
+        if (is_array($raw)) {
+            $raw = implode('', $raw);
+        }
+
+        return preg_replace('/\D+/', '', (string) $raw) ?? '';
+    }
+
+    private function getNotificationOptions(): array
+    {
+        return [
+            [
+                'code' => 'order_updates',
+                'label' => 'Мои заказы',
+                'description' => 'Статусы и изменения по текущим заказам.',
+                'locked' => true,
+                'default' => true,
+                'channel' => 'push',
+                'sort_order' => 10,
+            ],
+            [
+                'code' => 'system_updates',
+                'label' => 'Системные уведомления',
+                'description' => 'Важные сообщения о безопасности и входах.',
+                'locked' => true,
+                'default' => true,
+                'channel' => 'system',
+                'sort_order' => 20,
+            ],
+            [
+                'code' => 'promo_bouquets',
+                'label' => 'Уведомить о букетах по акции',
+                'description' => 'Скидки и подборки букетов недели.',
+                'default' => true,
+                'channel' => 'push',
+                'sort_order' => 30,
+            ],
+            [
+                'code' => 'auction_updates',
+                'label' => 'Уведомить о новых аукционах',
+                'description' => 'Свежие позиции и результаты торгов.',
+                'default' => true,
+                'channel' => 'push',
+                'sort_order' => 40,
+            ],
+            [
+                'code' => 'birthday_reminders',
+                'label' => 'Напоминания о днях рождений',
+                'description' => 'Подготовим идеи и напомним заранее.',
+                'default' => true,
+                'channel' => 'push',
+                'sort_order' => 50,
+                'link' => '/?page=account#birthday-reminders',
+            ],
+            [
+                'code' => 'holiday_preorders',
+                'label' => 'Предзаказы на праздники',
+                'description' => 'Закрепим букет до пиковой нагрузки.',
+                'default' => true,
+                'channel' => 'push',
+                'sort_order' => 60,
+            ],
+        ];
+    }
+
+    private function buildCartShortcut(array $items): ?array
+    {
+        if (!$items) {
+            return null;
+        }
+
+        $first = $items[array_key_first($items)];
+        $name = $first['name'] ?? 'Товар';
+        $qty = (int) ($first['qty'] ?? 1);
+
+        return [
+            'title' => $name,
+            'qty' => $qty,
+            'count' => count($items),
+        ];
     }
 }
