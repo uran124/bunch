@@ -186,7 +186,6 @@
                 <span class="material-symbols-rounded animate-spin text-base">progress_activity</span>
                 <span>Загружаем еще заказы…</span>
             </div>
-            <div class="text-center text-sm text-slate-500" data-history-end hidden>Загрузили всё.</div>
             <div data-history-sentinel class="h-1"></div>
         </div>
     </div>
