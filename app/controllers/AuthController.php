@@ -321,8 +321,9 @@ class AuthController extends Controller
                             $this->analytics->track('pin_recovered', ['user_id' => $verification['user_id']]);
 
                             Session::remove('recover_verification');
-                            $stage = 'code';
-                            $successMessage = 'PIN обновлён. Войдите с новым кодом.';
+                            Auth::login((int) $verification['user_id']);
+                            header('Location: /?page=home');
+                            exit;
                         }
                     } else {
                         $stage = 'reset';
