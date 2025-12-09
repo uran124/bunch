@@ -26,6 +26,14 @@ class AuthController extends Controller
         }
     }
 
+    public function logout(): void
+    {
+        Auth::logout();
+        Session::destroy();
+        header('Location: /?page=login');
+        exit;
+    }
+
     public function login()
     {
         $errors = [];
