@@ -44,7 +44,7 @@
                             href="https://t.me/<?php echo htmlspecialchars($botUsername ?? '', ENT_QUOTES, 'UTF-8'); ?>"
                             target="_blank"
                             rel="noopener noreferrer"
-                            class="inline-flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-800 transition hover:bg-emerald-100"
+                            class="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-4 py-3 text-base font-semibold text-white shadow-lg shadow-emerald-200 transition hover:shadow-xl hover:shadow-emerald-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-500"
                         >
                             <span class="material-symbols-rounded text-base">send</span>
                             Получить код в Telegram
@@ -58,6 +58,10 @@
                         <ol class="grid gap-2 pl-4 list-decimal marker:text-rose-500">
                             <li>Нажмите «Перейти к боту» и запустите бота кнопкой /start.</li>
                         </ol>
+                        <div class="flex items-center gap-2 rounded-xl bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-800">
+                            <span class="material-symbols-rounded text-base">info</span>
+                            Запустите бота кнопкой /start.
+                        </div>
                     </div>
                 </div>
                 <div class="grid gap-1.5">
@@ -74,14 +78,29 @@
                         inputmode="numeric"
                     >
                 </div>
-                <button
-                    type="submit"
-                    class="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-4 py-3 text-base font-semibold text-white shadow-lg shadow-emerald-200 transition hover:shadow-xl hover:shadow-emerald-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-500"
-                >
-                    <span class="material-symbols-rounded text-base">key</span>
-                    Подтвердить код
-                </button>
             </form>
+            <script>
+                const codeForm = document.querySelector('form[action="/?page=register"][method="POST"]');
+                const codeInput = document.getElementById('code');
+                let codeSubmitted = false;
+
+                if (codeForm && codeInput) {
+                    codeInput.addEventListener('input', () => {
+                        const numericValue = codeInput.value.replace(/\D+/g, '').slice(0, 5);
+                        codeInput.value = numericValue;
+
+                        if (numericValue.length === 5 && !codeSubmitted) {
+                            codeSubmitted = true;
+
+                            if (typeof codeForm.requestSubmit === 'function') {
+                                codeForm.requestSubmit();
+                            } else {
+                                codeForm.submit();
+                            }
+                        }
+                    });
+                }
+            </script>
         <?php else: ?>
             <form method="POST" action="/?page=register" class="grid gap-5">
                 <input type="hidden" name="step" value="complete_registration">
