@@ -21,55 +21,19 @@ class Cart
             throw new InvalidArgumentException('Количество должно быть 1 или больше');
         }
 
-        $productModel = new Product();
-
-        $product = $productModel->getById($productId);
-
-        if (!$product || (int) ($product['is_active'] ?? 0) !== 1) {
-            throw new RuntimeException('Товар не найден или недоступен');
-        }
-
-        $attributeValueIds = array_values(array_unique(array_map('intval', $attributeValueIds)));
-        $attributeDetails = $this->getAttributeDetails($attributeValueIds);
-
+        $attributeValueIds = $this->normalizeAttributeIds($attributeValueIds);
         $items = $this->getItems();
         $key = $this->buildKey($productId, $attributeValueIds);
-
         $finalQty = ($items[$key]['qty'] ?? 0) + $qty;
 
-        $pricePerStem = (float) $product['price'];
-        $priceTiers = $productModel->getPriceTiers($productId);
-        foreach ($priceTiers as $tier) {
-            if ($finalQty >= (int) $tier['min_qty']) {
-                $pricePerStem = (float) $tier['price'];
-            }
-        }
-        $bouquetDelta = 0.0;
+        $newItem = $this->buildItemData($productId, $finalQty, $attributeValueIds);
+        $newItem['key'] = $key;
 
-        foreach ($attributeDetails as $attr) {
-            if (($attr['applies_to'] ?? 'stem') === 'bouquet') {
-                $bouquetDelta += (float) $attr['price_delta'];
-            } else {
-                $pricePerStem += (float) $attr['price_delta'];
-            }
-        }
-
-        $items[$key] = [
-            'key' => $key,
-            'product_id' => $productId,
-            'name' => $product['name'],
-            'qty' => $finalQty,
-            'price_per_stem' => $pricePerStem,
-            'bouquet_delta' => $bouquetDelta,
-            'photo_url' => $product['photo_url'] ?? null,
-            'attributes' => $attributeDetails,
-        ];
-
-        $items[$key]['line_total'] = ($items[$key]['price_per_stem'] * $items[$key]['qty']) + $items[$key]['bouquet_delta'];
+        $items[$key] = $newItem;
 
         Session::set(self::SESSION_KEY, $items);
 
-        return $items[$key];
+        return $newItem;
     }
 
     public function clear(): void
@@ -103,6 +67,101 @@ class Cart
     {
         sort($attributeValueIds);
         return $productId . ':' . implode('-', $attributeValueIds);
+    }
+
+    private function buildItemData(int $productId, int $qty, array $attributeValueIds): array
+    {
+        if ($qty < 1) {
+            throw new InvalidArgumentException('Количество должно быть 1 или больше');
+        }
+
+        $attributeValueIds = $this->normalizeAttributeIds($attributeValueIds);
+
+        $productModel = new Product();
+        $product = $productModel->getById($productId);
+
+        if (!$product || (int) ($product['is_active'] ?? 0) !== 1) {
+            throw new RuntimeException('Товар не найден или недоступен');
+        }
+
+        $attributeDetails = $this->getAttributeDetails($attributeValueIds);
+
+        $pricePerStem = (float) $product['price'];
+        $priceTiers = $productModel->getPriceTiers($productId);
+        foreach ($priceTiers as $tier) {
+            if ($qty >= (int) $tier['min_qty']) {
+                $pricePerStem = (float) $tier['price'];
+            }
+        }
+
+        $bouquetDelta = 0.0;
+        foreach ($attributeDetails as $attr) {
+            if (($attr['applies_to'] ?? 'stem') === 'bouquet') {
+                $bouquetDelta += (float) $attr['price_delta'];
+            } else {
+                $pricePerStem += (float) $attr['price_delta'];
+            }
+        }
+
+        return [
+            'product_id' => $productId,
+            'name' => $product['name'],
+            'qty' => $qty,
+            'price_per_stem' => $pricePerStem,
+            'bouquet_delta' => $bouquetDelta,
+            'photo_url' => $product['photo_url'] ?? null,
+            'attributes' => $attributeDetails,
+            'line_total' => ($pricePerStem * $qty) + $bouquetDelta,
+        ];
+    }
+
+    public function updateItem(string $key, int $qty, array $attributeValueIds = []): array
+    {
+        if ($qty < 1) {
+            throw new InvalidArgumentException('Количество должно быть 1 или больше');
+        }
+
+        $items = $this->getItems();
+        if (!isset($items[$key])) {
+            throw new RuntimeException('Позиция не найдена в корзине');
+        }
+
+        $existingAttributeIds = $this->extractAttributeIds($items[$key]['attributes'] ?? []);
+        $attributeValueIds = $this->normalizeAttributeIds($attributeValueIds ?: $existingAttributeIds);
+
+        $productId = (int) $items[$key]['product_id'];
+        $newItem = $this->buildItemData($productId, $qty, $attributeValueIds);
+        $newKey = $this->buildKey($productId, $this->extractAttributeIds($newItem['attributes'] ?? []));
+        $newItem['key'] = $newKey;
+
+        if ($newKey !== $key) {
+            unset($items[$key]);
+        }
+
+        $items[$newKey] = $newItem;
+        Session::set(self::SESSION_KEY, $items);
+
+        return $newItem;
+    }
+
+    private function normalizeAttributeIds(array $attributeValueIds): array
+    {
+        $normalized = array_values(array_unique(array_map('intval', $attributeValueIds)));
+        sort($normalized);
+
+        return $normalized;
+    }
+
+    private function extractAttributeIds(array $attributeDetails): array
+    {
+        $ids = [];
+        foreach ($attributeDetails as $detail) {
+            if (isset($detail['value_id'])) {
+                $ids[] = (int) $detail['value_id'];
+            }
+        }
+
+        return $this->normalizeAttributeIds($ids);
     }
 
     private function getAttributeDetails(array $attributeValueIds): array

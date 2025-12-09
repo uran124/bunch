@@ -66,6 +66,8 @@ $router->post('admin-attribute-value-delete', [AdminController::class, 'deleteAt
 $router->post('admin-product-save', [AdminController::class, 'saveProduct']);
 $router->post('admin-product-delete', [AdminController::class, 'deleteProduct']);
 $router->post('cart-add', [CartController::class, 'add']);
+$router->post('cart-update', [CartController::class, 'update']);
+$router->post('cart-remove', [CartController::class, 'remove']);
 
 $publicPages = ['login', 'register', 'recover'];
 
