@@ -13,6 +13,16 @@ class Product extends Model
         return $stmt->fetchAll();
     }
 
+    public function getActiveByCategory(string $category): array
+    {
+        $stmt = $this->db->prepare(
+            "SELECT * FROM {$this->table} WHERE is_active = 1 AND category = :category ORDER BY sort_order ASC"
+        );
+        $stmt->execute(['category' => $category]);
+
+        return $stmt->fetchAll();
+    }
+
     public function getById(int $id): ?array
     {
         $stmt = $this->db->prepare("SELECT * FROM {$this->table} WHERE id = :id LIMIT 1");
@@ -55,7 +65,7 @@ class Product extends Model
     {
         $slug = $this->generateSlug($payload['name']);
 
-        $sql = "INSERT INTO {$this->table} (supply_id, name, slug, description, price, article, photo_url, stem_height_cm, stem_weight_g, country, is_base, is_active, sort_order) VALUES (:supply_id, :name, :slug, :description, :price, :article, :photo_url, :stem_height_cm, :stem_weight_g, :country, :is_base, :is_active, :sort_order)";
+        $sql = "INSERT INTO {$this->table} (supply_id, name, slug, description, price, article, photo_url, stem_height_cm, stem_weight_g, country, category, is_base, is_active, sort_order) VALUES (:supply_id, :name, :slug, :description, :price, :article, :photo_url, :stem_height_cm, :stem_weight_g, :country, :category, :is_base, :is_active, :sort_order)";
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute([
@@ -69,6 +79,7 @@ class Product extends Model
             'stem_height_cm' => $payload['stem_height_cm'],
             'stem_weight_g' => $payload['stem_weight_g'],
             'country' => $payload['country'],
+            'category' => $payload['category'] ?? 'main',
             'is_base' => $payload['is_base'],
             'is_active' => $payload['is_active'],
             'sort_order' => $payload['sort_order'],
@@ -79,7 +90,7 @@ class Product extends Model
 
     public function updateProduct(int $id, array $payload): void
     {
-        $sql = "UPDATE {$this->table} SET supply_id = :supply_id, name = :name, description = :description, price = :price, article = :article, photo_url = :photo_url, stem_height_cm = :stem_height_cm, stem_weight_g = :stem_weight_g, country = :country, is_active = :is_active WHERE id = :id";
+        $sql = "UPDATE {$this->table} SET supply_id = :supply_id, name = :name, description = :description, price = :price, article = :article, photo_url = :photo_url, stem_height_cm = :stem_height_cm, stem_weight_g = :stem_weight_g, country = :country, category = :category, is_active = :is_active WHERE id = :id";
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute([
@@ -92,6 +103,7 @@ class Product extends Model
             'stem_height_cm' => $payload['stem_height_cm'],
             'stem_weight_g' => $payload['stem_weight_g'],
             'country' => $payload['country'],
+            'category' => $payload['category'] ?? 'main',
             'is_active' => $payload['is_active'],
             'id' => $id,
         ]);

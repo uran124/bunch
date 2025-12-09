@@ -15,7 +15,13 @@
         rel="stylesheet">
     <script src="/assets/js/tailwindcss.js"></script>
 </head>
-<body class="min-h-screen bg-slate-50 text-slate-900 antialiased font-[\"Manrope\",system-ui,sans-serif]">
+<?php
+$currentPage = $_GET['page'] ?? trim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/') ?: 'home';
+?>
+<body
+    class="min-h-screen bg-slate-50 text-slate-900 antialiased font-[\"Manrope\",system-ui,sans-serif]"
+    data-page="<?php echo htmlspecialchars($currentPage, ENT_QUOTES, 'UTF-8'); ?>"
+>
     <header class="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur">
         <div class="mx-auto flex w-full max-w-6xl items-center justify-between px-3 py-2">
             <div>
@@ -64,5 +70,7 @@
             </div>
         </footer>
     <?php endif; ?>
+
+    <script type="module" src="/assets/js/app.js"></script>
 </body>
 </html>

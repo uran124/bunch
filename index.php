@@ -65,6 +65,7 @@ $router->post('admin-attribute-value-save', [AdminController::class, 'saveAttrib
 $router->post('admin-attribute-value-delete', [AdminController::class, 'deleteAttributeValue']);
 $router->post('admin-product-save', [AdminController::class, 'saveProduct']);
 $router->post('admin-product-delete', [AdminController::class, 'deleteProduct']);
+$router->post('cart-add', [CartController::class, 'add']);
 
 $publicPages = ['login', 'register', 'recover'];
 

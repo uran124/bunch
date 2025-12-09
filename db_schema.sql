@@ -152,6 +152,8 @@ CREATE TABLE products (
   stem_weight_g  INT UNSIGNED NULL,        -- вес стебля из поставки
   country       VARCHAR(80) NULL,          -- страна происхождения из поставки
 
+  category    ENUM('main', 'accessory') NOT NULL DEFAULT 'main', -- витрина или сопутствующие товары
+
   is_base     TINYINT(1) NOT NULL DEFAULT 0, -- базовый продукт (массовая роза)
   is_active   TINYINT(1) NOT NULL DEFAULT 1,
 
@@ -312,6 +314,26 @@ CREATE TABLE cart_items (
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE cart_item_attributes (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+
+  cart_item_id INT UNSIGNED NOT NULL,
+  CONSTRAINT fk_cart_item_attributes_item
+    FOREIGN KEY (cart_item_id) REFERENCES cart_items(id)
+    ON DELETE CASCADE,
+
+  attribute_id INT UNSIGNED NOT NULL,
+  attribute_value_id INT UNSIGNED NOT NULL,
+  applies_to ENUM('stem', 'bouquet') NOT NULL DEFAULT 'stem',
+  price_delta DECIMAL(10,2) NOT NULL DEFAULT 0,
+
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_unicode_ci;
+
 -- =========================
 -- 7. Таблицы заказов
 -- =========================
@@ -332,6 +354,14 @@ CREATE TABLE orders (
   total_amount DECIMAL(10,2) NOT NULL,         -- итоговая сумма
   status ENUM('new', 'confirmed', 'delivering', 'delivered', 'cancelled')
     NOT NULL DEFAULT 'new',
+
+  delivery_type ENUM('pickup', 'delivery', 'subscription') NOT NULL DEFAULT 'pickup',
+  scheduled_date DATE NULL,
+  scheduled_time TIME NULL,
+  address_text TEXT NULL,                      -- слепок адреса, если пользователь не авторизован
+  recipient_name VARCHAR(100) NULL,
+  recipient_phone VARCHAR(20) NULL,
+  subscription_interval INT UNSIGNED NULL,     -- интервал в днях для подписки
 
   comment TEXT NULL,                           -- комментарий клиента
 
@@ -360,6 +390,26 @@ CREATE TABLE order_items (
   CONSTRAINT fk_order_items_product
     FOREIGN KEY (product_id) REFERENCES products(id)
     ON DELETE RESTRICT,
+
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE order_item_attributes (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+
+  order_item_id INT UNSIGNED NOT NULL,
+  CONSTRAINT fk_order_item_attributes_item
+    FOREIGN KEY (order_item_id) REFERENCES order_items(id)
+    ON DELETE CASCADE,
+
+  attribute_id INT UNSIGNED NOT NULL,
+  attribute_value_id INT UNSIGNED NOT NULL,
+  applies_to ENUM('stem', 'bouquet') NOT NULL DEFAULT 'stem',
+  price_delta DECIMAL(10,2) NOT NULL DEFAULT 0,
 
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -625,10 +675,10 @@ INSERT INTO attribute_values (attribute_id, value, price_delta, photo_url, is_ac
   (3, 'Бордовая лента', 0.00, 'https://cdn.bunch.test/ribbon-red.jpg', 1, 1),
   (3, 'Бежевая лента', 0.00, 'https://cdn.bunch.test/ribbon-beige.jpg', 1, 2);
 
-INSERT INTO products (supply_id, name, slug, description, price, article, photo_url, stem_height_cm, stem_weight_g, country, is_base, is_active, sort_order)
+INSERT INTO products (supply_id, name, slug, description, price, article, photo_url, stem_height_cm, stem_weight_g, country, category, is_base, is_active, sort_order)
 VALUES
-  (1, 'Роза Rhodos', 'roza-rhodos', 'Классическая роза из стендинга, идеально для срезки.', 89.00, 'RHD-001', 'https://cdn.bunch.test/rhodos-card.jpg', 50, 45, 'Эквадор', 0, 1, 10),
-  (2, 'Эвкалипт Cinerea', 'evkalipt-cinerea', 'Ароматный эвкалипт для букетов и декора.', 55.00, 'EVC-010', 'https://cdn.bunch.test/eucalyptus-card.jpg', 40, 28, 'Россия', 0, 1, 20);
+  (1, 'Роза Rhodos', 'roza-rhodos', 'Классическая роза из стендинга, идеально для срезки.', 89.00, 'RHD-001', 'https://cdn.bunch.test/rhodos-card.jpg', 50, 45, 'Эквадор', 'main', 0, 1, 10),
+  (2, 'Эвкалипт Cinerea', 'evkalipt-cinerea', 'Ароматный эвкалипт для букетов и декора.', 55.00, 'EVC-010', 'https://cdn.bunch.test/eucalyptus-card.jpg', 40, 28, 'Россия', 'main', 0, 1, 20);
 
 INSERT INTO product_attributes (product_id, attribute_id) VALUES
   (1, 1),

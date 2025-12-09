@@ -53,6 +53,9 @@
                     ?>
                     <article
                         id="<?php echo $cardId; ?>"
+                        data-product-id="<?php echo (int) $product['id']; ?>"
+                        data-product-name="<?php echo htmlspecialchars($product['name'], ENT_QUOTES, 'UTF-8'); ?>"
+                        data-product-photo="<?php echo htmlspecialchars($product['photo_url'] ?? '', ENT_QUOTES, 'UTF-8'); ?>"
                         data-product-card
                         data-base-price="<?php echo $basePrice; ?>"
                         data-price-tiers='<?php echo $priceTiersJson; ?>'
@@ -138,6 +141,7 @@
                                                         type="button"
                                                         data-attr-option
                                                         data-attr-id="<?php echo (int) $attribute['id']; ?>"
+                                                        data-value-id="<?php echo (int) $value['id']; ?>"
                                                         data-price-delta="<?php echo $priceDelta; ?>"
                                                         class="inline-flex items-center gap-2 whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600"
                                                     aria-label="<?php echo htmlspecialchars($attribute['name'] . ': ' . $value['value'], ENT_QUOTES, 'UTF-8'); ?>"
@@ -156,7 +160,7 @@
 
                             <div class="flex items-center justify-between gap-3 rounded-2xl bg-white px-3 py-2 shadow-sm md:hidden">
                                 <span class="text-lg font-bold text-rose-600" data-actual-price>—</span>
-                                <button type="button" class="inline-flex items-center justify-center gap-2 rounded-xl bg-rose-600 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-white shadow-md shadow-rose-200 transition hover:-translate-y-0.5 hover:bg-rose-700">
+                                <button type="button" data-add-to-cart class="inline-flex items-center justify-center gap-2 rounded-xl bg-rose-600 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-white shadow-md shadow-rose-200 transition hover:-translate-y-0.5 hover:bg-rose-700">
                                     <span class="material-symbols-rounded text-base">shopping_cart</span>
                                     В корзину
                                 </button>
@@ -165,7 +169,7 @@
                             <div class="hidden flex-wrap items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-inner shadow-rose-100/60 md:flex">
                                 <span class="text-sm font-semibold text-slate-400 line-through" data-base-price-total>—</span>
                                 <span class="flex-1 text-center text-2xl font-bold text-rose-600" data-actual-price>—</span>
-                                <button type="button" class="inline-flex items-center justify-center gap-2 rounded-2xl bg-rose-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-rose-200 transition hover:-translate-y-0.5 hover:bg-rose-700">
+                                <button type="button" data-add-to-cart class="inline-flex items-center justify-center gap-2 rounded-2xl bg-rose-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-rose-200 transition hover:-translate-y-0.5 hover:bg-rose-700">
                                     <span class="material-symbols-rounded text-base">shopping_cart</span>
                                     <span class="hidden sm:inline">В корзину</span>
                                 </button>
@@ -219,6 +223,13 @@
         -ms-overflow-style: none;
         scrollbar-width: none;
     }
+
+    .attr-active {
+        border-color: #fb7185;
+        background: #fff1f2;
+        color: #be123c;
+        box-shadow: inset 0 1px 3px rgba(251, 113, 133, 0.25);
+    }
 </style>
 
 <script>
@@ -262,14 +273,15 @@
         if (!group) return;
 
         group.querySelectorAll('[data-attr-option]').forEach((option) => {
-            option.classList.remove('border-rose-200', 'bg-rose-50', 'text-rose-700', 'shadow-md');
+            option.classList.remove('border-rose-200', 'bg-rose-50', 'text-rose-700', 'shadow-md', 'attr-active');
             option.classList.add('border-slate-200', 'bg-white', 'text-slate-700');
         });
 
         button.classList.remove('border-slate-200', 'bg-white', 'text-slate-700');
-        button.classList.add('border-rose-200', 'bg-rose-50', 'text-rose-700', 'shadow-md');
+        button.classList.add('border-rose-200', 'bg-rose-50', 'text-rose-700', 'shadow-md', 'attr-active');
 
         group.dataset.selectedDelta = button.dataset.priceDelta || '0';
+        group.dataset.selectedValue = button.dataset.valueId || '';
     }
 
     function updateCardTotals(card) {
@@ -310,6 +322,53 @@
         actualPriceTargets.forEach((target) => {
             target.textContent = formatMoney(actualTotal);
         });
+    }
+
+    function getSelectedAttributes(card) {
+        return Array.from(card.querySelectorAll('[data-attribute-group]'))
+            .map((group) => group.dataset.selectedValue)
+            .filter(Boolean)
+            .map((value) => Number(value));
+    }
+
+    function updateCartIndicator(count) {
+        document.querySelectorAll('[data-cart-count]').forEach((badge) => {
+            badge.textContent = count;
+            if (Number(count) > 0) {
+                badge.classList.remove('hidden');
+                badge.classList.add('flex');
+            } else {
+                badge.classList.add('hidden');
+                badge.classList.remove('flex');
+            }
+        });
+    }
+
+    async function addCardToCart(card) {
+        const productId = Number(card.dataset.productId || 0);
+        const qtyInput = card.querySelector('[data-qty-value]') || card.querySelector('[data-qty]');
+        const qty = Number(qtyInput?.value || 1);
+        const attributes = getSelectedAttributes(card);
+
+        const response = await fetch('/?page=cart-add', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+            body: JSON.stringify({ product_id: productId, qty, attributes }),
+        });
+
+        if (!response.ok) {
+            throw new Error('Не удалось добавить товар в корзину');
+        }
+
+        const data = await response.json();
+        if (!data.ok) {
+            throw new Error(data.error || 'Ошибка добавления в корзину');
+        }
+
+        updateCartIndicator(data.totals?.count || 0);
     }
 
     document.querySelectorAll('[data-product-card]').forEach((card) => {
@@ -356,6 +415,21 @@
                 event.preventDefault();
                 activateOption(option);
                 updateCardTotals(card);
+            });
+        });
+
+        card.querySelectorAll('[data-add-to-cart]').forEach((button) => {
+            button.addEventListener('click', async () => {
+                button.disabled = true;
+                button.classList.add('opacity-70');
+                try {
+                    await addCardToCart(card);
+                } catch (error) {
+                    alert(error.message || 'Ошибка добавления в корзину');
+                } finally {
+                    button.disabled = false;
+                    button.classList.remove('opacity-70');
+                }
             });
         });
     });

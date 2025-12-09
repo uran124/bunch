@@ -120,6 +120,8 @@ CREATE TABLE products (
   description TEXT NULL,                  -- описание (без раскрытия страны/сорта)
   price       DECIMAL(10,2) NOT NULL,     -- текущая цена за единицу (например, 89.00)
 
+  category    ENUM('main', 'accessory') NOT NULL DEFAULT 'main', -- витрина или сопутствующие товары
+
   is_base     TINYINT(1) NOT NULL DEFAULT 0, -- базовый продукт (массовая красная роза)
   is_active   TINYINT(1) NOT NULL DEFAULT 1,
 
@@ -134,6 +136,7 @@ CREATE TABLE products (
 При наполнении:
 - для базового продукта `is_base = 1`, `price = 89.00`;
 - все тексты — в рамках ограничений (см. README_DEV.md).
+- сопутствующие товары помечаем `category = 'accessory'` (например, шарики, открытки, подарочные коробки).
 
 ---
 
@@ -281,6 +284,25 @@ CREATE TABLE cart_items (
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
     ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+CREATE TABLE cart_item_attributes (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+
+  cart_item_id INT UNSIGNED NOT NULL,
+  CONSTRAINT fk_cart_item_attributes_item
+    FOREIGN KEY (cart_item_id) REFERENCES cart_items(id)
+    ON DELETE CASCADE,
+
+  attribute_id INT UNSIGNED NOT NULL,
+  attribute_value_id INT UNSIGNED NOT NULL,
+  applies_to ENUM('stem', 'bouquet') NOT NULL DEFAULT 'stem',
+  price_delta DECIMAL(10,2) NOT NULL DEFAULT 0,
+
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 ```
 
 ---
@@ -307,6 +329,14 @@ CREATE TABLE orders (
   status ENUM('new', 'confirmed', 'delivering', 'delivered', 'cancelled')
     NOT NULL DEFAULT 'new',
 
+  delivery_type ENUM('pickup', 'delivery', 'subscription') NOT NULL DEFAULT 'pickup',
+  scheduled_date DATE NULL,
+  scheduled_time TIME NULL,
+  address_text TEXT NULL,                      -- слепок адреса, если не привязан к user_addresses
+  recipient_name VARCHAR(100) NULL,
+  recipient_phone VARCHAR(20) NULL,
+  subscription_interval INT UNSIGNED NULL,     -- интервал в днях для подписки
+
   comment TEXT NULL,                           -- комментарий клиента к заказу
 
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -332,6 +362,25 @@ CREATE TABLE order_items (
   CONSTRAINT fk_order_items_product
     FOREIGN KEY (product_id) REFERENCES products(id)
     ON DELETE RESTRICT,
+
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+CREATE TABLE order_item_attributes (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+
+  order_item_id INT UNSIGNED NOT NULL,
+  CONSTRAINT fk_order_item_attributes_item
+    FOREIGN KEY (order_item_id) REFERENCES order_items(id)
+    ON DELETE CASCADE,
+
+  attribute_id INT UNSIGNED NOT NULL,
+  attribute_value_id INT UNSIGNED NOT NULL,
+  applies_to ENUM('stem', 'bouquet') NOT NULL DEFAULT 'stem',
+  price_delta DECIMAL(10,2) NOT NULL DEFAULT 0,
 
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
