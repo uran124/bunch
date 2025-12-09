@@ -136,7 +136,11 @@ function handleRegistrationCode(
 
     $code = $verificationModel->createCode($chatId, 'register', $codePhone, $userId, $username, $name);
 
-    $telegram->sendMessage($chatId, "Ваш код для регистрации на сайте: {$code}\nВведите его в форме и продолжите заполнение профиля.");
+    $telegram->sendMessage(
+        $chatId,
+        "Ваш код для bunchflowers.ru: <code>{$code}</code>",
+        ['parse_mode' => 'HTML']
+    );
 
     $logger->logEvent('TG_REG_CODE_SENT', ['user_id' => $userId, 'chat_id' => $chatId, 'phone' => $phone]);
     $analytics->track('tg_code_sent', ['purpose' => 'register', 'user_id' => $userId]);
