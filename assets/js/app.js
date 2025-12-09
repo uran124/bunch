@@ -483,3 +483,191 @@ function initCartPage() {
 if (pageId === 'cart') {
     initCartPage();
 }
+
+function buildStatusBadgeClass(status) {
+    switch (status) {
+        case 'delivered':
+            return 'bg-emerald-50 text-emerald-700 ring-emerald-100';
+        case 'cancelled':
+            return 'bg-rose-50 text-rose-700 ring-rose-100';
+        case 'delivering':
+            return 'bg-sky-50 text-sky-700 ring-sky-100';
+        case 'confirmed':
+            return 'bg-amber-50 text-amber-700 ring-amber-100';
+        default:
+            return 'bg-slate-50 text-slate-700 ring-slate-100';
+    }
+}
+
+function createHistoryCard(order) {
+    const article = document.createElement('article');
+    article.className = 'flex gap-3 rounded-2xl border border-slate-100 bg-white p-3 shadow-sm ring-1 ring-slate-100 sm:gap-4 sm:p-4';
+    article.dataset.orderCard = 'true';
+
+    const imageWrap = document.createElement('div');
+    imageWrap.className = 'h-16 w-20 overflow-hidden rounded-xl bg-slate-100';
+    const img = document.createElement('img');
+    img.src = order.item?.image || '/assets/images/products/bouquet.svg';
+    img.alt = order.item?.title || 'Товар';
+    img.className = 'h-full w-full object-cover';
+    imageWrap.appendChild(img);
+
+    const body = document.createElement('div');
+    body.className = 'flex-1 space-y-2';
+
+    const header = document.createElement('div');
+    header.className = 'flex flex-wrap items-center justify-between gap-2 text-sm font-semibold text-slate-900';
+
+    const headerLeft = document.createElement('div');
+    headerLeft.className = 'flex flex-wrap items-center gap-2';
+    const numberEl = document.createElement('span');
+    numberEl.textContent = order.number;
+    const dateEl = document.createElement('span');
+    dateEl.className = 'text-slate-500';
+    dateEl.textContent = `· ${order.createdAt}`;
+    headerLeft.append(numberEl, dateEl);
+
+    const badge = document.createElement('span');
+    badge.className = `inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ${buildStatusBadgeClass(order.status)}`;
+    const badgeIcon = document.createElement('span');
+    badgeIcon.className = 'material-symbols-rounded text-base';
+    badgeIcon.textContent = order.status === 'cancelled' ? 'block' : 'verified';
+    const badgeText = document.createElement('span');
+    badgeText.textContent = order.statusLabel;
+    badge.append(badgeIcon, badgeText);
+
+    header.append(headerLeft, badge);
+
+    const titleRow = document.createElement('p');
+    titleRow.className = 'text-sm font-semibold text-slate-900';
+    if (order.item) {
+        titleRow.textContent = `${order.item.title} ×${order.item.qty}`;
+    } else {
+        titleRow.textContent = 'Состав уточняется';
+    }
+
+    const priceHint = document.createElement('p');
+    priceHint.className = 'text-xs text-slate-600';
+    if (order.item?.price) {
+        priceHint.textContent = order.item.price;
+    } else {
+        priceHint.textContent = order.total;
+    }
+
+    const footer = document.createElement('div');
+    footer.className = 'flex flex-wrap items-center justify-between gap-2 text-sm text-slate-700';
+    const delivery = document.createElement('span');
+    delivery.className = 'inline-flex items-center gap-1';
+    const icon = document.createElement('span');
+    icon.className = 'material-symbols-rounded text-base text-slate-500';
+    icon.textContent = order.deliveryType === 'Доставка' ? 'local_shipping' : 'storefront';
+    const deliveryText = document.createElement('span');
+    deliveryText.textContent = order.deliveryType;
+    delivery.append(icon, deliveryText);
+    if (order.scheduled) {
+        const scheduled = document.createElement('span');
+        scheduled.textContent = `· ${order.scheduled}`;
+        delivery.append(scheduled);
+    }
+
+    const total = document.createElement('span');
+    total.className = 'text-base font-semibold text-slate-900';
+    total.textContent = order.total;
+
+    footer.append(delivery, total);
+
+    body.append(header, titleRow, priceHint, footer);
+    article.append(imageWrap, body);
+
+    return article;
+}
+
+function initOrdersHistory() {
+    const container = document.querySelector('[data-orders-history]');
+    if (!container) return;
+
+    const list = container.querySelector('[data-history-list]');
+    const loader = container.querySelector('[data-history-loader]');
+    const endMarker = container.querySelector('[data-history-end]');
+    const sentinel = container.querySelector('[data-history-sentinel]');
+    const limit = Number(container.dataset.limit || 10);
+    const endpoint = container.dataset.endpoint || '/?page=orders-history';
+
+    let hasMore = container.dataset.hasMore === 'true';
+    let currentPage = 1;
+    let loading = false;
+
+    if (loader) {
+        loader.hidden = !hasMore;
+    }
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+                loadMore();
+            }
+        });
+    }, { rootMargin: '200px' });
+
+    const stopLoading = () => {
+        if (loader) loader.hidden = true;
+        if (endMarker) endMarker.hidden = false;
+        observer.disconnect();
+    };
+
+    const showError = (message) => {
+        const alert = document.createElement('div');
+        alert.className = 'rounded-2xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700';
+        alert.textContent = message || 'Не удалось загрузить заказы';
+        list.appendChild(alert);
+    };
+
+    const loadMore = async () => {
+        if (loading || !hasMore) return;
+        loading = true;
+        if (loader) loader.hidden = false;
+
+        const nextPage = currentPage + 1;
+
+        try {
+            const response = await fetch(`${endpoint}&page=${nextPage}&limit=${limit}`, {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            });
+
+            if (!response.ok) {
+                throw new Error('Ошибка загрузки истории');
+            }
+
+            const data = await response.json();
+            if (!data.ok) {
+                throw new Error(data.error || 'Ошибка загрузки истории');
+            }
+
+            (data.orders || []).forEach((order) => {
+                list.appendChild(createHistoryCard(order));
+            });
+
+            hasMore = Boolean(data.hasMore);
+            currentPage = nextPage;
+
+            if (!hasMore) {
+                stopLoading();
+            }
+        } catch (error) {
+            stopLoading();
+            showError(error.message);
+        } finally {
+            loading = false;
+        }
+    };
+
+    if (hasMore && sentinel) {
+        observer.observe(sentinel);
+    } else if (!hasMore) {
+        stopLoading();
+    }
+}
+
+if (pageId === 'orders') {
+    initOrdersHistory();
+}
