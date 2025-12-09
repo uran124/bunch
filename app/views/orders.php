@@ -8,11 +8,11 @@
 
 <section class="grid gap-4 sm:gap-6">
     <header class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-        <div class="space-y-1">
+        <div class="space-y-1"><h1>
             <p class="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.08em] text-rose-600">
                 <span class="material-symbols-rounded text-base">history</span>
-                <h1> Заказы и подписки </h1>
-            </p>
+                 Заказы и подписки 
+            </p></h1>
 
         </div>
 
