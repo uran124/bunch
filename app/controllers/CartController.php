@@ -23,7 +23,10 @@ class CartController extends Controller
         $addresses = [];
         if (Auth::check()) {
             $addressModel = new UserAddress();
-            $addresses = $addressModel->getByUserId((int) Auth::user()['id']);
+            $userId = Auth::userId();
+            if ($userId !== null) {
+                $addresses = $addressModel->getByUserId($userId);
+            }
         }
 
         $this->render('cart', [
