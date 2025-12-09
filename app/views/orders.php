@@ -123,10 +123,7 @@
                 <p class="text-xs font-semibold uppercase tracking-[0.06em] text-slate-500">Выполненные заказы</p>
                 <h3 class="text-xl font-semibold text-slate-900">История покупок</h3>
             </div>
-            <span class="inline-flex items-center gap-2 rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold text-white shadow-sm">
-                <span class="material-symbols-rounded text-base">infinity</span>
-                Ленивая подгрузка ×10
-            </span>
+
         </div>
 
         <div
