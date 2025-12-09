@@ -8,24 +8,12 @@
             <div class="space-y-2">
                 <div class="inline-flex items-center gap-2 rounded-full bg-sky-100 px-3 py-1 text-xs font-semibold text-sky-800">
                     <span class="material-symbols-rounded text-base">lock_reset</span>
-                    <span>Восстановление</span>
+                    <span>Сброс PIN-кода</span>
                 </div>
                 <div class="space-y-1">
-                    <h1 class="text-3xl font-semibold tracking-tight text-slate-900">Сброс PIN-кода</h1>
-                    <p class="text-sm text-slate-600">Получите одноразовый код от бота, подтвердите его и задайте новый PIN.</p>
+                    <h1 class="text-3xl font-semibold tracking-tight text-slate-900">Получите код и смените PIN</h1>
                 </div>
             </div>
-            <?php if (!empty($botUsername)): ?>
-                <a
-                    href="https://t.me/<?php echo htmlspecialchars($botUsername, ENT_QUOTES, 'UTF-8'); ?>"
-                    class="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-slate-900/10 transition hover:-translate-y-0.5 hover:shadow-xl"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                >
-                    <span class="material-symbols-rounded text-base">smart_toy</span>
-                    <span>Открыть бота</span>
-                </a>
-            <?php endif; ?>
         </header>
 
         <?php if (!empty($successMessage)): ?>
@@ -51,7 +39,31 @@
         <?php endif; ?>
 
         <?php if (($stage ?? 'code') === 'code'): ?>
-            <form method="POST" action="/?page=recover" class="grid gap-5">
+            <form method="POST" action="/?page=recover" class="grid gap-4 rounded-2xl border border-slate-200 bg-white/70 px-4 py-4 shadow-inner shadow-slate-100">
+                <input type="hidden" name="step" value="request_code">
+                <div class="grid gap-1.5">
+                    <label for="phone" class="text-sm font-semibold text-slate-800">Номер телефона</label>
+                    <input
+                        type="tel"
+                        id="phone"
+                        name="phone"
+                        value="<?php echo htmlspecialchars($prefillPhone ?? '', ENT_QUOTES, 'UTF-8'); ?>"
+                        class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-base font-medium text-slate-900 shadow-inner shadow-slate-100 outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-100"
+                        placeholder="+7 (999) 123-45-67"
+                        inputmode="tel"
+                        autocomplete="tel"
+                        required
+                    >
+                </div>
+                <button
+                    type="submit"
+                    class="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-sky-500 to-rose-500 px-4 py-3 text-base font-semibold text-white shadow-lg shadow-sky-200 transition hover:shadow-xl hover:shadow-rose-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-500"
+                >
+                    Получить одноразовый код
+                </button>
+            </form>
+
+            <form id="code-form" method="POST" action="/?page=recover" class="grid gap-4">
                 <input type="hidden" name="step" value="verify_code">
                 <div class="grid gap-1.5">
                     <label for="code" class="text-sm font-semibold text-slate-800">Код из Telegram (5 цифр)</label>
@@ -65,26 +77,10 @@
                         placeholder="12345"
                         required
                         inputmode="numeric"
+                        autocomplete="one-time-code"
                     >
+                    <p class="text-xs text-slate-500">Подтверждение сработает автоматически после ввода последней цифры.</p>
                 </div>
-                <div class="grid gap-3 rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 text-sm text-slate-700 shadow-inner shadow-slate-100">
-                    <div class="flex items-center gap-2 font-semibold text-slate-900">
-                        <span class="material-symbols-rounded text-base text-rose-500">info</span>
-                        Как получить код
-                    </div>
-                    <ol class="grid gap-2 pl-4 text-sm list-decimal marker:text-rose-500">
-                        <li>Откройте чат с ботом и нажмите «Восстановить PIN».</li>
-                        <li>Бот проверит ваш чат и пришлёт одноразовый код.</li>
-                        <li>Введите код здесь, чтобы сменить PIN.</li>
-                    </ol>
-                </div>
-                <button
-                    type="submit"
-                    class="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-sky-500 to-rose-500 px-4 py-3 text-base font-semibold text-white shadow-lg shadow-sky-200 transition hover:shadow-xl hover:shadow-rose-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-500"
-                >
-                    <span class="material-symbols-rounded text-base">key</span>
-                    Подтвердить код
-                </button>
             </form>
         <?php else: ?>
             <form method="POST" action="/?page=recover" class="grid gap-5">
@@ -132,4 +128,34 @@
             </form>
         <?php endif; ?>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const codeInput = document.getElementById('code');
+            const form = document.getElementById('code-form');
+            if (!codeInput || !form) {
+                return;
+            }
+
+            let submitted = false;
+
+            const submitIfComplete = () => {
+                const digits = (codeInput.value || '').replace(/\D+/g, '').slice(0, 5);
+                codeInput.value = digits;
+
+                if (digits.length === 5 && !submitted) {
+                    submitted = true;
+                    form.submit();
+                }
+            };
+
+            codeInput.addEventListener('input', submitIfComplete);
+            codeInput.addEventListener('paste', (event) => {
+                event.preventDefault();
+                const text = (event.clipboardData || window.clipboardData).getData('text');
+                codeInput.value = text;
+                submitIfComplete();
+            });
+        });
+    </script>
 </section>

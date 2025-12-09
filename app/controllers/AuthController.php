@@ -212,6 +212,7 @@ class AuthController extends Controller
         $errors = [];
         $successMessage = '';
         $stage = 'code';
+        $prefillPhone = '';
 
         if (Session::get('recover_verification')) {
             $stage = 'reset';
@@ -220,7 +221,50 @@ class AuthController extends Controller
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $step = $_POST['step'] ?? 'verify_code';
 
-            if ($step === 'verify_code') {
+            if ($step === 'request_code') {
+                $phone = trim($_POST['phone'] ?? '');
+
+                if ($phone === '') {
+                    $errors[] = 'Укажите номер телефона.';
+                } else {
+                    $normalizedPhone = $this->normalisePhone($phone);
+                    $user = $this->userModel->findByPhone($normalizedPhone);
+
+                    if (!$user) {
+                        $errors[] = 'Пользователь с таким номером не найден.';
+                    } elseif (empty($user['telegram_chat_id'])) {
+                        $errors[] = 'Для этого номера нет привязки к Telegram. Напишите боту, чтобы связать аккаунт.';
+                    } elseif (!$this->telegram) {
+                        $errors[] = 'Отправка кода временно недоступна.';
+                    } else {
+                        $chatId = (int) $user['telegram_chat_id'];
+                        $username = $user['telegram_username'] ?? null;
+
+                        $code = $this->verificationModel->createCode(
+                            $chatId,
+                            'recover',
+                            $normalizedPhone,
+                            (int) $user['id'],
+                            $username,
+                            $user['name'] ?? null
+                        );
+
+                        $this->userModel->linkTelegram((int) $user['id'], $chatId, $username);
+
+                        $this->logger->logEvent('WEB_RECOVERY_CODE_SENT', [
+                            'user_id' => $user['id'],
+                            'chat_id' => $chatId,
+                        ]);
+                        $this->analytics->track('tg_code_sent', ['purpose' => 'recover', 'user_id' => $user['id']]);
+
+                        $this->telegram->sendMessage($chatId, "Код для смены PIN: {$code}\nВведите его на странице восстановления на сайте.");
+
+                        $successMessage = 'Одноразовый код отправлен в Telegram.';
+                    }
+                }
+
+                $prefillPhone = $phone;
+            } elseif ($step === 'verify_code') {
                 $code = trim($_POST['code'] ?? '');
 
                 if (!preg_match('/^\d{5}$/', $code)) {
@@ -292,6 +336,7 @@ class AuthController extends Controller
             'successMessage' => $successMessage,
             'botUsername' => $this->botUsername,
             'stage' => $stage,
+            'prefillPhone' => $prefillPhone,
         ]);
     }
 
