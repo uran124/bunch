@@ -112,6 +112,20 @@ class AuthController extends Controller
                     if (!$verification) {
                         $errors[] = 'Код не найден или устарел. Запросите новый в Telegram.';
                     } else {
+                        $chatId = (int) $verification['chat_id'];
+                        $existingByChat = $chatId ? $this->userModel->findByTelegramChatId($chatId) : null;
+
+                        if ($existingByChat) {
+                            Session::set('auth_notice', 'Такой пользователь уже есть. Мы выполнили вход и перенаправили вас на главную.');
+                            $this->userModel->resetFailedAttempts((int) $existingByChat['id']);
+                            Auth::login((int) $existingByChat['id']);
+                            $this->logger->logEvent('LOGIN_SUCCESS', ['user_id' => $existingByChat['id'], 'phone' => $existingByChat['phone'] ?? null]);
+                            $this->analytics->track('login_success', ['user_id' => $existingByChat['id'], 'source' => 'register_code']);
+
+                            header('Location: /?page=home');
+                            exit;
+                        }
+
                         $data = [
                             'chat_id' => (int) $verification['chat_id'],
                             'username' => $verification['username'] ?? null,
@@ -322,6 +336,7 @@ class AuthController extends Controller
 
                             Session::remove('recover_verification');
                             Auth::login((int) $verification['user_id']);
+                            Session::set('auth_notice', 'PIN обновлён, вход выполнен. Мы перенаправили вас на главную.');
                             header('Location: /?page=home');
                             exit;
                         }
