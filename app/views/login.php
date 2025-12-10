@@ -53,10 +53,10 @@
                     <span>PIN-код</span>
                 </label>
                 <div class="grid grid-cols-4 gap-3" id="pin-inputs">
-                    <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" autocomplete="off" class="w-full aspect-square rounded-2xl border border-rose-200 bg-white backdrop-blur-sm text-center text-2xl font-bold text-slate-900 outline-none transition focus:border-rose-600 focus:shadow-lg focus:shadow-rose-500/20 focus:scale-105" aria-label="Первая цифра PIN">
-                    <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="w-full aspect-square rounded-2xl border border-rose-200 bg-white backdrop-blur-sm text-center text-2xl font-bold text-slate-900 outline-none transition focus:border-rose-600 focus:shadow-lg focus:shadow-rose-500/20 focus:scale-105" aria-label="Вторая цифра PIN">
-                    <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="w-full aspect-square rounded-2xl border border-rose-200 bg-white backdrop-blur-sm text-center text-2xl font-bold text-slate-900 outline-none transition focus:border-rose-600 focus:shadow-lg focus:shadow-rose-500/20 focus:scale-105" aria-label="Третья цифра PIN">
-                    <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="w-full aspect-square rounded-2xl border border-rose-200 bg-white backdrop-blur-sm text-center text-2xl font-bold text-slate-900 outline-none transition focus:border-rose-600 focus:shadow-lg focus:shadow-rose-500/20 focus:scale-105" aria-label="Четвертая цифра PIN">
+                    <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" autocomplete="one-time-code" class="w-full aspect-square rounded-2xl border border-rose-200 bg-white backdrop-blur-sm text-center text-2xl font-bold text-slate-900 outline-none transition focus:border-rose-600 focus:shadow-lg focus:shadow-rose-500/20 focus:scale-105" aria-label="Первая цифра PIN">
+                    <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" autocomplete="one-time-code" class="w-full aspect-square rounded-2xl border border-rose-200 bg-white backdrop-blur-sm text-center text-2xl font-bold text-slate-900 outline-none transition focus:border-rose-600 focus:shadow-lg focus:shadow-rose-500/20 focus:scale-105" aria-label="Вторая цифра PIN">
+                    <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" autocomplete="one-time-code" class="w-full aspect-square rounded-2xl border border-rose-200 bg-white backdrop-blur-sm text-center text-2xl font-bold text-slate-900 outline-none transition focus:border-rose-600 focus:shadow-lg focus:shadow-rose-500/20 focus:scale-105" aria-label="Третья цифра PIN">
+                    <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" autocomplete="one-time-code" class="w-full aspect-square rounded-2xl border border-rose-200 bg-white backdrop-blur-sm text-center text-2xl font-bold text-slate-900 outline-none transition focus:border-rose-600 focus:shadow-lg focus:shadow-rose-500/20 focus:scale-105" aria-label="Четвертая цифра PIN">
                 </div>
                 <input type="hidden" name="pin" id="pin" required minlength="4" maxlength="4">
             </div>
@@ -83,6 +83,13 @@
         const pinInputs = Array.from(document.querySelectorAll('#pin-inputs input'));
         const hiddenPin = document.getElementById('pin');
         const form = document.getElementById('login-form');
+
+        // Сбрасываем возможный автозаполненный PIN и запрещаем подсказки менеджеров паролей
+        pinInputs.forEach((input) => {
+            input.value = '';
+            input.setAttribute('autocomplete', 'one-time-code');
+        });
+        hiddenPin.value = '';
 
         if (phoneInput) {
             phoneInput.focus();
