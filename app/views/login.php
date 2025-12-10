@@ -61,7 +61,7 @@
                     <span class="material-symbols-rounded text-base">lock_open</span>
                     Забыли PIN?
                 </a>
-                <a href="/?page=register" class="inline-flex items-center justify-center gap-2 rounded-xl border border-rose-200 bg-white px-4 py-3 text-rose-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+                <a href="/?page=register" class="inline-flex items-center justify-center gap-2 rounded-xl border border-rose-200 bg-white px-4 py-3 text-rose-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md hover:border-rose-700">
                     <span class="material-symbols-rounded text-base">how_to_reg</span>
                     Регистрация
                 </a>
