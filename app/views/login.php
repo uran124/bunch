@@ -32,7 +32,7 @@
                         id="phone"
                         name="phone"
                         class="w-full bg-transparent text-lg font-semibold text-slate-900 outline-none placeholder:text-slate-400"
-                        placeholder="+7 ___ ___-__-__"
+                        placeholder="+7"
                         required
                         inputmode="tel"
                         autocomplete="tel"
