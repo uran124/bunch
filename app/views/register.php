@@ -1,9 +1,9 @@
-<section class="relative w-full max-w-sm overflow-hidden rounded-3xl bg-gradient-to-br from-white via-rose-50 to-white shadow-2xl">
+<section class="relative w-full max-w-[420px] overflow-hidden rounded-3xl bg-gradient-to-br from-white via-rose-50 to-white shadow-2xl">
     <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(225,29,72,0.08),transparent_50%)] pointer-events-none"></div>
     <div class="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,rgba(244,63,94,0.08),transparent_50%)] pointer-events-none"></div>
     <div class="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-px bg-gradient-to-r from-transparent via-rose-400 to-transparent opacity-50 pointer-events-none"></div>
 
-    <div class="flex flex-col gap-4 px-3 py-4">
+    <div class="flex flex-col gap-5 px-4 py-5 sm:px-5 sm:py-6">
         <header class="flex flex-col gap-2 text-center">
             <div class="flex items-center justify-center gap-2.5">
                 <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-rose-600 to-rose-700 flex items-center justify-center shadow-lg shadow-rose-500/30">
@@ -36,13 +36,13 @@
         <?php endif; ?>
 
         <?php if (($stage ?? 'code') === 'code'): ?>
-            <div class="rounded-2xl bg-white backdrop-blur-sm p-3.5">
-                <div class="space-y-2.5">
-                    <div class="flex items-center gap-2 text-xs font-semibold text-slate-900">
-                        <span class="material-symbols-rounded text-sm text-rose-600">info</span>
+            <div class="rounded-2xl border border-rose-100 bg-white/90 backdrop-blur-sm p-4 shadow-sm">
+                <div class="space-y-3">
+                    <div class="flex items-center gap-2 text-sm font-semibold text-slate-900">
+                        <span class="material-symbols-rounded text-base text-rose-600">info</span>
                         <span>Введите одноразовый код</span>
                     </div>
-                    <ol class="space-y-1.5 pl-3.5 text-xs text-slate-700 list-decimal marker:text-rose-600 marker:font-semibold">
+                    <ol class="space-y-1.5 pl-4 text-xs text-slate-700 list-decimal marker:text-rose-600 marker:font-semibold">
                         <li>Откройте телеграм бота по ссылке</li>
                         <li>Отправьте команду /start</li>
                         <li>Введите код ниже</li>
@@ -71,7 +71,7 @@
                         name="code"
                         maxlength="5"
                         pattern="\d{5}"
-                        class="w-44 rounded-2xl bg-white backdrop-blur-sm px-2 py-2 text-center text-2xl font-bold tracking-widest text-slate-900 outline-none transition focus:border-rose-600 focus:shadow-lg focus:shadow-rose-500/20 focus:scale-105"
+                        class="w-44 rounded-2xl border border-rose-200 bg-white/90 backdrop-blur-sm px-3 py-3 text-center text-2xl font-bold tracking-[0.35em] text-slate-900 outline-none transition focus:border-rose-600 focus:shadow-lg focus:shadow-rose-500/20 focus:scale-105"
                         placeholder="• • • • •"
                         required
                         inputmode="numeric"
@@ -83,11 +83,11 @@
 
             <div class="flex justify-center">
                 <div class="grid grid-cols-2 gap-2.5 w-full max-w-xs">
-                    <a href="/?page=login" class="inline-flex items-center justify-center gap-1.5 rounded-xl border border-rose-300 bg-white/50 backdrop-blur-sm px-3 py-2.5 text-xs font-medium text-rose-700 transition hover:bg-rose-50 hover:border-rose-300">
+                    <a href="/?page=login" class="inline-flex items-center justify-center gap-1.5 rounded-xl border border-rose-200 bg-white/90 backdrop-blur-sm px-3 py-2.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-50 hover:border-rose-300">
                         <span class="material-symbols-rounded text-sm">login</span>
                         Вход
                     </a>
-                    <a href="/?page=recover" class="inline-flex items-center justify-center gap-1.5 rounded-xl border border-rose-300 bg-white/50 backdrop-blur-sm px-3 py-2.5 text-xs font-medium text-rose-700 transition hover:bg-rose-50 hover:border-rose-300">
+                    <a href="/?page=recover" class="inline-flex items-center justify-center gap-1.5 rounded-xl border border-rose-200 bg-white/90 backdrop-blur-sm px-3 py-2.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-50 hover:border-rose-300">
                         <span class="material-symbols-rounded text-sm">lock_reset</span>
                         Восстановление
                     </a>
@@ -99,7 +99,7 @@
                 
                 <div class="flex justify-center">
                     <div class="w-full max-w-xs">
-                        <div class="group relative rounded-2xl border border-rose-200 bg-white backdrop-blur-sm transition focus-within:border-rose-600 focus-within:shadow-lg focus-within:shadow-rose-500/20">
+                        <div class="group relative rounded-2xl border border-rose-200 bg-white/90 backdrop-blur-sm transition focus-within:border-rose-600 focus-within:shadow-lg focus-within:shadow-rose-500/20">
                             <div class="absolute inset-y-0 left-3 flex items-center pointer-events-none">
                                 <span class="material-symbols-rounded text-rose-600 text-lg">person</span>
                             </div>
@@ -108,7 +108,7 @@
                                 id="name"
                                 name="name"
                                 value="<?php echo htmlspecialchars($prefillName ?? '', ENT_QUOTES, 'UTF-8'); ?>"
-                                class="w-full bg-transparent pl-10 pr-3 py-3.5 text-base font-medium text-slate-900 outline-none placeholder:text-slate-400"
+                                class="w-full bg-transparent pl-10 pr-3 py-3.5 text-base font-semibold text-slate-900 outline-none placeholder:text-slate-400"
                                 placeholder="Ваше имя"
                                 required
                             >
@@ -118,7 +118,7 @@
 
                 <div class="flex justify-center">
                     <div class="w-full max-w-xs">
-                        <div class="group relative rounded-2xl border border-rose-200 bg-white backdrop-blur-sm transition focus-within:border-rose-600 focus-within:shadow-lg focus-within:shadow-rose-500/20">
+                        <div class="group relative rounded-2xl border border-rose-200 bg-white/90 backdrop-blur-sm transition focus-within:border-rose-600 focus-within:shadow-lg focus-within:shadow-rose-500/20">
                             <div class="absolute inset-y-0 left-3 flex items-center pointer-events-none">
                                 <span class="material-symbols-rounded text-rose-600 text-lg">phone</span>
                             </div>
@@ -127,7 +127,7 @@
                                 id="phone"
                                 name="phone"
                                 value="<?php echo htmlspecialchars($prefillPhone ?? '', ENT_QUOTES, 'UTF-8'); ?>"
-                                class="w-full bg-transparent pl-10 pr-3 py-3.5 text-base font-medium text-slate-900 outline-none placeholder:text-slate-400"
+                                class="w-full bg-transparent pl-10 pr-3 py-3.5 text-base font-semibold text-slate-900 outline-none placeholder:text-slate-400"
                                 placeholder="+7"
                                 required
                                 inputmode="tel"
@@ -138,7 +138,7 @@
 
                 <div class="flex justify-center">
                     <div class="w-full max-w-xs">
-                        <div class="group relative rounded-2xl border border-rose-200 bg-white backdrop-blur-sm transition focus-within:border-rose-600 focus-within:shadow-lg focus-within:shadow-rose-500/20">
+                        <div class="group relative rounded-2xl border border-rose-200 bg-white/90 backdrop-blur-sm transition focus-within:border-rose-600 focus-within:shadow-lg focus-within:shadow-rose-500/20">
                             <div class="absolute inset-y-0 left-3 flex items-center pointer-events-none">
                                 <span class="material-symbols-rounded text-rose-600 text-lg">mail</span>
                             </div>
@@ -147,7 +147,7 @@
                                 id="email"
                                 name="email"
                                 value="<?php echo htmlspecialchars($prefillEmail ?? '', ENT_QUOTES, 'UTF-8'); ?>"
-                                class="w-full bg-transparent pl-10 pr-3 py-3.5 text-base font-medium text-slate-900 outline-none placeholder:text-slate-400"
+                                class="w-full bg-transparent pl-10 pr-3 py-3.5 text-base font-semibold text-slate-900 outline-none placeholder:text-slate-400"
                                 placeholder="Email (необязательно)"
                             >
                         </div>
@@ -165,7 +165,7 @@
                                 pattern="[0-9]*"
                                 maxlength="1"
                                 autocomplete="off"
-                                class="w-full aspect-square rounded-xl border border-rose-200 bg-white backdrop-blur-sm text-center text-xl font-bold text-slate-900 outline-none transition focus:border-rose-600 focus:shadow-lg focus:shadow-rose-500/20 focus:scale-105"
+                                  class="w-full aspect-square rounded-xl border border-rose-200 bg-white/90 backdrop-blur-sm text-center text-xl font-bold text-slate-900 outline-none transition focus:border-rose-600 focus:shadow-lg focus:shadow-rose-500/20 focus:scale-105"
                                 aria-label="Цифра PIN <?php echo $i; ?>"
                                 required
                             >
@@ -191,11 +191,11 @@
 
             <div class="flex justify-center">
                 <div class="grid grid-cols-2 gap-2.5 w-full max-w-xs">
-                    <a href="/?page=login" class="inline-flex items-center justify-center gap-1.5 rounded-xl border border-rose-200 bg-white/80 backdrop-blur-sm px-3 py-2.5 text-xs font-medium text-rose-700 transition hover:bg-rose-50 hover:border-rose-300">
+                    <a href="/?page=login" class="inline-flex items-center justify-center gap-1.5 rounded-xl border border-rose-200 bg-white/90 backdrop-blur-sm px-3 py-2.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-50 hover:border-rose-300">
                         <span class="material-symbols-rounded text-sm">login</span>
                         Вход
                     </a>
-                    <a href="/?page=recover" class="inline-flex items-center justify-center gap-1.5 rounded-xl border border-rose-200 bg-white/80 backdrop-blur-sm px-3 py-2.5 text-xs font-medium text-rose-700 transition hover:bg-rose-50 hover:border-rose-300">
+                    <a href="/?page=recover" class="inline-flex items-center justify-center gap-1.5 rounded-xl border border-rose-200 bg-white/90 backdrop-blur-sm px-3 py-2.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-50 hover:border-rose-300">
                         <span class="material-symbols-rounded text-sm">lock_reset</span>
                         Восстановление
                     </a>
