@@ -7,8 +7,6 @@
         <header class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div class="space-y-2">
                 <div class="inline-flex items-center gap-2 rounded-full bg-rose-100 px-3 py-1 text-xs font-semibold text-rose-700">
-                    <span class="material-symbols-rounded text-base">lock</span>
-                    <span>Вход в панель</span>
                 </div>
             </div>
         </header>
