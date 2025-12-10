@@ -259,30 +259,32 @@ function initAccessories() {
 }
 
 function initOrderFlow() {
-    const modeButtons = document.querySelectorAll('[data-order-mode]');
-    const modal = document.querySelector('[data-order-modal]');
-    const modalBody = modal?.querySelector('[data-order-modal-body]');
-    const modalTitle = modal?.querySelector('[data-order-modal-title]');
-    const applyButton = modal?.querySelector('[data-order-modal-apply]');
-    const todayISO = new Date().toISOString().slice(0, 10);
+    const orderSection = document.querySelector('[data-order-flow]');
+    const submitButton = document.querySelector('[data-submit-order]');
+    if (!orderSection || !submitButton) return;
 
-    const orderState = {
-        pickup: { date: todayISO, time: '' },
-        delivery: {
-            date: todayISO,
-            time: '',
-            address: '',
-            recipientMode: 'self',
-            recipient: { name: '', phone: '', note: '' },
-        },
-    };
+    const modeButtons = Array.from(orderSection.querySelectorAll('[data-order-mode]'));
+    const dateInput = orderSection.querySelector('[data-order-date]');
+    const timeInput = orderSection.querySelector('[data-order-time]');
+    const deliveryExtra = orderSection.querySelector('[data-delivery-extra]');
+    const addressSelect = orderSection.querySelector('[data-address-select]');
+    const addressInput = orderSection.querySelector('[data-address-input]');
+    const addressNew = orderSection.querySelector('[data-address-new]');
+    const recipientButtons = Array.from(orderSection.querySelectorAll('.recipient-btn'));
+    const recipientExtra = orderSection.querySelectorAll('[data-recipient-extra]');
+    const recipientName = orderSection.querySelector('[data-recipient-name]');
+    const recipientPhone = orderSection.querySelector('[data-recipient-phone]');
+    const commentInput = orderSection.querySelector('[data-order-comment]');
 
-    const summaries = {
-        pickup: document.querySelector('[data-order-summary="pickup"]'),
-        delivery: document.querySelector('[data-order-summary="delivery"]'),
-    };
+    const addresses = (() => {
+        try {
+            return JSON.parse(orderSection.dataset.addresses || '[]');
+        } catch (e) {
+            return [];
+        }
+    })();
 
-    let currentMode = null;
+    let currentMode = 'pickup';
 
     const highlightMode = (mode) => {
         modeButtons.forEach((btn) => {
@@ -291,42 +293,14 @@ function initOrderFlow() {
             btn.classList.toggle('bg-rose-50', isActive);
             btn.classList.toggle('text-rose-700', isActive);
             btn.classList.toggle('shadow-sm', isActive);
+            btn.classList.toggle('border-slate-200', !isActive);
+            btn.classList.toggle('bg-slate-50', !isActive);
+            btn.classList.toggle('text-slate-800', !isActive);
         });
     };
 
-    const formatDateLabel = (value) => {
-        if (!value) return 'Уточните дату';
-        if (value === todayISO) return 'Сегодня';
-        const date = new Date(value);
-        if (Number.isNaN(date.getTime())) return 'Уточните дату';
-        return date.toLocaleDateString('ru-RU', { day: '2-digit', month: 'short' });
-    };
-
-    const formatTimeLabel = (value) => (value ? value : 'Ближайшее');
-
-    const renderSummary = (mode) => {
-        const state = orderState[mode];
-        if (!state || !summaries[mode]) return;
-
-        const parts = [formatDateLabel(state.date), formatTimeLabel(state.time)];
-        if (mode === 'delivery' && state.address) {
-            const address = state.address.trim();
-            parts.push(address.length > 40 ? `${address.slice(0, 40)}…` : address);
-        }
-        summaries[mode].textContent = parts.join(' · ');
-        highlightMode(mode);
-    };
-
-    const closeModal = () => {
-        if (!modal) return;
-        modal.classList.add('hidden');
-        modal.classList.remove('flex');
-    };
-
-    const setRecipientMode = (container, mode) => {
-        const extras = container.querySelectorAll('[data-recipient-extra]');
-        const buttons = container.querySelectorAll('.recipient-btn');
-        buttons.forEach((btn) => {
+    const setRecipientMode = (mode) => {
+        recipientButtons.forEach((btn) => {
             const active = btn.dataset.recipientMode === mode;
             btn.classList.toggle('border-rose-100', active);
             btn.classList.toggle('bg-rose-50', active);
@@ -334,150 +308,207 @@ function initOrderFlow() {
             btn.classList.toggle('border-slate-200', !active);
             btn.classList.toggle('text-slate-700', !active);
         });
-        extras.forEach((extra) => {
+        recipientExtra.forEach((extra) => {
             extra.hidden = mode !== 'other';
         });
     };
 
-    const openModal = (mode) => {
-        if (!modal || !modalBody) return;
+    const setAddressFromSelect = () => {
+        if (!addressSelect || !addressInput) return;
+        const selectedOption = addressSelect.selectedOptions[0];
+        if (selectedOption) {
+            addressInput.value = selectedOption.dataset.addressText || '';
+        }
+    };
+
+    const toggleDelivery = (mode) => {
         currentMode = mode;
-        modalBody.innerHTML = '';
-        const template = document.getElementById(`order-template-${mode}`);
-        if (template) {
-            modalBody.appendChild(template.content.cloneNode(true));
+        if (deliveryExtra) {
+            deliveryExtra.hidden = mode !== 'delivery';
         }
-
-        const state = orderState[mode];
-        if (modalTitle) {
-            modalTitle.textContent = mode === 'pickup' ? 'Самовывоз' : 'Доставка';
-        }
-
-        if (mode === 'pickup') {
-            const dateInput = modalBody.querySelector('[data-pickup-date]');
-            const timeInput = modalBody.querySelector('[data-pickup-time]');
-            if (dateInput) {
-                dateInput.value = state.date || todayISO;
-            }
-            if (timeInput) {
-                timeInput.value = state.time || '';
-            }
-        }
-
-        if (mode === 'delivery') {
-            const dateInput = modalBody.querySelector('[data-delivery-date]');
-            const timeInput = modalBody.querySelector('[data-delivery-time]');
-            const addressInput = modalBody.querySelector('[data-delivery-address]');
-            const savedSelect = modalBody.querySelector('[data-delivery-saved]');
-            const recipientButtons = modalBody.querySelectorAll('.recipient-btn');
-
-            if (dateInput) {
-                dateInput.value = state.date || todayISO;
-            }
-            if (timeInput) {
-                timeInput.value = state.time || '';
-            }
-            if (addressInput) {
-                addressInput.value = state.address || '';
-            }
-            if (savedSelect) {
-                savedSelect.addEventListener('change', () => {
-                    const selectedValue = savedSelect.value || '';
-                    if (addressInput) {
-                        addressInput.value = selectedValue;
-                    }
-                });
-            }
-
-            if (recipientButtons.length) {
-                setRecipientMode(modalBody, state.recipientMode || 'self');
-                recipientButtons.forEach((btn) => {
-                    btn.addEventListener('click', () => {
-                        setRecipientMode(modalBody, btn.dataset.recipientMode || 'self');
-                    });
-                });
-            }
-
-            if (state.recipientMode === 'other') {
-                const nameInput = modalBody.querySelector('[data-recipient-name]');
-                const phoneInput = modalBody.querySelector('[data-recipient-phone]');
-                const noteInput = modalBody.querySelector('[data-recipient-note]');
-                if (nameInput) nameInput.value = state.recipient.name || '';
-                if (phoneInput) phoneInput.value = state.recipient.phone || '';
-                if (noteInput) noteInput.value = state.recipient.note || '';
-            }
-        }
-
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
+        highlightMode(mode);
     };
-
-    const collectModalState = () => {
-        if (!modalBody || !currentMode) return null;
-
-        if (currentMode === 'pickup') {
-            const dateInput = modalBody.querySelector('[data-pickup-date]');
-            const timeInput = modalBody.querySelector('[data-pickup-time]');
-            return {
-                date: dateInput?.value || todayISO,
-                time: timeInput?.value || '',
-            };
-        }
-
-        const dateInput = modalBody.querySelector('[data-delivery-date]');
-        const timeInput = modalBody.querySelector('[data-delivery-time]');
-        const addressInput = modalBody.querySelector('[data-delivery-address]');
-        const activeRecipient = modalBody.querySelector('.recipient-btn.border-rose-100') || modalBody.querySelector('[data-recipient-mode="self"]');
-        const mode = activeRecipient?.dataset.recipientMode || 'self';
-
-        const state = {
-            date: dateInput?.value || todayISO,
-            time: timeInput?.value || '',
-            address: addressInput?.value?.trim() || '',
-            recipientMode: mode,
-            recipient: { name: '', phone: '', note: '' },
-        };
-
-        if (mode === 'other') {
-            state.recipient.name = modalBody.querySelector('[data-recipient-name]')?.value || '';
-            state.recipient.phone = modalBody.querySelector('[data-recipient-phone]')?.value || '';
-            state.recipient.note = modalBody.querySelector('[data-recipient-note]')?.value || '';
-        }
-
-        return state;
-    };
-
-    if (applyButton) {
-        applyButton.addEventListener('click', () => {
-            if (!currentMode) return;
-            const newState = collectModalState();
-            if (newState) {
-                orderState[currentMode] = newState;
-                renderSummary(currentMode);
-            }
-            closeModal();
-        });
-    }
-
-    modal?.querySelectorAll('[data-order-modal-close]').forEach((btn) => {
-        btn.addEventListener('click', closeModal);
-    });
 
     modeButtons.forEach((button) => {
-        button.addEventListener('click', () => {
-            openModal(button.dataset.orderMode);
-        });
+        button.addEventListener('click', () => toggleDelivery(button.dataset.orderMode || 'pickup'));
     });
 
-    renderSummary('pickup');
-    renderSummary('delivery');
-    highlightMode('pickup');
+    recipientButtons.forEach((button) => {
+        button.addEventListener('click', () => setRecipientMode(button.dataset.recipientMode || 'self'));
+    });
+
+    addressSelect?.addEventListener('change', setAddressFromSelect);
+
+    addressNew?.addEventListener('click', () => {
+        if (addressSelect) {
+            addressSelect.selectedIndex = -1;
+        }
+        if (addressInput) {
+            addressInput.value = '';
+            addressInput.focus();
+        }
+    });
+
+    const collectPayload = () => {
+        const payload = {
+            mode: currentMode,
+            date: dateInput?.value || '',
+            time: timeInput?.value || '',
+            comment: commentInput?.value || '',
+        };
+
+        if (currentMode === 'delivery') {
+            payload.address_id = addressSelect ? Number(addressSelect.value || 0) || null : null;
+            payload.address_text = addressInput?.value || '';
+
+            const activeRecipient = orderSection.querySelector('.recipient-btn.border-rose-100') || orderSection.querySelector('[data-recipient-mode="self"]');
+            const recipientMode = activeRecipient?.dataset.recipientMode || 'self';
+            if (recipientMode === 'other') {
+                payload.recipient = {
+                    name: recipientName?.value || '',
+                    phone: recipientPhone?.value || '',
+                };
+            }
+        }
+
+        return payload;
+    };
+
+    const submitOrder = async () => {
+        submitButton.disabled = true;
+        submitButton.classList.add('opacity-70');
+
+        try {
+            const response = await fetch('/?page=cart-checkout', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                body: JSON.stringify(collectPayload()),
+            });
+
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok || !data.ok) {
+                throw new Error(data.error || 'Не удалось сохранить заказ');
+            }
+
+            window.location.href = '/?page=orders';
+        } catch (error) {
+            alert(error.message || 'Ошибка оформления заказа');
+        } finally {
+            submitButton.disabled = false;
+            submitButton.classList.remove('opacity-70');
+        }
+    };
+
+    submitButton.addEventListener('click', submitOrder);
+
+    if (addresses.length && !addressInput?.value) {
+        addressInput.value = orderSection.dataset.primaryAddress || addresses[0]?.address || '';
+    }
+
+    setRecipientMode('self');
+    toggleDelivery('pickup');
+}
+
+function initAttributeModal() {
+    const triggers = document.querySelectorAll('[data-attribute-modal-trigger]');
+    const modal = document.querySelector('[data-attribute-modal]');
+    const body = modal?.querySelector('[data-attribute-modal-body]');
+    const title = modal?.querySelector('[data-attribute-modal-title]');
+
+    if (!triggers.length || !modal || !body) return;
+
+    const closeModal = () => {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    };
+
+    modal.querySelectorAll('[data-attribute-modal-close]').forEach((btn) => btn.addEventListener('click', closeModal));
+    modal.addEventListener('click', (event) => {
+        if (event.target === modal) closeModal();
+    });
+
+    const renderRows = (rows) => {
+        body.innerHTML = '';
+        if (!rows.length) {
+            const empty = document.createElement('p');
+            empty.className = 'text-sm text-slate-500';
+            empty.textContent = 'Дополнительные параметры отсутствуют.';
+            body.appendChild(empty);
+            return;
+        }
+
+        rows.forEach((row) => {
+            const card = document.createElement('div');
+            card.className = 'space-y-2 rounded-xl border border-slate-100 bg-slate-50 p-3';
+
+            const header = document.createElement('div');
+            header.className = 'flex items-center justify-between gap-2';
+            const name = document.createElement('p');
+            name.className = 'text-sm font-semibold text-slate-900';
+            name.textContent = row.name || 'Атрибут';
+            const scope = document.createElement('span');
+            scope.className = 'text-[11px] font-semibold text-slate-500';
+            scope.textContent = row.applies_to === 'bouquet' ? 'к букету' : 'к стеблю';
+            header.appendChild(name);
+            header.appendChild(scope);
+            card.appendChild(header);
+
+            const values = document.createElement('div');
+            values.className = 'flex flex-wrap gap-2';
+
+            (row.values || []).forEach((value) => {
+                const pill = document.createElement('span');
+                const isActive = Number(row.selected) === Number(value.id);
+                pill.className = `inline-flex items-center gap-1 rounded-lg border px-3 py-1 text-xs font-semibold ${isActive ? 'border-rose-200 bg-white text-rose-700 shadow-sm shadow-rose-100' : 'border-slate-200 bg-white text-slate-700'}`;
+                pill.textContent = value.value;
+
+                if (Number(value.price_delta || 0) !== 0) {
+                    const delta = document.createElement('span');
+                    delta.className = 'text-[11px] font-semibold text-rose-500';
+                    const price = Number(value.price_delta || 0);
+                    delta.textContent = `${price > 0 ? '+' : '−'} ${Math.abs(price).toLocaleString('ru-RU')} ₽`;
+                    pill.appendChild(delta);
+                }
+
+                values.appendChild(pill);
+            });
+
+            card.appendChild(values);
+            body.appendChild(card);
+        });
+    };
+
+    triggers.forEach((trigger) => {
+        trigger.addEventListener('click', (event) => {
+            event.preventDefault();
+            if (!modal || !body) return;
+            const raw = trigger.dataset.attributeData || '[]';
+            let parsed = [];
+            try {
+                parsed = JSON.parse(raw);
+            } catch (e) {
+                parsed = [];
+            }
+
+            if (title) {
+                title.textContent = trigger.dataset.attributeTitle || 'Параметры';
+            }
+
+            renderRows(parsed);
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        });
+    });
 }
 
 function initCartPage() {
     initCartItems();
     initAccessories();
     initOrderFlow();
+    initAttributeModal();
 }
 
 if (pageId === 'cart') {
@@ -486,14 +517,18 @@ if (pageId === 'cart') {
 
 function buildStatusBadgeClass(status) {
     switch (status) {
-        case 'delivered':
-            return 'bg-emerald-50 text-emerald-700 ring-emerald-100';
-        case 'cancelled':
+        case 'new':
             return 'bg-rose-50 text-rose-700 ring-rose-100';
-        case 'delivering':
-            return 'bg-sky-50 text-sky-700 ring-sky-100';
         case 'confirmed':
+            return 'bg-emerald-50 text-emerald-700 ring-emerald-100';
+        case 'assembled':
+            return 'bg-sky-50 text-sky-700 ring-sky-100';
+        case 'delivering':
             return 'bg-amber-50 text-amber-700 ring-amber-100';
+        case 'delivered':
+            return 'bg-white text-slate-700 ring-slate-200';
+        case 'cancelled':
+            return 'bg-slate-100 text-slate-500 ring-slate-200';
         default:
             return 'bg-slate-50 text-slate-700 ring-slate-100';
     }

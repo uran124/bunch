@@ -68,14 +68,18 @@
                     </div>
 
                     <div class="mt-4 grid gap-3">
-                        <?php foreach ($activeOrders as $order): ?>
-                            <?php
-                            $badgeClasses = match ($order['status']) {
-                                'delivering' => 'bg-sky-50 text-sky-700 ring-sky-100',
-                                'confirmed' => 'bg-amber-50 text-amber-700 ring-amber-100',
-                                default => 'bg-slate-50 text-slate-700 ring-slate-100',
-                            };
-                            ?>
+                            <?php foreach ($activeOrders as $order): ?>
+                                <?php
+                                $badgeClasses = match ($order['status']) {
+                                    'new' => 'bg-rose-50 text-rose-700 ring-rose-100',
+                                    'confirmed' => 'bg-emerald-50 text-emerald-700 ring-emerald-100',
+                                    'assembled' => 'bg-sky-50 text-sky-700 ring-sky-100',
+                                    'delivering' => 'bg-amber-50 text-amber-700 ring-amber-100',
+                                    'delivered' => 'bg-white text-slate-700 ring-slate-200',
+                                    'cancelled' => 'bg-slate-100 text-slate-500 ring-slate-200',
+                                    default => 'bg-slate-50 text-slate-700 ring-slate-100',
+                                };
+                                ?>
                             <article class="flex items-start gap-3 rounded-2xl bg-white p-3 shadow-inner shadow-amber-100 sm:p-4">
                                 <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 text-amber-700">
                                     <span class="material-symbols-rounded text-xl">local_shipping</span>
@@ -135,18 +139,22 @@
                         Выполненных заказов пока нет.
                     </div>
                 <?php else: ?>
-                    <?php foreach ($completedOrders as $order): ?>
-                        <?php
-                        $badgeClasses = match ($order['status']) {
-                            'delivered' => 'bg-emerald-50 text-emerald-700 ring-emerald-100',
-                            'cancelled' => 'bg-rose-50 text-rose-700 ring-rose-100',
-                            default => 'bg-slate-50 text-slate-700 ring-slate-100',
-                        };
-                        ?>
-                        <article class="flex gap-3 rounded-2xl border border-slate-100 bg-white p-3 shadow-sm ring-1 ring-slate-100 sm:gap-4 sm:p-4" data-order-card>
-                            <div class="h-16 w-20 overflow-hidden rounded-xl bg-slate-100">
-                                <img
-                                    src="<?php echo htmlspecialchars($order['item']['image'] ?? '/assets/images/products/bouquet.svg', ENT_QUOTES, 'UTF-8'); ?>"
+                        <?php foreach ($completedOrders as $order): ?>
+                            <?php
+                            $badgeClasses = match ($order['status']) {
+                                'new' => 'bg-rose-50 text-rose-700 ring-rose-100',
+                                'confirmed' => 'bg-emerald-50 text-emerald-700 ring-emerald-100',
+                                'assembled' => 'bg-sky-50 text-sky-700 ring-sky-100',
+                                'delivering' => 'bg-amber-50 text-amber-700 ring-amber-100',
+                                'delivered' => 'bg-white text-slate-700 ring-slate-200',
+                                'cancelled' => 'bg-slate-100 text-slate-500 ring-slate-200',
+                                default => 'bg-slate-50 text-slate-700 ring-slate-100',
+                            };
+                            ?>
+                            <article class="flex gap-3 rounded-2xl border border-slate-100 bg-white p-3 shadow-sm ring-1 ring-slate-100 sm:gap-4 sm:p-4" data-order-card>
+                                <div class="h-16 w-20 overflow-hidden rounded-xl bg-slate-100">
+                                    <img
+                                        src="<?php echo htmlspecialchars($order['item']['image'] ?? '/assets/images/products/bouquet.svg', ENT_QUOTES, 'UTF-8'); ?>"
                                     alt="<?php echo htmlspecialchars($order['item']['title'] ?? 'Товар', ENT_QUOTES, 'UTF-8'); ?>"
                                     class="h-full w-full object-cover"
                                 >

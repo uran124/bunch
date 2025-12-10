@@ -70,6 +70,7 @@ $router->post('admin-product-delete', [AdminController::class, 'deleteProduct'])
 $router->post('cart-add', [CartController::class, 'add']);
 $router->post('cart-update', [CartController::class, 'update']);
 $router->post('cart-remove', [CartController::class, 'remove']);
+$router->post('cart-checkout', [CartController::class, 'checkout']);
 $router->post('account-notifications', [AccountController::class, 'updateNotifications']);
 $router->post('account-pin', [AccountController::class, 'updatePin']);
 
