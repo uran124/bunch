@@ -10,7 +10,7 @@
             </div>
             <div class="space-y-2">
                 <h1 class="text-3xl font-bold tracking-tight text-slate-900">Добро пожаловать</h1>
-                <p class="text-sm text-slate-600">Войдите в свой аккаунт Bunch</p>
+                <p class="text-sm text-slate-600">Войдите в свой аккаунт bunch</p>
             </div>
         </header>
 
@@ -29,7 +29,6 @@
 
         <form method="POST" action="/?page=login" class="grid gap-6" id="login-form">
             <div class="grid gap-2">
-                <label class="text-sm font-medium text-slate-700 pl-1">Номер телефона</label>
                 <div class="group relative rounded-2xl border border-rose-200 bg-white backdrop-blur-sm transition focus-within:border-rose-600 focus-within:shadow-lg focus-within:shadow-rose-500/20">
                     <div class="absolute inset-y-0 left-4 flex items-center pointer-events-none">
                         <span class="material-symbols-rounded text-rose-600 text-xl">phone</span>
@@ -39,7 +38,7 @@
                         id="phone"
                         name="phone"
                         class="w-full bg-transparent pl-12 pr-4 py-4 text-base font-medium text-slate-900 outline-none placeholder:text-slate-400"
-                        placeholder="+7 ___ ___-__-__"
+                        placeholder="+7"
                         required
                         inputmode="tel"
                         autocomplete="tel"
