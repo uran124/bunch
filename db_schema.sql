@@ -352,7 +352,7 @@ CREATE TABLE orders (
     ON DELETE SET NULL,
 
   total_amount DECIMAL(10,2) NOT NULL,         -- итоговая сумма
-  status ENUM('new', 'confirmed', 'delivering', 'delivered', 'cancelled')
+  status ENUM('new', 'confirmed', 'assembled', 'delivering', 'delivered', 'cancelled')
     NOT NULL DEFAULT 'new',
 
   delivery_type ENUM('pickup', 'delivery', 'subscription') NOT NULL DEFAULT 'pickup',
