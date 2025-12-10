@@ -1,7 +1,7 @@
 <section class="relative w-full max-w-xl overflow-hidden rounded-3xl bg-white shadow-lg ring-1 ring-rose-100">
-    <div class="absolute inset-0 -z-10 bg-gradient-to-br from-rose-50 via-white to-rose-100"></div>
-    <div class="absolute -left-24 -top-24 h-56 w-56 rounded-full bg-rose-200 opacity-30 blur-3xl"></div>
-    <div class="absolute -right-20 -bottom-24 h-64 w-64 rounded-full bg-rose-100 opacity-50 blur-3xl"></div>
+    <div class="absolute inset-0 -z-10 bg-gradient-to-br from-rose-50 via-white to-rose-100 pointer-events-none"></div>
+    <div class="absolute -left-24 -top-24 h-56 w-56 rounded-full bg-rose-200 opacity-30 blur-3xl pointer-events-none"></div>
+    <div class="absolute -right-20 -bottom-24 h-64 w-64 rounded-full bg-rose-100 opacity-50 blur-3xl pointer-events-none"></div>
 
     <div class="flex flex-col gap-8 px-5 py-8 sm:px-8">
         <header class="flex flex-col gap-2 text-center">
