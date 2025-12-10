@@ -3,6 +3,12 @@
 
 class Order extends Model
 {
+    private array $statusPaymentMap = [
+        'paid' => ['confirmed', 'assembled', 'delivering', 'delivered'],
+        'pending' => ['new'],
+        'refund' => ['cancelled'],
+    ];
+
     public function getLatestActiveForUser(int $userId): ?array
     {
         $stmt = $this->db->prepare(
@@ -17,6 +23,16 @@ class Order extends Model
         }
 
         return $this->buildOrderPayload($order);
+    }
+
+    public function findById(int $orderId): ?array
+    {
+        $stmt = $this->db->prepare('SELECT * FROM orders WHERE id = :id LIMIT 1');
+        $stmt->execute(['id' => $orderId]);
+
+        $order = $stmt->fetch();
+
+        return $order ?: null;
     }
 
     public function getActiveOrdersForUser(int $userId): array
@@ -73,6 +89,94 @@ class Order extends Model
         }, $orders);
     }
 
+    public function getAdminOrders(?string $search = null, ?string $statusFilter = null, ?string $paymentFilter = null): array
+    {
+        $sql = "SELECT o.*, u.name AS user_name, u.phone AS user_phone FROM orders o LEFT JOIN users u ON u.id = o.user_id WHERE o.delivery_type <> 'subscription'";
+        $params = [];
+
+        if ($statusFilter && $statusFilter !== 'all') {
+            $sql .= ' AND o.status = :status';
+            $params['status'] = $statusFilter;
+        }
+
+        if ($paymentFilter && $paymentFilter !== 'all') {
+            $statuses = $this->mapPaymentFilterToStatuses($paymentFilter);
+
+            if (!empty($statuses)) {
+                $placeholders = [];
+                foreach ($statuses as $index => $status) {
+                    $key = ':payment_status_' . $index;
+                    $placeholders[] = $key;
+                    $params[$key] = $status;
+                }
+
+                $sql .= ' AND o.status IN (' . implode(', ', $placeholders) . ')';
+            }
+        }
+
+        if ($search) {
+            $sql .= ' AND (o.id LIKE :search OR o.recipient_name LIKE :search OR u.name LIKE :search OR u.phone LIKE :search)';
+            $params['search'] = '%' . $search . '%';
+        }
+
+        $sql .= ' ORDER BY o.created_at DESC LIMIT 100';
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+
+        $orders = $stmt->fetchAll();
+
+        return array_map(function (array $order): array {
+            return $this->mapAdminOrder($order);
+        }, $orders);
+    }
+
+    public function getAdminOrderDetail(int $orderId): ?array
+    {
+        $stmt = $this->db->prepare('SELECT o.*, u.name AS user_name, u.phone AS user_phone FROM orders o LEFT JOIN users u ON u.id = o.user_id WHERE o.id = :id LIMIT 1');
+        $stmt->execute(['id' => $orderId]);
+
+        $order = $stmt->fetch();
+
+        if (!$order || $order['delivery_type'] === 'subscription') {
+            return null;
+        }
+
+        $items = $this->getItems($orderId);
+
+        return $this->mapAdminOrder($order, $items);
+    }
+
+    public function updateAdminOrder(int $orderId, array $data): void
+    {
+        $allowedStatuses = ['new', 'confirmed', 'assembled', 'delivering', 'delivered', 'cancelled'];
+        $allowedDeliveryTypes = ['pickup', 'delivery'];
+
+        $status = in_array($data['status'] ?? 'new', $allowedStatuses, true) ? $data['status'] : 'new';
+        $deliveryType = in_array($data['delivery_type'] ?? 'pickup', $allowedDeliveryTypes, true)
+            ? $data['delivery_type']
+            : 'pickup';
+
+        $scheduledDate = $this->normalizeDate($data['scheduled_date'] ?? null);
+        $scheduledTime = $this->normalizeTime($data['scheduled_time'] ?? null);
+
+        $stmt = $this->db->prepare(
+            'UPDATE orders SET status = :status, delivery_type = :delivery_type, scheduled_date = :scheduled_date, scheduled_time = :scheduled_time, address_text = :address_text, recipient_name = :recipient_name, recipient_phone = :recipient_phone, comment = :comment, updated_at = NOW() WHERE id = :id'
+        );
+
+        $stmt->execute([
+            'id' => $orderId,
+            'status' => $status,
+            'delivery_type' => $deliveryType,
+            'scheduled_date' => $scheduledDate,
+            'scheduled_time' => $scheduledTime,
+            'address_text' => $this->emptyToNull($data['address_text'] ?? null),
+            'recipient_name' => $this->emptyToNull($data['recipient_name'] ?? null),
+            'recipient_phone' => $this->emptyToNull($data['recipient_phone'] ?? null),
+            'comment' => $this->emptyToNull($data['comment'] ?? null),
+        ]);
+    }
+
     private function getItems(int $orderId): array
     {
         $stmt = $this->db->prepare(
@@ -81,6 +185,11 @@ class Order extends Model
         $stmt->execute(['order_id' => $orderId]);
 
         return $stmt->fetchAll();
+    }
+
+    public function getItemsForOrder(int $orderId): array
+    {
+        return $this->getItems($orderId);
     }
 
     public function createFromCart(int $userId, array $cartItems, array $payload): int
@@ -182,6 +291,113 @@ class Order extends Model
 
         $dt = DateTime::createFromFormat('H:i', $value);
         return $dt instanceof DateTime ? $dt->format('H:i:s') : null;
+    }
+
+    private function mapAdminOrder(array $order, array $items = []): array
+    {
+        $scheduled = $this->formatDeliveryWindow($order['scheduled_date'] ?? null, $order['scheduled_time'] ?? null);
+        $items = $items ?: $this->getItems((int) $order['id']);
+
+        $itemsPayload = array_map(function (array $item): array {
+            $qty = (int) $item['qty'];
+            $price = (float) $item['price'];
+
+            return [
+                'title' => $item['product_name'] ?? ($item['name'] ?? 'Товар'),
+                'qty' => $qty,
+                'unit' => $this->formatPrice($price),
+                'total' => $this->formatPrice($price * $qty),
+                'image' => $item['photo_url'] ?? '/assets/images/products/bouquet.svg',
+            ];
+        }, $items);
+
+        return [
+            'id' => (int) $order['id'],
+            'number' => 'B-' . str_pad((string) $order['id'], 4, '0', STR_PAD_LEFT),
+            'customer' => $order['user_name'] ?? $order['recipient_name'] ?? 'Без имени',
+            'customerPhone' => $order['user_phone'] ?? $order['recipient_phone'] ?? '',
+            'sum' => $this->formatPrice((float) $order['total_amount']),
+            'status' => $order['status'],
+            'statusLabel' => $this->mapOrderStatus($order['status']),
+            'payment' => $this->mapPaymentStatus($order['status']),
+            'delivery' => $scheduled,
+            'deliveryType' => $this->mapDeliveryType($order['delivery_type'] ?? 'pickup'),
+            'scheduled_date' => $order['scheduled_date'] ?? null,
+            'scheduled_time' => $order['scheduled_time'] ?? null,
+            'address' => $order['address_text'] ?? null,
+            'comment' => $order['comment'] ?? null,
+            'recipient_name' => $order['recipient_name'] ?? null,
+            'recipient_phone' => $order['recipient_phone'] ?? null,
+            'updated_at' => $order['updated_at'] ?? $order['created_at'] ?? null,
+            'items' => $itemsPayload,
+        ];
+    }
+
+    private function formatPrice(float $amount): string
+    {
+        return number_format($amount, 0, ',', ' ') . ' ₽';
+    }
+
+    private function formatDeliveryWindow(?string $date, ?string $time): string
+    {
+        $parts = [];
+
+        if ($date) {
+            try {
+                $parts[] = (new DateTimeImmutable($date))->format('d.m');
+            } catch (Throwable $e) {
+                $parts[] = $date;
+            }
+        }
+
+        if ($time) {
+            $parts[] = substr($time, 0, 5);
+        }
+
+        return $parts ? implode(', ', $parts) : '—';
+    }
+
+    private function mapOrderStatus(string $status): string
+    {
+        return match ($status) {
+            'new' => 'Новый',
+            'confirmed' => 'Принят',
+            'assembled' => 'Собран',
+            'delivering' => 'В доставке',
+            'delivered' => 'Доставлен',
+            'cancelled' => 'Отменён',
+            default => 'В обработке',
+        };
+    }
+
+    private function mapDeliveryType(string $type): string
+    {
+        return match ($type) {
+            'delivery' => 'Доставка',
+            'subscription' => 'Подписка',
+            default => 'Самовывоз',
+        };
+    }
+
+    private function mapPaymentStatus(string $status): string
+    {
+        return match ($status) {
+            'cancelled' => 'Возврат',
+            'new' => 'Ожидает',
+            default => 'Оплачен',
+        };
+    }
+
+    private function mapPaymentFilterToStatuses(string $filter): array
+    {
+        return $this->statusPaymentMap[$filter] ?? [];
+    }
+
+    private function emptyToNull(?string $value): ?string
+    {
+        $trimmed = trim((string) $value);
+
+        return $trimmed === '' ? null : $trimmed;
     }
 
     private function buildOrderPayload(array $order): array

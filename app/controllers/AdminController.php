@@ -713,6 +713,11 @@ class AdminController extends Controller
 
     public function ordersOneTime(): void
     {
+        $query = trim($_GET['q'] ?? '');
+        $statusFilter = $_GET['status_filter'] ?? 'all';
+        $paymentFilter = $_GET['payment_filter'] ?? 'all';
+        $selectedId = isset($_GET['id']) ? (int) $_GET['id'] : null;
+
         $pageMeta = [
             'title' => 'Заказы · разовые покупки — админ-панель Bunch',
             'description' => 'Контроль статусов разовых заказов, оплат и доставки.',
@@ -721,14 +726,71 @@ class AdminController extends Controller
             'headerSubtitle' => 'Заказы · Разовые покупки',
         ];
 
+        $orderModel = new Order();
+
         $this->render('admin-orders-one-time', [
             'pageMeta' => $pageMeta,
-            'orders' => $this->getOneTimeOrders(),
+            'orders' => $orderModel->getAdminOrders($query, $statusFilter, $paymentFilter),
             'filters' => [
-                'status' => ['Все', 'Новый', 'В доставке', 'Доставлен', 'Отменён'],
-                'payment' => ['Все', 'Оплачен', 'Ожидает', 'Возврат'],
+                'status' => [
+                    'all' => 'Все',
+                    'new' => 'Новый',
+                    'confirmed' => 'Принят',
+                    'assembled' => 'Собран',
+                    'delivering' => 'В доставке',
+                    'delivered' => 'Доставлен',
+                    'cancelled' => 'Отменён',
+                ],
+                'payment' => [
+                    'all' => 'Все',
+                    'paid' => 'Оплачен',
+                    'pending' => 'Ожидает',
+                    'refund' => 'Возврат',
+                ],
             ],
+            'selectedOrder' => $selectedId ? $orderModel->getAdminOrderDetail($selectedId) : null,
+            'query' => $query,
+            'activeFilters' => [
+                'status' => $statusFilter,
+                'payment' => $paymentFilter,
+            ],
+            'message' => $_GET['result'] ?? null,
         ]);
+    }
+
+    public function updateOneTimeOrder(): void
+    {
+        $orderId = (int) ($_POST['order_id'] ?? 0);
+
+        if ($orderId <= 0) {
+            header('Location: /?page=admin-orders-one-time&status=error');
+            return;
+        }
+
+        $orderModel = new Order();
+        $order = $orderModel->findById($orderId);
+
+        if (!$order || $order['delivery_type'] === 'subscription') {
+            header('Location: /?page=admin-orders-one-time&status=error');
+            return;
+        }
+
+        $payload = [
+            'status' => $_POST['status'] ?? 'new',
+            'delivery_type' => $_POST['delivery_type'] ?? ($order['delivery_type'] ?? 'pickup'),
+            'scheduled_date' => trim($_POST['scheduled_date'] ?? ''),
+            'scheduled_time' => trim($_POST['scheduled_time'] ?? ''),
+            'recipient_name' => trim($_POST['recipient_name'] ?? ''),
+            'recipient_phone' => trim($_POST['recipient_phone'] ?? ''),
+            'address_text' => trim($_POST['address_text'] ?? ''),
+            'comment' => trim($_POST['comment'] ?? ''),
+        ];
+
+        $orderModel->updateAdminOrder($orderId, $payload);
+
+        $query = ['page' => 'admin-orders-one-time', 'id' => $orderId, 'result' => 'updated'];
+
+        header('Location: /?' . http_build_query($query));
     }
 
     public function ordersSubscriptions(): void
@@ -1216,18 +1278,6 @@ class AdminController extends Controller
         ];
     }
 
-
-    private function getOneTimeOrders(): array
-    {
-        return [
-            ['number' => 'B-3012', 'customer' => 'Анна Соколова', 'sum' => '2 350 ₽', 'status' => 'Новый', 'payment' => 'Ожидает', 'delivery' => '12.06, 14:00', 'channel' => 'Сайт'],
-            ['number' => 'B-3011', 'customer' => 'ИП Флора', 'sum' => '7 480 ₽', 'status' => 'В доставке', 'payment' => 'Оплачен', 'delivery' => '12.06, 18:00', 'channel' => 'Корзина'],
-            ['number' => 'B-3010', 'customer' => 'Ольга Смирнова', 'sum' => '1 980 ₽', 'status' => 'Доставлен', 'payment' => 'Оплачен', 'delivery' => '11.06, 16:00', 'channel' => 'Сайт'],
-            ['number' => 'B-3009', 'customer' => 'Retail 24', 'sum' => '4 120 ₽', 'status' => 'Отменён', 'payment' => 'Возврат', 'delivery' => '—', 'channel' => 'Менеджер'],
-            ['number' => 'B-3008', 'customer' => 'Артем Якубов', 'sum' => '3 550 ₽', 'status' => 'Доставлен', 'payment' => 'Оплачен', 'delivery' => '10.06, 13:00', 'channel' => 'Сайт'],
-            ['number' => 'B-3007', 'customer' => 'ООО «Астра»', 'sum' => '12 400 ₽', 'status' => 'В доставке', 'payment' => 'Оплачен', 'delivery' => '12.06, 09:00', 'channel' => 'Менеджер'],
-        ];
-    }
 
     private function getSubscriptionOrders(): array
     {
