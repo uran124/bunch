@@ -1,15 +1,17 @@
-<section class="relative overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-slate-100">
+<section class="relative w-full max-w-2xl overflow-hidden rounded-3xl bg-white shadow-lg ring-1 ring-emerald-100">
     <div class="absolute inset-0 -z-10 bg-gradient-to-br from-emerald-50 via-white to-rose-50"></div>
     <div class="absolute -left-24 top-10 h-56 w-56 rounded-full bg-emerald-100 opacity-40 blur-3xl"></div>
     <div class="absolute -right-16 bottom-0 h-64 w-64 rounded-full bg-rose-100 opacity-50 blur-3xl"></div>
 
     <div class="flex flex-col gap-8 px-5 py-8 sm:px-8">
-        <header class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div class="space-y-2">
-                <div class="inline-flex items-center gap-2 rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800">
-                    <span class="material-symbols-rounded text-base">verified_user</span>
-                    <span>Регистрация</span>
-                </div>
+        <header class="flex flex-col gap-2 text-center">
+            <span class="mx-auto inline-flex items-center gap-2 rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800">
+                <span class="material-symbols-rounded text-base">verified_user</span>
+                Создание аккаунта
+            </span>
+            <div class="space-y-1">
+                <h1 class="text-3xl font-bold tracking-tight text-slate-900">Регистрация в Bunch</h1>
+                <p class="text-sm text-slate-600">Получите код в Telegram, подтвердите номер и придумайте PIN.</p>
             </div>
         </header>
 
@@ -186,5 +188,8 @@
                 });
             </script>
         <?php endif; ?>
+        <p class="text-center text-sm text-slate-600">
+            Уже есть аккаунт? <a href="/?page=login" class="font-semibold text-rose-600 hover:text-rose-700">Вернуться ко входу</a>
+        </p>
     </div>
 </section>

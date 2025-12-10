@@ -17,6 +17,13 @@
 </head>
 <?php
 $currentPage = $_GET['page'] ?? trim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/') ?: 'home';
+$authPages = ['login', 'register', 'recover'];
+$isAuthPage = in_array($currentPage, $authPages, true);
+$mainClasses = 'mx-auto flex w-full max-w-6xl flex-1 flex-col gap-4 px-3 py-3 sm:gap-6 sm:px-4 sm:py-8';
+
+if ($isAuthPage) {
+    $mainClasses .= ' items-center justify-center';
+}
 ?>
 <body
     class="min-h-screen bg-slate-50 text-slate-900 antialiased font-[\"Manrope\",system-ui,sans-serif] flex flex-col pb-[calc(6.5rem+env(safe-area-inset-bottom))]"
@@ -43,7 +50,15 @@ $currentPage = $_GET['page'] ?? trim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_
         </div>
     </header>
 
-    <main class="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-4 px-3 py-3 sm:gap-6 sm:px-4 sm:py-8">
+    <main class="<?php echo htmlspecialchars($mainClasses, ENT_QUOTES, 'UTF-8'); ?>">
+        <?php
+        $notice = Session::get('auth_notice');
+        if ($notice) {
+            Session::remove('auth_notice');
+            echo '<div class="w-full max-w-3xl rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 shadow-sm"><div class="flex items-start gap-2"><span class="material-symbols-rounded text-base">info</span><p>' . htmlspecialchars($notice, ENT_QUOTES, 'UTF-8') . '</p></div></div>';
+        }
+        ?>
+
         <?php echo $content; ?>
     </main>
 

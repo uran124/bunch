@@ -1,18 +1,17 @@
-<section class="relative overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-slate-100">
+<section class="relative w-full max-w-xl overflow-hidden rounded-3xl bg-white shadow-lg ring-1 ring-sky-100">
     <div class="absolute inset-0 -z-10 bg-gradient-to-br from-sky-50 via-white to-rose-50"></div>
     <div class="absolute -left-24 -top-16 h-56 w-56 rounded-full bg-sky-100 opacity-50 blur-3xl"></div>
     <div class="absolute -right-16 bottom-0 h-64 w-64 rounded-full bg-rose-100 opacity-50 blur-3xl"></div>
 
     <div class="flex flex-col gap-8 px-5 py-8 sm:px-8">
-        <header class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div class="space-y-2">
-                <div class="inline-flex items-center gap-2 rounded-full bg-sky-100 px-3 py-1 text-xs font-semibold text-sky-800">
-                    <span class="material-symbols-rounded text-base">lock_reset</span>
-                    <span>Сброс PIN-кода</span>
-                </div>
-                <div class="space-y-1">
-                    <h1 class="text-3xl font-semibold tracking-tight text-slate-900">Получите код и смените PIN</h1>
-                </div>
+        <header class="flex flex-col gap-2 text-center">
+            <span class="mx-auto inline-flex items-center gap-2 rounded-full bg-sky-100 px-3 py-1 text-xs font-semibold text-sky-800">
+                <span class="material-symbols-rounded text-base">lock_reset</span>
+                Восстановление PIN
+            </span>
+            <div class="space-y-1">
+                <h1 class="text-3xl font-bold tracking-tight text-slate-900">Получите код и смените PIN</h1>
+                <p class="text-sm text-slate-600">Мы отправим одноразовый код в Telegram и вернём вас на главную.</p>
             </div>
         </header>
 
@@ -52,6 +51,7 @@
                         placeholder="+7 (999) 123-45-67"
                         inputmode="tel"
                         autocomplete="tel"
+                        autofocus
                         required
                     >
                 </div>
@@ -129,10 +129,20 @@
         <?php endif; ?>
     </div>
 
+    <p class="px-5 pb-6 text-center text-sm text-slate-600 sm:px-8">
+        Вернуться на стартовую страницу входа можно по ссылке <a class="font-semibold text-rose-600 hover:text-rose-700" href="/?page=login">Войти</a>.
+    </p>
+
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const codeInput = document.getElementById('code');
             const form = document.getElementById('code-form');
+            const phoneInput = document.getElementById('phone');
+
+            if (phoneInput) {
+                phoneInput.focus();
+            }
+
             if (!codeInput || !form) {
                 return;
             }
