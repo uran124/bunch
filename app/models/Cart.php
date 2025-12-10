@@ -110,6 +110,7 @@ class Cart
             'price_per_stem' => $pricePerStem,
             'bouquet_delta' => $bouquetDelta,
             'photo_url' => $product['photo_url'] ?? null,
+            'stem_height_cm' => $product['stem_height_cm'] ?? null,
             'attributes' => $attributeDetails,
             'line_total' => ($pricePerStem * $qty) + $bouquetDelta,
         ];
