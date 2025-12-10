@@ -156,9 +156,10 @@ class OrdersController extends Controller
     {
         return match ($status) {
             'new' => 'Новый',
-            'confirmed' => 'Подтвержден',
-            'delivering' => 'В пути',
-            'delivered' => 'Доставлен',
+            'confirmed' => 'Принят',
+            'assembled' => 'Собран',
+            'delivering' => 'В доставке',
+            'delivered' => 'Выполнен',
             'cancelled' => 'Отменен',
             default => 'В обработке',
         };

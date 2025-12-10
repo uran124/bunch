@@ -140,4 +140,72 @@ class CartController extends Controller
             ]);
         }
     }
+
+    public function checkout(): void
+    {
+        header('Content-Type: application/json');
+
+        if (!Auth::check()) {
+            http_response_code(401);
+            echo json_encode(['error' => 'Требуется авторизация']);
+            return;
+        }
+
+        $payload = json_decode(file_get_contents('php://input'), true) ?: $_POST;
+        $cart = new Cart();
+        $items = $cart->getItems();
+
+        if (empty($items)) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Корзина пуста']);
+            return;
+        }
+
+        $userId = Auth::userId();
+        $mode = $payload['mode'] ?? 'pickup';
+        $date = $payload['date'] ?? null;
+        $time = $payload['time'] ?? null;
+        $addressId = isset($payload['address_id']) ? (int) $payload['address_id'] : null;
+        $addressText = trim((string) ($payload['address_text'] ?? ''));
+        $recipient = $payload['recipient'] ?? [];
+        $comment = trim((string) ($payload['comment'] ?? ''));
+
+        $addressModel = new UserAddress();
+        $userAddresses = $addressModel->getByUserId((int) $userId);
+
+        if ($mode === 'delivery' && $addressId !== null) {
+            $validAddressIds = array_map(static fn ($row) => (int) ($row['raw']['id'] ?? 0), $userAddresses);
+            if ($addressId > 0 && !in_array($addressId, $validAddressIds, true)) {
+                http_response_code(400);
+                echo json_encode(['error' => 'Адрес не найден']);
+                return;
+            }
+        }
+
+        try {
+            $orderModel = new Order();
+            $orderId = $orderModel->createFromCart((int) $userId, $items, [
+                'mode' => $mode,
+                'date' => $date,
+                'time' => $time,
+                'address_id' => $addressId,
+                'address_text' => $addressText,
+                'recipient_name' => $recipient['name'] ?? null,
+                'recipient_phone' => $recipient['phone'] ?? null,
+                'comment' => $comment,
+            ]);
+
+            $cart->clear();
+
+            echo json_encode([
+                'ok' => true,
+                'order_id' => $orderId,
+            ]);
+        } catch (Throwable $e) {
+            http_response_code(400);
+            echo json_encode([
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
 }

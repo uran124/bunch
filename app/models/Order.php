@@ -83,6 +83,107 @@ class Order extends Model
         return $stmt->fetchAll();
     }
 
+    public function createFromCart(int $userId, array $cartItems, array $payload): int
+    {
+        if (empty($cartItems)) {
+            throw new RuntimeException('Корзина пуста');
+        }
+
+        $deliveryType = ($payload['mode'] ?? '') === 'delivery' ? 'delivery' : 'pickup';
+        $scheduledDate = $this->normalizeDate($payload['date'] ?? null);
+        $scheduledTime = $this->normalizeTime($payload['time'] ?? null);
+        $addressId = isset($payload['address_id']) ? (int) $payload['address_id'] : null;
+        $addressText = trim((string) ($payload['address_text'] ?? ''));
+        $recipientName = trim((string) ($payload['recipient_name'] ?? ''));
+        $recipientPhone = trim((string) ($payload['recipient_phone'] ?? ''));
+        $comment = trim((string) ($payload['comment'] ?? ''));
+
+        $totalAmount = 0.0;
+        foreach ($cartItems as $item) {
+            $totalAmount += (float) ($item['line_total'] ?? 0);
+        }
+
+        $this->db->beginTransaction();
+
+        try {
+            $orderStmt = $this->db->prepare(
+                'INSERT INTO orders (user_id, address_id, total_amount, status, delivery_type, scheduled_date, scheduled_time, address_text, recipient_name, recipient_phone, comment) VALUES (:user_id, :address_id, :total_amount, :status, :delivery_type, :scheduled_date, :scheduled_time, :address_text, :recipient_name, :recipient_phone, :comment)'
+            );
+
+            $orderStmt->execute([
+                'user_id' => $userId,
+                'address_id' => $deliveryType === 'delivery' ? $addressId : null,
+                'total_amount' => $totalAmount,
+                'status' => 'new',
+                'delivery_type' => $deliveryType,
+                'scheduled_date' => $scheduledDate,
+                'scheduled_time' => $scheduledTime,
+                'address_text' => $deliveryType === 'delivery' ? ($addressText ?: null) : null,
+                'recipient_name' => $deliveryType === 'delivery' ? ($recipientName ?: null) : null,
+                'recipient_phone' => $deliveryType === 'delivery' ? ($recipientPhone ?: null) : null,
+                'comment' => $comment ?: null,
+            ]);
+
+            $orderId = (int) $this->db->lastInsertId();
+
+            $itemStmt = $this->db->prepare(
+                'INSERT INTO order_items (order_id, product_id, product_name, qty, price) VALUES (:order_id, :product_id, :product_name, :qty, :price)'
+            );
+            $attrStmt = $this->db->prepare(
+                'INSERT INTO order_item_attributes (order_item_id, attribute_id, attribute_value_id, applies_to, price_delta) VALUES (:order_item_id, :attribute_id, :attribute_value_id, :applies_to, :price_delta)'
+            );
+
+            foreach ($cartItems as $item) {
+                $itemStmt->execute([
+                    'order_id' => $orderId,
+                    'product_id' => (int) $item['product_id'],
+                    'product_name' => $item['name'] ?? 'Товар',
+                    'qty' => (int) $item['qty'],
+                    'price' => (float) ($item['price_per_stem'] ?? 0),
+                ]);
+
+                $orderItemId = (int) $this->db->lastInsertId();
+
+                foreach ($item['attributes'] as $attr) {
+                    $attrStmt->execute([
+                        'order_item_id' => $orderItemId,
+                        'attribute_id' => (int) ($attr['attribute_id'] ?? 0),
+                        'attribute_value_id' => (int) ($attr['value_id'] ?? 0),
+                        'applies_to' => $attr['applies_to'] ?? 'stem',
+                        'price_delta' => (float) ($attr['price_delta'] ?? 0),
+                    ]);
+                }
+            }
+
+            $this->db->commit();
+
+            return $orderId;
+        } catch (Throwable $e) {
+            $this->db->rollBack();
+            throw $e;
+        }
+    }
+
+    private function normalizeDate(?string $value): ?string
+    {
+        if (!$value) {
+            return null;
+        }
+
+        $dt = DateTime::createFromFormat('Y-m-d', $value);
+        return $dt instanceof DateTime ? $dt->format('Y-m-d') : null;
+    }
+
+    private function normalizeTime(?string $value): ?string
+    {
+        if (!$value) {
+            return null;
+        }
+
+        $dt = DateTime::createFromFormat('H:i', $value);
+        return $dt instanceof DateTime ? $dt->format('H:i:s') : null;
+    }
+
     private function buildOrderPayload(array $order): array
     {
         $items = $this->getItems((int) $order['id']);
