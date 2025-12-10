@@ -5,13 +5,9 @@
 
     <div class="flex flex-col gap-8 px-5 py-8 sm:px-8">
         <header class="flex flex-col gap-2 text-center">
-            <span class="mx-auto inline-flex items-center gap-2 rounded-full bg-rose-100 px-3 py-1 text-xs font-semibold text-rose-700">
-                <span class="material-symbols-rounded text-base">lock</span>
-                Окно для ввода телефона и PIN
-            </span>
             <div class="space-y-1">
-                <h1 class="text-3xl font-bold tracking-tight text-slate-900">Добро пожаловать в Bunch</h1>
-                <p class="text-sm text-slate-600">Введите номер телефона и PIN, чтобы попасть в свой кабинет.</p>
+                <h1 class="text-3xl font-bold tracking-tight text-slate-900"><span class="material-symbols-rounded text-base">lock</span> Добро пожаловать в Bunch</h1>
+                
             </div>
         </header>
 
@@ -30,7 +26,6 @@
 
         <form method="POST" action="/?page=login" class="grid gap-6" id="login-form">
             <div class="grid gap-1.5">
-                <label for="phone" class="text-sm font-semibold text-slate-800">Телефон</label>
                 <div class="rounded-2xl border border-rose-200 bg-white/80 px-4 py-3 shadow-inner shadow-rose-100">
                     <input
                         type="tel"
@@ -51,7 +46,7 @@
                         <span class="material-symbols-rounded text-base">key</span>
                         <span>PIN</span>
                     </div>
-                    <span class="text-xs font-semibold uppercase tracking-wide text-rose-500">4 цифры</span>
+                    
                 </div>
                 <div class="grid grid-cols-4 gap-3" id="pin-inputs">
                     <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="w-full rounded-xl border border-rose-200 bg-white py-3 text-center text-xl font-semibold text-slate-900 shadow-inner shadow-rose-100 outline-none transition focus:border-rose-400 focus:ring-2 focus:ring-rose-100" aria-label="Первая цифра PIN">
@@ -66,7 +61,7 @@
                     <span class="material-symbols-rounded text-base">lock_open</span>
                     Забыли PIN?
                 </a>
-                <a href="/?page=register" class="inline-flex items-center justify-center gap-2 rounded-xl border border-rose-200 bg-white px-4 py-3 text-rose-700 shadow-sm transition hover:-translate-y-0.5 hover:border-rose-300 hover:shadow-md">
+                <a href="/?page=register" class="inline-flex items-center justify-center gap-2 rounded-xl border border-rose-200 bg-white px-4 py-3 text-rose-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
                     <span class="material-symbols-rounded text-base">how_to_reg</span>
                     Регистрация
                 </a>
