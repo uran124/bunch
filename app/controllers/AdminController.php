@@ -371,6 +371,8 @@ class AdminController extends Controller
 
         $supplyOptions = array_column($supplies, 'flower_name');
 
+        $selectedSupplyId = isset($_GET['create_from_supply']) ? (int) $_GET['create_from_supply'] : null;
+
         $filters = [
             'active' => ['Все', 'Активные', 'Неактивные'],
             'supplies' => $supplyOptions,
@@ -383,6 +385,7 @@ class AdminController extends Controller
             'supplies' => $supplies,
             'attributes' => $attributeModel->getAllWithValues(),
             'editingProduct' => isset($_GET['edit_id']) ? $productModel->getWithRelations((int) $_GET['edit_id']) : null,
+            'selectedSupplyId' => $selectedSupplyId,
             'message' => $_GET['status'] ?? null,
         ]);
     }
@@ -635,6 +638,70 @@ class AdminController extends Controller
         ]);
     }
 
+    public function supplyStandingForm(): void
+    {
+        $pageMeta = [
+            'title' => 'Добавить стендинг — админ-панель Bunch',
+            'description' => 'Создание стендинговых поставок с расчётом ближайшей даты.',
+            'h1' => 'Добавить стендинг',
+            'headerTitle' => 'Bunch Admin',
+            'headerSubtitle' => 'Каталог · Поставки и брони',
+        ];
+
+        $this->render('admin-supply-standing', [
+            'pageMeta' => $pageMeta,
+            'message' => $_GET['status'] ?? null,
+        ]);
+    }
+
+    public function supplySingleForm(): void
+    {
+        $pageMeta = [
+            'title' => 'Разовая поставка — админ-панель Bunch',
+            'description' => 'Создание единичных поставок с указанием дат и параметров.',
+            'h1' => 'Разовая поставка',
+            'headerTitle' => 'Bunch Admin',
+            'headerSubtitle' => 'Каталог · Поставки и брони',
+        ];
+
+        $this->render('admin-supply-single', [
+            'pageMeta' => $pageMeta,
+            'message' => $_GET['status'] ?? null,
+        ]);
+    }
+
+    public function editSupply(): void
+    {
+        $supplyId = (int) ($_GET['id'] ?? 0);
+
+        if ($supplyId <= 0) {
+            header('Location: /?page=admin-supplies&status=notfound');
+            return;
+        }
+
+        $supplyModel = new Supply();
+        $supply = $supplyModel->findById($supplyId);
+
+        if (!$supply) {
+            header('Location: /?page=admin-supplies&status=notfound');
+            return;
+        }
+
+        $pageMeta = [
+            'title' => 'Редактировать поставку — админ-панель Bunch',
+            'description' => 'Обновление параметров и расписания поставки.',
+            'h1' => 'Редактирование поставки',
+            'headerTitle' => 'Bunch Admin',
+            'headerSubtitle' => 'Каталог · Поставки и брони',
+        ];
+
+        $this->render('admin-supply-edit', [
+            'pageMeta' => $pageMeta,
+            'supply' => $supply,
+            'message' => $_GET['status'] ?? null,
+        ]);
+    }
+
     public function createStandingSupply(): void
     {
         $firstDelivery = trim($_POST['first_delivery_date'] ?? '');
@@ -665,7 +732,7 @@ class AdminController extends Controller
         }
 
         if ($payload['flower_name'] === '' || $payload['variety'] === '' || !$payload['packs_total'] || !$payload['stems_per_pack'] || empty($payload['first_delivery_date'])) {
-            header('Location: /?page=admin-supplies&status=error');
+            header('Location: /?page=admin-supply-standing&status=error');
             return;
         }
 
@@ -701,7 +768,7 @@ class AdminController extends Controller
         }
 
         if ($payload['flower_name'] === '' || $payload['variety'] === '' || !$payload['packs_total'] || !$payload['stems_per_pack'] || empty($payload['planned_delivery_date'])) {
-            header('Location: /?page=admin-supplies&status=error');
+            header('Location: /?page=admin-supply-single&status=error');
             return;
         }
 
@@ -709,6 +776,104 @@ class AdminController extends Controller
         $supplyModel->createOneTime($payload);
 
         header('Location: /?page=admin-supplies&status=created');
+    }
+
+    public function updateSupply(): void
+    {
+        $supplyId = (int) ($_POST['supply_id'] ?? 0);
+
+        $supplyModel = new Supply();
+        $existing = $supplyModel->findById($supplyId);
+
+        if (!$existing) {
+            header('Location: /?page=admin-supplies&status=notfound');
+            return;
+        }
+
+        $photoUrl = trim($_POST['photo_url'] ?? '');
+        $uploadedPhoto = $this->handlePhotoUpload('photo_file', 'supply');
+        if ($uploadedPhoto) {
+            $photoUrl = $uploadedPhoto;
+        }
+
+        $common = [
+            'photo_url' => $photoUrl,
+            'flower_name' => trim($_POST['flower_name'] ?? ''),
+            'variety' => trim($_POST['variety'] ?? ''),
+            'country' => trim($_POST['country'] ?? ''),
+            'packs_total' => (int) ($_POST['packs_total'] ?? 0),
+            'stems_per_pack' => (int) ($_POST['stems_per_pack'] ?? 0),
+            'stem_height_cm' => (int) ($_POST['stem_height_cm'] ?? 0),
+            'stem_weight_g' => (int) ($_POST['stem_weight_g'] ?? 0),
+            'allow_small_wholesale' => isset($_POST['allow_small_wholesale']) ? 1 : 0,
+        ];
+
+        if ($existing['is_standing']) {
+            $firstDelivery = trim($_POST['first_delivery_date'] ?? '');
+            $actualDelivery = trim($_POST['actual_delivery_date'] ?? '');
+            $skipDate = trim($_POST['skip_date'] ?? '');
+            $periodicity = $_POST['periodicity'] === 'biweekly' ? 'biweekly' : 'weekly';
+
+            $payload = array_merge($common, [
+                'periodicity' => $periodicity,
+                'first_delivery_date' => $firstDelivery !== '' ? $firstDelivery : null,
+                'planned_delivery_date' => $firstDelivery !== '' ? $firstDelivery : null,
+                'actual_delivery_date' => $actualDelivery !== '' ? $actualDelivery : null,
+                'skip_date' => $skipDate !== '' ? $skipDate : null,
+            ]);
+
+            if ($payload['flower_name'] === '' || $payload['variety'] === '' || !$payload['packs_total'] || !$payload['stems_per_pack'] || empty($payload['first_delivery_date'])) {
+                header('Location: /?page=admin-supply-edit&id=' . $supplyId . '&status=error');
+                return;
+            }
+
+            $supplyModel->updateStanding($supplyId, $payload);
+        } else {
+            $plannedDelivery = trim($_POST['planned_delivery_date'] ?? '');
+            $actualDelivery = trim($_POST['actual_delivery_date'] ?? '');
+
+            $payload = array_merge($common, [
+                'planned_delivery_date' => $plannedDelivery !== '' ? $plannedDelivery : null,
+                'actual_delivery_date' => $actualDelivery !== '' ? $actualDelivery : null,
+            ]);
+
+            if ($payload['flower_name'] === '' || $payload['variety'] === '' || !$payload['packs_total'] || !$payload['stems_per_pack'] || empty($payload['planned_delivery_date'])) {
+                header('Location: /?page=admin-supply-edit&id=' . $supplyId . '&status=error');
+                return;
+            }
+
+            $supplyModel->updateOneTime($supplyId, $payload);
+        }
+
+        header('Location: /?page=admin-supply-edit&id=' . $supplyId . '&status=saved');
+    }
+
+    public function toggleSupplyCard(): void
+    {
+        $supplyId = (int) ($_POST['supply_id'] ?? 0);
+        $cardType = $_POST['card_type'] ?? '';
+        $activateRaw = $_POST['activate'] ?? null;
+
+        if ($supplyId <= 0 || !in_array($cardType, ['retail', 'wholesale'], true) || !in_array($activateRaw, ['0', '1'], true)) {
+            header('Location: /?page=admin-supplies&status=error');
+            return;
+        }
+
+        $activate = $activateRaw === '1';
+
+        $supplyModel = new Supply();
+        $supply = $supplyModel->findById($supplyId);
+
+        if (!$supply) {
+            header('Location: /?page=admin-supplies&status=notfound');
+            return;
+        }
+
+        $field = $cardType === 'retail' ? 'has_product_card' : 'has_wholesale_card';
+        $supplyModel->setCardStatus($supplyId, $field, $activate ? 1 : 0);
+
+        $status = $activate ? 'card-activated' : 'card-deactivated';
+        header('Location: /?page=admin-supplies&status=' . $status . '#supply-' . $supplyId);
     }
 
     public function ordersOneTime(): void

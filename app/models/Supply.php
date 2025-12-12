@@ -75,6 +75,65 @@ class Supply extends Model
         return (int) $this->db->lastInsertId();
     }
 
+    public function updateStanding(int $id, array $data): void
+    {
+        $sql = "UPDATE {$this->table} SET photo_url = :photo_url, flower_name = :flower_name, variety = :variety, country = :country, packs_total = :packs_total, stems_per_pack = :stems_per_pack, stem_height_cm = :stem_height_cm, stem_weight_g = :stem_weight_g, periodicity = :periodicity, first_delivery_date = :first_delivery_date, planned_delivery_date = :planned_delivery_date, actual_delivery_date = :actual_delivery_date, allow_small_wholesale = :allow_small_wholesale, skip_date = :skip_date WHERE id = :id";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([
+            'photo_url' => $data['photo_url'],
+            'flower_name' => $data['flower_name'],
+            'variety' => $data['variety'],
+            'country' => $data['country'],
+            'packs_total' => $data['packs_total'],
+            'stems_per_pack' => $data['stems_per_pack'],
+            'stem_height_cm' => $data['stem_height_cm'],
+            'stem_weight_g' => $data['stem_weight_g'],
+            'periodicity' => $data['periodicity'],
+            'first_delivery_date' => $data['first_delivery_date'],
+            'planned_delivery_date' => $data['planned_delivery_date'],
+            'actual_delivery_date' => $data['actual_delivery_date'],
+            'allow_small_wholesale' => $data['allow_small_wholesale'],
+            'skip_date' => $data['skip_date'],
+            'id' => $id,
+        ]);
+    }
+
+    public function updateOneTime(int $id, array $data): void
+    {
+        $sql = "UPDATE {$this->table} SET photo_url = :photo_url, flower_name = :flower_name, variety = :variety, country = :country, packs_total = :packs_total, stems_per_pack = :stems_per_pack, stem_height_cm = :stem_height_cm, stem_weight_g = :stem_weight_g, first_delivery_date = :planned_delivery_date, planned_delivery_date = :planned_delivery_date, actual_delivery_date = :actual_delivery_date, allow_small_wholesale = :allow_small_wholesale WHERE id = :id";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([
+            'photo_url' => $data['photo_url'],
+            'flower_name' => $data['flower_name'],
+            'variety' => $data['variety'],
+            'country' => $data['country'],
+            'packs_total' => $data['packs_total'],
+            'stems_per_pack' => $data['stems_per_pack'],
+            'stem_height_cm' => $data['stem_height_cm'],
+            'stem_weight_g' => $data['stem_weight_g'],
+            'planned_delivery_date' => $data['planned_delivery_date'],
+            'actual_delivery_date' => $data['actual_delivery_date'],
+            'allow_small_wholesale' => $data['allow_small_wholesale'],
+            'id' => $id,
+        ]);
+    }
+
+    public function setCardStatus(int $id, string $field, int $status): void
+    {
+        if (!in_array($field, ['has_product_card', 'has_wholesale_card'], true)) {
+            return;
+        }
+
+        $sql = "UPDATE {$this->table} SET {$field} = :status WHERE id = :id";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([
+            'status' => $status,
+            'id' => $id,
+        ]);
+    }
+
     private function appendDerivedFields(array $row): array
     {
         $nextPlannedDate = $this->calculateNextPlannedDate($row);
