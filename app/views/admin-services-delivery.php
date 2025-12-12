@@ -1,0 +1,406 @@
+<?php /** @var array $pageMeta */ ?>
+<?php $pageMeta = $pageMeta ?? []; ?>
+<?php $dadata = $dadata ?? []; ?>
+<?php $zones = $zones ?? []; ?>
+<?php $testAddresses = $testAddresses ?? []; ?>
+
+<section class="flex flex-col gap-6">
+    <header class="flex flex-wrap items-start justify-between gap-4">
+        <div class="space-y-2">
+            <p class="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">Настройка сервисов</p>
+            <h1 class="text-3xl font-semibold text-slate-900"><?php echo htmlspecialchars($pageMeta['h1'] ?? 'DaData + зоны доставки', ENT_QUOTES, 'UTF-8'); ?></h1>
+            <p class="max-w-2xl text-sm text-slate-500"><?php echo htmlspecialchars($pageMeta['description'] ?? 'Подсказки, геокодинг и расчёт стоимости доставки по полигонам.', ENT_QUOTES, 'UTF-8'); ?></p>
+        </div>
+        <div class="flex flex-wrap items-center gap-3">
+            <a
+                href="/?page=admin"
+                class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+            >
+                <span class="material-symbols-rounded text-base">arrow_back</span>
+                К разделам
+            </a>
+            <span class="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-200">
+                <span class="material-symbols-rounded text-base">verified</span>
+                DaData подключена
+            </span>
+        </div>
+    </header>
+
+    <section class="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
+        <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-rose-50/60 ring-1 ring-transparent">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+                <div class="space-y-1">
+                    <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">DaData</p>
+                    <h2 class="text-xl font-semibold text-slate-900">Подсказки + геокодинг</h2>
+                </div>
+                <span class="inline-flex items-center gap-2 rounded-full bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-slate-200">
+                    <span class="material-symbols-rounded text-base text-emerald-500">cloud_sync</span>
+                    <?php echo htmlspecialchars($dadata['lastSync'] ?? 'Синхронизация сегодня', ENT_QUOTES, 'UTF-8'); ?>
+                </span>
+            </div>
+
+            <div class="mt-4 grid gap-4 lg:grid-cols-2">
+                <div class="space-y-3 rounded-xl border border-slate-100 bg-slate-50 p-4">
+                    <p class="text-sm font-semibold text-slate-800">Данные авторизации</p>
+                    <div class="grid gap-2 text-sm">
+                        <label class="space-y-1">
+                            <span class="text-xs uppercase tracking-[0.14em] text-slate-500">API-ключ</span>
+                            <div class="flex items-center justify-between rounded-lg bg-white px-3 py-2 text-slate-800 ring-1 ring-slate-200">
+                                <span class="truncate text-sm font-mono">
+                                    <?php echo htmlspecialchars($dadata['apiKey'] ?? '', ENT_QUOTES, 'UTF-8'); ?>
+                                </span>
+                                <span class="material-symbols-rounded text-base text-rose-500">key_vertical</span>
+                            </div>
+                        </label>
+                        <label class="space-y-1">
+                            <span class="text-xs uppercase tracking-[0.14em] text-slate-500">Секретный ключ</span>
+                            <div class="flex items-center justify-between rounded-lg bg-white px-3 py-2 text-slate-800 ring-1 ring-slate-200">
+                                <span class="truncate text-sm font-mono">
+                                    <?php echo htmlspecialchars($dadata['secretKey'] ?? '', ENT_QUOTES, 'UTF-8'); ?>
+                                </span>
+                                <span class="material-symbols-rounded text-base text-indigo-500">lock</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="grid gap-3 rounded-xl border border-slate-100 bg-white p-4 shadow-sm">
+                    <div class="flex items-start justify-between gap-3">
+                        <div>
+                            <p class="text-sm font-semibold text-slate-800">Режимы работы</p>
+                            <p class="text-xs text-slate-500">Подсказки и геокодинг активируются сразу после сохранения.</p>
+                        </div>
+                        <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-200">
+                            <span class="material-symbols-rounded text-base">done_all</span>
+                            Активно
+                        </span>
+                    </div>
+                    <label class="flex items-center justify-between gap-3 rounded-lg border border-slate-100 bg-slate-50 px-3 py-2 text-sm text-slate-800">
+                        <div>
+                            <p class="font-semibold">Подсказки адресов</p>
+                            <p class="text-xs text-slate-500">Моментальный подбор улицы и дома в один клик.</p>
+                        </div>
+                        <input
+                            type="checkbox"
+                            <?php echo !empty($dadata['suggestions']) ? 'checked' : ''; ?>
+                            class="h-5 w-5 rounded border-slate-300 text-rose-600 focus:ring-rose-500"
+                        >
+                    </label>
+                    <label class="flex items-center justify-between gap-3 rounded-lg border border-slate-100 bg-slate-50 px-3 py-2 text-sm text-slate-800">
+                        <div>
+                            <p class="font-semibold">Геокодинг</p>
+                            <p class="text-xs text-slate-500">Получаем координаты точки для расчёта зоны.</p>
+                        </div>
+                        <input
+                            type="checkbox"
+                            <?php echo !empty($dadata['geocoding']) ? 'checked' : ''; ?>
+                            class="h-5 w-5 rounded border-slate-300 text-rose-600 focus:ring-rose-500"
+                        >
+                    </label>
+                    <div class="grid grid-cols-2 gap-3 text-sm text-slate-700">
+                        <div class="rounded-lg bg-slate-50 px-3 py-2">
+                            <p class="text-xs uppercase tracking-[0.08em] text-slate-500">Лимит в сутки</p>
+                            <p class="font-semibold text-slate-900"><?php echo (int) ($dadata['dailyLimit'] ?? 0); ?> запросов</p>
+                        </div>
+                        <div class="rounded-lg bg-slate-50 px-3 py-2">
+                            <p class="text-xs uppercase tracking-[0.08em] text-slate-500">Сегодня израсходовано</p>
+                            <p class="font-semibold text-slate-900"><?php echo (int) ($dadata['requestsToday'] ?? 0); ?> запросов</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </article>
+
+        <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div class="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Turf.js</p>
+                    <h2 class="text-xl font-semibold text-slate-900">Попадание адреса в зону</h2>
+                    <p class="text-sm text-slate-500">Полигоны зон доставки, стоимость и приоритет попадания.</p>
+                </div>
+                <span class="inline-flex items-center gap-2 rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700 ring-1 ring-indigo-200">
+                    <span class="material-symbols-rounded text-base">map</span>
+                    <?php echo count($zones); ?> зон активны
+                </span>
+            </div>
+
+            <div class="mt-4 grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
+                <div class="space-y-3 rounded-xl border border-slate-100 bg-slate-50 p-4">
+                    <div class="flex items-center justify-between gap-3">
+                        <p class="text-sm font-semibold text-slate-800">Карта полигона</p>
+                        <span class="text-xs text-slate-500">turf.booleanPointInPolygon</span>
+                    </div>
+                    <div id="zone-map" class="relative h-72 rounded-xl bg-gradient-to-br from-slate-100 via-white to-slate-50 ring-1 ring-slate-200">
+                        <p class="absolute inset-0 flex items-center justify-center text-sm text-slate-400" aria-hidden="true">Загрузка схемы зон...</p>
+                    </div>
+                    <p class="text-xs text-slate-500">Точки вычисляются по координатам из DaData, затем проверяются в полигонах turf.js. При совпадении — выбирается стоимость зоны.</p>
+                </div>
+                <div class="space-y-3">
+                    <?php foreach ($zones as $zone): ?>
+                        <article class="rounded-xl border border-slate-100 bg-white px-3 py-3 shadow-sm ring-1 ring-transparent">
+                            <div class="flex items-start justify-between gap-3">
+                                <div class="space-y-1">
+                                    <div class="flex items-center gap-2">
+                                        <span class="h-2.5 w-2.5 rounded-full" style="background: <?php echo htmlspecialchars($zone['color'], ENT_QUOTES, 'UTF-8'); ?>"></span>
+                                        <p class="text-sm font-semibold text-slate-900"><?php echo htmlspecialchars($zone['name'], ENT_QUOTES, 'UTF-8'); ?></p>
+                                    </div>
+                                    <p class="text-xs text-slate-500"><?php echo htmlspecialchars($zone['landmarks'] ?? 'Микрорайоны и ориентиры', ENT_QUOTES, 'UTF-8'); ?></p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-sm font-semibold text-slate-900"><?php echo (int) $zone['price']; ?> ₽</p>
+                                    <p class="text-xs text-slate-500">доставка</p>
+                                </div>
+                            </div>
+                        </article>
+                    <?php endforeach; ?>
+                    <div class="rounded-xl border border-dashed border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                        Добавьте новые точки полигона, если зона расширилась, и сохраните стоимость. Изменения применяются сразу в корзине.
+                    </div>
+                </div>
+            </div>
+        </article>
+    </section>
+
+    <section class="grid gap-4 xl:grid-cols-[0.8fr_1.2fr]">
+        <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div class="flex items-start justify-between gap-3">
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Тестирование</p>
+                    <h2 class="text-xl font-semibold text-slate-900">Проверка попадания адреса</h2>
+                    <p class="text-sm text-slate-500">Улица и дом проходят через DaData, затем точка проверяется в полигонах.</p>
+                </div>
+                <span class="inline-flex items-center gap-1 rounded-full bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-slate-200">
+                    <span class="material-symbols-rounded text-base text-emerald-500">task_alt</span>
+                    Онлайн расчёт
+                </span>
+            </div>
+
+            <form id="address-zone-form" class="mt-4 space-y-3">
+                <div class="grid gap-3 md:grid-cols-[1.1fr_0.9fr]">
+                    <label class="flex flex-col gap-2">
+                        <span class="text-sm font-semibold text-slate-700">Улица</span>
+                        <input
+                            type="text"
+                            id="address-street"
+                            name="street"
+                            placeholder="Например: Тверская"
+                            class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-sm focus:border-rose-300 focus:outline-none focus:ring-2 focus:ring-rose-200"
+                        >
+                    </label>
+                    <label class="flex flex-col gap-2">
+                        <span class="text-sm font-semibold text-slate-700">Дом</span>
+                        <input
+                            type="text"
+                            id="address-building"
+                            name="building"
+                            placeholder="12"
+                            class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-sm focus:border-rose-300 focus:outline-none focus:ring-2 focus:ring-rose-200"
+                        >
+                    </label>
+                </div>
+                <div class="grid gap-3 md:grid-cols-2">
+                    <label class="flex items-center justify-between gap-3 rounded-lg border border-slate-100 bg-slate-50 px-3 py-2 text-sm text-slate-800">
+                        <div>
+                            <p class="font-semibold">Автозаполнение</p>
+                            <p class="text-xs text-slate-500">DaData подсказывает полный адрес в процессе ввода.</p>
+                        </div>
+                        <span class="material-symbols-rounded text-base text-emerald-500">flash_on</span>
+                    </label>
+                    <label class="flex items-center justify-between gap-3 rounded-lg border border-slate-100 bg-slate-50 px-3 py-2 text-sm text-slate-800">
+                        <div>
+                            <p class="font-semibold">Координаты</p>
+                            <p class="text-xs text-slate-500">Геокодинг возвращает долготу и широту для проверки зоны.</p>
+                        </div>
+                        <span class="material-symbols-rounded text-base text-indigo-500">my_location</span>
+                    </label>
+                </div>
+                <?php if (!empty($testAddresses)): ?>
+                    <div class="rounded-lg border border-slate-100 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+                        <p class="mb-2 text-[13px] font-semibold text-slate-800">Примеры адресов с готовыми координатами</p>
+                        <ul class="list-disc space-y-1 pl-4">
+                            <?php foreach ($testAddresses as $address): ?>
+                                <li><?php echo htmlspecialchars($address['label'], ENT_QUOTES, 'UTF-8'); ?></li>
+                            <?php endforeach; ?>
+                        </ul>
+                    </div>
+                <?php endif; ?>
+                <button
+                    type="submit"
+                    class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-rose-200 transition hover:-translate-y-0.5 hover:shadow-xl"
+                >
+                    <span class="material-symbols-rounded text-base">paid</span>
+                    Рассчитать доставку
+                </button>
+            </form>
+
+            <div id="address-zone-result" class="mt-4 rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+                Введите улицу и дом, чтобы увидеть стоимость и зону.
+            </div>
+        </article>
+
+        <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div class="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Процесс</p>
+                    <h2 class="text-xl font-semibold text-slate-900">Как это работает</h2>
+                    <p class="text-sm text-slate-500">От подсказки улицы до добавления стоимости в заказ.</p>
+                </div>
+                <span class="inline-flex items-center gap-1 rounded-full bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-slate-200">
+                    <span class="material-symbols-rounded text-base text-rose-500">route</span>
+                    4 шага
+                </span>
+            </div>
+            <ol class="mt-4 grid gap-3 md:grid-cols-2">
+                <li class="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 shadow-sm">
+                    <p class="text-sm font-semibold text-slate-900">1. Подсказка адреса</p>
+                    <p class="text-xs text-slate-600">DaData выдаёт улицу и дом, подставляет индекс и город.</p>
+                </li>
+                <li class="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 shadow-sm">
+                    <p class="text-sm font-semibold text-slate-900">2. Геокодинг</p>
+                    <p class="text-xs text-slate-600">Получаем координаты точки, готовые для проверки turf.js.</p>
+                </li>
+                <li class="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 shadow-sm">
+                    <p class="text-sm font-semibold text-slate-900">3. Проверка полигона</p>
+                    <p class="text-xs text-slate-600">turf.booleanPointInPolygon определяет зону, если точка попала внутрь.</p>
+                </li>
+                <li class="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 shadow-sm">
+                    <p class="text-sm font-semibold text-slate-900">4. Добавление в заказ</p>
+                    <p class="text-xs text-slate-600">Стоимость зоны добавляется в корзину и чек-лист доставки.</p>
+                </li>
+            </ol>
+            <div class="mt-4 rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+                При смене адреса пересчитываем зону и обновляем оплату в реальном времени.
+            </div>
+        </article>
+    </section>
+</section>
+
+<script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
+<script>
+    const zones = <?php echo json_encode($zones); ?>;
+    const testAddresses = <?php echo json_encode($testAddresses); ?>;
+
+    const mapContainer = document.getElementById('zone-map');
+    let marker;
+
+    function normalizeText(value) {
+        return value.trim().toLowerCase();
+    }
+
+    function geocodeAddress(street, building) {
+        const needle = normalizeText(`${street} ${building}`);
+        return testAddresses.find((item) => needle.includes(item.match));
+    }
+
+    function findZone(coords) {
+        const point = turf.point(coords);
+        for (const zone of zones) {
+            const closedPolygon = [...zone.polygon];
+            const firstPoint = zone.polygon[0];
+            if (firstPoint[0] !== zone.polygon[zone.polygon.length - 1][0] || firstPoint[1] !== zone.polygon[zone.polygon.length - 1][1]) {
+                closedPolygon.push(firstPoint);
+            }
+            const polygon = turf.polygon([closedPolygon]);
+            if (turf.booleanPointInPolygon(point, polygon)) {
+                return zone;
+            }
+        }
+        return null;
+    }
+
+    function renderMap() {
+        if (!mapContainer) return;
+        const width = mapContainer.clientWidth;
+        const height = mapContainer.clientHeight;
+
+        const lons = zones.flatMap((zone) => zone.polygon.map((p) => p[0]));
+        const lats = zones.flatMap((zone) => zone.polygon.map((p) => p[1]));
+        const minLon = Math.min(...lons);
+        const maxLon = Math.max(...lons);
+        const minLat = Math.min(...lats);
+        const maxLat = Math.max(...lats);
+
+        const svgNS = 'http://www.w3.org/2000/svg';
+        const svg = document.createElementNS(svgNS, 'svg');
+        svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+        svg.classList.add('absolute', 'inset-0');
+
+        zones.forEach((zone) => {
+            const points = zone.polygon.map(([lon, lat]) => {
+                const x = ((lon - minLon) / (maxLon - minLon || 1)) * (width - 40) + 20;
+                const y = height - (((lat - minLat) / (maxLat - minLat || 1)) * (height - 40) + 20);
+                return `${x},${y}`;
+            }).join(' ');
+            const polygon = document.createElementNS(svgNS, 'polygon');
+            polygon.setAttribute('points', points);
+            polygon.setAttribute('fill', zone.color + '20');
+            polygon.setAttribute('stroke', zone.color);
+            polygon.setAttribute('stroke-width', '2');
+            svg.appendChild(polygon);
+        });
+
+        mapContainer.innerHTML = '';
+        mapContainer.appendChild(svg);
+    }
+
+    function placeMarker(coords) {
+        if (!mapContainer || !mapContainer.firstChild) return;
+        const svg = mapContainer.firstChild;
+        const width = mapContainer.clientWidth;
+        const height = mapContainer.clientHeight;
+        const lons = zones.flatMap((zone) => zone.polygon.map((p) => p[0]));
+        const lats = zones.flatMap((zone) => zone.polygon.map((p) => p[1]));
+        const minLon = Math.min(...lons);
+        const maxLon = Math.max(...lons);
+        const minLat = Math.min(...lats);
+        const maxLat = Math.max(...lats);
+
+        const [lon, lat] = coords;
+        const x = ((lon - minLon) / (maxLon - minLon || 1)) * (width - 40) + 20;
+        const y = height - (((lat - minLat) / (maxLat - minLat || 1)) * (height - 40) + 20);
+
+        if (marker) {
+            svg.removeChild(marker);
+        }
+
+        marker = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        marker.setAttribute('cx', x);
+        marker.setAttribute('cy', y);
+        marker.setAttribute('r', '6');
+        marker.setAttribute('fill', '#0f172a');
+        marker.setAttribute('stroke', '#fff');
+        marker.setAttribute('stroke-width', '2');
+        svg.appendChild(marker);
+    }
+
+    renderMap();
+
+    const form = document.getElementById('address-zone-form');
+    const result = document.getElementById('address-zone-result');
+
+    form?.addEventListener('submit', (event) => {
+        event.preventDefault();
+        const street = normalizeText(document.getElementById('address-street').value);
+        const building = normalizeText(document.getElementById('address-building').value);
+
+        if (!street || !building) {
+            result.textContent = 'Добавьте улицу и номер дома, чтобы рассчитать доставку.';
+            return;
+        }
+
+        const geocoded = geocodeAddress(street, building);
+        if (!geocoded) {
+            result.textContent = 'Нет готовых координат для этого адреса. Добавьте адрес в DaData или включите автодобавление.';
+            return;
+        }
+
+        const zone = findZone(geocoded.coords);
+        placeMarker(geocoded.coords);
+
+        if (zone) {
+            result.innerHTML = `<strong class="text-slate-900">${geocoded.label}</strong> находится в зоне <strong class="text-slate-900">${zone.name}</strong>. Стоимость доставки: <strong class="text-slate-900">${zone.price} ₽</strong>.`;
+        } else {
+            result.textContent = 'Координаты получены, но точка не попала ни в одну зону. Добавьте полигон или расширьте границы.';
+        }
+    });
+</script>
