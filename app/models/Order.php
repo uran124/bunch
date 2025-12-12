@@ -203,6 +203,9 @@ class Order extends Model
         $scheduledTime = $this->normalizeTime($payload['time'] ?? null);
         $addressId = isset($payload['address_id']) ? (int) $payload['address_id'] : null;
         $addressText = trim((string) ($payload['address_text'] ?? ''));
+        $deliveryPrice = isset($payload['delivery_price']) ? (float) $payload['delivery_price'] : null;
+        $zoneId = isset($payload['zone_id']) ? (int) $payload['zone_id'] : null;
+        $deliveryPricingVersion = $this->emptyToNull($payload['delivery_pricing_version'] ?? null);
         $recipientName = trim((string) ($payload['recipient_name'] ?? ''));
         $recipientPhone = trim((string) ($payload['recipient_phone'] ?? ''));
         $comment = trim((string) ($payload['comment'] ?? ''));
@@ -216,7 +219,7 @@ class Order extends Model
 
         try {
             $orderStmt = $this->db->prepare(
-                'INSERT INTO orders (user_id, address_id, total_amount, status, delivery_type, scheduled_date, scheduled_time, address_text, recipient_name, recipient_phone, comment) VALUES (:user_id, :address_id, :total_amount, :status, :delivery_type, :scheduled_date, :scheduled_time, :address_text, :recipient_name, :recipient_phone, :comment)'
+                'INSERT INTO orders (user_id, address_id, total_amount, status, delivery_type, delivery_price, zone_id, delivery_pricing_version, scheduled_date, scheduled_time, address_text, recipient_name, recipient_phone, comment) VALUES (:user_id, :address_id, :total_amount, :status, :delivery_type, :delivery_price, :zone_id, :delivery_pricing_version, :scheduled_date, :scheduled_time, :address_text, :recipient_name, :recipient_phone, :comment)'
             );
 
             $orderStmt->execute([
@@ -225,6 +228,9 @@ class Order extends Model
                 'total_amount' => $totalAmount,
                 'status' => 'new',
                 'delivery_type' => $deliveryType,
+                'delivery_price' => $deliveryType === 'delivery' ? $deliveryPrice : null,
+                'zone_id' => $deliveryType === 'delivery' ? $zoneId : null,
+                'delivery_pricing_version' => $deliveryType === 'delivery' ? $deliveryPricingVersion : null,
                 'scheduled_date' => $scheduledDate,
                 'scheduled_time' => $scheduledTime,
                 'address_text' => $deliveryType === 'delivery' ? ($addressText ?: null) : null,
