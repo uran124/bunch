@@ -71,6 +71,7 @@
                         data-cart-item
                         data-item-key="<?php echo htmlspecialchars($item['key'], ENT_QUOTES, 'UTF-8'); ?>"
                         data-product-id="<?php echo (int) $item['product_id']; ?>"
+                        data-selected-attributes="<?php echo htmlspecialchars(json_encode(array_values($selectedAttributeIds), JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8'); ?>"
                     >
                         <div class="flex flex-col gap-3 sm:flex-row">
                             <div class="h-28 w-28 overflow-hidden rounded-xl bg-slate-100 shadow-inner">
@@ -98,7 +99,7 @@
                                                     <span class="text-xs font-semibold uppercase tracking-wide text-slate-400">· <?php echo (int) $item['stem_height_cm']; ?> см</span>
                                                 <?php endif; ?>
                                             </p>
-                                            <div class="flex flex-col gap-0.5 text-xs text-slate-600">
+                                            <div class="flex flex-col gap-0.5 text-xs text-slate-600" data-attribute-preview>
                                                 <?php foreach ($previewAttributes as $line): ?>
                                                     <span class="inline-flex items-center gap-1">
                                                         <span class="h-1.5 w-1.5 rounded-full bg-rose-200"></span>
@@ -143,51 +144,6 @@
                             </div>
                         </div>
 
-                        <div class="space-y-2 rounded-xl border border-slate-100 bg-slate-50 p-3">
-                            <div class="flex items-center justify-between gap-2">
-                                <div class="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                                    <span class="material-symbols-rounded text-base text-emerald-500">tune</span>
-                                    Настройте атрибуты
-                                </div>
-                                <?php if (empty($availableAttributes)): ?>
-                                    <span class="text-xs font-semibold text-slate-400">Без дополнительных параметров</span>
-                                <?php endif; ?>
-                            </div>
-
-                            <?php foreach ($availableAttributes as $attribute): ?>
-                                <?php $selectedValueId = $selectedAttributeIds[(int) $attribute['id']] ?? null; ?>
-                                <div class="space-y-1" data-attribute-group data-attribute-id="<?php echo (int) $attribute['id']; ?>">
-                                    <div class="flex items-center justify-between gap-2">
-                                        <p class="text-sm font-semibold text-slate-800"><?php echo htmlspecialchars($attribute['name'], ENT_QUOTES, 'UTF-8'); ?></p>
-                                        <span class="text-[11px] font-semibold text-slate-400"><?php echo htmlspecialchars($attribute['applies_to'] === 'bouquet' ? 'к букету' : 'к стеблю', ENT_QUOTES, 'UTF-8'); ?></span>
-                                    </div>
-                                    <div class="flex flex-wrap gap-2">
-                                        <?php foreach ($attribute['values'] as $value): ?>
-                                            <?php
-                                            $isSelected = (int) $value['id'] === (int) $selectedValueId;
-                                            $priceDelta = (float) ($value['price_delta'] ?? 0);
-                                            $priceLabel = $priceDelta > 0
-                                                ? '+ ' . number_format($priceDelta, 0, '.', ' ') . ' ₽'
-                                                : ($priceDelta < 0 ? '− ' . number_format(abs($priceDelta), 0, '.', ' ') . ' ₽' : '');
-                                            ?>
-                                            <button
-                                                type="button"
-                                                class="attribute-option inline-flex items-center gap-1 rounded-lg border px-3 py-2 text-xs font-semibold transition <?php echo $isSelected ? 'border-rose-200 bg-white text-rose-700 shadow-sm shadow-rose-100 attribute-selected' : 'border-slate-200 bg-white text-slate-700 hover:border-rose-200 hover:text-rose-700'; ?>"
-                                                data-attribute-option
-                                                data-attribute-id="<?php echo (int) $attribute['id']; ?>"
-                                                data-value-id="<?php echo (int) $value['id']; ?>"
-                                                data-selected="<?php echo $isSelected ? 'true' : 'false'; ?>"
-                                            >
-                                                <span><?php echo htmlspecialchars($value['value'], ENT_QUOTES, 'UTF-8'); ?></span>
-                                                <?php if ($priceLabel !== ''): ?>
-                                                    <span class="text-[11px] font-semibold text-rose-500"><?php echo $priceLabel; ?></span>
-                                                <?php endif; ?>
-                                            </button>
-                                        <?php endforeach; ?>
-                                    </div>
-                                </div>
-                            <?php endforeach; ?>
-                        </div>
                     </article>
                 <?php endforeach; ?>
 
@@ -393,6 +349,15 @@
                 </div>
 
                 <div class="space-y-2 py-3" data-attribute-modal-body></div>
+                <div class="flex items-center justify-end gap-2 border-t border-slate-100 pt-3" data-attribute-modal-actions>
+                    <button type="button" class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-rose-200 hover:text-rose-700" data-attribute-modal-close>
+                        Отмена
+                    </button>
+                    <button type="button" class="inline-flex items-center gap-2 rounded-lg bg-rose-600 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white shadow-md shadow-rose-200 transition hover:-translate-y-0.5 hover:bg-rose-700" data-attribute-modal-apply>
+                        <span class="material-symbols-rounded text-base">done_all</span>
+                        Сохранить
+                    </button>
+                </div>
             </div>
         </div>
     <?php endif; ?>
