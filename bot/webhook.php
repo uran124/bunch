@@ -136,11 +136,8 @@ function handleRegistrationCode(
 
     $code = $verificationModel->createCode($chatId, 'register', $codePhone, $userId, $username, $name);
 
-    $telegram->sendMessage(
-        $chatId,
-        "Ваш код для bunchflowers.ru: <code>{$code}</code>",
-        ['parse_mode' => 'HTML']
-    );
+    $telegram->sendMessage($chatId, 'Ваш код для регистрации на сайте:');
+    $telegram->sendMessage($chatId, $code);
 
     $logger->logEvent('TG_REG_CODE_SENT', ['user_id' => $userId, 'chat_id' => $chatId, 'phone' => $phone]);
     $analytics->track('tg_code_sent', ['purpose' => 'register', 'user_id' => $userId]);
@@ -169,7 +166,8 @@ function handleRecoveryCode(
     $logger->logEvent('TG_RECOVERY_CODE_SENT', ['user_id' => $user['id'], 'chat_id' => $chatId]);
     $analytics->track('tg_code_sent', ['purpose' => 'recover', 'user_id' => $user['id']]);
 
-    $telegram->sendMessage($chatId, "Код для смены PIN: {$code}\nВведите его на странице восстановления на сайте.");
+    $telegram->sendMessage($chatId, 'Код для смены PIN:');
+    $telegram->sendMessage($chatId, $code);
 }
 
 function normalisePhone(string $phone): string
