@@ -101,14 +101,23 @@ async function removeCartItemRequest(key) {
 }
 
 function getSelectedAttributesFromItem(itemEl) {
-    const selected = [];
+    try {
+        const data = JSON.parse(itemEl.dataset.selectedAttributes || '[]');
+        if (Array.isArray(data) && data.length) {
+            return data.map((id) => Number(id)).filter(Boolean);
+        }
+    } catch (e) {
+        // ignore
+    }
+
+    const fallback = [];
     itemEl.querySelectorAll('[data-attribute-group]').forEach((group) => {
         const active = group.querySelector('.attribute-selected') || group.querySelector('[data-selected="true"]');
         if (active) {
-            selected.push(Number(active.dataset.valueId || 0));
+            fallback.push(Number(active.dataset.valueId || 0));
         }
     });
-    return selected;
+    return fallback;
 }
 
 function toggleAttributeButton(button, isActive) {
@@ -130,15 +139,74 @@ function bindCartItem(itemEl) {
     const lineTotal = itemEl.querySelector('[data-line-total]');
     const qtyLabel = itemEl.querySelector('[data-qty-label]');
     const removeButton = itemEl.querySelector('[data-remove-item]');
+    const attributePreview = itemEl.querySelector('[data-attribute-preview]');
 
     const setLoading = (state) => {
         itemEl.classList.toggle('opacity-60', state);
         itemEl.classList.toggle('pointer-events-none', state);
     };
 
-    const applyUpdate = async (nextQty) => {
+    const extractValueIds = (attributes = []) => attributes.map((attr) => Number(attr.value_id || 0)).filter(Boolean);
+
+    const updatePreview = (attributes = []) => {
+        if (!attributePreview) return;
+        const priority = [1, 3, 8];
+        const priorityLines = [];
+        const fallback = [];
+
+        attributes.forEach((attr) => {
+            const line = `${attr.label}: ${attr.value}`;
+            if (priority.includes(Number(attr.attribute_id))) {
+                priorityLines.push(line);
+            } else if (fallback.length < 3) {
+                fallback.push(line);
+            }
+        });
+
+        const lines = priorityLines.length ? priorityLines : fallback;
+        attributePreview.innerHTML = '';
+        lines.forEach((line) => {
+            const span = document.createElement('span');
+            span.className = 'inline-flex items-center gap-1';
+            const dot = document.createElement('span');
+            dot.className = 'h-1.5 w-1.5 rounded-full bg-rose-200';
+            span.appendChild(dot);
+            span.appendChild(document.createTextNode(line));
+            attributePreview.appendChild(span);
+        });
+    };
+
+    const updateAttributeDataset = (selectedIds = []) => {
+        itemEl.dataset.selectedAttributes = JSON.stringify(selectedIds);
+        itemEl.querySelectorAll('[data-attribute-modal-trigger]').forEach((trigger) => {
+            const raw = trigger.dataset.attributeData || '[]';
+            let rows = [];
+            try {
+                rows = JSON.parse(raw);
+            } catch (e) {
+                rows = [];
+            }
+
+            rows = (rows || []).map((row) => {
+                const next = { ...row };
+                next.selected = null;
+                (next.values || []).forEach((value) => {
+                    if (selectedIds.includes(Number(value.id))) {
+                        next.selected = Number(value.id);
+                    }
+                });
+                return next;
+            });
+
+            trigger.dataset.attributeData = JSON.stringify(rows);
+        });
+    };
+
+    const applyUpdate = async (nextQty, customAttributes) => {
         const safeQty = Math.max(1, Number(nextQty) || 1);
-        const attributes = getSelectedAttributesFromItem(itemEl);
+        const attributes = Array.isArray(customAttributes)
+            ? customAttributes
+            : getSelectedAttributesFromItem(itemEl);
         setLoading(true);
 
         try {
@@ -151,6 +219,9 @@ function bindCartItem(itemEl) {
             if (lineTotal) {
                 lineTotal.textContent = formatCurrency(data.item?.line_total || 0);
             }
+            const selectedIds = extractValueIds(data.item?.attributes || []);
+            updateAttributeDataset(selectedIds);
+            updatePreview(data.item?.attributes || []);
             if (data.item?.key) {
                 itemEl.dataset.itemKey = data.item.key;
             }
@@ -189,18 +260,7 @@ function bindCartItem(itemEl) {
         });
     }
 
-    itemEl.querySelectorAll('[data-attribute-group]').forEach((group) => {
-        const options = group.querySelectorAll('[data-attribute-option]');
-        options.forEach((option) => {
-            if (option.dataset.selected === 'true') {
-                toggleAttributeButton(option, true);
-            }
-            option.addEventListener('click', () => {
-                options.forEach((btn) => toggleAttributeButton(btn, btn === option));
-                applyUpdate(qtyInput?.value || 1);
-            });
-        });
-    });
+    itemEl._applyUpdate = applyUpdate;
 
     if (removeButton) {
         removeButton.addEventListener('click', async () => {
@@ -286,6 +346,8 @@ function initOrderFlow() {
 
     let currentMode = 'pickup';
 
+    const findAddressById = (id) => addresses.find((item) => Number(item.raw?.id || 0) === Number(id));
+
     const highlightMode = (mode) => {
         modeButtons.forEach((btn) => {
             const isActive = btn.dataset.orderMode === mode;
@@ -313,11 +375,31 @@ function initOrderFlow() {
         });
     };
 
+    const setRecipientFromAddress = (address) => {
+        const recipientNameValue = address?.raw?.recipient_name || '';
+        const recipientPhoneValue = address?.raw?.recipient_phone || '';
+        const hasRecipient = recipientNameValue || recipientPhoneValue;
+
+        if (hasRecipient) {
+            setRecipientMode('other');
+            if (recipientName) recipientName.value = recipientNameValue;
+            if (recipientPhone) recipientPhone.value = recipientPhoneValue;
+        } else {
+            setRecipientMode('self');
+            if (recipientName) recipientName.value = '';
+            if (recipientPhone) recipientPhone.value = '';
+        }
+    };
+
     const setAddressFromSelect = () => {
         if (!addressSelect || !addressInput) return;
         const selectedOption = addressSelect.selectedOptions[0];
         if (selectedOption) {
             addressInput.value = selectedOption.dataset.addressText || '';
+            const chosen = findAddressById(selectedOption.value);
+            setRecipientFromAddress(chosen);
+        } else {
+            setRecipientFromAddress(null);
         }
     };
 
@@ -327,6 +409,10 @@ function initOrderFlow() {
             deliveryExtra.hidden = mode !== 'delivery';
         }
         highlightMode(mode);
+
+        if (mode === 'delivery') {
+            setAddressFromSelect();
+        }
     };
 
     modeButtons.forEach((button) => {
@@ -347,6 +433,7 @@ function initOrderFlow() {
             addressInput.value = '';
             addressInput.focus();
         }
+        setRecipientFromAddress(null);
     });
 
     const collectPayload = () => {
@@ -417,12 +504,18 @@ function initAttributeModal() {
     const modal = document.querySelector('[data-attribute-modal]');
     const body = modal?.querySelector('[data-attribute-modal-body]');
     const title = modal?.querySelector('[data-attribute-modal-title]');
+    const applyButton = modal?.querySelector('[data-attribute-modal-apply]');
 
     if (!triggers.length || !modal || !body) return;
+
+    let activeItem = null;
+    let activeRows = [];
 
     const closeModal = () => {
         modal.classList.add('hidden');
         modal.classList.remove('flex');
+        activeItem = null;
+        activeRows = [];
     };
 
     modal.querySelectorAll('[data-attribute-modal-close]').forEach((btn) => btn.addEventListener('click', closeModal));
@@ -431,8 +524,9 @@ function initAttributeModal() {
     });
 
     const renderRows = (rows) => {
+        activeRows = rows.map((row) => ({ ...row }));
         body.innerHTML = '';
-        if (!rows.length) {
+        if (!activeRows.length) {
             const empty = document.createElement('p');
             empty.className = 'text-sm text-slate-500';
             empty.textContent = 'Дополнительные параметры отсутствуют.';
@@ -440,7 +534,7 @@ function initAttributeModal() {
             return;
         }
 
-        rows.forEach((row) => {
+        activeRows.forEach((row) => {
             const card = document.createElement('div');
             card.className = 'space-y-2 rounded-xl border border-slate-100 bg-slate-50 p-3';
 
@@ -460,9 +554,10 @@ function initAttributeModal() {
             values.className = 'flex flex-wrap gap-2';
 
             (row.values || []).forEach((value) => {
-                const pill = document.createElement('span');
+                const pill = document.createElement('button');
+                pill.type = 'button';
                 const isActive = Number(row.selected) === Number(value.id);
-                pill.className = `inline-flex items-center gap-1 rounded-lg border px-3 py-1 text-xs font-semibold ${isActive ? 'border-rose-200 bg-white text-rose-700 shadow-sm shadow-rose-100' : 'border-slate-200 bg-white text-slate-700'}`;
+                pill.className = `attribute-option inline-flex items-center gap-1 rounded-lg border px-3 py-2 text-xs font-semibold transition ${isActive ? 'border-rose-200 bg-white text-rose-700 shadow-sm shadow-rose-100 attribute-selected' : 'border-slate-200 bg-white text-slate-700 hover:border-rose-200 hover:text-rose-700'}`;
                 pill.textContent = value.value;
 
                 if (Number(value.price_delta || 0) !== 0) {
@@ -473,6 +568,13 @@ function initAttributeModal() {
                     pill.appendChild(delta);
                 }
 
+                pill.addEventListener('click', () => {
+                    row.selected = Number(value.id);
+                    values.querySelectorAll('.attribute-option').forEach((btn) => {
+                        toggleAttributeButton(btn, btn === pill);
+                    });
+                });
+
                 values.appendChild(pill);
             });
 
@@ -480,6 +582,26 @@ function initAttributeModal() {
             body.appendChild(card);
         });
     };
+
+    const collectSelectedIds = () =>
+        activeRows
+            .map((row) => Number(row.selected || 0))
+            .filter(Boolean);
+
+    const applySelection = async () => {
+        if (!activeItem) return;
+        const qtyInput = activeItem.querySelector('[data-qty-input]');
+        const qtyValue = qtyInput?.value || 1;
+        const selected = collectSelectedIds();
+        try {
+            await activeItem._applyUpdate?.(qtyValue, selected);
+            closeModal();
+        } catch (error) {
+            alert(error.message || 'Не удалось применить атрибуты');
+        }
+    };
+
+    applyButton?.addEventListener('click', applySelection);
 
     triggers.forEach((trigger) => {
         trigger.addEventListener('click', (event) => {
@@ -497,6 +619,7 @@ function initAttributeModal() {
                 title.textContent = trigger.dataset.attributeTitle || 'Параметры';
             }
 
+            activeItem = trigger.closest('[data-cart-item]');
             renderRows(parsed);
             modal.classList.remove('hidden');
             modal.classList.add('flex');
