@@ -106,28 +106,49 @@ CREATE TABLE user_addresses (
     FOREIGN KEY (user_id) REFERENCES users(id)
     ON DELETE CASCADE,
 
-  label VARCHAR(50) NULL,                  -- "Дом", "Работа", "Для мамы" и др.
-
-  recipient_name  VARCHAR(100) NULL,       -- ФИО получателя
-  recipient_phone VARCHAR(20)  NULL,       -- телефон получателя
-
-  city      VARCHAR(100) NOT NULL,
-  street    VARCHAR(255) NOT NULL,
-  house     VARCHAR(50)  NOT NULL,
-  building  VARCHAR(50)  NULL,             -- корпус/строение
-  apartment VARCHAR(50)  NULL,
-  entrance  VARCHAR(20)  NULL,
-  floor     VARCHAR(20)  NULL,
-  door_code VARCHAR(20)  NULL,
-  comment   TEXT         NULL,             -- ориентиры, комментарий к адресу
-
-  is_primary TINYINT(1) NOT NULL DEFAULT 0, -- основной адрес пользователя
-
+  is_active TINYINT(1) NOT NULL DEFAULT 1,
+  is_archived TINYINT(1) NOT NULL DEFAULT 0,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
     ON UPDATE CURRENT_TIMESTAMP,
+  last_used_at DATETIME NULL,
 
-  INDEX idx_user_primary (user_id, is_primary)
+  settlement VARCHAR(150) NULL,
+  street VARCHAR(255) NULL,
+  house VARCHAR(50) NULL,
+  apartment VARCHAR(50) NULL,
+  address_text TEXT NULL,
+
+  lat DECIMAL(10,7) NULL,
+  lon DECIMAL(10,7) NULL,
+  location_source ENUM('dadata', 'manual_pin', 'other') NULL,
+  geo_quality VARCHAR(50) NULL,
+
+  zone_id INT UNSIGNED NULL,
+  zone_calculated_at DATETIME NULL,
+  zone_version VARCHAR(100) NULL,
+
+  recipient_name  VARCHAR(100) NULL,
+  recipient_phone VARCHAR(20)  NULL,
+
+  entrance VARCHAR(50) NULL,
+  floor VARCHAR(50) NULL,
+  intercom VARCHAR(50) NULL,
+  delivery_comment TEXT NULL,
+
+  label VARCHAR(50) NULL,
+  is_default TINYINT(1) NOT NULL DEFAULT 0,
+
+  fias_id VARCHAR(50) NULL,
+  kladr_id VARCHAR(50) NULL,
+  postal_code VARCHAR(20) NULL,
+  region VARCHAR(150) NULL,
+  city_district VARCHAR(150) NULL,
+
+  last_delivery_price_hint DECIMAL(10,2) NULL,
+
+  INDEX idx_user_default (user_id, is_default),
+  INDEX idx_user_archived (user_id, is_archived)
 ) ENGINE=InnoDB
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_unicode_ci;
@@ -356,6 +377,9 @@ CREATE TABLE orders (
     NOT NULL DEFAULT 'new',
 
   delivery_type ENUM('pickup', 'delivery', 'subscription') NOT NULL DEFAULT 'pickup',
+  delivery_price DECIMAL(10,2) NULL,
+  zone_id INT UNSIGNED NULL,
+  delivery_pricing_version VARCHAR(100) NULL,
   scheduled_date DATE NULL,
   scheduled_time TIME NULL,
   address_text TEXT NULL,                      -- слепок адреса, если пользователь не авторизован

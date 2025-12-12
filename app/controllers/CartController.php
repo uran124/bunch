@@ -173,11 +173,48 @@ class CartController extends Controller
         $addressModel = new UserAddress();
         $userAddresses = $addressModel->getByUserId((int) $userId);
 
+        $addressDetails = is_array($payload['address'] ?? null) ? $payload['address'] : [];
+
         if ($mode === 'delivery' && $addressId !== null) {
             $validAddressIds = array_map(static fn ($row) => (int) ($row['raw']['id'] ?? 0), $userAddresses);
             if ($addressId > 0 && !in_array($addressId, $validAddressIds, true)) {
                 http_response_code(400);
                 echo json_encode(['error' => 'Адрес не найден']);
+                return;
+            }
+
+            if ($addressId > 0) {
+                $addressModel->touchUsage((int) $userId, $addressId);
+            }
+        }
+
+        if ($mode === 'delivery' && $addressId === null) {
+            $hasAddressPayload = $addressText !== '' || array_filter($addressDetails);
+            if (!$hasAddressPayload) {
+                http_response_code(400);
+                echo json_encode(['error' => 'Укажите адрес доставки']);
+                return;
+            }
+
+            try {
+                $addressPayload = array_merge($addressDetails, [
+                    'address_text' => $addressText,
+                    'recipient_name' => $recipient['name'] ?? null,
+                    'recipient_phone' => $recipient['phone'] ?? null,
+                    'zone_id' => $payload['zone_id'] ?? ($addressDetails['zone_id'] ?? null),
+                    'zone_version' => $payload['zone_version'] ?? $payload['delivery_pricing_version'] ?? null,
+                    'zone_calculated_at' => $payload['zone_calculated_at'] ?? null,
+                    'last_delivery_price_hint' => $payload['delivery_price'] ?? null,
+                    'location_source' => $addressDetails['location_source'] ?? ($payload['location_source'] ?? null),
+                    'geo_quality' => $addressDetails['geo_quality'] ?? ($payload['geo_quality'] ?? null),
+                    'lat' => $addressDetails['lat'] ?? null,
+                    'lon' => $addressDetails['lon'] ?? null,
+                ]);
+
+                $addressId = $addressModel->createForUser((int) $userId, $addressPayload);
+            } catch (Throwable $e) {
+                http_response_code(400);
+                echo json_encode(['error' => 'Не удалось сохранить адрес']);
                 return;
             }
         }
@@ -190,6 +227,10 @@ class CartController extends Controller
                 'time' => $time,
                 'address_id' => $addressId,
                 'address_text' => $addressText,
+                'address' => $addressDetails,
+                'delivery_price' => $payload['delivery_price'] ?? null,
+                'zone_id' => $payload['zone_id'] ?? null,
+                'delivery_pricing_version' => $payload['delivery_pricing_version'] ?? null,
                 'recipient_name' => $recipient['name'] ?? null,
                 'recipient_phone' => $recipient['phone'] ?? null,
                 'comment' => $comment,
