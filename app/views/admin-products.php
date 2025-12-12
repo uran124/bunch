@@ -87,8 +87,14 @@
                         <select name="supply_id" required class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-sm focus:border-rose-300 focus:outline-none focus:ring-2 focus:ring-rose-200">
                             <option value="">Выберите поставку</option>
                             <?php foreach ($supplies as $supply): ?>
-                                <?php $label = $supply['flower_name'] . ' ' . $supply['variety'] . ' · ' . ($supply['country'] ?? ''); ?>
-                                <option value="<?php echo (int) $supply['id']; ?>" <?php echo $editingProduct && (int) $editingProduct['supply_id'] === (int) $supply['id'] ? 'selected' : ''; ?>>
+                                <?php
+                                $label = $supply['flower_name'] . ' ' . $supply['variety'] . ' · ' . ($supply['country'] ?? '');
+                                $isSelected = $editingProduct && (int) $editingProduct['supply_id'] === (int) $supply['id'];
+                                if (!$editingProduct && isset($selectedSupplyId)) {
+                                    $isSelected = (int) $selectedSupplyId === (int) $supply['id'];
+                                }
+                                ?>
+                                <option value="<?php echo (int) $supply['id']; ?>" <?php echo $isSelected ? 'selected' : ''; ?>>
                                     <?php echo htmlspecialchars($label, ENT_QUOTES, 'UTF-8'); ?>
                                 </option>
                             <?php endforeach; ?>
