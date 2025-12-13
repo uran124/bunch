@@ -1725,6 +1725,11 @@ class AdminController extends Controller
                 'match' => 'шаболовка 24',
                 'coords' => [37.6115, 55.7325],
             ],
+            [
+                'label' => 'Москва, ул. Алексеева, 22',
+                'match' => 'алексеева 22',
+                'coords' => [37.6100, 55.7535],
+            ],
         ];
     }
 }
