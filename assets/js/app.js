@@ -330,6 +330,7 @@ function initOrderFlow() {
     const addressSelect = orderSection.querySelector('[data-address-select]');
     const addressInput = orderSection.querySelector('[data-address-input]');
     const addressNew = orderSection.querySelector('[data-address-new]');
+    const addressSuggestionList = document.createElement('div');
     const deliveryHint = orderSection.querySelector('[data-delivery-pricing-hint]');
     const recipientButtons = Array.from(orderSection.querySelectorAll('.recipient-btn'));
     const recipientExtra = orderSection.querySelectorAll('[data-recipient-extra]');
@@ -363,6 +364,7 @@ function initOrderFlow() {
 
     const deliveryPricingVersion = orderSection.dataset.deliveryPricingVersion || null;
     let lastDeliveryQuote = null;
+    let lastSuggestionRequestId = 0;
 
     let currentMode = 'pickup';
 
@@ -456,6 +458,22 @@ function initOrderFlow() {
         setRecipientFromAddress(null);
     });
 
+    if (addressInput) {
+        const addressWrapper = addressInput.parentElement;
+        if (addressWrapper) {
+            addressWrapper.classList.add('relative');
+            addressSuggestionList.className =
+                'absolute left-0 right-0 top-full z-30 mt-1 hidden overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg';
+            addressWrapper.appendChild(addressSuggestionList);
+        }
+    }
+
+    document.addEventListener('click', (event) => {
+        if (!addressSuggestionList.contains(event.target) && addressInput !== event.target) {
+            addressSuggestionList.classList.add('hidden');
+        }
+    });
+
     const buildPolygon = (zone) => {
         const closed = [...(zone.polygon || [])];
         const first = zone.polygon?.[0];
@@ -487,6 +505,74 @@ function initOrderFlow() {
         deliveryHint.classList.toggle('text-emerald-700', tone === 'success');
         deliveryHint.classList.toggle('text-amber-700', tone === 'warn');
     };
+
+    const renderSuggestions = (suggestions) => {
+        if (!addressInput || !addressSuggestionList) return;
+
+        addressSuggestionList.innerHTML = '';
+        if (!suggestions.length) {
+            addressSuggestionList.classList.add('hidden');
+            return;
+        }
+
+        suggestions.forEach((item) => {
+            const row = document.createElement('button');
+            row.type = 'button';
+            row.className =
+                'flex w-full items-start gap-2 rounded-xl px-3 py-2 text-left text-sm font-semibold text-slate-800 hover:bg-rose-50';
+            row.innerHTML = `
+                <span class="material-symbols-rounded text-base text-rose-500">location_on</span>
+                <span class="flex-1">
+                    <span class="block">${item.value || ''}</span>
+                    <span class="block text-xs font-medium text-slate-500">${item.data?.city_with_type || item.data?.area_with_type || ''}</span>
+                </span>
+            `;
+
+            row.addEventListener('click', () => {
+                addressInput.value = item.unrestricted_value || item.value || '';
+                addressSuggestionList.classList.add('hidden');
+                setTimeout(updateDeliveryQuote, 50);
+            });
+
+            addressSuggestionList.appendChild(row);
+        });
+
+        addressSuggestionList.classList.remove('hidden');
+    };
+
+    const fetchSuggestions = async (query, requestId) => {
+        if (!query || query.length < 3 || !dadataConfig.apiKey) return [];
+
+        const response = await fetch('https://suggestions.dadata.ru/suggestions/api/4_1/rs/suggest/address', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Accept: 'application/json',
+                Authorization: `Token ${dadataConfig.apiKey}`,
+            },
+            body: JSON.stringify({ query, count: 5 }),
+        }).catch(() => null);
+
+        if (!response || !response.ok) return [];
+
+        const data = await response.json().catch(() => null);
+        if (requestId !== lastSuggestionRequestId) return [];
+
+        return data?.suggestions || [];
+    };
+
+    const debouncedSuggest = (() => {
+        let timer;
+        return (value) => {
+            clearTimeout(timer);
+            timer = setTimeout(async () => {
+                lastSuggestionRequestId += 1;
+                const requestId = lastSuggestionRequestId;
+                const suggestions = await fetchSuggestions(value.trim(), requestId);
+                renderSuggestions(suggestions);
+            }, 250);
+        };
+    })();
 
     const geocodeWithDadata = async (addressText) => {
         if (!addressText || !dadataConfig.apiKey || !dadataConfig.secretKey) return null;
@@ -566,6 +652,8 @@ function initOrderFlow() {
 
     addressInput?.addEventListener('blur', updateDeliveryQuote);
     addressInput?.addEventListener('change', updateDeliveryQuote);
+    addressInput?.addEventListener('input', (event) => debouncedSuggest(event.target.value || ''));
+    addressInput?.addEventListener('focus', (event) => debouncedSuggest(event.target.value || ''));
 
     const collectPayload = () => {
         const payload = {
