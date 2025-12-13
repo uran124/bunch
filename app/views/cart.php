@@ -198,6 +198,9 @@
                     data-order-flow
                     data-addresses="<?php echo htmlspecialchars(json_encode($addresses, JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8'); ?>"
                     data-primary-address="<?php echo htmlspecialchars($primaryAddress['address'] ?? '', ENT_QUOTES, 'UTF-8'); ?>"
+                    data-delivery-zones="<?php echo htmlspecialchars(json_encode($deliveryZones, JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8'); ?>"
+                    data-delivery-pricing-version="<?php echo htmlspecialchars($deliveryPricingVersion ?? '', ENT_QUOTES, 'UTF-8'); ?>"
+                    data-dadata-config="<?php echo htmlspecialchars(json_encode($dadataConfig ?? [], JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8'); ?>"
                 >
                     <div class="flex flex-col gap-1">
                         <p class="text-xs uppercase tracking-[0.2em] text-slate-500">Способ получения</p>
@@ -266,6 +269,10 @@
                                 data-address-input
                             >
                         </label>
+
+                        <div class="rounded-xl border border-slate-100 bg-white px-3 py-2 text-xs text-slate-600" data-delivery-pricing-hint>
+                            Введите адрес, чтобы получить подсказку DaData, геокодировать точку и определить зону доставки.
+                        </div>
 
                         <div class="space-y-2">
                             <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Получатель</p>
@@ -362,3 +369,4 @@
         </div>
     <?php endif; ?>
 </div>
+<script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
