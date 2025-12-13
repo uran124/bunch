@@ -330,6 +330,7 @@ function initOrderFlow() {
     const addressSelect = orderSection.querySelector('[data-address-select]');
     const addressInput = orderSection.querySelector('[data-address-input]');
     const addressNew = orderSection.querySelector('[data-address-new]');
+    const deliveryHint = orderSection.querySelector('[data-delivery-pricing-hint]');
     const recipientButtons = Array.from(orderSection.querySelectorAll('.recipient-btn'));
     const recipientExtra = orderSection.querySelectorAll('[data-recipient-extra]');
     const recipientName = orderSection.querySelector('[data-recipient-name]');
@@ -343,6 +344,25 @@ function initOrderFlow() {
             return [];
         }
     })();
+
+    const deliveryZones = (() => {
+        try {
+            return JSON.parse(orderSection.dataset.deliveryZones || '[]');
+        } catch (e) {
+            return [];
+        }
+    })();
+
+    const dadataConfig = (() => {
+        try {
+            return JSON.parse(orderSection.dataset.dadataConfig || '{}');
+        } catch (e) {
+            return {};
+        }
+    })();
+
+    const deliveryPricingVersion = orderSection.dataset.deliveryPricingVersion || null;
+    let lastDeliveryQuote = null;
 
     let currentMode = 'pickup';
 
@@ -436,6 +456,117 @@ function initOrderFlow() {
         setRecipientFromAddress(null);
     });
 
+    const buildPolygon = (zone) => {
+        const closed = [...(zone.polygon || [])];
+        const first = zone.polygon?.[0];
+        if (first) {
+            const last = zone.polygon[zone.polygon.length - 1];
+            if (first[0] !== last[0] || first[1] !== last[1]) {
+                closed.push(first);
+            }
+        }
+        return turf.polygon([closed]);
+    };
+
+    const findZoneForPoint = (coords) => {
+        if (!Array.isArray(coords) || coords.length < 2) return null;
+        const point = turf.point(coords);
+        for (const zone of deliveryZones) {
+            const polygon = buildPolygon(zone);
+            if (turf.booleanPointInPolygon(point, polygon)) {
+                return zone;
+            }
+        }
+        return null;
+    };
+
+    const setDeliveryHint = (text, tone = 'muted') => {
+        if (!deliveryHint) return;
+        deliveryHint.textContent = text;
+        deliveryHint.classList.toggle('text-slate-600', tone === 'muted');
+        deliveryHint.classList.toggle('text-emerald-700', tone === 'success');
+        deliveryHint.classList.toggle('text-amber-700', tone === 'warn');
+    };
+
+    const geocodeWithDadata = async (addressText) => {
+        if (!addressText || !dadataConfig.apiKey || !dadataConfig.secretKey) return null;
+
+        const response = await fetch('https://cleaner.dadata.ru/api/v1/clean/address', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Token ${dadataConfig.apiKey}`,
+                'X-Secret': dadataConfig.secretKey,
+            },
+            body: JSON.stringify([addressText]),
+        });
+
+        if (!response.ok) return null;
+        const data = await response.json().catch(() => null);
+        if (!Array.isArray(data) || !data[0]) return null;
+        const row = data[0];
+        if (!row.geo_lon || !row.geo_lat) return null;
+
+        return {
+            lon: Number(row.geo_lon),
+            lat: Number(row.geo_lat),
+            qc: row.qc_geo,
+            label: row.result || addressText,
+        };
+    };
+
+    const updateDeliveryQuote = async () => {
+        if (!addressInput || currentMode !== 'delivery') return;
+        const addressText = (addressInput.value || '').trim();
+        if (!addressText) {
+            setDeliveryHint('Введите адрес, чтобы получить подсказку DaData, геокодировать точку и определить зону доставки.');
+            lastDeliveryQuote = null;
+            return;
+        }
+
+        setDeliveryHint('Ищем адрес в DaData и определяем зону...', 'muted');
+
+        try {
+            const geocoded = await geocodeWithDadata(addressText);
+            if (!geocoded) {
+                setDeliveryHint('Не удалось получить координаты этого адреса. Попробуйте уточнить улицу и дом.', 'warn');
+                lastDeliveryQuote = null;
+                return;
+            }
+
+            const zone = findZoneForPoint([geocoded.lon, geocoded.lat]);
+            if (!zone) {
+                setDeliveryHint('Адрес найден, но не попал ни в одну зону. Добавьте полигон или расширьте границы.', 'warn');
+                lastDeliveryQuote = null;
+                return;
+            }
+
+            lastDeliveryQuote = {
+                address_text: addressText,
+                label: geocoded.label,
+                lat: geocoded.lat,
+                lon: geocoded.lon,
+                zone_id: zone.id,
+                delivery_price: zone.price,
+                zone_version: deliveryPricingVersion,
+                zone_calculated_at: new Date().toISOString(),
+                location_source: 'dadata',
+                geo_quality: geocoded.qc,
+            };
+
+            setDeliveryHint(
+                `${geocoded.label} в зоне «${zone.name}». Доставка ${zone.price.toLocaleString('ru-RU')} ₽`,
+                'success',
+            );
+        } catch (e) {
+            setDeliveryHint('Ошибка при расчёте зоны. Проверьте соединение и попробуйте снова.', 'warn');
+            lastDeliveryQuote = null;
+        }
+    };
+
+    addressInput?.addEventListener('blur', updateDeliveryQuote);
+    addressInput?.addEventListener('change', updateDeliveryQuote);
+
     const collectPayload = () => {
         const payload = {
             mode: currentMode,
@@ -454,6 +585,22 @@ function initOrderFlow() {
                 payload.recipient = {
                     name: recipientName?.value || '',
                     phone: recipientPhone?.value || '',
+                };
+            }
+
+            if (lastDeliveryQuote) {
+                payload.delivery_price = lastDeliveryQuote.delivery_price;
+                payload.zone_id = lastDeliveryQuote.zone_id;
+                payload.delivery_pricing_version = lastDeliveryQuote.zone_version;
+                payload.zone_calculated_at = lastDeliveryQuote.zone_calculated_at;
+                payload.address = {
+                    location_source: lastDeliveryQuote.location_source,
+                    geo_quality: lastDeliveryQuote.geo_quality,
+                    lat: lastDeliveryQuote.lat,
+                    lon: lastDeliveryQuote.lon,
+                    zone_id: lastDeliveryQuote.zone_id,
+                    zone_version: lastDeliveryQuote.zone_version,
+                    zone_calculated_at: lastDeliveryQuote.zone_calculated_at,
                 };
             }
         }
