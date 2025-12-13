@@ -40,29 +40,59 @@
             </div>
 
             <div class="mt-4 grid gap-4 lg:grid-cols-2">
-                <div class="space-y-3 rounded-xl border border-slate-100 bg-slate-50 p-4">
-                    <p class="text-sm font-semibold text-slate-800">Данные авторизации</p>
+                <form id="dadata-credentials-form" class="space-y-3 rounded-xl border border-slate-100 bg-slate-50 p-4">
+                    <div class="flex items-center justify-between gap-3">
+                        <div>
+                            <p class="text-sm font-semibold text-slate-800">Данные авторизации</p>
+                            <p class="text-xs text-slate-500">API-ключи нужны для подсказок и геокодинга.</p>
+                        </div>
+                        <span id="dadata-credentials-status" class="hidden items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-200">
+                            <span class="material-symbols-rounded text-base">task_alt</span>
+                            Сохранено
+                        </span>
+                    </div>
                     <div class="grid gap-2 text-sm">
                         <label class="space-y-1">
                             <span class="text-xs uppercase tracking-[0.14em] text-slate-500">API-ключ</span>
-                            <div class="flex items-center justify-between rounded-lg bg-white px-3 py-2 text-slate-800 ring-1 ring-slate-200">
-                                <span class="truncate text-sm font-mono">
-                                    <?php echo htmlspecialchars($dadata['apiKey'] ?? '', ENT_QUOTES, 'UTF-8'); ?>
-                                </span>
+                            <div class="flex items-center gap-2 rounded-lg bg-white px-3 py-2 text-slate-800 ring-1 ring-slate-200">
+                                <input
+                                    type="text"
+                                    name="apiKey"
+                                    id="dadata-api-key"
+                                    autocomplete="off"
+                                    value="<?php echo htmlspecialchars($dadata['apiKey'] ?? '', ENT_QUOTES, 'UTF-8'); ?>"
+                                    placeholder="Вставьте ключ DaData"
+                                    class="w-full truncate bg-transparent text-sm font-mono focus:outline-none"
+                                >
                                 <span class="material-symbols-rounded text-base text-rose-500">key_vertical</span>
                             </div>
+                            <span id="dadata-api-key-display" class="block truncate text-[11px] text-slate-500"></span>
                         </label>
                         <label class="space-y-1">
                             <span class="text-xs uppercase tracking-[0.14em] text-slate-500">Секретный ключ</span>
-                            <div class="flex items-center justify-between rounded-lg bg-white px-3 py-2 text-slate-800 ring-1 ring-slate-200">
-                                <span class="truncate text-sm font-mono">
-                                    <?php echo htmlspecialchars($dadata['secretKey'] ?? '', ENT_QUOTES, 'UTF-8'); ?>
-                                </span>
+                            <div class="flex items-center gap-2 rounded-lg bg-white px-3 py-2 text-slate-800 ring-1 ring-slate-200">
+                                <input
+                                    type="password"
+                                    name="secretKey"
+                                    id="dadata-secret-key"
+                                    autocomplete="off"
+                                    value="<?php echo htmlspecialchars($dadata['secretKey'] ?? '', ENT_QUOTES, 'UTF-8'); ?>"
+                                    placeholder="Введите секретный ключ"
+                                    class="w-full truncate bg-transparent text-sm font-mono focus:outline-none"
+                                >
                                 <span class="material-symbols-rounded text-base text-indigo-500">lock</span>
                             </div>
+                            <span id="dadata-secret-key-display" class="block truncate text-[11px] text-slate-500"></span>
                         </label>
                     </div>
-                </div>
+                    <button
+                        type="submit"
+                        class="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-rose-600 px-3 py-2 text-sm font-semibold text-white shadow-sm shadow-rose-200 transition hover:-translate-y-0.5 hover:shadow"
+                    >
+                        <span class="material-symbols-rounded text-base">save</span>
+                        Сохранить ключи
+                    </button>
+                </form>
 
                 <div class="grid gap-3 rounded-xl border border-slate-100 bg-white p-4 shadow-sm">
                     <div class="flex items-start justify-between gap-3">
@@ -307,16 +337,59 @@
 <script>
     const zones = <?php echo json_encode($zones); ?>;
     const testAddresses = <?php echo json_encode($testAddresses); ?>;
-    const dadataConfig = <?php echo json_encode($dadata); ?>;
+    let dadataConfig = <?php echo json_encode($dadata); ?>;
 
     const mapContainer = document.getElementById('zone-map');
     const addressInput = document.getElementById('address-full');
     const addressSuggestionList = document.createElement('div');
+    const credentialsForm = document.getElementById('dadata-credentials-form');
+    const apiKeyInput = document.getElementById('dadata-api-key');
+    const secretKeyInput = document.getElementById('dadata-secret-key');
+    const apiKeyDisplay = document.getElementById('dadata-api-key-display');
+    const secretKeyDisplay = document.getElementById('dadata-secret-key-display');
+    const credentialsStatus = document.getElementById('dadata-credentials-status');
     let marker;
     let lastSuggestionRequestId = 0;
 
+    function formatKey(value) {
+        if (!value) return 'Не задано';
+        if (value.length <= 12) return value;
+        return `${value.slice(0, 6)}…${value.slice(-4)}`;
+    }
+
+    function hydrateCredentials() {
+        try {
+            const cached = localStorage.getItem('dadataCredentials');
+            if (cached) {
+                const parsed = JSON.parse(cached);
+                dadataConfig = {
+                    ...dadataConfig,
+                    ...(typeof parsed === 'object' && parsed ? parsed : {}),
+                };
+            }
+        } catch (e) {
+            console.error('Не удалось загрузить ключи DaData из localStorage', e);
+        }
+
+        renderCredentials();
+    }
+
+    function renderCredentials() {
+        if (apiKeyInput) apiKeyInput.value = dadataConfig?.apiKey || '';
+        if (secretKeyInput) secretKeyInput.value = dadataConfig?.secretKey || '';
+        if (apiKeyDisplay) apiKeyDisplay.textContent = formatKey(dadataConfig?.apiKey || '');
+        if (secretKeyDisplay) secretKeyDisplay.textContent = formatKey(dadataConfig?.secretKey || '');
+    }
+
     function normalizeText(value) {
         return value.trim().toLowerCase();
+    }
+
+    function showCredentialsSaved() {
+        if (!credentialsStatus) return;
+        credentialsStatus.classList.remove('hidden');
+        credentialsStatus.classList.add('inline-flex');
+        setTimeout(() => credentialsStatus.classList.add('hidden'), 2400);
     }
 
     function renderSuggestions(suggestions) {
@@ -505,7 +578,26 @@
         svg.appendChild(marker);
     }
 
+    hydrateCredentials();
     renderMap();
+
+    credentialsForm?.addEventListener('submit', (event) => {
+        event.preventDefault();
+
+        const apiKey = (apiKeyInput?.value || '').trim();
+        const secretKey = (secretKeyInput?.value || '').trim();
+
+        dadataConfig = { ...dadataConfig, apiKey, secretKey };
+
+        try {
+            localStorage.setItem('dadataCredentials', JSON.stringify({ apiKey, secretKey }));
+        } catch (e) {
+            console.error('Не удалось сохранить ключи DaData', e);
+        }
+
+        renderCredentials();
+        showCredentialsSaved();
+    });
 
     if (addressInput) {
         const wrapper = addressInput.parentElement;
