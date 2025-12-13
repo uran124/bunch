@@ -506,6 +506,17 @@ function initOrderFlow() {
         deliveryHint.classList.toggle('text-amber-700', tone === 'warn');
     };
 
+    const formatAddressFromDadata = (data) => {
+        if (!data) return '';
+
+        const city = data.city_with_type || data.settlement_with_type || '';
+        const street = data.street_with_type || '';
+        const house = data.house ? `д ${data.house}` : '';
+        const flat = data.flat ? `кв ${data.flat}` : '';
+
+        return [city, [street, house].filter(Boolean).join(', '), flat].filter(Boolean).join(', ');
+    };
+
     const renderSuggestions = (suggestions) => {
         if (!addressInput || !addressSuggestionList) return;
 
@@ -516,6 +527,7 @@ function initOrderFlow() {
         }
 
         suggestions.forEach((item) => {
+            const formatted = formatAddressFromDadata(item.data) || item.value || '';
             const row = document.createElement('button');
             row.type = 'button';
             row.className =
@@ -523,13 +535,13 @@ function initOrderFlow() {
             row.innerHTML = `
                 <span class="material-symbols-rounded text-base text-rose-500">location_on</span>
                 <span class="flex-1">
-                    <span class="block">${item.value || ''}</span>
-                    <span class="block text-xs font-medium text-slate-500">${item.data?.city_with_type || item.data?.area_with_type || ''}</span>
+                    <span class="block">${formatted}</span>
+                    <span class="block text-xs font-medium text-slate-500">${item.data?.street_with_type || ''}</span>
                 </span>
             `;
 
             row.addEventListener('click', () => {
-                addressInput.value = item.unrestricted_value || item.value || '';
+                addressInput.value = formatted;
                 addressSuggestionList.classList.add('hidden');
                 setTimeout(updateDeliveryQuote, 50);
             });
@@ -597,7 +609,7 @@ function initOrderFlow() {
             lon: Number(row.geo_lon),
             lat: Number(row.geo_lat),
             qc: row.qc_geo,
-            label: row.result || addressText,
+            label: formatAddressFromDadata(row) || row.result || addressText,
         };
     };
 
