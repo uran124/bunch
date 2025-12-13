@@ -176,43 +176,71 @@
             </div>
 
             <form id="address-zone-form" class="mt-4 space-y-3">
-                <div class="grid gap-3 md:grid-cols-[1.1fr_0.9fr]">
-                    <label class="flex flex-col gap-2">
-                        <span class="text-sm font-semibold text-slate-700">Улица</span>
-                        <input
-                            type="text"
-                            id="address-street"
-                            name="street"
-                            placeholder="Например: Тверская"
-                            class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-sm focus:border-rose-300 focus:outline-none focus:ring-2 focus:ring-rose-200"
-                        >
-                    </label>
-                    <label class="flex flex-col gap-2">
-                        <span class="text-sm font-semibold text-slate-700">Дом</span>
-                        <input
-                            type="text"
-                            id="address-building"
-                            name="building"
-                            placeholder="12"
-                            class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-sm focus:border-rose-300 focus:outline-none focus:ring-2 focus:ring-rose-200"
-                        >
-                    </label>
-                </div>
+                <label class="flex flex-col gap-2">
+                    <span class="text-sm font-semibold text-slate-700">Адрес для теста</span>
+                    <input
+                        type="text"
+                        id="address-full"
+                        name="address"
+                        placeholder="Например: Тверская, 12"
+                        class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-sm focus:border-rose-300 focus:outline-none focus:ring-2 focus:ring-rose-200"
+                    >
+                </label>
                 <div class="grid gap-3 md:grid-cols-2">
-                    <label class="flex items-center justify-between gap-3 rounded-lg border border-slate-100 bg-slate-50 px-3 py-2 text-sm text-slate-800">
-                        <div>
-                            <p class="font-semibold">Автозаполнение</p>
-                            <p class="text-xs text-slate-500">DaData подсказывает полный адрес в процессе ввода.</p>
-                        </div>
-                        <span class="material-symbols-rounded text-base text-emerald-500">flash_on</span>
-                    </label>
-                    <label class="flex items-center justify-between gap-3 rounded-lg border border-slate-100 bg-slate-50 px-3 py-2 text-sm text-slate-800">
-                        <div>
-                            <p class="font-semibold">Координаты</p>
-                            <p class="text-xs text-slate-500">Геокодинг возвращает долготу и широту для проверки зоны.</p>
-                        </div>
-                        <span class="material-symbols-rounded text-base text-indigo-500">my_location</span>
-                    </label>
+                    <div class="rounded-lg border border-slate-100 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+                        <p class="mb-2 text-[13px] font-semibold text-slate-800">Что проверяем</p>
+                        <ol class="space-y-1">
+                            <li class="flex items-start gap-2">
+                                <span class="mt-0.5 h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
+                                <span>Подключение к DaData</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <span class="mt-0.5 h-2.5 w-2.5 rounded-full bg-indigo-500"></span>
+                                <span>Определение адреса (подсказка + индекс)</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <span class="mt-0.5 h-2.5 w-2.5 rounded-full bg-amber-500"></span>
+                                <span>Получение координат (геокодинг)</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <span class="mt-0.5 h-2.5 w-2.5 rounded-full bg-rose-500"></span>
+                                <span>Попадание в зону и стоимость</span>
+                            </li>
+                        </ol>
+                    </div>
+                    <div class="rounded-lg border border-slate-100 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+                        <p class="mb-2 text-[13px] font-semibold text-slate-800">Статус шагов</p>
+                        <ul class="space-y-1" id="address-steps">
+                            <li class="flex items-center justify-between gap-2 rounded-lg bg-white px-3 py-2 text-sm text-slate-800" data-step="connect">
+                                <span class="flex items-center gap-2">
+                                    <span class="material-symbols-rounded text-base text-emerald-500">cloud_sync</span>
+                                    Подключение DaData
+                                </span>
+                                <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">Ожидает</span>
+                            </li>
+                            <li class="flex items-center justify-between gap-2 rounded-lg bg-white px-3 py-2 text-sm text-slate-800" data-step="address">
+                                <span class="flex items-center gap-2">
+                                    <span class="material-symbols-rounded text-base text-indigo-500">location_searching</span>
+                                    Подсказка и нормализация
+                                </span>
+                                <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">Ожидает</span>
+                            </li>
+                            <li class="flex items-center justify-between gap-2 rounded-lg bg-white px-3 py-2 text-sm text-slate-800" data-step="coords">
+                                <span class="flex items-center gap-2">
+                                    <span class="material-symbols-rounded text-base text-amber-500">my_location</span>
+                                    Координаты из геокодинга
+                                </span>
+                                <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">Ожидает</span>
+                            </li>
+                            <li class="flex items-center justify-between gap-2 rounded-lg bg-white px-3 py-2 text-sm text-slate-800" data-step="zone">
+                                <span class="flex items-center gap-2">
+                                    <span class="material-symbols-rounded text-base text-rose-500">task_alt</span>
+                                    Определение зоны
+                                </span>
+                                <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">Ожидает</span>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
                 <?php if (!empty($testAddresses)): ?>
                     <div class="rounded-lg border border-slate-100 bg-slate-50 px-3 py-2 text-xs text-slate-600">
@@ -234,7 +262,7 @@
             </form>
 
             <div id="address-zone-result" class="mt-4 rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 text-sm text-slate-700">
-                Введите улицу и дом, чтобы увидеть стоимость и зону.
+                Введите адрес, чтобы увидеть стоимость и зону.
             </div>
         </article>
 
@@ -287,8 +315,8 @@
         return value.trim().toLowerCase();
     }
 
-    function geocodeAddress(street, building) {
-        const needle = normalizeText(`${street} ${building}`);
+    function geocodeAddress(address) {
+        const needle = normalizeText(address);
         return testAddresses.find((item) => needle.includes(item.match));
     }
 
@@ -377,25 +405,56 @@
 
     const form = document.getElementById('address-zone-form');
     const result = document.getElementById('address-zone-result');
+    const steps = document.querySelectorAll('#address-steps [data-step]');
+
+    function setStepStatus(step, status, color = 'bg-slate-100 text-slate-600') {
+        const item = Array.from(steps).find((el) => el.dataset.step === step);
+        if (!item) return;
+
+        const badge = item.querySelector('span.rounded-full');
+        if (badge) {
+            badge.textContent = status;
+            badge.className = `rounded-full px-2.5 py-1 text-xs font-semibold ${color}`;
+        }
+    }
+
+    function resetSteps() {
+        setStepStatus('connect', 'Готово', 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200');
+        ['address', 'coords', 'zone'].forEach((step) => {
+            setStepStatus(step, 'Ожидает', 'bg-slate-100 text-slate-600');
+        });
+    }
+
+    resetSteps();
 
     form?.addEventListener('submit', (event) => {
         event.preventDefault();
-        const street = normalizeText(document.getElementById('address-street').value);
-        const building = normalizeText(document.getElementById('address-building').value);
+        const addressValue = normalizeText(document.getElementById('address-full').value);
 
-        if (!street || !building) {
-            result.textContent = 'Добавьте улицу и номер дома, чтобы рассчитать доставку.';
+        resetSteps();
+
+        if (!addressValue) {
+            result.textContent = 'Добавьте адрес, чтобы рассчитать доставку.';
             return;
         }
 
-        const geocoded = geocodeAddress(street, building);
+        const geocoded = geocodeAddress(addressValue);
+        setStepStatus('address', geocoded ? 'Адрес найден' : 'Адрес не найден', geocoded ? 'bg-indigo-50 text-indigo-700 ring-1 ring-indigo-200' : 'bg-amber-50 text-amber-700 ring-1 ring-amber-200');
+
         if (!geocoded) {
             result.textContent = 'Нет готовых координат для этого адреса. Добавьте адрес в DaData или включите автодобавление.';
             return;
         }
 
+        setStepStatus('coords', 'Координаты получены', 'bg-amber-50 text-amber-700 ring-1 ring-amber-200');
         const zone = findZone(geocoded.coords);
         placeMarker(geocoded.coords);
+
+        if (zone) {
+            setStepStatus('zone', 'Зона найдена', 'bg-rose-50 text-rose-700 ring-1 ring-rose-200');
+        } else {
+            setStepStatus('zone', 'Зона не найдена', 'bg-amber-50 text-amber-700 ring-1 ring-amber-200');
+        }
 
         if (zone) {
             result.innerHTML = `<strong class="text-slate-900">${geocoded.label}</strong> находится в зоне <strong class="text-slate-900">${zone.name}</strong>. Стоимость доставки: <strong class="text-slate-900">${zone.price} ₽</strong>.`;
