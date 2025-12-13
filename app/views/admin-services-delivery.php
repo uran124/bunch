@@ -307,17 +307,121 @@
 <script>
     const zones = <?php echo json_encode($zones); ?>;
     const testAddresses = <?php echo json_encode($testAddresses); ?>;
+    const dadataConfig = <?php echo json_encode($dadata); ?>;
 
     const mapContainer = document.getElementById('zone-map');
+    const addressInput = document.getElementById('address-full');
+    const addressSuggestionList = document.createElement('div');
     let marker;
+    let lastSuggestionRequestId = 0;
 
     function normalizeText(value) {
         return value.trim().toLowerCase();
     }
 
-    function geocodeAddress(address) {
+    function renderSuggestions(suggestions) {
+        if (!addressInput || !addressSuggestionList) return;
+
+        addressSuggestionList.innerHTML = '';
+        if (!suggestions.length) {
+            addressSuggestionList.classList.add('hidden');
+            return;
+        }
+
+        suggestions.forEach((item) => {
+            const row = document.createElement('button');
+            row.type = 'button';
+            row.className =
+                'flex w-full items-start gap-2 rounded-xl px-3 py-2 text-left text-sm font-semibold text-slate-800 hover:bg-rose-50';
+            row.innerHTML = `
+                <span class="material-symbols-rounded text-base text-rose-500">location_on</span>
+                <span class="flex-1">
+                    <span class="block">${item.value || item.label || ''}</span>
+                    <span class="block text-xs font-medium text-slate-500">${item.data?.city_with_type || ''}</span>
+                </span>
+            `;
+
+            row.addEventListener('click', () => {
+                addressInput.value = item.unrestricted_value || item.value || item.label || '';
+                addressSuggestionList.classList.add('hidden');
+            });
+
+            addressSuggestionList.appendChild(row);
+        });
+
+        addressSuggestionList.classList.remove('hidden');
+    }
+
+    async function fetchSuggestions(query, requestId) {
+        if (!query || query.length < 3) return [];
+
+        if (dadataConfig?.apiKey) {
+            const response = await fetch('https://suggestions.dadata.ru/suggestions/api/4_1/rs/suggest/address', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Accept: 'application/json',
+                    Authorization: `Token ${dadataConfig.apiKey}`,
+                },
+                body: JSON.stringify({ query, count: 5 }),
+            }).catch(() => null);
+
+            if (response?.ok) {
+                const data = await response.json().catch(() => null);
+                if (requestId === lastSuggestionRequestId) {
+                    return data?.suggestions || [];
+                }
+            }
+        }
+
+        return testAddresses
+            .filter((item) => normalizeText(item.label).includes(normalizeText(query)))
+            .map((item) => ({ value: item.label }));
+    }
+
+    function debouncedSuggest(value) {
+        if (!addressSuggestionList) return;
+        clearTimeout(debouncedSuggest.timer);
+        debouncedSuggest.timer = setTimeout(async () => {
+            lastSuggestionRequestId += 1;
+            const requestId = lastSuggestionRequestId;
+            const suggestions = await fetchSuggestions(value.trim(), requestId);
+            renderSuggestions(suggestions);
+        }, 250);
+    }
+
+    async function geocodeAddress(address) {
         const needle = normalizeText(address);
-        return testAddresses.find((item) => needle.includes(item.match));
+
+        if (needle && dadataConfig?.apiKey && dadataConfig?.secretKey) {
+            const response = await fetch('https://cleaner.dadata.ru/api/v1/clean/address', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Token ${dadataConfig.apiKey}`,
+                    'X-Secret': dadataConfig.secretKey,
+                },
+                body: JSON.stringify([address]),
+            }).catch(() => null);
+
+            if (response?.ok) {
+                const data = await response.json().catch(() => null);
+                const row = Array.isArray(data) ? data[0] : null;
+                if (row?.geo_lon && row?.geo_lat) {
+                    return {
+                        label: row.result || address,
+                        coords: [Number(row.geo_lon), Number(row.geo_lat)],
+                    };
+                }
+            }
+        }
+
+        const fixture = testAddresses.find((item) => needle.includes(item.match));
+        if (fixture) {
+            return { label: fixture.label, coords: fixture.coords };
+        }
+
+        return null;
     }
 
     function findZone(coords) {
@@ -403,6 +507,25 @@
 
     renderMap();
 
+    if (addressInput) {
+        const wrapper = addressInput.parentElement;
+        if (wrapper) {
+            wrapper.classList.add('relative');
+            addressSuggestionList.className =
+                'absolute left-0 right-0 top-full z-20 mt-1 hidden overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg';
+            wrapper.appendChild(addressSuggestionList);
+        }
+
+        addressInput.addEventListener('input', (event) => debouncedSuggest(event.target.value || ''));
+        addressInput.addEventListener('focus', (event) => debouncedSuggest(event.target.value || ''));
+    }
+
+    document.addEventListener('click', (event) => {
+        if (!addressSuggestionList.contains(event.target) && addressInput !== event.target) {
+            addressSuggestionList.classList.add('hidden');
+        }
+    });
+
     const form = document.getElementById('address-zone-form');
     const result = document.getElementById('address-zone-result');
     const steps = document.querySelectorAll('#address-steps [data-step]');
@@ -427,9 +550,10 @@
 
     resetSteps();
 
-    form?.addEventListener('submit', (event) => {
+    form?.addEventListener('submit', async (event) => {
         event.preventDefault();
-        const addressValue = normalizeText(document.getElementById('address-full').value);
+        const addressRaw = document.getElementById('address-full').value || '';
+        const addressValue = normalizeText(addressRaw);
 
         resetSteps();
 
@@ -438,7 +562,7 @@
             return;
         }
 
-        const geocoded = geocodeAddress(addressValue);
+        const geocoded = await geocodeAddress(addressRaw);
         setStepStatus('address', geocoded ? 'Адрес найден' : 'Адрес не найден', geocoded ? 'bg-indigo-50 text-indigo-700 ring-1 ring-indigo-200' : 'bg-amber-50 text-amber-700 ring-1 ring-amber-200');
 
         if (!geocoded) {
