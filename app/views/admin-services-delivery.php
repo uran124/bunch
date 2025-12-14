@@ -388,10 +388,13 @@
             const cached = localStorage.getItem('dadataCredentials');
             if (cached) {
                 const parsed = JSON.parse(cached);
-                dadataConfig = {
-                    ...dadataConfig,
-                    ...(typeof parsed === 'object' && parsed ? parsed : {}),
-                };
+                if (parsed && typeof parsed === 'object') {
+                    dadataConfig = {
+                        ...dadataConfig,
+                        apiKey: dadataConfig?.apiKey || parsed.apiKey || '',
+                        secretKey: dadataConfig?.secretKey || parsed.secretKey || '',
+                    };
+                }
             }
         } catch (e) {
             console.error('Не удалось загрузить ключи DaData из localStorage', e);

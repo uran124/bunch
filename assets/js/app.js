@@ -376,7 +376,11 @@ function initOrderFlow() {
             if (cached) {
                 const parsed = JSON.parse(cached);
                 if (parsed && typeof parsed === 'object') {
-                    return { ...config, ...parsed };
+                    return {
+                        ...config,
+                        apiKey: config.apiKey || parsed.apiKey || '',
+                        secretKey: config.secretKey || parsed.secretKey || '',
+                    };
                 }
             }
         } catch (e) {
