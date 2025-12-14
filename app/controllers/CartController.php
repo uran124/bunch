@@ -38,6 +38,7 @@ class CartController extends Controller
             'deliveryZones' => $this->getDeliveryZones(),
             'deliveryPricingVersion' => '2024-06-01',
             'dadataConfig' => $this->getDadataSettings(),
+            'testAddresses' => $this->getDeliveryTestAddresses(),
             'pageMeta' => [
                 'title' => 'Корзина — Bunch flowers',
                 'description' => 'Проверьте позиции перед оформлением заказа.',
@@ -306,6 +307,32 @@ class CartController extends Controller
                     [37.6040, 55.7440],
                 ],
                 'landmarks' => 'Павелецкая, Шаболовка, Фрунзенская',
+            ],
+        ];
+    }
+
+    private function getDeliveryTestAddresses(): array
+    {
+        return [
+            [
+                'label' => 'Москва, ул. Тверская, 12',
+                'match' => 'тверская 12',
+                'coords' => [37.6047, 55.7586],
+            ],
+            [
+                'label' => 'Москва, ул. Бауманская, 35',
+                'match' => 'бауманская 35',
+                'coords' => [37.6630, 55.7650],
+            ],
+            [
+                'label' => 'Москва, ул. Шаболовка, 24',
+                'match' => 'шаболовка 24',
+                'coords' => [37.6115, 55.7325],
+            ],
+            [
+                'label' => 'Москва, ул. Алексеева, 22',
+                'match' => 'алексеева 22',
+                'coords' => [37.6100, 55.7535],
             ],
         ];
     }

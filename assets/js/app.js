@@ -354,6 +354,14 @@ function initOrderFlow() {
         }
     })();
 
+    const testAddresses = (() => {
+        try {
+            return JSON.parse(orderSection.dataset.testAddresses || '[]');
+        } catch (e) {
+            return [];
+        }
+    })();
+
     const dadataConfig = (() => {
         try {
             return JSON.parse(orderSection.dataset.dadataConfig || '{}');
@@ -370,6 +378,8 @@ function initOrderFlow() {
     let currentMode = 'pickup';
 
     const findAddressById = (id) => addresses.find((item) => Number(item.raw?.id || 0) === Number(id));
+
+    const normalizeText = (value = '') => value.trim().toLowerCase();
 
     const highlightMode = (mode) => {
         modeButtons.forEach((btn) => {
@@ -575,24 +585,33 @@ function initOrderFlow() {
     };
 
     const fetchSuggestions = async (query, requestId) => {
-        if (!query || query.length < 3 || !dadataConfig.apiKey) return [];
+        if (!query || query.length < 3) return [];
 
-        const response = await fetch('https://suggestions.dadata.ru/suggestions/api/4_1/rs/suggest/address', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                Accept: 'application/json',
-                Authorization: `Token ${dadataConfig.apiKey}`,
-            },
-            body: JSON.stringify({ query, count: 5 }),
-        }).catch(() => null);
+        if (dadataConfig.apiKey) {
+            const response = await fetch('https://suggestions.dadata.ru/suggestions/api/4_1/rs/suggest/address', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Accept: 'application/json',
+                    Authorization: `Token ${dadataConfig.apiKey}`,
+                },
+                body: JSON.stringify({ query, count: 5 }),
+            }).catch(() => null);
 
-        if (!response || !response.ok) return [];
+            if (response?.ok) {
+                const data = await response.json().catch(() => null);
+                if (requestId === lastSuggestionRequestId) {
+                    return data?.suggestions || [];
+                }
+            }
+        }
 
-        const data = await response.json().catch(() => null);
-        if (requestId !== lastSuggestionRequestId) return [];
-
-        return data?.suggestions || [];
+        return testAddresses
+            .filter((item) => normalizeText(item.label).includes(normalizeText(query)))
+            .map((item) => ({
+                value: item.label,
+                data: { city_with_type: item.label, street_with_type: '' },
+            }));
     };
 
     const debouncedSuggest = (() => {
