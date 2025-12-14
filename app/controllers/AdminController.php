@@ -1659,6 +1659,7 @@ class AdminController extends Controller
             'dailyLimit' => 1500,
             'requestsToday' => 240,
             'lastSync' => 'Сегодня, 09:20',
+            'defaultDeliveryPrice' => 350,
         ];
     }
 
