@@ -254,15 +254,6 @@ class CartController extends Controller
         }
     }
 
-    private function getDadataSettings(): array
-    {
-        return [
-            'apiKey' => '6e4950476cc01a78b287788434dc1028eb3e86cf',
-            'secretKey' => 'f2b84eb0e15b3c7b93c75ac50a8cd53b1a9defa1',
-            'defaultDeliveryPrice' => 350,
-        ];
-    }
-
     private function getDeliveryZones(): array
     {
         return [
