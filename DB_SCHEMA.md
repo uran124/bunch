@@ -574,3 +574,29 @@ INSERT INTO supplies (
 При любых изменениях структур таблиц:
 - сначала меняем схемы в миграциях/скриптах;
 - затем синхронизируем описание здесь (`DB_SCHEMA.md`).
+
+### Зоны доставки
+
+```sql
+CREATE TABLE delivery_pricing_meta (
+  id TINYINT UNSIGNED NOT NULL DEFAULT 1 PRIMARY KEY,
+  shop VARCHAR(100) NOT NULL DEFAULT 'bunch',
+  version INT UNSIGNED NOT NULL DEFAULT 1,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE delivery_zones (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(150) NOT NULL,
+  price DECIMAL(10,2) NOT NULL DEFAULT 0,
+  priority INT NOT NULL DEFAULT 0,
+  color VARCHAR(20) NOT NULL DEFAULT '#f43f5e',
+  is_active TINYINT(1) NOT NULL DEFAULT 1,
+  polygon JSON NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+```
+
+- `delivery_pricing_meta.version` — увеличивается при каждом сохранении зон.
+- `delivery_zones.polygon` — массив точек `[lon, lat]` для turf/Leaflet.

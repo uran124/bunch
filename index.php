@@ -16,11 +16,18 @@ spl_autoload_register(function (string $class): void {
     }
 });
 
+$path = trim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/');
+
+if (str_starts_with($path, 'api/')) {
+    require_once __DIR__ . '/api/index.php';
+    exit;
+}
+
 Session::start();
 
 $router = new Router();
 
-$page = $_GET['page'] ?? trim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/');
+$page = $_GET['page'] ?? $path;
 
 if ($page === '' || $page === 'index' || $page === 'index.php') {
     $page = 'home';
