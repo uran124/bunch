@@ -362,13 +362,35 @@ function initOrderFlow() {
         }
     })();
 
-    const dadataConfig = (() => {
+    let dadataConfig = (() => {
         try {
             return JSON.parse(orderSection.dataset.dadataConfig || '{}');
         } catch (e) {
             return {};
         }
     })();
+
+    const mergeCredentialsFromStorage = (config) => {
+        try {
+            const cached = localStorage.getItem('dadataCredentials');
+            if (cached) {
+                const parsed = JSON.parse(cached);
+                if (parsed && typeof parsed === 'object') {
+                    return {
+                        ...config,
+                        apiKey: config.apiKey || parsed.apiKey || '',
+                        secretKey: config.secretKey || parsed.secretKey || '',
+                    };
+                }
+            }
+        } catch (e) {
+            console.error('Не удалось загрузить ключи DaData из localStorage', e);
+        }
+
+        return config;
+    };
+
+    dadataConfig = mergeCredentialsFromStorage(dadataConfig);
 
     const fallbackDeliveryPrice = Number(dadataConfig.defaultDeliveryPrice ?? 0) || 350;
     const deliveryPricingVersion = orderSection.dataset.deliveryPricingVersion || null;
