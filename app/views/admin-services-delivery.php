@@ -867,9 +867,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         try {
+            const headers = { 'Content-Type': 'application/json' };
+            if (dadataConfig?.apiKey) {
+                headers.Authorization = `Token ${dadataConfig.apiKey}`;
+            }
+
             const response = await fetch('/api/delivery/zones', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers,
                 body: JSON.stringify({ zones }),
             });
 
