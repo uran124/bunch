@@ -1013,11 +1013,14 @@ class AdminController extends Controller
             'headerSubtitle' => 'Сервисы · Адреса и доставка',
         ];
 
+        $zoneModel = new DeliveryZone();
+
         $this->render('admin-services-delivery', [
             'pageMeta' => $pageMeta,
             'dadata' => $this->getDadataSettings(),
-            'zones' => $this->getDeliveryZones(),
-            'testAddresses' => $this->getDeliveryTestAddresses(),
+            'zones' => $zoneModel->getZones(false, true),
+            'deliveryPricingVersion' => $zoneModel->getPricingVersion(),
+            'testAddresses' => $zoneModel->getTestAddresses(),
         ]);
     }
 
@@ -1649,74 +1652,4 @@ class AdminController extends Controller
         ];
     }
 
-    private function getDeliveryZones(): array
-    {
-        return [
-            [
-                'name' => 'Центр',
-                'price' => 290,
-                'color' => '#f43f5e',
-                'polygon' => [
-                    [37.5995, 55.7620],
-                    [37.6205, 55.7620],
-                    [37.6210, 55.7470],
-                    [37.6015, 55.7465],
-                    [37.5995, 55.7620],
-                ],
-                'landmarks' => 'Тверская, Цветной бульвар, Патрики',
-            ],
-            [
-                'name' => 'Северо-восток',
-                'price' => 390,
-                'color' => '#06b6d4',
-                'polygon' => [
-                    [37.6220, 55.7660],
-                    [37.6660, 55.7680],
-                    [37.6690, 55.7500],
-                    [37.6250, 55.7475],
-                    [37.6220, 55.7660],
-                ],
-                'landmarks' => 'Бауманская, Семёновская, Сокольники',
-            ],
-            [
-                'name' => 'Юг',
-                'price' => 490,
-                'color' => '#a855f7',
-                'polygon' => [
-                    [37.6040, 55.7440],
-                    [37.6570, 55.7440],
-                    [37.6590, 55.7340],
-                    [37.6050, 55.7340],
-                    [37.6040, 55.7440],
-                ],
-                'landmarks' => 'Павелецкая, Шаболовка, Фрунзенская',
-            ],
-        ];
-    }
-
-    private function getDeliveryTestAddresses(): array
-    {
-        return [
-            [
-                'label' => 'Москва, ул. Тверская, 12',
-                'match' => 'тверская 12',
-                'coords' => [37.6047, 55.7586],
-            ],
-            [
-                'label' => 'Москва, ул. Бауманская, 35',
-                'match' => 'бауманская 35',
-                'coords' => [37.6630, 55.7650],
-            ],
-            [
-                'label' => 'Москва, ул. Шаболовка, 24',
-                'match' => 'шаболовка 24',
-                'coords' => [37.6115, 55.7325],
-            ],
-            [
-                'label' => 'Москва, ул. Алексеева, 22',
-                'match' => 'алексеева 22',
-                'coords' => [37.6100, 55.7535],
-            ],
-        ];
-    }
 }
