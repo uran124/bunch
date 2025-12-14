@@ -362,6 +362,7 @@ function initOrderFlow() {
         }
     })();
 
+    const fallbackDeliveryPrice = Number(dadataConfig.defaultDeliveryPrice ?? 0) || 350;
     const deliveryPricingVersion = orderSection.dataset.deliveryPricingVersion || null;
     let lastDeliveryQuote = null;
     let lastSuggestionRequestId = 0;
@@ -506,6 +507,27 @@ function initOrderFlow() {
         deliveryHint.classList.toggle('text-amber-700', tone === 'warn');
     };
 
+    const useFallbackDeliveryQuote = (addressText, reason) => {
+        const price = Number(fallbackDeliveryPrice) || 0;
+
+        lastDeliveryQuote = {
+            address_text: addressText,
+            label: addressText || 'Адрес доставки',
+            lat: null,
+            lon: null,
+            zone_id: null,
+            delivery_price: price,
+            zone_version: deliveryPricingVersion,
+            zone_calculated_at: new Date().toISOString(),
+            location_source: 'fallback',
+            geo_quality: null,
+        };
+
+        const priceText = price.toLocaleString('ru-RU');
+        const reasonText = reason ? `${reason} ` : '';
+        setDeliveryHint(`${reasonText}Применили доставку ${priceText} ₽ по умолчанию.`, 'warn');
+    };
+
     const formatAddressFromDadata = (data) => {
         if (!data) return '';
 
@@ -627,15 +649,19 @@ function initOrderFlow() {
         try {
             const geocoded = await geocodeWithDadata(addressText);
             if (!geocoded) {
-                setDeliveryHint('Не удалось получить координаты этого адреса. Попробуйте уточнить улицу и дом.', 'warn');
-                lastDeliveryQuote = null;
+                useFallbackDeliveryQuote(
+                    addressText,
+                    'Не удалось получить координаты этого адреса. Попробуйте уточнить улицу и дом.',
+                );
                 return;
             }
 
             const zone = findZoneForPoint([geocoded.lon, geocoded.lat]);
             if (!zone) {
-                setDeliveryHint('Адрес найден, но не попал ни в одну зону. Добавьте полигон или расширьте границы.', 'warn');
-                lastDeliveryQuote = null;
+                useFallbackDeliveryQuote(
+                    addressText,
+                    'Адрес найден, но не попал ни в одну зону. Добавьте полигон или расширьте границы.',
+                );
                 return;
             }
 
@@ -657,8 +683,7 @@ function initOrderFlow() {
                 'success',
             );
         } catch (e) {
-            setDeliveryHint('Ошибка при расчёте зоны. Проверьте соединение и попробуйте снова.', 'warn');
-            lastDeliveryQuote = null;
+            useFallbackDeliveryQuote(addressText, 'Ошибка при расчёте зоны. Проверьте соединение и попробуйте снова.');
         }
     };
 
