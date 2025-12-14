@@ -19,7 +19,7 @@
 $currentPage = $_GET['page'] ?? trim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/') ?: 'home';
 $authPages = ['login', 'register', 'recover'];
 $isAuthPage = in_array($currentPage, $authPages, true);
-$mainClasses = 'mx-auto flex w-full max-w-6xl flex-1 flex-col gap-4 px-3 py-3 sm:gap-6 sm:px-4 sm:py-8';
+$mainClasses = 'mx-auto flex w-full max-w-6xl flex-1 flex-col gap-4 px-3 py-3 pb-[calc(6.5rem+env(safe-area-inset-bottom))] sm:gap-6 sm:px-4 sm:py-8';
 
 if ($isAuthPage) {
     $mainClasses .= ' items-center justify-center';
