@@ -36,3 +36,12 @@ if (!defined('TG_WEBHOOK_SECRET')) {
 }
 // Таймзона
 date_default_timezone_set('Asia/Krasnoyarsk');
+
+// DaData credentials
+if (!defined('DADATA_API_KEY')) {
+    define('DADATA_API_KEY', 'd32d23e2087d406928a38947855d3179f03dcff2');
+}
+
+if (!defined('DADATA_SECRET_KEY')) {
+    define('DADATA_SECRET_KEY', 'b11fccf3100a8666f0cb5382071f2e935c449df9');
+}

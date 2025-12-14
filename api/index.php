@@ -35,6 +35,7 @@ switch ($resource) {
 function handleDeliveryZones(): void
 {
     $zoneModel = new DeliveryZone();
+    $apiToken = defined('DADATA_API_KEY') ? DADATA_API_KEY : '';
 
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         $includeInactive = isset($_GET['include_inactive']) && $_GET['include_inactive'] === '1';
@@ -54,7 +55,18 @@ function handleDeliveryZones(): void
         return;
     }
 
-    if (!Auth::check()) {
+    $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
+    $providedToken = null;
+
+    if (stripos($authHeader, 'Token ') === 0) {
+        $providedToken = trim(substr($authHeader, strlen('Token ')));
+    } elseif (stripos($authHeader, 'Bearer ') === 0) {
+        $providedToken = trim(substr($authHeader, strlen('Bearer ')));
+    }
+
+    $isAuthorized = Auth::check() || ($providedToken && hash_equals($apiToken, $providedToken));
+
+    if (!$isAuthorized) {
         http_response_code(401);
         echo json_encode(['error' => 'Требуется авторизация']);
         return;
