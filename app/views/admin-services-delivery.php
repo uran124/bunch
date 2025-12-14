@@ -189,6 +189,22 @@
                     <div id="zone-map" class="relative h-72 rounded-xl bg-gradient-to-br from-slate-100 via-white to-slate-50 ring-1 ring-slate-200">
                         <p class="absolute inset-0 flex items-center justify-center text-sm text-slate-400" aria-hidden="true">Загрузка схемы зон...</p>
                     </div>
+                    <div class="grid gap-3 md:grid-cols-2">
+                        <div class="rounded-lg border border-slate-100 bg-white px-3 py-2 text-xs text-slate-600">
+                            <p class="mb-1 text-[13px] font-semibold text-slate-800">Что нужно для расчёта</p>
+                            <ul class="list-disc space-y-1 pl-4">
+                                <li>Координаты точек полигона в формате <span class="font-mono">[lon, lat]</span>.</li>
+                                <li>Цена доставки и приоритет зоны (используем порядок списка).</li>
+                                <li>Ключи DaData для подсказок и геокодинга адресов.</li>
+                                <li>Тестовые адреса с готовыми координатами для проверки.</li>
+                            </ul>
+                        </div>
+                        <div class="rounded-lg border border-slate-100 bg-white px-3 py-2 text-xs text-slate-600">
+                            <p class="mb-1 text-[13px] font-semibold text-slate-800">Карта и визуализация</p>
+                            <p>Для предпросмотра используем лёгкую SVG-схему на основе координат turf.js — без внешних тайлов. При необходимости можно подменить фон на OSM/Яндекс, оставив расчёт точек через turf.</p>
+                            <p class="mt-1 text-[11px] text-slate-500">Точки из DaData превращаются в <span class="font-mono">turf.point</span>, сравниваются с полигонами и подсвечиваются на схеме.</p>
+                        </div>
+                    </div>
                     <p class="text-xs text-slate-500">Точки вычисляются по координатам из DaData, затем проверяются в полигонах turf.js. При совпадении — выбирается стоимость зоны.</p>
                 </div>
                 <div class="space-y-3">
