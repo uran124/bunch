@@ -10,6 +10,7 @@
 <script src="/assets/js/leaflet.js" defer></script>
 <script src="/assets/js/leaflet.draw.js" defer></script>
 
+
 <section class="flex flex-col gap-6">
     <header class="flex flex-wrap items-start justify-between gap-4">
         <div class="space-y-2">
