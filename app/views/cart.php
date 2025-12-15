@@ -370,4 +370,4 @@
         </div>
     <?php endif; ?>
 </div>
-<script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
+<script src="/assets/js/turf.min.js"></script>

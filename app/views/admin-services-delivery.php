@@ -5,8 +5,8 @@
 <?php $testAddresses = $testAddresses ?? []; ?>
 <?php $activeZonesCount = count(array_filter($zones, static fn ($zone) => !empty($zone['active']))); ?>
 
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css">
+<link rel="stylesheet" href="/assets/css/leaflet.css">
+<link rel="stylesheet" href="/assets/css/leaflet.draw.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
 <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js" defer></script>
 
@@ -386,7 +386,7 @@
     </section>
 </section>
 
-<script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
+<script src="/assets/js/turf.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     const zonesFromServer = <?php echo json_encode($zones, JSON_UNESCAPED_UNICODE); ?>;
