@@ -652,14 +652,12 @@ function initOrderFlow() {
     const geocodeWithDadata = async (addressText) => {
         if (!addressText || !dadataConfig.apiKey || !dadataConfig.secretKey) return null;
 
-        const response = await fetch('https://cleaner.dadata.ru/api/v1/clean/address', {
+        const response = await fetch('/api/dadata/clean-address', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                Authorization: `Token ${dadataConfig.apiKey}`,
-                'X-Secret': dadataConfig.secretKey,
             },
-            body: JSON.stringify([addressText]),
+            body: JSON.stringify({ query: addressText }),
         });
 
         if (!response.ok) return null;

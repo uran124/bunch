@@ -795,14 +795,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const needle = normalizeText(address);
 
         if (needle && dadataConfig?.apiKey && dadataConfig?.secretKey) {
-            const response = await fetch('https://cleaner.dadata.ru/api/v1/clean/address', {
+            const response = await fetch('/api/dadata/clean-address', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    Authorization: `Token ${dadataConfig.apiKey}`,
-                    'X-Secret': dadataConfig.secretKey,
                 },
-                body: JSON.stringify([address]),
+                body: JSON.stringify({ query: address }),
             }).catch(() => null);
 
             if (response?.ok) {
