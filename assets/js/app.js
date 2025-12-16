@@ -560,18 +560,13 @@ function initOrderFlow() {
         setDeliveryHint(`${reasonText}Применили доставку ${priceText} ₽ по умолчанию.`, 'warn');
     };
 
-    const formatAddressFromDadata = (data) => {
+const formatAddressFromDadata = (data) => {
         if (!data) return '';
 
         const cityName = data.city || data.settlement || '';
         const cityLabel = data.settlement_with_type || data.city_with_type || '';
         const street = data.street_with_type || '';
         const house = data.house ? `д ${data.house}` : '';
-        const isKrasnoyarsk = (cityName || cityLabel).toLowerCase().includes('красноярск');
-
-        if (isKrasnoyarsk) {
-            return [street, house].filter(Boolean).join(', ');
-        }
 
         return [cityLabel || cityName, street, house].filter(Boolean).join(', ');
     };
