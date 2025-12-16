@@ -560,7 +560,7 @@ function initOrderFlow() {
         setDeliveryHint(`${reasonText}Применили доставку ${priceText} ₽ по умолчанию.`, 'warn');
     };
 
-    const formatAddressFromDadata = (data) => {
+const formatAddressFromDadata = (data) => {
         if (!data) return '';
 
         const cityName = data.city || data.settlement || '';
