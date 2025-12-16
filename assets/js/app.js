@@ -563,12 +563,20 @@ function initOrderFlow() {
     const formatAddressFromDadata = (data) => {
         if (!data) return '';
 
-        const city = data.city_with_type || data.settlement_with_type || '';
+        const cityName = data.city || data.settlement || '';
+        const cityLabel = data.settlement_with_type || data.city_with_type || '';
         const street = data.street_with_type || '';
         const house = data.house ? `д ${data.house}` : '';
-        const flat = data.flat ? `кв ${data.flat}` : '';
 
-        return [city, [street, house].filter(Boolean).join(', '), flat].filter(Boolean).join(', ');
+        return [cityLabel || cityName, street, house].filter(Boolean).join(', ');
+    };
+
+    const isKrasnoyarskAddress = (data) => {
+        if (!data) return false;
+        const cityName = data.city || data.settlement || '';
+        const cityLabel = data.settlement_with_type || data.city_with_type || '';
+
+        return (cityName || cityLabel).toLowerCase().includes('красноярск');
     };
 
     const renderSuggestions = (suggestions) => {
@@ -590,7 +598,6 @@ function initOrderFlow() {
                 <span class="material-symbols-rounded text-base text-rose-500">location_on</span>
                 <span class="flex-1">
                     <span class="block">${formatted}</span>
-                    <span class="block text-xs font-medium text-slate-500">${item.data?.street_with_type || ''}</span>
                 </span>
             `;
 
@@ -606,6 +613,8 @@ function initOrderFlow() {
         addressSuggestionList.classList.remove('hidden');
     };
 
+    const DADATA_CENTER = { lat: 56.233717, lon: 92.8426 };
+
     const fetchSuggestions = async (query, requestId) => {
         if (!query || query.length < 3) return [];
 
@@ -617,13 +626,28 @@ function initOrderFlow() {
                     Accept: 'application/json',
                     Authorization: `Token ${dadataConfig.apiKey}`,
                 },
-                body: JSON.stringify({ query, count: 5 }),
+                body: JSON.stringify({
+                    query,
+                    count: 10,
+                    locations_geo: [
+                        {
+                            lat: DADATA_CENTER.lat,
+                            lon: DADATA_CENTER.lon,
+                            radius_meters: 60000,
+                        },
+                    ],
+                }),
             }).catch(() => null);
 
             if (response?.ok) {
                 const data = await response.json().catch(() => null);
                 if (requestId === lastSuggestionRequestId) {
-                    return data?.suggestions || [];
+                    const suggestions = data?.suggestions || [];
+                    return suggestions.sort((a, b) => {
+                        const aIsKrasnoyarsk = isKrasnoyarskAddress(a?.data) ? 0 : 1;
+                        const bIsKrasnoyarsk = isKrasnoyarskAddress(b?.data) ? 0 : 1;
+                        return aIsKrasnoyarsk - bIsKrasnoyarsk;
+                    });
                 }
             }
         }
