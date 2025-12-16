@@ -57,11 +57,26 @@ class DeliveryZone extends Model
             foreach ($normalized as $zone) {
                 if ($zone['id'] !== null) {
                     $stmt = $this->db->prepare('UPDATE delivery_zones SET name = :name, price = :price, priority = :priority, color = :color, is_active = :is_active, polygon = :polygon WHERE id = :id');
-                    $stmt->execute($zone);
+                    $stmt->execute([
+                        'name' => $zone['name'],
+                        'price' => $zone['price'],
+                        'priority' => $zone['priority'],
+                        'color' => $zone['color'],
+                        'is_active' => $zone['is_active'],
+                        'polygon' => $zone['polygon'],
+                        'id' => $zone['id'],
+                    ]);
                     $seenIds[] = $zone['id'];
                 } else {
                     $stmt = $this->db->prepare('INSERT INTO delivery_zones (name, price, priority, color, is_active, polygon) VALUES (:name, :price, :priority, :color, :is_active, :polygon)');
-                    $stmt->execute($zone);
+                    $stmt->execute([
+                        'name' => $zone['name'],
+                        'price' => $zone['price'],
+                        'priority' => $zone['priority'],
+                        'color' => $zone['color'],
+                        'is_active' => $zone['is_active'],
+                        'polygon' => $zone['polygon'],
+                    ]);
                     $seenIds[] = (int) $this->db->lastInsertId();
                 }
             }
