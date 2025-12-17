@@ -116,7 +116,7 @@ CREATE TABLE user_addresses (
   settlement VARCHAR(150) NULL,
   street VARCHAR(255) NULL,
   house VARCHAR(50) NULL,
-  apartment VARCHAR(50) NULL,
+  apartment VARCHAR(50) NULL,                 -- квартира / офис / компания
   address_text TEXT NULL,
 
   lat DECIMAL(10,7) NULL,
@@ -383,6 +383,7 @@ CREATE TABLE orders (
   scheduled_date DATE NULL,
   scheduled_time TIME NULL,
   address_text TEXT NULL,                      -- слепок адреса, если пользователь не авторизован
+  address_unit VARCHAR(100) NULL,
   recipient_name VARCHAR(100) NULL,
   recipient_phone VARCHAR(20) NULL,
   subscription_interval INT UNSIGNED NULL,     -- интервал в днях для подписки
