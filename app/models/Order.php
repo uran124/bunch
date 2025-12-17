@@ -161,7 +161,7 @@ class Order extends Model
         $scheduledTime = $this->normalizeTime($data['scheduled_time'] ?? null);
 
         $stmt = $this->db->prepare(
-            'UPDATE orders SET status = :status, delivery_type = :delivery_type, scheduled_date = :scheduled_date, scheduled_time = :scheduled_time, address_text = :address_text, address_unit = :address_unit, recipient_name = :recipient_name, recipient_phone = :recipient_phone, comment = :comment, updated_at = NOW() WHERE id = :id'
+            'UPDATE orders SET status = :status, delivery_type = :delivery_type, scheduled_date = :scheduled_date, scheduled_time = :scheduled_time, address_text = :address_text, recipient_name = :recipient_name, recipient_phone = :recipient_phone, comment = :comment, updated_at = NOW() WHERE id = :id'
         );
 
         $stmt->execute([
@@ -171,7 +171,6 @@ class Order extends Model
             'scheduled_date' => $scheduledDate,
             'scheduled_time' => $scheduledTime,
             'address_text' => $this->emptyToNull($data['address_text'] ?? null),
-            'address_unit' => $this->emptyToNull($data['address_unit'] ?? null),
             'recipient_name' => $this->emptyToNull($data['recipient_name'] ?? null),
             'recipient_phone' => $this->emptyToNull($data['recipient_phone'] ?? null),
             'comment' => $this->emptyToNull($data['comment'] ?? null),
@@ -204,7 +203,6 @@ class Order extends Model
         $scheduledTime = $this->normalizeTime($payload['time'] ?? null);
         $addressId = isset($payload['address_id']) ? (int) $payload['address_id'] : null;
         $addressText = trim((string) ($payload['address_text'] ?? ''));
-        $addressUnit = trim((string) ($payload['address_unit'] ?? ($payload['address']['apartment'] ?? '')));
         $deliveryPrice = isset($payload['delivery_price']) ? (float) $payload['delivery_price'] : null;
         $zoneId = isset($payload['zone_id']) ? (int) $payload['zone_id'] : null;
         $deliveryPricingVersion = $this->emptyToNull($payload['delivery_pricing_version'] ?? null);
@@ -217,16 +215,12 @@ class Order extends Model
             $totalAmount += (float) ($item['line_total'] ?? 0);
         }
 
-        if ($deliveryType === 'delivery' && $deliveryPrice !== null) {
-            $totalAmount += $deliveryPrice;
-        }
 
         $this->db->beginTransaction();
 
         try {
             $orderStmt = $this->db->prepare(
-                'INSERT INTO orders (user_id, address_id, total_amount, status, delivery_type, delivery_price, zone_id, delivery_pricing_version, scheduled_date, scheduled_time, address_text, address_unit, recipient_name, recipient_phone, comment) VALUES (:user_id, :address_id, :total_amount, :status, :delivery_type, :delivery_price, :zone_id, :delivery_pricing_version, :scheduled_date, :scheduled_time, :address_text, :address_unit, :recipient_name, :recipient_phone, :comment)'
-            );
+                'INSERT INTO orders (user_id, address_id, total_amount, status, delivery_type, delivery_price, zone_id, delivery_pricing_version, scheduled_date, scheduled_time, address_text, recipient_name, recipient_phone, comment) VALUES (:user_id, :address_id, :total_amount, :status, :delivery_type, :delivery_price, :zone_id, :delivery_pricing_version, :scheduled_date, :scheduled_time, :address_text, :recipient_name, :recipient_phone, :comment)'            );
 
             $orderStmt->execute([
                 'user_id' => $userId,
@@ -240,7 +234,6 @@ class Order extends Model
                 'scheduled_date' => $scheduledDate,
                 'scheduled_time' => $scheduledTime,
                 'address_text' => $deliveryType === 'delivery' ? ($addressText ?: null) : null,
-                'address_unit' => $deliveryType === 'delivery' ? ($addressUnit ?: null) : null,
                 'recipient_name' => $deliveryType === 'delivery' ? ($recipientName ?: null) : null,
                 'recipient_phone' => $deliveryType === 'delivery' ? ($recipientPhone ?: null) : null,
                 'comment' => $comment ?: null,
@@ -339,7 +332,6 @@ class Order extends Model
             'scheduled_time' => $order['scheduled_time'] ?? null,
             'address' => $order['address_text'] ?? null,
             'comment' => $order['comment'] ?? null,
-            'address_unit' => $order['address_unit'] ?? null,
             'recipient_name' => $order['recipient_name'] ?? null,
             'recipient_phone' => $order['recipient_phone'] ?? null,
             'updated_at' => $order['updated_at'] ?? $order['created_at'] ?? null,
