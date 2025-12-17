@@ -188,6 +188,19 @@
                 $today = date('Y-m-d');
                 $hasSavedAddresses = !empty($addresses);
                 $primaryAddress = $hasSavedAddresses ? $addresses[0] : null;
+                $primaryAddressBase = '';
+
+                if ($primaryAddress) {
+                    $primaryAddressBase = implode(', ', array_filter([
+                        $primaryAddress['raw']['settlement'] ?? null,
+                        $primaryAddress['raw']['street'] ?? null,
+                        isset($primaryAddress['raw']['house']) ? 'д. ' . $primaryAddress['raw']['house'] : null,
+                    ]));
+
+                    if (!$primaryAddressBase) {
+                        $primaryAddressBase = $primaryAddress['address'] ?? '';
+                    }
+                }
                 ?>
                 <section
                     class="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
@@ -251,13 +264,24 @@
                         <?php endif; ?>
 
                         <label class="flex flex-col gap-1 text-sm font-semibold text-slate-700">
-                            Адрес доставки
+                            Улица, номер дома
                             <input
                                 type="text"
                                 placeholder="Город, улица, дом"
-                                value="<?php echo htmlspecialchars($primaryAddress['address'] ?? '', ENT_QUOTES, 'UTF-8'); ?>"
+                                value="<?php echo htmlspecialchars($primaryAddressBase, ENT_QUOTES, 'UTF-8'); ?>"
                                 class="rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm focus:border-rose-300 focus:outline-none"
                                 data-address-input
+                            >
+                        </label>
+
+                        <label class="flex flex-col gap-1 text-sm font-semibold text-slate-700">
+                            Квартира/Офис
+                            <input
+                                type="text"
+                                placeholder="Квартира или офис"
+                                value="<?php echo htmlspecialchars($primaryAddress['raw']['apartment'] ?? '', ENT_QUOTES, 'UTF-8'); ?>"
+                                class="rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm focus:border-rose-300 focus:outline-none"
+                                data-address-apartment
                             >
                         </label>
 

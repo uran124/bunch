@@ -329,6 +329,7 @@ function initOrderFlow() {
     const deliveryExtra = orderSection.querySelector('[data-delivery-extra]');
     const addressSelect = orderSection.querySelector('[data-address-select]');
     const addressInput = orderSection.querySelector('[data-address-input]');
+    const apartmentInput = orderSection.querySelector('[data-address-apartment]');
     const addressNew = orderSection.querySelector('[data-address-new]');
     const addressSuggestionList = document.createElement('div');
     const deliveryHint = orderSection.querySelector('[data-delivery-pricing-hint]');
@@ -430,6 +431,13 @@ function initOrderFlow() {
         });
     };
 
+    const composeAddressText = () => {
+        const baseAddress = (addressInput?.value || '').trim();
+        const apartment = (apartmentInput?.value || '').trim();
+
+        return [baseAddress, apartment ? `кв/офис ${apartment}` : null].filter(Boolean).join(', ');
+    };
+
     const setRecipientFromAddress = (address) => {
         const recipientNameValue = address?.raw?.recipient_name || '';
         const recipientPhoneValue = address?.raw?.recipient_phone || '';
@@ -450,10 +458,14 @@ function initOrderFlow() {
         if (!addressSelect || !addressInput) return;
         const selectedOption = addressSelect.selectedOptions[0];
         if (selectedOption) {
-            addressInput.value = selectedOption.dataset.addressText || '';
             const chosen = findAddressById(selectedOption.value);
+            addressInput.value = selectedOption.dataset.addressText || '';
+            if (apartmentInput) {
+                apartmentInput.value = chosen?.raw?.apartment || '';
+            }
             setRecipientFromAddress(chosen);
         } else {
+            if (apartmentInput) apartmentInput.value = '';
             setRecipientFromAddress(null);
         }
     };
@@ -488,6 +500,7 @@ function initOrderFlow() {
             addressInput.value = '';
             addressInput.focus();
         }
+        if (apartmentInput) apartmentInput.value = '';
         setRecipientFromAddress(null);
     });
 
@@ -700,7 +713,7 @@ const formatAddressFromDadata = (data) => {
 
     const updateDeliveryQuote = async () => {
         if (!addressInput || currentMode !== 'delivery') return;
-        const addressText = (addressInput.value || '').trim();
+        const addressText = composeAddressText();
         if (!addressText) {
             setDeliveryHint('Введите адрес, чтобы получить подсказку DaData, геокодировать точку и определить зону доставки.');
             lastDeliveryQuote = null;
@@ -765,7 +778,7 @@ const formatAddressFromDadata = (data) => {
 
         if (currentMode === 'delivery') {
             payload.address_id = addressSelect ? Number(addressSelect.value || 0) || null : null;
-            payload.address_text = addressInput?.value || '';
+            payload.address_text = composeAddressText();
 
             const activeRecipient = orderSection.querySelector('.recipient-btn.border-rose-100') || orderSection.querySelector('[data-recipient-mode="self"]');
             const recipientMode = activeRecipient?.dataset.recipientMode || 'self';
@@ -776,12 +789,21 @@ const formatAddressFromDadata = (data) => {
                 };
             }
 
+            if (!payload.address) {
+                payload.address = {};
+            }
+
+            if (apartmentInput) {
+                payload.address.apartment = apartmentInput.value || '';
+            }
+
             if (lastDeliveryQuote) {
                 payload.delivery_price = lastDeliveryQuote.delivery_price;
                 payload.zone_id = lastDeliveryQuote.zone_id;
                 payload.delivery_pricing_version = lastDeliveryQuote.zone_version;
                 payload.zone_calculated_at = lastDeliveryQuote.zone_calculated_at;
                 payload.address = {
+                    ...payload.address,
                     location_source: lastDeliveryQuote.location_source,
                     geo_quality: lastDeliveryQuote.geo_quality,
                     lat: lastDeliveryQuote.lat,

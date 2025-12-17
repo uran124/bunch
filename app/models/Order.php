@@ -215,6 +215,10 @@ class Order extends Model
             $totalAmount += (float) ($item['line_total'] ?? 0);
         }
 
+        if ($deliveryType === 'delivery' && $deliveryPrice !== null) {
+            $totalAmount += $deliveryPrice;
+        }
+
 
         $this->db->beginTransaction();
 
