@@ -580,6 +580,8 @@ function initOrderFlow() {
         deliveryHint.classList.toggle('text-amber-700', tone === 'warn');
     };
 
+    const formatMysqlDatetime = (date) => (date instanceof Date ? date : new Date(date)).toISOString().slice(0, 19).replace('T', ' ');
+
     const useFallbackDeliveryQuote = (addressText, reason) => {
         const price = Number(fallbackDeliveryPrice) || 0;
 
@@ -591,7 +593,7 @@ function initOrderFlow() {
             zone_id: null,
             delivery_price: price,
             zone_version: deliveryPricingVersion,
-            zone_calculated_at: new Date().toISOString(),
+            zone_calculated_at: formatMysqlDatetime(new Date()),
             location_source: 'fallback',
             geo_quality: null,
         };
@@ -779,7 +781,7 @@ const formatAddressFromDadata = (data) => {
                 zone_id: zone.id,
                 delivery_price: zone.price,
                 zone_version: deliveryPricingVersion,
-                zone_calculated_at: new Date().toISOString(),
+                zone_calculated_at: formatMysqlDatetime(new Date()),
                 location_source: 'dadata',
                 geo_quality: geocoded.qc,
             };
