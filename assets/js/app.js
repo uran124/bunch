@@ -1,4 +1,6 @@
 const pageId = document.body.dataset.page || '';
+let cartSubtotal = Number(document.querySelector('[data-cart-bouquet-total]')?.dataset.amount || 0);
+let deliveryPrice = Number(document.querySelector('[data-delivery-total]')?.dataset.amount || 0);
 
 function formatCurrency(value) {
     return Number(value || 0).toLocaleString('ru-RU', { maximumFractionDigits: 0 }) + ' ₽';
@@ -24,9 +26,31 @@ function updateCartCountStatic(count) {
 }
 
 function updateCartTotal(total) {
-    const target = document.querySelector('[data-cart-total]');
-    if (target) {
+    cartSubtotal = Number(total || 0);
+    const bouquetTarget = document.querySelector('[data-cart-bouquet-total]');
+    if (bouquetTarget) {
+        bouquetTarget.textContent = formatCurrency(cartSubtotal);
+    }
+    recalculateGrandTotal();
+}
+
+function updateDeliveryPriceDisplay(value) {
+    deliveryPrice = Number(value || 0);
+    const deliveryTarget = document.querySelector('[data-delivery-total]');
+    if (deliveryTarget) {
+        deliveryTarget.textContent = formatCurrency(deliveryPrice);
+    }
+    recalculateGrandTotal();
+}
+
+function recalculateGrandTotal() {
+    const total = cartSubtotal + deliveryPrice;
+    document.querySelectorAll('[data-order-grand-total]').forEach((target) => {
         target.textContent = formatCurrency(total);
+    });
+    const legacyTotal = document.querySelector('[data-cart-total]');
+    if (legacyTotal) {
+        legacyTotal.textContent = formatCurrency(total);
     }
 }
 
@@ -479,6 +503,10 @@ function initOrderFlow() {
 
         if (mode === 'delivery') {
             setAddressFromSelect();
+            updateDeliveryQuote();
+        } else {
+            lastDeliveryQuote = null;
+            updateDeliveryPriceDisplay(0);
         }
     };
 
@@ -571,6 +599,7 @@ function initOrderFlow() {
         const priceText = price.toLocaleString('ru-RU');
         const reasonText = reason ? `${reason} ` : '';
         setDeliveryHint(`${reasonText}Применили доставку ${priceText} ₽ по умолчанию.`, 'warn');
+        updateDeliveryPriceDisplay(price);
     };
 
 const formatAddressFromDadata = (data) => {
@@ -717,6 +746,7 @@ const formatAddressFromDadata = (data) => {
         if (!addressText) {
             setDeliveryHint('Введите адрес, чтобы получить подсказку DaData, геокодировать точку и определить зону доставки.');
             lastDeliveryQuote = null;
+            updateDeliveryPriceDisplay(0);
             return;
         }
 
@@ -758,6 +788,7 @@ const formatAddressFromDadata = (data) => {
                 `${geocoded.label} в зоне «${zone.name}». Доставка ${zone.price.toLocaleString('ru-RU')} ₽`,
                 'success',
             );
+            updateDeliveryPriceDisplay(lastDeliveryQuote.delivery_price);
         } catch (e) {
             useFallbackDeliveryQuote(addressText, 'Ошибка при расчёте зоны. Проверьте соединение и попробуйте снова.');
         }
