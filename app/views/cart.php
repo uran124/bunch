@@ -173,7 +173,7 @@
                                         <p class="text-sm font-semibold text-slate-900"><?php echo htmlspecialchars($product['name'], ENT_QUOTES, 'UTF-8'); ?></p>
                                         <p class="text-xs text-slate-500"><?php echo number_format((float) $product['price'], 0, '.', ' '); ?> ₽</p>
                                     </div>
-                                    <button
+                     <button
                                         type="button"
                                         class="inline-flex items-center gap-1 rounded-lg bg-white px-3 py-2 text-xs font-semibold text-rose-600 shadow-sm shadow-rose-100 transition hover:-translate-y-0.5"
                                         data-add-accessory
@@ -196,7 +196,6 @@
                 <section
                     class="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
                     data-order-flow
-                    data-items-total="<?php echo htmlspecialchars((string) ($totals['total'] ?? 0), ENT_QUOTES, 'UTF-8'); ?>"
                     data-addresses="<?php echo htmlspecialchars(json_encode($addresses, JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8'); ?>"
                     data-primary-address="<?php echo htmlspecialchars($primaryAddress['address'] ?? '', ENT_QUOTES, 'UTF-8'); ?>"
                     data-delivery-zones="<?php echo htmlspecialchars(json_encode($deliveryZones, JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8'); ?>"
@@ -205,39 +204,30 @@
                     data-test-addresses="<?php echo htmlspecialchars(json_encode($testAddresses ?? [], JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8'); ?>"
                 >
                     <div class="flex flex-col gap-1">
+                        <p class="text-xs uppercase tracking-[0.2em] text-slate-500">Способ получения</p>
                         <h3 class="text-lg font-semibold text-slate-900">Самовывоз или доставка</h3>
                         <p class="text-sm text-slate-500">Заполните дату и время. Для доставки укажите адрес и получателя.</p>
                     </div>
 
-                    <div class="grid grid-cols-2 gap-2">
-                        <button type="button" data-order-mode="pickup" class="order-mode-btn inline-flex w-full items-center justify-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 shadow-sm">
+                    <div class="flex flex-wrap gap-2">
+                        <button type="button" data-order-mode="pickup" class="order-mode-btn flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 shadow-sm">
                             <span class="material-symbols-rounded text-base">storefront</span>
                             Самовывоз
                         </button>
-                        <button type="button" data-order-mode="delivery" class="order-mode-btn inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-800 transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700">
+                        <button type="button" data-order-mode="delivery" class="order-mode-btn flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-800 transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700">
                             <span class="material-symbols-rounded text-base">local_shipping</span>
                             Доставка
                         </button>
                     </div>
 
-                    <div class="grid grid-cols-2 gap-3" data-schedule-fields>
-                        <label class="sr-only">
+                    <div class="grid gap-3 sm:grid-cols-2" data-schedule-fields>
+                        <label class="flex flex-col gap-1 text-sm font-semibold text-slate-700">
                             Дата
-                            <input
-                                type="date"
-                                value="<?php echo htmlspecialchars($today, ENT_QUOTES, 'UTF-8'); ?>"
-                                class="rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm focus:border-rose-300 focus:outline-none"
-                                data-order-date
-                            >
+                            <input type="date" value="<?php echo htmlspecialchars($today, ENT_QUOTES, 'UTF-8'); ?>" class="rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm focus:border-rose-300 focus:outline-none" data-order-date>
                         </label>
-                        <label class="sr-only">
+                        <label class="flex flex-col gap-1 text-sm font-semibold text-slate-700">
                             Время
-                            <input
-                                type="time"
-                                class="rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm focus:border-rose-300 focus:outline-none"
-                                placeholder="Ближайшее"
-                                data-order-time
-                            >
+                            <input type="time" class="rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm focus:border-rose-300 focus:outline-none" placeholder="Ближайшее" data-order-time>
                         </label>
                     </div>
 
@@ -249,71 +239,52 @@
 
                         <?php if ($hasSavedAddresses): ?>
                             <div class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-                                <div class="flex flex-1 flex-col gap-1 text-sm font-semibold text-slate-700">
+                                <label class="flex flex-1 flex-col gap-1 text-sm font-semibold text-slate-700">
+                                    Сохраненные адреса
                                     <select class="rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm focus:border-rose-300 focus:outline-none" data-address-select>
                                         <?php foreach ($addresses as $address): ?>
-                                            <?php
-                                            $addressId = (int) ($address['raw']['id'] ?? 0);
-                                            $recipientName = trim((string) ($address['raw']['recipient_name'] ?? ''));
-                                            $displayText = $address['address'];
-                                            if ($recipientName !== '') {
-                                                $displayText .= ', ' . $recipientName;
-                                            }
-                                            ?>
                                             <option
-                                                value="<?php echo $addressId; ?>"
+                                                value="<?php echo (int) ($address['raw']['id'] ?? 0); ?>"
                                                 data-address-text="<?php echo htmlspecialchars($address['address'], ENT_QUOTES, 'UTF-8'); ?>"
-                                                data-address-unit="<?php echo htmlspecialchars($address['raw']['apartment'] ?? '', ENT_QUOTES, 'UTF-8'); ?>"
-                                                data-recipient-name="<?php echo htmlspecialchars($address['raw']['recipient_name'] ?? '', ENT_QUOTES, 'UTF-8'); ?>"
-                                                data-recipient-phone="<?php echo htmlspecialchars($address['raw']['recipient_phone'] ?? '', ENT_QUOTES, 'UTF-8'); ?>"
                                                 <?php echo !empty($address['is_primary']) ? 'selected' : ''; ?>
                                             >
-                                                <?php echo htmlspecialchars($displayText, ENT_QUOTES, 'UTF-8'); ?>
+                                                <?php echo htmlspecialchars($address['label'] . ' — ' . $address['address'], ENT_QUOTES, 'UTF-8'); ?>
                                             </option>
                                         <?php endforeach; ?>
-                                        <option value="new" data-address-text="" data-address-unit="">Добавить новый адрес</option>
                                     </select>
-                                </div>
+                                </label>
+                                <button type="button" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-rose-200 hover:text-rose-700" data-address-new>
+                                    <span class="material-symbols-rounded text-base">add_location_alt</span>
+                                    Другой адрес
+                                </button>
                             </div>
                         <?php endif; ?>
 
-                        <div class="grid gap-3 sm:grid-cols-2" data-address-fields>
-                            <label class="flex flex-col gap-1 text-sm font-semibold text-slate-700">
-                                Улица, номер дома
-                                <input
-                                    type="text"
-                                    placeholder="Город, улица, дом"
-                                    value="<?php echo htmlspecialchars($primaryAddress['address'] ?? '', ENT_QUOTES, 'UTF-8'); ?>"
-                                    class="rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm focus:border-rose-300 focus:outline-none"
-                                    data-address-input
-                                >
-                            </label>
-                            <label class="flex flex-col gap-1 text-sm font-semibold text-slate-700">
-                                Квартира / Офис
-                                <input
-                                    type="text"
-                                    placeholder="Кв., офис или название компании"
-                                    value="<?php echo htmlspecialchars($primaryAddress['raw']['apartment'] ?? '', ENT_QUOTES, 'UTF-8'); ?>"
-                                    class="rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm focus:border-rose-300 focus:outline-none"
-                                    data-address-unit
-                                >
-                            </label>
+                        <label class="flex flex-col gap-1 text-sm font-semibold text-slate-700">
+                            Адрес доставки
+                            <input
+                                type="text"
+                                placeholder="Город, улица, дом"
+                                value="<?php echo htmlspecialchars($primaryAddress['address'] ?? '', ENT_QUOTES, 'UTF-8'); ?>"
+                                class="rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm focus:border-rose-300 focus:outline-none"
+                                data-address-input
+                            >
+                        </label>
+
+                        <div class="rounded-xl border border-slate-100 bg-white px-3 py-2 text-xs text-slate-600" data-delivery-pricing-hint>
+                            Введите адрес, чтобы получить подсказку DaData, геокодировать точку и определить зону доставки.
                         </div>
 
-                        <p class="text-xs font-semibold text-slate-600" data-delivery-pricing-hint>
-                            Введите адрес, чтобы получить подсказку DaData, геокодировать точку и определить зону доставки.
-                        </p>
-
                         <div class="space-y-2">
-                            <p class="text-sm font-semibold text-slate-900">Кто будет получать?</p>
-                            <div class="flex flex-nowrap gap-2">
-                                <button type="button" class="recipient-btn inline-flex w-full items-center justify-center gap-2 rounded-xl border border-rose-100 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700 shadow-sm" data-recipient-mode="self">
+                            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Получатель</p>
+                            <div class="flex flex-wrap gap-2">
+                                <button type="button" class="recipient-btn inline-flex items-center gap-2 rounded-xl border border-rose-100 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700 shadow-sm" data-recipient-mode="self">
                                     <span class="material-symbols-rounded text-base">person</span>
-                                    я
+                                    Получаю я
                                 </button>
-                                <button type="button" class="recipient-btn inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm" data-recipient-mode="other">
+                                <button type="button" class="recipient-btn inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm" data-recipient-mode="other">
                                     <span class="material-symbols-rounded text-base">group</span>
-                                    другой человек
+                                    Получает другой человек
                                 </button>
                             </div>
                         </div>
@@ -341,18 +312,28 @@
             </div>
 
             <aside class="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                <div class="space-y-3">
-                    <div class="flex items-center justify-between text-sm font-semibold text-slate-800">
-                        <span>Товары</span>
-                        <span data-cart-subtotal data-value="<?php echo (float) ($totals['total'] ?? 0); ?>"><?php echo number_format((float) ($totals['total'] ?? 0), 0, '.', ' '); ?> ₽</span>
-                    </div>
-                    <div class="flex items-center justify-between text-sm font-semibold text-slate-800" data-cart-delivery-row>
-                        <span>Доставка</span>
-                        <span data-cart-delivery data-value="0">0 ₽</span>
-                    </div>
+                <div class="space-y-2">
                     <div class="flex items-center justify-between text-lg font-bold text-rose-600">
                         <span>Сумма заказа</span>
                         <span data-cart-total><?php echo number_format((float) ($totals['total'] ?? 0), 0, '.', ' '); ?> ₽</span>
+                    </div>
+                    <p class="text-xs text-slate-500">Учитываем количество стеблей, выбранные атрибуты и сопутствующие позиции.</p>
+                </div>
+
+                <div class="space-y-3 rounded-xl bg-slate-50 p-3">
+                    <div class="flex items-center justify-between text-sm font-semibold text-slate-800">
+                        <span class="inline-flex items-center gap-2">
+                            <span class="material-symbols-rounded text-base">inventory_2</span>
+                            Позиции
+                        </span>
+                        <span data-cart-count-static><?php echo (int) ($totals['count'] ?? 0); ?></span>
+                    </div>
+                    <div class="flex items-center justify-between text-sm font-semibold text-slate-800">
+                        <span class="inline-flex items-center gap-2">
+                            <span class="material-symbols-rounded text-base">sell</span>
+                            Промокод
+                        </span>
+                        <button class="rounded-lg border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-700">Добавить</button>
                     </div>
                 </div>
 
@@ -378,7 +359,8 @@
                 <div class="space-y-2 py-3" data-attribute-modal-body></div>
                 <div class="flex items-center justify-end gap-2 border-t border-slate-100 pt-3" data-attribute-modal-actions>
                     <button type="button" class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-rose-200 hover:text-rose-700" data-attribute-modal-close>
-                        Отмена
+                        Отмена                
+                                    
                     </button>
                     <button type="button" class="inline-flex items-center gap-2 rounded-lg bg-rose-600 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white shadow-md shadow-rose-200 transition hover:-translate-y-0.5 hover:bg-rose-700" data-attribute-modal-apply>
                         <span class="material-symbols-rounded text-base">done_all</span>
