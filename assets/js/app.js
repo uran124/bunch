@@ -404,6 +404,7 @@ function initOrderFlow() {
                     return {
                         ...config,
                         apiKey: config.apiKey || parsed.apiKey || '',
+                        secretKey: config.secretKey || parsed.secretKey || '',
                     };
                 }
             }
@@ -420,7 +421,6 @@ function initOrderFlow() {
     const deliveryPricingVersion = orderSection.dataset.deliveryPricingVersion || null;
     let lastDeliveryQuote = null;
     let lastSuggestionRequestId = 0;
-    let lastSelectedSuggestion = null;
 
     let currentMode = 'pickup';
 
@@ -484,7 +484,6 @@ function initOrderFlow() {
         if (selectedOption) {
             const chosen = findAddressById(selectedOption.value);
             addressInput.value = selectedOption.dataset.addressText || '';
-            lastSelectedSuggestion = null;
             if (apartmentInput) {
                 apartmentInput.value = chosen?.raw?.apartment || '';
             }
@@ -581,8 +580,6 @@ function initOrderFlow() {
         deliveryHint.classList.toggle('text-amber-700', tone === 'warn');
     };
 
-    const formatMysqlDatetime = (date) => (date instanceof Date ? date : new Date(date)).toISOString().slice(0, 19).replace('T', ' ');
-
     const useFallbackDeliveryQuote = (addressText, reason) => {
         const price = Number(fallbackDeliveryPrice) || 0;
 
@@ -594,7 +591,7 @@ function initOrderFlow() {
             zone_id: null,
             delivery_price: price,
             zone_version: deliveryPricingVersion,
-            zone_calculated_at: formatMysqlDatetime(new Date()),
+            zone_calculated_at: new Date().toISOString(),
             location_source: 'fallback',
             geo_quality: null,
         };
@@ -605,7 +602,7 @@ function initOrderFlow() {
         updateDeliveryPriceDisplay(price);
     };
 
-    const formatAddressFromDadata = (data) => {
+const formatAddressFromDadata = (data) => {
         if (!data) return '';
 
         const cityName = data.city || data.settlement || '';
@@ -648,7 +645,6 @@ function initOrderFlow() {
 
             row.addEventListener('click', () => {
                 addressInput.value = formatted;
-                lastSelectedSuggestion = { data: item.data || {}, text: formatted, value: item.value };
                 addressSuggestionList.classList.add('hidden');
                 setTimeout(updateDeliveryQuote, 50);
             });
@@ -719,29 +715,14 @@ function initOrderFlow() {
         };
     })();
 
-    const geocodeWithDadata = async (addressText, selectedSuggestion = null) => {
-        if (!addressText) return null;
-
-        if (selectedSuggestion?.text && addressText.startsWith(selectedSuggestion.text)) {
-            const { geo_lat: lat, geo_lon: lon, qc_geo: qc } = selectedSuggestion.data || {};
-            if (lat && lon) {
-                return {
-                    lon: Number(lon),
-                    lat: Number(lat),
-                    qc,
-                    label: formatAddressFromDadata(selectedSuggestion.data) || selectedSuggestion.value || addressText,
-                };
-            }
-        }
+    const geocodeWithDadata = async (addressText) => {
+        if (!addressText || !dadataConfig.apiKey || !dadataConfig.secretKey) return null;
 
         const response = await fetch('/api/dadata/clean-address', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                Accept: 'application/json',
-                'X-Requested-With': 'XMLHttpRequest',
             },
-            credentials: 'same-origin',
             body: JSON.stringify({ query: addressText }),
         });
 
@@ -772,7 +753,7 @@ function initOrderFlow() {
         setDeliveryHint('Ищем адрес в DaData и определяем зону...', 'muted');
 
         try {
-            const geocoded = await geocodeWithDadata(addressText, lastSelectedSuggestion);
+            const geocoded = await geocodeWithDadata(addressText);
             if (!geocoded) {
                 useFallbackDeliveryQuote(
                     addressText,
@@ -798,7 +779,7 @@ function initOrderFlow() {
                 zone_id: zone.id,
                 delivery_price: zone.price,
                 zone_version: deliveryPricingVersion,
-                zone_calculated_at: formatMysqlDatetime(new Date()),
+                zone_calculated_at: new Date().toISOString(),
                 location_source: 'dadata',
                 geo_quality: geocoded.qc,
             };
@@ -815,13 +796,7 @@ function initOrderFlow() {
 
     addressInput?.addEventListener('blur', updateDeliveryQuote);
     addressInput?.addEventListener('change', updateDeliveryQuote);
-    addressInput?.addEventListener('input', (event) => {
-        const value = event.target.value || '';
-        if (lastSelectedSuggestion?.text && !value.startsWith(lastSelectedSuggestion.text)) {
-            lastSelectedSuggestion = null;
-        }
-        debouncedSuggest(value);
-    });
+    addressInput?.addEventListener('input', (event) => debouncedSuggest(event.target.value || ''));
     addressInput?.addEventListener('focus', (event) => debouncedSuggest(event.target.value || ''));
 
     const collectPayload = () => {
@@ -859,7 +834,7 @@ function initOrderFlow() {
                 payload.delivery_pricing_version = lastDeliveryQuote.zone_version;
                 payload.zone_calculated_at = lastDeliveryQuote.zone_calculated_at;
                 payload.address = {
-                    ...(payload.address || {}),
+                    ...payload.address,
                     location_source: lastDeliveryQuote.location_source,
                     geo_quality: lastDeliveryQuote.geo_quality,
                     lat: lastDeliveryQuote.lat,
