@@ -300,6 +300,10 @@
                             </label>
                         </div>
 
+                        <p class="text-xs font-semibold text-slate-600" data-delivery-pricing-hint>
+                            Введите адрес, чтобы получить подсказку DaData, геокодировать точку и определить зону доставки.
+                        </p>
+
                         <div class="space-y-2">
                             <p class="text-sm font-semibold text-slate-900">Кто будет получать?</p>
                             <div class="flex flex-nowrap gap-2">
