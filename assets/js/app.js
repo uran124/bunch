@@ -492,13 +492,6 @@ function initOrderFlow() {
     });
 
     if (addressInput) {
-            addressInput.value = '';
-            addressInput.focus();
-        }
-        setRecipientFromAddress(null);
-    });
-
-    if (addressInput) {
         const addressWrapper = addressInput.parentElement;
         if (addressWrapper) {
             addressWrapper.classList.add('relative');
