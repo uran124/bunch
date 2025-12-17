@@ -205,7 +205,7 @@ class CartController extends Controller
             try {
                 $addressPayload = array_merge($addressDetails, [
                     'address_text' => $addressText,
-                     
+
                     'recipient_name' => $recipient['name'] ?? null,
                     'recipient_phone' => $recipient['phone'] ?? null,
                     'zone_id' => $payload['zone_id'] ?? ($addressDetails['zone_id'] ?? null),
@@ -217,6 +217,11 @@ class CartController extends Controller
                     'lat' => $addressDetails['lat'] ?? null,
                     'lon' => $addressDetails['lon'] ?? null,
                 ]);
+
+                $validLocationSources = ['dadata', 'manual_pin', 'other'];
+                if (!empty($addressPayload['location_source']) && !in_array($addressPayload['location_source'], $validLocationSources, true)) {
+                    $addressPayload['location_source'] = 'other';
+                }
 
                 $addressId = $addressModel->createForUser((int) $userId, $addressPayload);
             } catch (Throwable $e) {

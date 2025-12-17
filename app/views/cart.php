@@ -323,28 +323,38 @@
             </div>
 
             <aside class="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                <div class="space-y-2">
+                <div class="space-y-3">
                     <div class="flex items-center justify-between text-lg font-bold text-rose-600">
                         <span>Сумма заказа</span>
-                        <span data-cart-total><?php echo number_format((float) ($totals['total'] ?? 0), 0, '.', ' '); ?> ₽</span>
+                        <span
+                            data-order-grand-total
+                            data-cart-total
+                            data-amount="<?php echo (float) ($totals['total'] ?? 0); ?>"
+                        >
+                            <?php echo number_format((float) ($totals['total'] ?? 0), 0, '.', ' '); ?> ₽
+                        </span>
                     </div>
-                    <p class="text-xs text-slate-500">Учитываем количество стеблей, выбранные атрибуты и сопутствующие позиции.</p>
-                </div>
 
-                <div class="space-y-3 rounded-xl bg-slate-50 p-3">
-                    <div class="flex items-center justify-between text-sm font-semibold text-slate-800">
-                        <span class="inline-flex items-center gap-2">
-                            <span class="material-symbols-rounded text-base">inventory_2</span>
-                            Позиции
-                        </span>
-                        <span data-cart-count-static><?php echo (int) ($totals['count'] ?? 0); ?></span>
-                    </div>
-                    <div class="flex items-center justify-between text-sm font-semibold text-slate-800">
-                        <span class="inline-flex items-center gap-2">
-                            <span class="material-symbols-rounded text-base">sell</span>
-                            Промокод
-                        </span>
-                        <button class="rounded-lg border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-700">Добавить</button>
+                    <div class="space-y-2 rounded-xl bg-slate-50 p-3 text-sm font-semibold text-slate-800">
+                        <div class="flex items-center justify-between">
+                            <span>Стоимость букета</span>
+                            <span
+                                data-cart-bouquet-total
+                                data-amount="<?php echo (float) ($totals['total'] ?? 0); ?>"
+                            >
+                                <?php echo number_format((float) ($totals['total'] ?? 0), 0, '.', ' '); ?> ₽
+                            </span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span>Стоимость доставки</span>
+                            <span data-delivery-total data-amount="0">0 ₽</span>
+                        </div>
+                        <div class="flex items-center justify-between text-base font-bold text-rose-600">
+                            <span>Итого</span>
+                            <span data-order-grand-total data-cart-total>
+                                <?php echo number_format((float) ($totals['total'] ?? 0), 0, '.', ' '); ?> ₽
+                            </span>
+                        </div>
                     </div>
                 </div>
 
