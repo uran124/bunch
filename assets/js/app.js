@@ -4,6 +4,59 @@ function formatCurrency(value) {
     return Number(value || 0).toLocaleString('ru-RU', { maximumFractionDigits: 0 }) + ' ₽';
 }
 
+let cartItemsTotal = 0;
+let cartDeliveryTotal = 0;
+
+function renderCartTotals() {
+    const subtotalEl = document.querySelector('[data-cart-subtotal]');
+    const deliveryEl = document.querySelector('[data-cart-delivery]');
+    const totalEl = document.querySelector('[data-cart-total]');
+    const deliveryRow = document.querySelector('[data-cart-delivery-row]');
+
+    if (subtotalEl) {
+        subtotalEl.textContent = formatCurrency(cartItemsTotal);
+    }
+
+    if (deliveryEl) {
+        deliveryEl.textContent = formatCurrency(cartDeliveryTotal);
+    }
+
+    if (deliveryRow) {
+        deliveryRow.classList.toggle('hidden', cartDeliveryTotal <= 0);
+    }
+
+    if (totalEl) {
+        totalEl.textContent = formatCurrency(cartItemsTotal + cartDeliveryTotal);
+    }
+}
+
+function updateCartTotal(total) {
+    cartItemsTotal = Number(total || 0);
+    renderCartTotals();
+}
+
+function setDeliveryTotal(total) {
+    cartDeliveryTotal = Math.max(0, Number(total) || 0);
+    renderCartTotals();
+}
+
+(function initializeCartTotalsFromDom() {
+    const subtotalEl = document.querySelector('[data-cart-subtotal]');
+    const deliveryEl = document.querySelector('[data-cart-delivery]');
+
+    if (subtotalEl?.dataset.value) {
+        cartItemsTotal = Number(subtotalEl.dataset.value) || 0;
+    }
+
+    if (deliveryEl?.dataset.value) {
+        cartDeliveryTotal = Number(deliveryEl.dataset.value) || 0;
+    }
+
+    if (subtotalEl || deliveryEl) {
+        renderCartTotals();
+    }
+})();
+
 function updateCartIndicator(count) {
     document.querySelectorAll('[data-cart-count]').forEach((badge) => {
         badge.textContent = count;
@@ -21,13 +74,6 @@ function updateCartCountStatic(count) {
     document.querySelectorAll('[data-cart-count-static]').forEach((badge) => {
         badge.textContent = count;
     });
-}
-
-function updateCartTotal(total) {
-    const target = document.querySelector('[data-cart-total]');
-    if (target) {
-        target.textContent = formatCurrency(total);
-    }
 }
 
 async function addProductToCart(productId, qty = 1, attributes = []) {
@@ -329,7 +375,7 @@ function initOrderFlow() {
     const deliveryExtra = orderSection.querySelector('[data-delivery-extra]');
     const addressSelect = orderSection.querySelector('[data-address-select]');
     const addressInput = orderSection.querySelector('[data-address-input]');
-    const addressNew = orderSection.querySelector('[data-address-new]');
+    const addressUnitInput = orderSection.querySelector('[data-address-unit]');
     const addressSuggestionList = document.createElement('div');
     const deliveryHint = orderSection.querySelector('[data-delivery-pricing-hint]');
     const recipientButtons = Array.from(orderSection.querySelectorAll('.recipient-btn'));
@@ -337,6 +383,9 @@ function initOrderFlow() {
     const recipientName = orderSection.querySelector('[data-recipient-name]');
     const recipientPhone = orderSection.querySelector('[data-recipient-phone]');
     const commentInput = orderSection.querySelector('[data-order-comment]');
+
+    cartItemsTotal = Number(orderSection.dataset.itemsTotal || cartItemsTotal);
+    renderCartTotals();
 
     const addresses = (() => {
         try {
@@ -449,10 +498,25 @@ function initOrderFlow() {
     const setAddressFromSelect = () => {
         if (!addressSelect || !addressInput) return;
         const selectedOption = addressSelect.selectedOptions[0];
+
         if (selectedOption) {
             addressInput.value = selectedOption.dataset.addressText || '';
-            const chosen = findAddressById(selectedOption.value);
+            if (addressUnitInput) {
+                addressUnitInput.value = selectedOption.dataset.addressUnit || '';
+            }
+
+            const chosen = selectedOption.value === 'new' ? null : findAddressById(selectedOption.value);
             setRecipientFromAddress(chosen);
+
+            if (selectedOption.value === 'new') {
+                lastDeliveryQuote = null;
+                setDeliveryTotal(currentMode === 'delivery' ? 0 : cartDeliveryTotal);
+            }
+
+            if (currentMode === 'delivery') {
+                setDeliveryTotal(0);
+                setTimeout(updateDeliveryQuote, 50);
+            }
         } else {
             setRecipientFromAddress(null);
         }
@@ -467,6 +531,11 @@ function initOrderFlow() {
 
         if (mode === 'delivery') {
             setAddressFromSelect();
+            if (lastDeliveryQuote) {
+                setDeliveryTotal(lastDeliveryQuote.delivery_price);
+            }
+        } else {
+            setDeliveryTotal(0);
         }
     };
 
@@ -558,6 +627,7 @@ function initOrderFlow() {
         const priceText = price.toLocaleString('ru-RU');
         const reasonText = reason ? `${reason} ` : '';
         setDeliveryHint(`${reasonText}Применили доставку ${priceText} ₽ по умолчанию.`, 'warn');
+        setDeliveryTotal(price);
     };
 
 const formatAddressFromDadata = (data) => {
@@ -704,6 +774,7 @@ const formatAddressFromDadata = (data) => {
         if (!addressText) {
             setDeliveryHint('Введите адрес, чтобы получить подсказку DaData, геокодировать точку и определить зону доставки.');
             lastDeliveryQuote = null;
+            setDeliveryTotal(0);
             return;
         }
 
@@ -745,6 +816,7 @@ const formatAddressFromDadata = (data) => {
                 `${geocoded.label} в зоне «${zone.name}». Доставка ${zone.price.toLocaleString('ru-RU')} ₽`,
                 'success',
             );
+            setDeliveryTotal(zone.price);
         } catch (e) {
             useFallbackDeliveryQuote(addressText, 'Ошибка при расчёте зоны. Проверьте соединение и попробуйте снова.');
         }
@@ -766,6 +838,7 @@ const formatAddressFromDadata = (data) => {
         if (currentMode === 'delivery') {
             payload.address_id = addressSelect ? Number(addressSelect.value || 0) || null : null;
             payload.address_text = addressInput?.value || '';
+            payload.address_unit = addressUnitInput?.value || '';
 
             const activeRecipient = orderSection.querySelector('.recipient-btn.border-rose-100') || orderSection.querySelector('[data-recipient-mode="self"]');
             const recipientMode = activeRecipient?.dataset.recipientMode || 'self';
@@ -776,12 +849,17 @@ const formatAddressFromDadata = (data) => {
                 };
             }
 
+            const addressDetails = {
+                apartment: addressUnitInput?.value || '',
+            };
+
             if (lastDeliveryQuote) {
                 payload.delivery_price = lastDeliveryQuote.delivery_price;
                 payload.zone_id = lastDeliveryQuote.zone_id;
                 payload.delivery_pricing_version = lastDeliveryQuote.zone_version;
                 payload.zone_calculated_at = lastDeliveryQuote.zone_calculated_at;
                 payload.address = {
+                    ...addressDetails,
                     location_source: lastDeliveryQuote.location_source,
                     geo_quality: lastDeliveryQuote.geo_quality,
                     lat: lastDeliveryQuote.lat,
@@ -790,6 +868,8 @@ const formatAddressFromDadata = (data) => {
                     zone_version: lastDeliveryQuote.zone_version,
                     zone_calculated_at: lastDeliveryQuote.zone_calculated_at,
                 };
+            } else {
+                payload.address = addressDetails;
             }
         }
 
@@ -826,8 +906,14 @@ const formatAddressFromDadata = (data) => {
 
     submitButton.addEventListener('click', submitOrder);
 
-    if (addresses.length && !addressInput?.value) {
-        addressInput.value = orderSection.dataset.primaryAddress || addresses[0]?.address || '';
+    if (addresses.length) {
+        const primaryAddress = addresses.find((item) => item.is_primary) || addresses[0];
+        if (!addressInput?.value) {
+            addressInput.value = orderSection.dataset.primaryAddress || primaryAddress?.address || '';
+        }
+        if (addressUnitInput && !addressUnitInput.value && primaryAddress?.raw?.apartment) {
+            addressUnitInput.value = primaryAddress.raw.apartment;
+        }
     }
 
     setRecipientMode('self');

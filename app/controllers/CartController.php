@@ -172,6 +172,7 @@ class CartController extends Controller
         $time = $payload['time'] ?? null;
         $addressId = isset($payload['address_id']) ? (int) $payload['address_id'] : null;
         $addressText = trim((string) ($payload['address_text'] ?? ''));
+        $addressUnit = trim((string) ($payload['address_unit'] ?? ''));
         $recipient = $payload['recipient'] ?? [];
         $comment = trim((string) ($payload['comment'] ?? ''));
 
@@ -204,6 +205,7 @@ class CartController extends Controller
             try {
                 $addressPayload = array_merge($addressDetails, [
                     'address_text' => $addressText,
+                    'apartment' => $addressUnit ?: ($addressDetails['apartment'] ?? null),
                     'recipient_name' => $recipient['name'] ?? null,
                     'recipient_phone' => $recipient['phone'] ?? null,
                     'zone_id' => $payload['zone_id'] ?? ($addressDetails['zone_id'] ?? null),
@@ -232,6 +234,7 @@ class CartController extends Controller
                 'time' => $time,
                 'address_id' => $addressId,
                 'address_text' => $addressText,
+                'address_unit' => $addressUnit ?: ($addressDetails['apartment'] ?? null),
                 'address' => $addressDetails,
                 'delivery_price' => $payload['delivery_price'] ?? null,
                 'zone_id' => $payload['zone_id'] ?? null,
