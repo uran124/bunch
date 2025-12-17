@@ -48,8 +48,7 @@ if ($isAuthPage) {
                 <a class="flex items-center gap-3 text-lg font-semibold tracking-tight text-slate-900" href="/?page=home">
                     <img
                         alt="Bunch flowers"
-                        class="h-10 w-auto"
-                        height="40"
+                        class="h-8 w-auto"
                         src="/bunchlogo.svg"
                         width="143"
                     >
