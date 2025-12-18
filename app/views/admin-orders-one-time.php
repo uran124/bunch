@@ -71,22 +71,19 @@
 
     <div class="grid gap-5 xl:grid-cols-[1.9fr_1.2fr]">
         <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm shadow-rose-50/60 ring-1 ring-transparent">
-            <div class="grid grid-cols-[120px_1.1fr_1fr_1fr_1fr_150px] items-center gap-4 border-b border-slate-100 bg-slate-50 px-5 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                <span>Номер</span>
-                <span>Клиент</span>
-                <span>Сумма</span>
-                <span>Статус</span>
-                <span>Доставка</span>
-                <span class="text-right">Действия</span>
-            </div>
             <?php foreach ($orders as $order): ?>
                 <?php
-                $statusClass = match ($order['status']) {
-                    'delivered' => 'bg-emerald-50 text-emerald-700 ring-emerald-200',
-                    'delivering', 'confirmed', 'assembled' => 'bg-sky-50 text-sky-700 ring-sky-200',
-                    'cancelled' => 'bg-amber-50 text-amber-700 ring-amber-200',
-                    default => 'bg-slate-50 text-slate-700 ring-slate-200',
-                };
+                $deliveryDate = '—';
+
+                if (!empty($order['scheduled_date_raw'])) {
+                    try {
+                        $deliveryDate = (new DateTimeImmutable($order['scheduled_date_raw']))->format('d.m');
+                    } catch (Throwable $e) {
+                        $deliveryDate = $order['scheduled_date_raw'];
+                    }
+                }
+
+                $deliveryTime = $order['scheduled_time_raw'] ? substr((string) $order['scheduled_time_raw'], 0, 5) : '—';
 
                 $linkParams = [
                     'page' => 'admin-orders-one-time',
@@ -96,36 +93,128 @@
                     'payment_filter' => $activeFilters['payment'] ?? 'all',
                 ];
                 ?>
-                <article class="grid grid-cols-[120px_1.1fr_1fr_1fr_1fr_150px] items-center gap-4 border-b border-slate-100 px-5 py-4 last:border-b-0">
-                    <div class="text-sm font-semibold text-slate-900"><?php echo htmlspecialchars($order['number'], ENT_QUOTES, 'UTF-8'); ?></div>
-                    <div class="space-y-1 text-sm text-slate-700">
-                        <div class="font-semibold text-slate-900"><?php echo htmlspecialchars($order['customer'], ENT_QUOTES, 'UTF-8'); ?></div>
-                        <div class="text-slate-500">Телефон: <?php echo htmlspecialchars($order['customerPhone'] ?: '—', ENT_QUOTES, 'UTF-8'); ?></div>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <span class="rounded-full bg-slate-50 px-3 py-1 text-sm font-semibold text-slate-800 ring-1 ring-slate-200"><?php echo htmlspecialchars($order['sum'], ENT_QUOTES, 'UTF-8'); ?></span>
-                        <span class="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-200"><?php echo htmlspecialchars($order['payment'], ENT_QUOTES, 'UTF-8'); ?></span>
-                    </div>
-                    <div class="space-y-1 text-sm text-slate-700">
-                        <div class="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold ring-1 <?php echo $statusClass; ?>">
-                            <span class="material-symbols-rounded text-base">local_shipping</span>
-                            <?php echo htmlspecialchars($order['statusLabel'], ENT_QUOTES, 'UTF-8'); ?>
+                <article class="space-y-4 border-b border-slate-100 px-5 py-5 last:border-b-0">
+                    <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                        <div class="flex flex-wrap items-center gap-3 text-sm text-slate-700">
+                            <a href="/?<?php echo http_build_query($linkParams); ?>" class="text-base font-semibold text-rose-700 underline-offset-4 hover:text-rose-800 hover:underline">
+                                <?php echo htmlspecialchars($order['number'], ENT_QUOTES, 'UTF-8'); ?>
+                            </a>
+                            <span class="inline-flex items-center gap-2 rounded-full bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-slate-200">
+                                <span class="material-symbols-rounded text-base">event</span>
+                                <?php echo htmlspecialchars($deliveryDate, ENT_QUOTES, 'UTF-8'); ?> · <?php echo htmlspecialchars($deliveryTime, ENT_QUOTES, 'UTF-8'); ?>
+                            </span>
+                            <span class="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-200">
+                                <span class="material-symbols-rounded text-base">payments</span>
+                                <?php echo htmlspecialchars($order['sum'], ENT_QUOTES, 'UTF-8'); ?>
+                            </span>
                         </div>
-                        <div class="text-slate-500">Обновлено: <?php echo htmlspecialchars($order['updated_at'] ?? '—', ENT_QUOTES, 'UTF-8'); ?></div>
+                        <form method="post" action="/?page=admin-order-update" class="flex flex-wrap items-center gap-2">
+                            <input type="hidden" name="order_id" value="<?php echo (int) $order['id']; ?>">
+                            <input type="hidden" name="delivery_type" value="<?php echo htmlspecialchars($order['deliveryTypeValue'], ENT_QUOTES, 'UTF-8'); ?>">
+                            <input type="hidden" name="scheduled_date" value="<?php echo htmlspecialchars($order['scheduled_date_raw'] ?? '', ENT_QUOTES, 'UTF-8'); ?>">
+                            <input type="hidden" name="scheduled_time" value="<?php echo htmlspecialchars($order['scheduled_time_raw'] ?? '', ENT_QUOTES, 'UTF-8'); ?>">
+                            <input type="hidden" name="recipient_name" value="<?php echo htmlspecialchars($order['recipientNameRaw'] ?? '', ENT_QUOTES, 'UTF-8'); ?>">
+                            <input type="hidden" name="recipient_phone" value="<?php echo htmlspecialchars($order['recipientPhoneRaw'] ?? '', ENT_QUOTES, 'UTF-8'); ?>">
+                            <input type="hidden" name="address_text" value="<?php echo htmlspecialchars($order['addressTextRaw'] ?? '', ENT_QUOTES, 'UTF-8'); ?>">
+                            <input type="hidden" name="comment" value="<?php echo htmlspecialchars($order['commentRaw'] ?? '', ENT_QUOTES, 'UTF-8'); ?>">
+                            <label class="flex items-center gap-2 text-sm font-semibold text-slate-700">
+                                <span class="text-xs uppercase tracking-wide text-slate-500">Статус</span>
+                                <select name="status" class="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-rose-300 focus:outline-none focus:ring-2 focus:ring-rose-200">
+                                    <?php foreach ($filters['status'] as $value => $label): ?>
+                                        <?php if ($value === 'all') { continue; } ?>
+                                        <option value="<?php echo htmlspecialchars($value, ENT_QUOTES, 'UTF-8'); ?>" <?php echo $order['status'] === $value ? 'selected' : ''; ?>>
+                                            <?php echo htmlspecialchars($label, ENT_QUOTES, 'UTF-8'); ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </label>
+                            <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-emerald-200 transition hover:-translate-y-0.5 hover:shadow-md">
+                                <span class="material-symbols-rounded text-base">save</span>
+                                Обновить
+                            </button>
+                        </form>
                     </div>
-                    <div class="space-y-1 text-sm text-slate-700">
-                        <div class="font-semibold text-slate-900"><?php echo htmlspecialchars($order['delivery'], ENT_QUOTES, 'UTF-8'); ?></div>
-                        <div class="text-slate-500"><?php echo htmlspecialchars($order['deliveryType'], ENT_QUOTES, 'UTF-8'); ?></div>
-                    </div>
-                    <div class="flex justify-end gap-2 text-sm font-semibold">
-                        <a href="/?<?php echo http_build_query($linkParams); ?>" class="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-2 text-slate-700 transition hover:-translate-y-0.5 hover:border-rose-200 hover:text-rose-700">
-                            <span class="material-symbols-rounded text-base">fact_check</span>
-                            Обработать
-                        </a>
-                        <a href="/?<?php echo http_build_query($linkParams); ?>" class="inline-flex items-center gap-1 rounded-lg border border-rose-100 bg-rose-50 px-3 py-2 text-rose-700 transition hover:-translate-y-0.5 hover:border-rose-200">
-                            <span class="material-symbols-rounded text-base">edit</span>
-                            Изменить
-                        </a>
+
+                    <div class="grid gap-4 rounded-xl bg-slate-50 p-4 md:grid-cols-[1.25fr_1fr]">
+                        <div class="space-y-3">
+                            <?php foreach ($order['items'] as $item): ?>
+                                <div class="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
+                                    <div class="flex items-start justify-between gap-3">
+                                        <div class="space-y-1">
+                                            <p class="font-semibold text-slate-900"><?php echo htmlspecialchars($item['title'], ENT_QUOTES, 'UTF-8'); ?></p>
+                                            <p class="text-xs text-slate-500">Атрибуты: <?php echo htmlspecialchars($item['attributes'] ?? '—', ENT_QUOTES, 'UTF-8'); ?></p>
+                                        </div>
+                                        <div class="text-right text-sm font-semibold text-slate-900"><?php echo (int) $item['qty']; ?> шт</div>
+                                    </div>
+                                    <div class="mt-2 flex items-center justify-between text-sm text-slate-700">
+                                        <span>Полная стоимость</span>
+                                        <span class="font-semibold text-slate-900"><?php echo htmlspecialchars($item['total'], ENT_QUOTES, 'UTF-8'); ?></span>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+
+                            <?php if ($order['deliveryTypeValue'] === 'delivery' && $order['deliveryPrice']): ?>
+                                <div class="rounded-lg border border-dashed border-rose-200 bg-rose-50 p-3 text-sm text-rose-900">
+                                    <div class="flex items-center justify-between">
+                                        <span class="font-semibold">Доставка</span>
+                                        <span class="font-semibold"><?php echo htmlspecialchars($order['deliveryPrice'], ENT_QUOTES, 'UTF-8'); ?></span>
+                                    </div>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+
+                        <div class="space-y-3 rounded-lg border border-slate-200 bg-white p-3 text-sm text-slate-700">
+                            <div class="flex items-start justify-between gap-3">
+                                <div>
+                                    <p class="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Заказчик</p>
+                                    <p class="font-semibold text-slate-900"><?php echo htmlspecialchars($order['customer'], ENT_QUOTES, 'UTF-8'); ?></p>
+                                    <p class="text-slate-600"><?php echo htmlspecialchars($order['customerPhone'] ?: '—', ENT_QUOTES, 'UTF-8'); ?></p>
+                                </div>
+                                <button type="button" class="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700 transition hover:-translate-y-0.5 hover:border-rose-200 hover:text-rose-700" data-copy-text="<?php echo htmlspecialchars(trim(($order['customer'] ?? '') . ' ' . ($order['customerPhone'] ?? '')), ENT_QUOTES, 'UTF-8'); ?>">
+                                    <span class="material-symbols-rounded text-base">content_copy</span>
+                                    Копировать
+                                </button>
+                            </div>
+
+                            <?php if (!empty($order['recipient_name']) || !empty($order['recipient_phone'])): ?>
+                                <div class="flex items-start justify-between gap-3">
+                                    <div>
+                                        <p class="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Получатель</p>
+                                        <p class="font-semibold text-slate-900"><?php echo htmlspecialchars($order['recipient_name'] ?? '—', ENT_QUOTES, 'UTF-8'); ?></p>
+                                        <p class="text-slate-600"><?php echo htmlspecialchars($order['recipient_phone'] ?? '—', ENT_QUOTES, 'UTF-8'); ?></p>
+                                    </div>
+                                    <button type="button" class="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700 transition hover:-translate-y-0.5 hover:border-rose-200 hover:text-rose-700" data-copy-text="<?php echo htmlspecialchars(trim(($order['recipient_name'] ?? '') . ' ' . ($order['recipient_phone'] ?? '')), ENT_QUOTES, 'UTF-8'); ?>">
+                                        <span class="material-symbols-rounded text-base">content_copy</span>
+                                        Копировать
+                                    </button>
+                                </div>
+                            <?php endif; ?>
+
+                            <div class="flex items-start justify-between gap-3">
+                                <div>
+                                    <p class="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500"><?php echo $order['deliveryTypeValue'] === 'delivery' ? 'Доставка' : 'Самовывоз'; ?></p>
+                                    <p class="font-semibold text-slate-900"><?php echo htmlspecialchars($order['delivery'], ENT_QUOTES, 'UTF-8'); ?></p>
+                                    <p class="text-slate-600"><?php echo htmlspecialchars($order['address'] ?? 'Не указано', ENT_QUOTES, 'UTF-8'); ?></p>
+                                </div>
+                                <button type="button" class="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700 transition hover:-translate-y-0.5 hover:border-rose-200 hover:text-rose-700" data-copy-text="<?php echo htmlspecialchars(trim(($order['deliveryTypeValue'] === 'delivery' ? ($order['address'] ?? '') : 'Самовывоз')), ENT_QUOTES, 'UTF-8'); ?>">
+                                    <span class="material-symbols-rounded text-base">content_copy</span>
+                                    Копировать
+                                </button>
+                            </div>
+
+                            <?php if (!empty($order['comment'])): ?>
+                                <div class="flex items-start justify-between gap-3">
+                                    <div class="space-y-1">
+                                        <p class="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Примечания</p>
+                                        <p class="text-slate-700"><?php echo nl2br(htmlspecialchars($order['comment'], ENT_QUOTES, 'UTF-8')); ?></p>
+                                    </div>
+                                    <button type="button" class="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700 transition hover:-translate-y-0.5 hover:border-rose-200 hover:text-rose-700" data-copy-text="<?php echo htmlspecialchars($order['comment'], ENT_QUOTES, 'UTF-8'); ?>">
+                                        <span class="material-symbols-rounded text-base">content_copy</span>
+                                        Копировать
+                                    </button>
+                                </div>
+                            <?php endif; ?>
+                        </div>
                     </div>
                 </article>
             <?php endforeach; ?>
@@ -249,3 +338,27 @@
         </section>
     </div>
 </section>
+
+<script>
+document.addEventListener('click', (event) => {
+    const copyButton = event.target.closest('[data-copy-text]');
+
+    if (!copyButton || !navigator.clipboard) {
+        return;
+    }
+
+    const text = copyButton.getAttribute('data-copy-text');
+
+    if (!text) {
+        return;
+    }
+
+    navigator.clipboard.writeText(text).then(() => {
+        copyButton.classList.add('border-emerald-200', 'text-emerald-700');
+        setTimeout(() => {
+            copyButton.classList.remove('border-emerald-200', 'text-emerald-700');
+        }, 1200);
+    }).catch(() => {
+    });
+});
+</script>
