@@ -90,7 +90,7 @@
                     'payment_filter' => $activeFilters['payment'] ?? 'all',
                 ];
                 ?>
-                <article class="space-y-4 border-b border-slate-100 px-5 py-5 last:border-b-0">
+                <article class="space-y-4 border-b border-slate-100 px-3 py-3 last:border-b-0">
                     <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                         <div class="flex flex-wrap items-center gap-3 text-sm text-slate-700">
                             <a href="/?<?php echo http_build_query($linkParams); ?>" class="text-base font-semibold text-rose-700 underline-offset-4 hover:text-rose-800 hover:underline">
@@ -131,7 +131,7 @@
                         </form>
                     </div>
 
-                    <div class="grid gap-4 rounded-xl bg-slate-50 p-4 md:grid-cols-[1.25fr_1fr]">
+                    <div class="grid gap-4 rounded-xl bg-slate-50 p-3 md:grid-cols-[1.25fr_1fr]">
                         <div class="space-y-3">
                             <?php foreach ($order['items'] as $item): ?>
                                 <div class="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
