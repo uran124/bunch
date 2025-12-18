@@ -149,6 +149,17 @@ function handleDadataCleanAddress(): void
         return;
     }
 
-    http_response_code($statusCode ?: 502);
-    echo json_encode(['error' => 'DaData ответила с ошибкой', 'status' => $statusCode]);
+    $errorMessage = 'DaData ответила с ошибкой';
+
+    if (is_array($data)) {
+        $errorMessage = $data['message']
+            ?? $data['detail']
+            ?? $data['reason']
+            ?? $errorMessage;
+    } elseif (is_string($response) && $response !== '') {
+        $errorMessage = $response;
+    }
+
+    http_response_code($statusCode >= 400 && $statusCode < 600 ? 502 : ($statusCode ?: 502));
+    echo json_encode(['error' => $errorMessage, 'status' => $statusCode], JSON_UNESCAPED_UNICODE);
 }

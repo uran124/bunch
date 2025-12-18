@@ -815,6 +815,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         qc: row.qc_geo,
                     };
                 }
+            } else if (response) {
+                const errorPayload = await response.json().catch(() => null);
+                const errorMessage = errorPayload?.error || errorPayload?.message || 'Не удалось обратиться к DaData';
+                const statusHint = response.status ? ` (код ${response.status})` : '';
+                showStatus(`${errorMessage}${statusHint}. Проверьте ключи DaData или повторите попытку позже.`, 'warn');
             }
         }
 
