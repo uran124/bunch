@@ -211,6 +211,7 @@
                     data-delivery-pricing-version="<?php echo htmlspecialchars($deliveryPricingVersion ?? '', ENT_QUOTES, 'UTF-8'); ?>"
                     data-dadata-config="<?php echo htmlspecialchars(json_encode($dadataConfig ?? [], JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8'); ?>"
                     data-test-addresses="<?php echo htmlspecialchars(json_encode($testAddresses ?? [], JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8'); ?>"
+                    data-delivery-fallback="<?php echo htmlspecialchars((string) ($dadataConfig['defaultDeliveryPrice'] ?? 0), ENT_QUOTES, 'UTF-8'); ?>"
                 >
                     <div class="flex flex-wrap gap-2">
                         <button type="button" data-order-mode="pickup" class="order-mode-btn flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 shadow-sm">

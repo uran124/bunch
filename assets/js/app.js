@@ -417,7 +417,9 @@ function initOrderFlow() {
 
     dadataConfig = mergeCredentialsFromStorage(dadataConfig);
 
-    const fallbackDeliveryPrice = Number(dadataConfig.defaultDeliveryPrice ?? 0) || 350;
+    const fallbackDeliveryPrice = Number(
+        orderSection.dataset.deliveryFallback || dadataConfig.defaultDeliveryPrice || 0,
+    ) || 350;
     const deliveryPricingVersion = orderSection.dataset.deliveryPricingVersion || null;
     let lastDeliveryQuote = null;
     let lastSuggestionRequestId = 0;

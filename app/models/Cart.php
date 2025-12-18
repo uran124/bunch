@@ -12,7 +12,13 @@ class Cart
 
     public function getItemCount(): int
     {
-        return count($this->getItems());
+        $count = 0;
+
+        foreach ($this->getItems() as $item) {
+            $count += (int) ($item['qty'] ?? 0);
+        }
+
+        return $count;
     }
 
     public function addItem(int $productId, int $qty, array $attributeValueIds = []): array
@@ -52,14 +58,16 @@ class Cart
     {
         $items = $this->getItems();
         $total = 0.0;
+        $count = 0;
 
         foreach ($items as $item) {
             $total += (float) ($item['line_total'] ?? 0);
+            $count += (int) ($item['qty'] ?? 0);
         }
 
         return [
             'total' => $total,
-            'count' => count($items),
+            'count' => $count,
         ];
     }
 
