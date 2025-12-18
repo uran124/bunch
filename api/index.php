@@ -120,46 +120,17 @@ function handleDadataCleanAddress(): void
         return;
     }
 
-    $ch = curl_init('https://cleaner.dadata.ru/api/v1/clean/address');
-    curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, [
-        'Content-Type: application/json',
-        'Accept: application/json',
-        'Authorization: Token ' . DADATA_API_KEY,
-        'X-Secret: ' . DADATA_SECRET_KEY,
-    ]);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode([$address], JSON_UNESCAPED_UNICODE));
+    $dadata = new DadataClient(DADATA_API_KEY, DADATA_SECRET_KEY);
+    $response = $dadata->normalizeAddress($address);
 
-    $response = curl_exec($ch);
-    $statusCode = curl_getinfo($ch, CURLINFO_RESPONSE_CODE) ?: 0;
-    $curlError = curl_error($ch);
-    curl_close($ch);
-
-    if ($response === false) {
-        http_response_code(502);
-        echo json_encode(['error' => 'Ошибка запроса к DaData: ' . ($curlError ?: 'unknown')]);
+    if ($response['success'] && is_array($response['data'])) {
+        echo json_encode($response['data'], JSON_UNESCAPED_UNICODE);
         return;
     }
 
-    $data = json_decode($response, true);
-
-    if ($statusCode >= 200 && $statusCode < 300 && is_array($data)) {
-        echo json_encode($data, JSON_UNESCAPED_UNICODE);
-        return;
-    }
-
-    $errorMessage = 'DaData ответила с ошибкой';
-
-    if (is_array($data)) {
-        $errorMessage = $data['message']
-            ?? $data['detail']
-            ?? $data['reason']
-            ?? $errorMessage;
-    } elseif (is_string($response) && $response !== '') {
-        $errorMessage = $response;
-    }
-
-    http_response_code($statusCode >= 400 && $statusCode < 600 ? 502 : ($statusCode ?: 502));
-    echo json_encode(['error' => $errorMessage, 'status' => $statusCode], JSON_UNESCAPED_UNICODE);
+    http_response_code($response['status'] >= 400 && $response['status'] < 600 ? 502 : 502);
+    echo json_encode([
+        'error' => $response['error'] ?? 'Не удалось получить ответ от DaData',
+        'status' => $response['status'],
+    ], JSON_UNESCAPED_UNICODE);
 }
