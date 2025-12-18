@@ -20,21 +20,19 @@
         </a>
     </header>
 
-    <div class="grid gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-rose-50/60 ring-1 ring-transparent lg:grid-cols-[1.4fr_1fr_1fr]">
+    <div class="grid gap-4 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm shadow-rose-50/60 ring-1 ring-transparent lg:grid-cols-[1.4fr_1fr_1fr]">
         <form method="get" action="/" class="contents">
             <input type="hidden" name="page" value="admin-orders-one-time">
             <label class="flex flex-col gap-2">
-                <span class="text-sm font-semibold text-slate-700">Поиск по клиенту или номеру</span>
                 <input
                     type="search"
                     name="q"
                     value="<?php echo htmlspecialchars($query, ENT_QUOTES, 'UTF-8'); ?>"
-                    placeholder="например, B-3012 или Соколова"
+                    placeholder="поиск"
                     class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-sm focus:border-rose-300 focus:outline-none focus:ring-2 focus:ring-rose-200"
                 >
             </label>
             <label class="flex flex-col gap-2">
-                <span class="text-sm font-semibold text-slate-700">Статус доставки</span>
                 <select name="status_filter" class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-sm focus:border-rose-300 focus:outline-none focus:ring-2 focus:ring-rose-200">
                     <?php foreach ($filters['status'] as $value => $label): ?>
                         <option value="<?php echo htmlspecialchars($value, ENT_QUOTES, 'UTF-8'); ?>" <?php echo $value === ($activeFilters['status'] ?? 'all') ? 'selected' : ''; ?>>
@@ -44,7 +42,6 @@
                 </select>
             </label>
             <label class="flex flex-col gap-2">
-                <span class="text-sm font-semibold text-slate-700">Оплата</span>
                 <select name="payment_filter" class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-sm focus:border-rose-300 focus:outline-none focus:ring-2 focus:ring-rose-200">
                     <?php foreach ($filters['payment'] as $value => $label): ?>
                         <option value="<?php echo htmlspecialchars($value, ENT_QUOTES, 'UTF-8'); ?>" <?php echo $value === ($activeFilters['payment'] ?? 'all') ? 'selected' : ''; ?>>
@@ -165,8 +162,8 @@
                         <div class="space-y-3 rounded-lg border border-slate-200 bg-white p-3 text-sm text-slate-700">
                             <div class="flex items-start justify-between gap-3">
                                 <div>
-                                    <p class="font-semibold text-slate-900"><?php echo htmlspecialchars($order['customer'], ENT_QUOTES, 'UTF-8'); ?></p>
-                                    <p class="text-slate-600"><?php echo htmlspecialchars($order['customerPhone'] ?: '—', ENT_QUOTES, 'UTF-8'); ?></p>
+                                    <p class="font-semibold text-slate-600"><?php echo htmlspecialchars($order['customer'], ENT_QUOTES, 'UTF-8'); ?>
+                                    <?php echo htmlspecialchars($order['customerPhone'] ?: '—', ENT_QUOTES, 'UTF-8'); ?></p>
                                 </div>
                                 <button type="button" class="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700 transition hover:-translate-y-0.5 hover:border-rose-200 hover:text-rose-700" data-copy-text="<?php echo htmlspecialchars(trim(($order['customer'] ?? '') . ' ' . ($order['customerPhone'] ?? '')), ENT_QUOTES, 'UTF-8'); ?>">
                                     <span class="material-symbols-rounded text-base">content_copy</span>
