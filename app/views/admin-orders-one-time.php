@@ -118,7 +118,6 @@
                             <input type="hidden" name="address_text" value="<?php echo htmlspecialchars($order['addressTextRaw'] ?? '', ENT_QUOTES, 'UTF-8'); ?>">
                             <input type="hidden" name="comment" value="<?php echo htmlspecialchars($order['commentRaw'] ?? '', ENT_QUOTES, 'UTF-8'); ?>">
                             <label class="flex items-center gap-2 text-sm font-semibold text-slate-700">
-                                <span class="text-xs uppercase tracking-wide text-slate-500">Статус</span>
                                 <select name="status" class="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-rose-300 focus:outline-none focus:ring-2 focus:ring-rose-200">
                                     <?php foreach ($filters['status'] as $value => $label): ?>
                                         <?php if ($value === 'all') { continue; } ?>
@@ -166,26 +165,22 @@
                         <div class="space-y-3 rounded-lg border border-slate-200 bg-white p-3 text-sm text-slate-700">
                             <div class="flex items-start justify-between gap-3">
                                 <div>
-                                    <p class="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Заказчик</p>
                                     <p class="font-semibold text-slate-900"><?php echo htmlspecialchars($order['customer'], ENT_QUOTES, 'UTF-8'); ?></p>
                                     <p class="text-slate-600"><?php echo htmlspecialchars($order['customerPhone'] ?: '—', ENT_QUOTES, 'UTF-8'); ?></p>
                                 </div>
                                 <button type="button" class="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700 transition hover:-translate-y-0.5 hover:border-rose-200 hover:text-rose-700" data-copy-text="<?php echo htmlspecialchars(trim(($order['customer'] ?? '') . ' ' . ($order['customerPhone'] ?? '')), ENT_QUOTES, 'UTF-8'); ?>">
                                     <span class="material-symbols-rounded text-base">content_copy</span>
-                                    Копировать
                                 </button>
                             </div>
 
                             <?php if (!empty($order['recipient_name']) || !empty($order['recipient_phone'])): ?>
                                 <div class="flex items-start justify-between gap-3">
                                     <div>
-                                        <p class="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Получатель</p>
                                         <p class="font-semibold text-slate-900"><?php echo htmlspecialchars($order['recipient_name'] ?? '—', ENT_QUOTES, 'UTF-8'); ?></p>
                                         <p class="text-slate-600"><?php echo htmlspecialchars($order['recipient_phone'] ?? '—', ENT_QUOTES, 'UTF-8'); ?></p>
                                     </div>
                                     <button type="button" class="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700 transition hover:-translate-y-0.5 hover:border-rose-200 hover:text-rose-700" data-copy-text="<?php echo htmlspecialchars(trim(($order['recipient_name'] ?? '') . ' ' . ($order['recipient_phone'] ?? '')), ENT_QUOTES, 'UTF-8'); ?>">
                                         <span class="material-symbols-rounded text-base">content_copy</span>
-                                        Копировать
                                     </button>
                                 </div>
                             <?php endif; ?>
@@ -198,7 +193,6 @@
                                 </div>
                                 <button type="button" class="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700 transition hover:-translate-y-0.5 hover:border-rose-200 hover:text-rose-700" data-copy-text="<?php echo htmlspecialchars(trim(($order['deliveryTypeValue'] === 'delivery' ? ($order['address'] ?? '') : 'Самовывоз')), ENT_QUOTES, 'UTF-8'); ?>">
                                     <span class="material-symbols-rounded text-base">content_copy</span>
-                                    Копировать
                                 </button>
                             </div>
 
@@ -210,7 +204,6 @@
                                     </div>
                                     <button type="button" class="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700 transition hover:-translate-y-0.5 hover:border-rose-200 hover:text-rose-700" data-copy-text="<?php echo htmlspecialchars($order['comment'], ENT_QUOTES, 'UTF-8'); ?>">
                                         <span class="material-symbols-rounded text-base">content_copy</span>
-                                        Копировать
                                     </button>
                                 </div>
                             <?php endif; ?>
