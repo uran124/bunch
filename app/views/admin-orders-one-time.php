@@ -67,7 +67,7 @@
     <?php endif; ?>
 
     <div class="grid gap-5 xl:grid-cols-[1.9fr_1.2fr]">
-        <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm shadow-rose-50/60 ring-1 ring-transparent">
+        <div class="overflow-hidden rounded-2xl shadow-sm shadow-rose-50/60 ring-1 ring-transparent">
             <?php foreach ($orders as $order): ?>
                 <?php
                 $deliveryDate = '—';
@@ -131,10 +131,10 @@
                         </form>
                     </div>
 
-                    <div class="grid gap-4 rounded-xl bg-slate-50 p-3 md:grid-cols-[1.25fr_1fr]">
+                    <div class="grid gap-4 rounded-xl p-0 md:grid-cols-[1fr_1.5fr]">
                         <div class="space-y-3">
                             <?php foreach ($order['items'] as $item): ?>
-                                <div class="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
+                                <div class="rounded-lg bg-white p-3">
                                     <div class="flex items-start justify-between gap-3">
                                         <div class="space-y-1">
                                             <p class="font-semibold text-slate-900"><?php echo htmlspecialchars($item['title'], ENT_QUOTES, 'UTF-8'); ?></p>
