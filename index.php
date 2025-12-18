@@ -64,6 +64,7 @@ $router->get('admin-services-delivery', [AdminController::class, 'serviceDeliver
 $router->get('admin-content-static', [AdminController::class, 'contentStatic']);
 $router->get('admin-content-products', [AdminController::class, 'contentProducts']);
 $router->get('admin-content-sections', [AdminController::class, 'contentSections']);
+$router->post('api-dadata-clean-address', [ApiController::class, 'cleanDadataAddress']);
 $router->post('login', [AuthController::class, 'login']);
 $router->post('register', [AuthController::class, 'register']);
 $router->post('recover', [AuthController::class, 'recover']);
@@ -88,7 +89,7 @@ $router->post('cart-checkout', [CartController::class, 'checkout']);
 $router->post('account-notifications', [AccountController::class, 'updateNotifications']);
 $router->post('account-pin', [AccountController::class, 'updatePin']);
 
-$publicPages = ['login', 'register', 'recover'];
+$publicPages = ['login', 'register', 'recover', 'api-dadata-clean-address'];
 
 if (!Auth::check() && !in_array($page, $publicPages, true)) {
     header('Location: /?page=login');
