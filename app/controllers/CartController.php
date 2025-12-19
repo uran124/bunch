@@ -151,6 +151,7 @@ class CartController extends Controller
         header('Content-Type: application/json');
 
         if (!Auth::check()) {
+            $this->logCheckoutError('Unauthorized checkout attempt');
             http_response_code(401);
             echo json_encode(['error' => 'Требуется авторизация']);
             return;
@@ -161,6 +162,7 @@ class CartController extends Controller
         $items = $cart->getItems();
 
         if (empty($items)) {
+            $this->logCheckoutError('Empty cart on checkout', ['user_id' => $userId]);
             http_response_code(400);
             echo json_encode(['error' => 'Корзина пуста']);
             return;
@@ -184,6 +186,10 @@ class CartController extends Controller
         if ($mode === 'delivery' && $addressId !== null) {
             $validAddressIds = array_map(static fn ($row) => (int) ($row['raw']['id'] ?? 0), $userAddresses);
             if ($addressId > 0 && !in_array($addressId, $validAddressIds, true)) {
+                $this->logCheckoutError('Address does not belong to user', [
+                    'user_id' => $userId,
+                    'address_id' => $addressId,
+                ]);
                 http_response_code(400);
                 echo json_encode(['error' => 'Адрес не найден']);
                 return;
@@ -197,6 +203,9 @@ class CartController extends Controller
         if ($mode === 'delivery' && $addressId === null) {
             $hasAddressPayload = $addressText !== '' || array_filter($addressDetails);
             if (!$hasAddressPayload) {
+                $this->logCheckoutError('Delivery checkout without address payload', [
+                    'user_id' => $userId,
+                ]);
                 http_response_code(400);
                 echo json_encode(['error' => 'Укажите адрес доставки']);
                 return;
@@ -225,6 +234,10 @@ class CartController extends Controller
 
                 $addressId = $addressModel->createForUser((int) $userId, $addressPayload);
             } catch (Throwable $e) {
+                $this->logCheckoutError('Failed to save address during checkout', [
+                    'user_id' => $userId,
+                    'message' => $e->getMessage(),
+                ]);
                 http_response_code(400);
                 echo json_encode(['error' => 'Не удалось сохранить адрес']);
                 return;
@@ -256,11 +269,28 @@ class CartController extends Controller
                 'order_id' => $orderId,
             ]);
         } catch (Throwable $e) {
+            $this->logCheckoutError('Checkout failed', [
+                'user_id' => $userId,
+                'message' => $e->getMessage(),
+            ]);
             http_response_code(400);
             echo json_encode([
                 'error' => $e->getMessage(),
             ]);
         }
+    }
+
+    private function logCheckoutError(string $message, array $context = []): void
+    {
+        $logDir = __DIR__ . '/../../storage/logs';
+        if (!is_dir($logDir)) {
+            return;
+        }
+
+        $payload = $context ? ' ' . json_encode($context, JSON_UNESCAPED_UNICODE) : '';
+        $entry = sprintf("[%s] %s%s\n", date('c'), $message, $payload);
+
+        file_put_contents($logDir . '/checkout.log', $entry, FILE_APPEND);
     }
 
 }
