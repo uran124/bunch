@@ -212,6 +212,9 @@ class CartController extends Controller
             }
 
             try {
+                $zoneCalculatedAt = $this->normalizeZoneCalculatedAt(
+                    $payload['zone_calculated_at'] ?? ($addressDetails['zone_calculated_at'] ?? null)
+                );
                 $addressPayload = array_merge($addressDetails, [
                     'address_text' => $addressText,
 
@@ -219,7 +222,7 @@ class CartController extends Controller
                     'recipient_phone' => $recipient['phone'] ?? null,
                     'zone_id' => $payload['zone_id'] ?? ($addressDetails['zone_id'] ?? null),
                     'zone_version' => $payload['zone_version'] ?? $payload['delivery_pricing_version'] ?? null,
-                    'zone_calculated_at' => $payload['zone_calculated_at'] ?? null,
+                    'zone_calculated_at' => $zoneCalculatedAt,
                     'last_delivery_price_hint' => $payload['delivery_price'] ?? null,
                     'location_source' => $addressDetails['location_source'] ?? ($payload['location_source'] ?? null),
                     'geo_quality' => $addressDetails['geo_quality'] ?? ($payload['geo_quality'] ?? null),
@@ -278,6 +281,22 @@ class CartController extends Controller
                 'error' => $e->getMessage(),
             ]);
         }
+    }
+
+    private function normalizeZoneCalculatedAt(?string $value): ?string
+    {
+        $value = trim((string) $value);
+        if ($value === '') {
+            return null;
+        }
+
+        try {
+            $dt = new DateTimeImmutable($value);
+        } catch (Throwable $e) {
+            return null;
+        }
+
+        return $dt->format('Y-m-d H:i:s');
     }
 
     private function logCheckoutError(string $message, array $context = []): void
