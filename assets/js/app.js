@@ -1418,3 +1418,305 @@ if (pageId === 'account') {
 if (pageId === 'orders') {
     initOrdersHistory();
 }
+
+function formatCurrency(value) {
+    const number = Number(value || 0);
+    return `${number.toLocaleString('ru-RU', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} ₽`;
+}
+
+async function fetchJson(url, options) {
+    const response = await fetch(url, options);
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+        const message = data.error || 'Не удалось выполнить запрос';
+        throw new Error(message);
+    }
+    return data;
+}
+
+function initLotteryModal() {
+    const modal = document.querySelector('[data-lottery-modal]');
+    const triggers = document.querySelectorAll('[data-lottery-open]');
+    if (!modal || !triggers.length) return;
+
+    const title = modal.querySelector('[data-lottery-title]');
+    const subtitle = modal.querySelector('[data-lottery-subtitle]');
+    const price = modal.querySelector('[data-lottery-price]');
+    const availability = modal.querySelector('[data-lottery-availability]');
+    const ticketsContainer = modal.querySelector('[data-lottery-tickets]');
+    const payButton = modal.querySelector('[data-lottery-pay]');
+    const randomButton = modal.querySelector('[data-lottery-random]');
+    const closeButtons = modal.querySelectorAll('[data-lottery-close]');
+
+    let activeLotteryId = null;
+    let payTicketId = null;
+
+    const closeModal = () => {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        activeLotteryId = null;
+        payTicketId = null;
+    };
+
+    closeButtons.forEach((btn) => btn.addEventListener('click', closeModal));
+    modal.addEventListener('click', (event) => {
+        if (event.target === modal) closeModal();
+    });
+
+    const renderTickets = (tickets) => {
+        ticketsContainer.innerHTML = '';
+        tickets.forEach((ticket) => {
+            const item = document.createElement(ticket.status === 'free' ? 'button' : 'div');
+            item.className =
+                'flex w-full items-center justify-between rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm';
+            if (ticket.status === 'free') {
+                item.type = 'button';
+            }
+
+            const number = document.createElement('span');
+            number.textContent = `#${ticket.ticket_number}`;
+            const status = document.createElement('span');
+            if (ticket.status === 'free') {
+                status.textContent = 'Свободен';
+            } else {
+                status.textContent = ticket.phone_last4 ? `……${ticket.phone_last4}` : 'Занят';
+            }
+
+            if (ticket.is_mine) {
+                status.textContent = `${status.textContent} · ваш билет`;
+                item.classList.add('border-emerald-200', 'bg-emerald-50');
+            }
+
+            if (ticket.status === 'paid') {
+                item.classList.add('opacity-80');
+            }
+
+            if (ticket.status === 'free') {
+                item.addEventListener('click', async () => {
+                    try {
+                        await reserveTicket(activeLotteryId, ticket.ticket_number);
+                    } catch (error) {
+                        alert(error.message);
+                    }
+                });
+            }
+
+            item.appendChild(number);
+            item.appendChild(status);
+            ticketsContainer.appendChild(item);
+        });
+    };
+
+    const updatePayState = (tickets) => {
+        const mine = tickets.find((ticket) => ticket.is_mine && ticket.status === 'reserved');
+        if (mine) {
+            payTicketId = mine.id;
+            payButton.disabled = false;
+            payButton.classList.remove('opacity-70');
+        } else {
+            payTicketId = null;
+            payButton.disabled = true;
+            payButton.classList.add('opacity-70');
+        }
+    };
+
+    const loadTickets = async (lotteryId) => {
+        const data = await fetchJson(`/api/lottery/tickets?lottery_id=${lotteryId}`);
+        if (title) title.textContent = data.lottery.title;
+        if (subtitle) subtitle.textContent = `Билетов всего ${data.lottery.tickets_total}. Резерв ${data.reserve_ttl} мин.`;
+        if (price) price.textContent = `Билет ${formatCurrency(data.lottery.ticket_price)}`;
+        if (availability) {
+            availability.textContent = `Свободно ${data.lottery.tickets_free} из ${data.lottery.tickets_total}`;
+        }
+        renderTickets(data.tickets);
+        updatePayState(data.tickets);
+    };
+
+    const reserveTicket = async (lotteryId, ticketNumber) => {
+        await fetchJson('/api/lottery/reserve', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+            body: JSON.stringify({ lottery_id: lotteryId, ticket_number: ticketNumber }),
+        });
+        await loadTickets(lotteryId);
+    };
+
+    const reserveRandom = async () => {
+        await fetchJson('/api/lottery/reserve', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+            body: JSON.stringify({ lottery_id: activeLotteryId, random: true }),
+        });
+        await loadTickets(activeLotteryId);
+    };
+
+    randomButton?.addEventListener('click', async () => {
+        if (!activeLotteryId) return;
+        try {
+            await reserveRandom();
+        } catch (error) {
+            alert(error.message);
+        }
+    });
+
+    payButton?.addEventListener('click', async () => {
+        if (!payTicketId) return;
+        try {
+            await fetchJson('/api/lottery/pay', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                body: JSON.stringify({ ticket_id: payTicketId }),
+            });
+            await loadTickets(activeLotteryId);
+        } catch (error) {
+            alert(error.message);
+        }
+    });
+
+    triggers.forEach((trigger) => {
+        trigger.addEventListener('click', async () => {
+            const lotteryId = Number(trigger.dataset.lotteryId);
+            if (!lotteryId) return;
+            activeLotteryId = lotteryId;
+            try {
+                await loadTickets(lotteryId);
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            } catch (error) {
+                alert(error.message);
+            }
+        });
+    });
+}
+
+function initAuctionModal() {
+    const modal = document.querySelector('[data-auction-modal]');
+    const triggers = document.querySelectorAll('[data-auction-open]');
+    if (!modal || !triggers.length) return;
+
+    const title = modal.querySelector('[data-auction-title]');
+    const subtitle = modal.querySelector('[data-auction-subtitle]');
+    const currentEl = modal.querySelector('[data-auction-current]');
+    const stepEl = modal.querySelector('[data-auction-step]');
+    const endsEl = modal.querySelector('[data-auction-ends]');
+    const bidsEl = modal.querySelector('[data-auction-bids]');
+    const amountInput = modal.querySelector('[data-auction-amount]');
+    const bidButton = modal.querySelector('[data-auction-bid]');
+    const blitzButton = modal.querySelector('[data-auction-blitz]');
+    const closeButtons = modal.querySelectorAll('[data-auction-close]');
+
+    let activeLotId = null;
+
+    const closeModal = () => {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        activeLotId = null;
+    };
+
+    closeButtons.forEach((btn) => btn.addEventListener('click', closeModal));
+    modal.addEventListener('click', (event) => {
+        if (event.target === modal) closeModal();
+    });
+
+    const renderBids = (bids) => {
+        bidsEl.innerHTML = '';
+        if (!bids.length) {
+            bidsEl.textContent = 'Ставок ещё нет.';
+            return;
+        }
+        bids.forEach((bid) => {
+            const row = document.createElement('div');
+            row.className = 'flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600';
+            row.innerHTML = `<span>${formatCurrency(bid.amount)}</span><span>……${bid.phone_last4}</span><span>${bid.created_at}</span>`;
+            bidsEl.appendChild(row);
+        });
+    };
+
+    const loadLot = async (lotId) => {
+        const data = await fetchJson(`/api/auction/lot?id=${lotId}`);
+        const lot = data.lot;
+        if (title) title.textContent = lot.title;
+        if (subtitle) subtitle.textContent = lot.status === 'finished' ? 'Аукцион завершён.' : 'Ставка обновляется при каждом действии.';
+        if (currentEl) currentEl.textContent = formatCurrency(lot.current_price);
+        if (stepEl) stepEl.textContent = formatCurrency(lot.bid_step);
+        if (endsEl) endsEl.textContent = lot.ends_at || '—';
+        if (amountInput) amountInput.value = lot.min_bid;
+
+        if (blitzButton) {
+            if (lot.blitz_price) {
+                blitzButton.disabled = false;
+                blitzButton.classList.remove('opacity-60');
+                blitzButton.innerHTML = `<span class="material-symbols-rounded text-base">bolt</span>Выкупить за ${formatCurrency(lot.blitz_price)}`;
+            } else {
+                blitzButton.disabled = true;
+                blitzButton.classList.add('opacity-60');
+                blitzButton.innerHTML = '<span class="material-symbols-rounded text-base">bolt</span>Блиц не задан';
+            }
+        }
+
+        renderBids(data.bids);
+    };
+
+    bidButton?.addEventListener('click', async () => {
+        if (!activeLotId) return;
+        try {
+            await fetchJson('/api/auction/bid', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                body: JSON.stringify({ lot_id: activeLotId, amount: amountInput?.value }),
+            });
+            await loadLot(activeLotId);
+        } catch (error) {
+            alert(error.message);
+        }
+    });
+
+    blitzButton?.addEventListener('click', async () => {
+        if (!activeLotId) return;
+        try {
+            await fetchJson('/api/auction/blitz', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                body: JSON.stringify({ lot_id: activeLotId }),
+            });
+            await loadLot(activeLotId);
+        } catch (error) {
+            alert(error.message);
+        }
+    });
+
+    triggers.forEach((trigger) => {
+        trigger.addEventListener('click', async () => {
+            const lotId = Number(trigger.dataset.auctionId);
+            if (!lotId) return;
+            activeLotId = lotId;
+            try {
+                await loadLot(lotId);
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            } catch (error) {
+                alert(error.message);
+            }
+        });
+    });
+}
+
+if (pageId === 'promo') {
+    initLotteryModal();
+    initAuctionModal();
+}

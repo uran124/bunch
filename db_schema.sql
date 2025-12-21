@@ -25,6 +25,12 @@ DROP TABLE IF EXISTS product_price_tiers;
 DROP TABLE IF EXISTS product_attributes;
 DROP TABLE IF EXISTS attribute_values;
 DROP TABLE IF EXISTS attributes;
+DROP TABLE IF EXISTS auction_events;
+DROP TABLE IF EXISTS auction_bids;
+DROP TABLE IF EXISTS auction_lots;
+DROP TABLE IF EXISTS lottery_ticket_logs;
+DROP TABLE IF EXISTS lottery_tickets;
+DROP TABLE IF EXISTS lotteries;
 DROP TABLE IF EXISTS user_addresses;
 DROP TABLE IF EXISTS promos;
 DROP TABLE IF EXISTS products;
@@ -174,6 +180,7 @@ CREATE TABLE products (
   country       VARCHAR(80) NULL,          -- страна происхождения из поставки
 
   category    ENUM('main', 'accessory') NOT NULL DEFAULT 'main', -- витрина или сопутствующие товары
+  product_type ENUM('regular', 'lottery') NOT NULL DEFAULT 'regular',
 
   is_base     TINYINT(1) NOT NULL DEFAULT 0, -- базовый продукт (массовая роза)
   is_active   TINYINT(1) NOT NULL DEFAULT 1,
@@ -209,6 +216,160 @@ CREATE TABLE promos (
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
     ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_unicode_ci;
+
+-- =========================
+-- 4.1. Лотереи
+-- =========================
+
+CREATE TABLE lotteries (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  product_id INT UNSIGNED NOT NULL,
+
+  prize_description TEXT NULL,
+  ticket_price DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+  tickets_total INT UNSIGNED NOT NULL,
+  draw_at DATETIME NULL,
+  status ENUM('active', 'sold_out', 'finished') NOT NULL DEFAULT 'active',
+  winner_ticket_id INT UNSIGNED NULL,
+
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    ON UPDATE CURRENT_TIMESTAMP,
+
+  CONSTRAINT fk_lotteries_product
+    FOREIGN KEY (product_id) REFERENCES products(id)
+    ON DELETE CASCADE,
+
+  INDEX idx_lottery_status (status)
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE lottery_tickets (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  lottery_id INT UNSIGNED NOT NULL,
+  ticket_number INT UNSIGNED NOT NULL,
+  status ENUM('free', 'reserved', 'paid') NOT NULL DEFAULT 'free',
+  user_id INT UNSIGNED NULL,
+  phone_last4 VARCHAR(4) NULL,
+  reserved_at DATETIME NULL,
+  paid_at DATETIME NULL,
+
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+  CONSTRAINT fk_lottery_tickets_lottery
+    FOREIGN KEY (lottery_id) REFERENCES lotteries(id)
+    ON DELETE CASCADE,
+  CONSTRAINT fk_lottery_tickets_user
+    FOREIGN KEY (user_id) REFERENCES users(id)
+    ON DELETE SET NULL,
+
+  UNIQUE KEY uniq_ticket_number (lottery_id, ticket_number),
+  INDEX idx_lottery_ticket_status (lottery_id, status)
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE lottery_ticket_logs (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  ticket_id INT UNSIGNED NOT NULL,
+  action ENUM('created', 'reserved', 'paid', 'released') NOT NULL,
+  user_id INT UNSIGNED NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+  CONSTRAINT fk_lottery_ticket_logs_ticket
+    FOREIGN KEY (ticket_id) REFERENCES lottery_tickets(id)
+    ON DELETE CASCADE,
+  CONSTRAINT fk_lottery_ticket_logs_user
+    FOREIGN KEY (user_id) REFERENCES users(id)
+    ON DELETE SET NULL,
+
+  INDEX idx_ticket_log_ticket (ticket_id)
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_unicode_ci;
+
+-- =========================
+-- 4.2. Аукционы
+-- =========================
+
+CREATE TABLE auction_lots (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+
+  title VARCHAR(150) NOT NULL,
+  description TEXT NULL,
+  image VARCHAR(255) NULL,
+  store_price DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+  start_price DECIMAL(10,2) NOT NULL DEFAULT 1.00,
+  bid_step DECIMAL(10,2) NOT NULL DEFAULT 1.00,
+  blitz_price DECIMAL(10,2) NULL,
+  starts_at DATETIME NULL,
+  ends_at DATETIME NULL,
+  original_ends_at DATETIME NULL,
+  status ENUM('draft', 'active', 'finished', 'cancelled') NOT NULL DEFAULT 'draft',
+  winner_user_id INT UNSIGNED NULL,
+  winning_bid_id INT UNSIGNED NULL,
+
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    ON UPDATE CURRENT_TIMESTAMP,
+
+  CONSTRAINT fk_auction_lot_winner
+    FOREIGN KEY (winner_user_id) REFERENCES users(id)
+    ON DELETE SET NULL,
+
+  INDEX idx_auction_status (status),
+  INDEX idx_auction_time (starts_at, ends_at)
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE auction_bids (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  lot_id INT UNSIGNED NOT NULL,
+  user_id INT UNSIGNED NOT NULL,
+  amount DECIMAL(10,2) NOT NULL,
+  status ENUM('active', 'cancelled') NOT NULL DEFAULT 'active',
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  cancelled_at DATETIME NULL,
+  cancel_reason VARCHAR(255) NULL,
+
+  CONSTRAINT fk_auction_bids_lot
+    FOREIGN KEY (lot_id) REFERENCES auction_lots(id)
+    ON DELETE CASCADE,
+  CONSTRAINT fk_auction_bids_user
+    FOREIGN KEY (user_id) REFERENCES users(id)
+    ON DELETE CASCADE,
+
+  INDEX idx_auction_bid_lot (lot_id, status),
+  INDEX idx_auction_bid_user (user_id)
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE auction_events (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  lot_id INT UNSIGNED NOT NULL,
+  bid_id INT UNSIGNED NULL,
+  user_id INT UNSIGNED NULL,
+  action ENUM('bid_created', 'bid_cancelled', 'blitz', 'finished') NOT NULL,
+  note VARCHAR(255) NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+  CONSTRAINT fk_auction_events_lot
+    FOREIGN KEY (lot_id) REFERENCES auction_lots(id)
+    ON DELETE CASCADE,
+  CONSTRAINT fk_auction_events_bid
+    FOREIGN KEY (bid_id) REFERENCES auction_bids(id)
+    ON DELETE SET NULL,
+  CONSTRAINT fk_auction_events_user
+    FOREIGN KEY (user_id) REFERENCES users(id)
+    ON DELETE SET NULL,
+
+  INDEX idx_auction_event_lot (lot_id, action)
 ) ENGINE=InnoDB
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_unicode_ci;

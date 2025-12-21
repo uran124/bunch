@@ -88,6 +88,58 @@ class Product extends Model
         return (int) $this->db->lastInsertId();
     }
 
+    public function createCustom(array $payload): int
+    {
+        $slug = $this->generateSlug($payload['name']);
+
+        $sql = "INSERT INTO {$this->table} (name, slug, description, price, article, photo_url, category, product_type, is_base, is_active, sort_order) VALUES (:name, :slug, :description, :price, :article, :photo_url, :category, :product_type, :is_base, :is_active, :sort_order)";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([
+            'name' => $payload['name'],
+            'slug' => $slug,
+            'description' => $payload['description'],
+            'price' => $payload['price'],
+            'article' => $payload['article'],
+            'photo_url' => $payload['photo_url'],
+            'category' => $payload['category'] ?? 'main',
+            'product_type' => $payload['product_type'] ?? 'regular',
+            'is_base' => $payload['is_base'] ?? 0,
+            'is_active' => $payload['is_active'] ?? 1,
+            'sort_order' => $payload['sort_order'] ?? 0,
+        ]);
+
+        return (int) $this->db->lastInsertId();
+    }
+
+    private function generateSlug(string $name): string
+    {
+        $slug = strtolower(trim($name));
+        $slug = preg_replace('/[^a-z0-9а-яё]+/ui', '-', $slug);
+        $slug = trim($slug, '-');
+
+        if ($slug === '') {
+            $slug = 'product';
+        }
+
+        $base = $slug;
+        $index = 1;
+
+        while ($this->slugExists($slug)) {
+            $index++;
+            $slug = $base . '-' . $index;
+        }
+
+        return $slug;
+    }
+
+    private function slugExists(string $slug): bool
+    {
+        $stmt = $this->db->prepare("SELECT 1 FROM {$this->table} WHERE slug = :slug LIMIT 1");
+        $stmt->execute(['slug' => $slug]);
+        return (bool) $stmt->fetchColumn();
+    }
+
     public function updateProduct(int $id, array $payload): void
     {
         $sql = "UPDATE {$this->table} SET supply_id = :supply_id, name = :name, description = :description, price = :price, article = :article, photo_url = :photo_url, stem_height_cm = :stem_height_cm, stem_weight_g = :stem_weight_g, country = :country, category = :category, is_active = :is_active WHERE id = :id";

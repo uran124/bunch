@@ -12,41 +12,10 @@ class PromoController extends Controller
             'headerSubtitle' => 'Акции и спецпредложения',
         ];
 
-        $auctions = [
-            [
-                'title' => 'Аукцион на пион Coral Charm',
-                'status' => 'Идёт торг',
-                'startPrice' => 'Старт 250 ₽',
-                'currentBid' => 'Текущая ставка 410 ₽',
-                'time' => 'До завершения 02:15',
-                'photo' => 'https://images.unsplash.com/photo-1597892657493-6847b9640c59?auto=format&fit=crop&w=1200&q=80',
-            ],
-            [
-                'title' => 'Аукцион: «Собери стендинг»',
-                'status' => 'Приём ставок открыт',
-                'startPrice' => 'Старт 180 ₽',
-                'currentBid' => 'Ставка 240 ₽',
-                'time' => 'Старт сегодня в 18:00',
-                'photo' => 'https://images.unsplash.com/photo-1501004318641-b39e6451bec6?auto=format&fit=crop&w=1200&q=80',
-            ],
-        ];
-
-        $lotteries = [
-            [
-                'title' => 'Лотерея «Букет выходного дня»',
-                'entry' => 'Взнос 150 ₽ · 1 билет',
-                'spots' => 'Осталось 8 из 50 билетов',
-                'draw' => 'Розыгрыш 16.06 в 12:00',
-                'photo' => 'https://images.unsplash.com/photo-1528825871115-3581a5387919?auto=format&fit=crop&w=1200&q=80',
-            ],
-            [
-                'title' => 'Лотерея: коробка сезонных цветов',
-                'entry' => 'Взнос 0 ₽ для подписчиков',
-                'spots' => 'Осталось 22 места',
-                'draw' => 'Розыгрыш 18.06 в 20:00',
-                'photo' => 'https://images.unsplash.com/photo-1487412912498-0447578fcca8?auto=format&fit=crop&w=1200&q=80',
-            ],
-        ];
+        $auctionModel = new AuctionLot();
+        $lotteryModel = new Lottery();
+        $auctions = $auctionModel->getPromoList();
+        $lotteries = $lotteryModel->getPromoList();
 
         $oneTimeItems = [
             [
