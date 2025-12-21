@@ -124,6 +124,35 @@
                 </article>
             <?php endforeach; ?>
         </div>
+        <div class="rounded-3xl border border-amber-100 bg-amber-50/60 p-5 text-sm text-slate-700 shadow-sm sm:p-6">
+            <div class="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-[0.22em] text-amber-700">
+                <span class="material-symbols-rounded text-base">verified</span>
+                Прозрачная лотерея
+            </div>
+            <p class="mt-3 text-base font-semibold text-slate-900">
+                👉 Лотерея = товар с фиксированным пулом билетов + публичное состояние каждого билета + неизменяемая история.
+            </p>
+            <p class="mt-2 text-sm text-slate-600">
+                Если клиент в любой момент может увидеть все билеты, понять кто и когда занял билет и убедиться, что номера не меняются задним числом — доверие возникает автоматически, без объяснений.
+            </p>
+            <ul class="mt-4 space-y-2 text-sm text-slate-600">
+                <li class="flex gap-2">
+                    <span class="material-symbols-rounded text-base text-amber-600">confirmation_number</span>
+                    Все билеты создаются заранее, количество фиксируется при создании и не меняется.
+                </li>
+                <li class="flex gap-2">
+                    <span class="material-symbols-rounded text-base text-amber-600">visibility</span>
+                    Публично видно состояние каждого билета: свободен или занят, только последние 4 цифры телефона.
+                </li>
+                <li class="flex gap-2">
+                    <span class="material-symbols-rounded text-base text-amber-600">history</span>
+                    История действий по билетам хранится неизменно и позволяет доказать порядок событий.
+                </li>
+            </ul>
+            <p class="mt-4 text-xs font-semibold uppercase tracking-[0.22em] text-amber-700">
+                «Все билеты создаются заранее. Вы видите, какие номера свободны и какие уже куплены — с последними 4 цифрами телефона участников.»
+            </p>
+        </div>
     </div>
 
     <div class="space-y-3 sm:space-y-4">
