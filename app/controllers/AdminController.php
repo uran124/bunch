@@ -494,10 +494,91 @@ class AdminController extends Controller
             'headerSubtitle' => 'Каталог · Спецпредложения',
         ];
 
+        $lotteryModel = new Lottery();
+        $auctionModel = new AuctionLot();
+
         $this->render('admin-promos', [
             'pageMeta' => $pageMeta,
-            'promos' => $this->getPromoFixtures(),
+            'lotteries' => $lotteryModel->getAdminList(),
+            'auctions' => $auctionModel->getAdminList(),
+            'message' => $_GET['status'] ?? null,
         ]);
+    }
+
+    public function saveLottery(): void
+    {
+        $title = trim($_POST['title'] ?? '');
+        $prize = trim($_POST['prize_description'] ?? '');
+        $ticketPrice = (float) ($_POST['ticket_price'] ?? 0);
+        $ticketsTotal = (int) ($_POST['tickets_total'] ?? 0);
+        $drawAt = trim($_POST['draw_at'] ?? '');
+        $status = $_POST['status'] ?? 'active';
+        $photo = trim($_POST['photo_url'] ?? '');
+
+        if ($title === '' || $ticketsTotal <= 0) {
+            header('Location: /?page=admin-promos&status=error');
+            return;
+        }
+
+        $lotteryModel = new Lottery();
+
+        try {
+            $lotteryModel->createLottery([
+                'title' => $title,
+                'prize_description' => $prize !== '' ? $prize : null,
+                'ticket_price' => $ticketPrice,
+                'tickets_total' => $ticketsTotal,
+                'draw_at' => $drawAt !== '' ? $drawAt : null,
+                'status' => $status,
+                'photo_url' => $photo !== '' ? $photo : null,
+            ]);
+        } catch (Throwable $e) {
+            header('Location: /?page=admin-promos&status=error');
+            return;
+        }
+
+        header('Location: /?page=admin-promos&status=saved');
+    }
+
+    public function saveAuctionLot(): void
+    {
+        $title = trim($_POST['title'] ?? '');
+        $description = trim($_POST['description'] ?? '');
+        $image = trim($_POST['image'] ?? '');
+        $storePrice = (float) ($_POST['store_price'] ?? 0);
+        $startPrice = (float) ($_POST['start_price'] ?? 1);
+        $bidStep = (float) ($_POST['bid_step'] ?? 1);
+        $blitzPrice = trim($_POST['blitz_price'] ?? '');
+        $startsAt = trim($_POST['starts_at'] ?? '');
+        $endsAt = trim($_POST['ends_at'] ?? '');
+        $status = $_POST['status'] ?? 'draft';
+
+        if ($title === '' || $bidStep <= 0 || $startPrice <= 0) {
+            header('Location: /?page=admin-promos&status=error');
+            return;
+        }
+
+        $auctionModel = new AuctionLot();
+
+        try {
+            $auctionModel->createLot([
+                'title' => $title,
+                'description' => $description !== '' ? $description : null,
+                'image' => $image !== '' ? $image : null,
+                'store_price' => $storePrice,
+                'start_price' => $startPrice,
+                'bid_step' => $bidStep,
+                'blitz_price' => $blitzPrice !== '' ? (float) $blitzPrice : null,
+                'starts_at' => $startsAt !== '' ? $startsAt : null,
+                'ends_at' => $endsAt !== '' ? $endsAt : null,
+                'status' => $status,
+            ]);
+        } catch (Throwable $e) {
+            header('Location: /?page=admin-promos&status=error');
+            return;
+        }
+
+        header('Location: /?page=admin-promos&status=saved');
     }
 
     public function catalogAttributes(): void
@@ -1395,39 +1476,6 @@ class AdminController extends Controller
                 'updatedAt' => '2024-06-01',
                 'color' => 'Серебристый',
                 'height' => '40 см',
-            ],
-        ];
-    }
-
-    private function getPromoFixtures(): array
-    {
-        return [
-            [
-                'id' => 801,
-                'title' => 'Флеш-распродажа 6 часов',
-                'type' => 'sale',
-                'price' => '75 ₽',
-                'active' => true,
-                'period' => '14.06 10:00 — 14.06 16:00',
-                'product' => 'Роза Freedom',
-            ],
-            [
-                'id' => 802,
-                'title' => 'Аукцион на пион Coral Charm',
-                'type' => 'auction',
-                'price' => 'Старт 250 ₽',
-                'active' => true,
-                'period' => '15.06 12:00 — 15.06 20:00',
-                'product' => 'Пион Coral Charm',
-            ],
-            [
-                'id' => 803,
-                'title' => 'Лотерея «Заберите стендинг»',
-                'type' => 'lottery',
-                'price' => '0 ₽',
-                'active' => false,
-                'period' => '01.06 — 07.06',
-                'product' => null,
             ],
         ];
     }
