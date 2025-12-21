@@ -6,7 +6,7 @@ class AuctionBid extends Model
     public function getCurrentBid(int $lotId): ?array
     {
         $stmt = $this->db->prepare(
-            'SELECT id, amount, user_id, created_at FROM auction_bids WHERE lot_id = :lot_id AND status = \"active\" ORDER BY amount DESC, created_at DESC LIMIT 1'
+            "SELECT id, amount, user_id, created_at FROM auction_bids WHERE lot_id = :lot_id AND status = 'active' ORDER BY amount DESC, created_at DESC LIMIT 1"
         );
         $stmt->execute(['lot_id' => $lotId]);
         $row = $stmt->fetch();
@@ -17,7 +17,7 @@ class AuctionBid extends Model
     public function getRecentBids(int $lotId, int $limit = 5): array
     {
         $stmt = $this->db->prepare(
-            'SELECT b.id, b.amount, b.created_at, u.phone FROM auction_bids b JOIN users u ON u.id = b.user_id WHERE b.lot_id = :lot_id AND b.status = \"active\" ORDER BY b.created_at DESC LIMIT :limit'
+            "SELECT b.id, b.amount, b.created_at, u.phone FROM auction_bids b JOIN users u ON u.id = b.user_id WHERE b.lot_id = :lot_id AND b.status = 'active' ORDER BY b.created_at DESC LIMIT :limit"
         );
         $stmt->bindValue(':lot_id', $lotId, PDO::PARAM_INT);
         $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
