@@ -61,7 +61,7 @@ SQL;
 
     public function getPromoList(): array
     {
-        $stmt = $this->db->query('SELECT * FROM auction_lots WHERE status != \"cancelled\" ORDER BY starts_at DESC');
+        $stmt = $this->db->query("SELECT * FROM auction_lots WHERE status != 'cancelled' ORDER BY starts_at DESC");
         $rows = $stmt->fetchAll();
         $bidModel = new AuctionBid();
 
@@ -206,7 +206,7 @@ SQL;
         $bidId = (int) $this->db->lastInsertId();
 
         $update = $this->db->prepare(
-            'UPDATE auction_lots SET status = \"finished\", winner_user_id = :user_id, winning_bid_id = :bid_id, ends_at = NOW() WHERE id = :id'
+            "UPDATE auction_lots SET status = 'finished', winner_user_id = :user_id, winning_bid_id = :bid_id, ends_at = NOW() WHERE id = :id"
         );
         $update->execute([
             'user_id' => $userId,
@@ -250,7 +250,7 @@ SQL;
         }
 
         $update = $this->db->prepare(
-            'UPDATE auction_bids SET status = \"cancelled\", cancelled_at = NOW(), cancel_reason = :reason WHERE id = :id'
+            "UPDATE auction_bids SET status = 'cancelled', cancelled_at = NOW(), cancel_reason = :reason WHERE id = :id"
         );
         $update->execute([
             'reason' => 'Отменено пользователем',
@@ -283,7 +283,7 @@ SQL;
         $winningBidId = $currentBid ? (int) $currentBid['id'] : null;
 
         $update = $this->db->prepare(
-            'UPDATE auction_lots SET status = \"finished\", winner_user_id = :winner_user_id, winning_bid_id = :winning_bid_id WHERE id = :id'
+            "UPDATE auction_lots SET status = 'finished', winner_user_id = :winner_user_id, winning_bid_id = :winning_bid_id WHERE id = :id"
         );
         $update->execute([
             'winner_user_id' => $winnerUserId,

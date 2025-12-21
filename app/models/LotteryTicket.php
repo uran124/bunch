@@ -35,7 +35,7 @@ class LotteryTicket extends Model
 
             if ($ticketNumber !== null) {
                 $stmt = $this->db->prepare(
-                    'SELECT id, ticket_number FROM lottery_tickets WHERE lottery_id = :lottery_id AND ticket_number = :ticket_number AND status = \"free\" FOR UPDATE'
+                    "SELECT id, ticket_number FROM lottery_tickets WHERE lottery_id = :lottery_id AND ticket_number = :ticket_number AND status = 'free' FOR UPDATE"
                 );
                 $stmt->execute([
                     'lottery_id' => $lotteryId,
@@ -43,7 +43,7 @@ class LotteryTicket extends Model
                 ]);
             } else {
                 $stmt = $this->db->prepare(
-                    'SELECT id, ticket_number FROM lottery_tickets WHERE lottery_id = :lottery_id AND status = \"free\" ORDER BY RAND() LIMIT 1 FOR UPDATE'
+                    "SELECT id, ticket_number FROM lottery_tickets WHERE lottery_id = :lottery_id AND status = 'free' ORDER BY RAND() LIMIT 1 FOR UPDATE"
                 );
                 $stmt->execute(['lottery_id' => $lotteryId]);
             }
@@ -55,7 +55,7 @@ class LotteryTicket extends Model
             }
 
             $update = $this->db->prepare(
-                'UPDATE lottery_tickets SET status = \"reserved\", user_id = :user_id, phone_last4 = :phone_last4, reserved_at = NOW() WHERE id = :id AND status = \"free\"'
+                "UPDATE lottery_tickets SET status = 'reserved', user_id = :user_id, phone_last4 = :phone_last4, reserved_at = NOW() WHERE id = :id AND status = 'free'"
             );
             $update->execute([
                 'user_id' => $userId,
@@ -84,7 +84,7 @@ class LotteryTicket extends Model
     public function markPaid(int $ticketId, int $userId, string $phoneLast4): void
     {
         $stmt = $this->db->prepare(
-            'UPDATE lottery_tickets SET status = \"paid\", paid_at = NOW(), phone_last4 = :phone_last4 WHERE id = :id AND status = \"reserved\" AND user_id = :user_id'
+            "UPDATE lottery_tickets SET status = 'paid', paid_at = NOW(), phone_last4 = :phone_last4 WHERE id = :id AND status = 'reserved' AND user_id = :user_id"
         );
         $stmt->execute([
             'phone_last4' => $phoneLast4,
@@ -106,7 +106,7 @@ class LotteryTicket extends Model
             ->format('Y-m-d H:i:s');
 
         $stmt = $this->db->prepare(
-            'SELECT id, user_id FROM lottery_tickets WHERE lottery_id = :lottery_id AND status = \"reserved\" AND reserved_at < :threshold'
+            "SELECT id, user_id FROM lottery_tickets WHERE lottery_id = :lottery_id AND status = 'reserved' AND reserved_at < :threshold"
         );
         $stmt->execute([
             'lottery_id' => $lotteryId,
