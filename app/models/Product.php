@@ -251,30 +251,4 @@ class Product extends Model
         return $attributes;
     }
 
-    private function generateSlug(string $name): string
-    {
-        $slug = strtolower(trim(preg_replace('/[^A-Za-zА-Яа-я0-9]+/u', '-', $name), '-'));
-
-        if ($slug === '') {
-            $slug = 'product';
-        }
-
-        $candidate = $slug;
-        $counter = 1;
-
-        while ($this->slugExists($candidate)) {
-            $candidate = $slug . '-' . $counter;
-            $counter++;
-        }
-
-        return $candidate;
-    }
-
-    private function slugExists(string $slug): bool
-    {
-        $stmt = $this->db->prepare("SELECT COUNT(*) FROM {$this->table} WHERE slug = :slug");
-        $stmt->execute(['slug' => $slug]);
-
-        return (bool) $stmt->fetchColumn();
-    }
 }
