@@ -94,6 +94,8 @@
             phoneInput.focus();
         }
 
+        let lastPhoneDigits = '';
+
         const formatPhone = (value) => {
             const digits = value.replace(/\D/g, '');
             const withoutPrefix = digits.startsWith('7') ? digits.slice(1) : digits;
@@ -134,8 +136,17 @@
             const { formatted, digits } = formatPhone(value);
             phoneInput.value = formatted;
 
-            if (digits.length === 10) {
-                pinInputs[0].focus();
+            const shouldMoveToPin = digits.length === 10 && lastPhoneDigits.length < 10;
+            lastPhoneDigits = digits;
+
+            if (shouldMoveToPin) {
+                requestAnimationFrame(() => {
+                    pinInputs.forEach((input) => {
+                        input.value = '';
+                    });
+                    hiddenPin.value = '';
+                    pinInputs[0].focus();
+                });
             }
         };
 
