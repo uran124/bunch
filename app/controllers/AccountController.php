@@ -50,6 +50,11 @@ class AccountController extends Controller
         $this->notificationSettingModel->syncTypes($notificationOptions);
         $notificationSettings = $this->notificationSettingModel->getSettingsForUser($userId, $notificationOptions);
 
+        $birthdayReminderDays = range(1, 7);
+        $birthdayReminderLeadDays = (int) ($userRow['birthday_reminder_days'] ?? 3);
+        $birthdayReminderLeadDays = max(1, min(7, $birthdayReminderLeadDays));
+        $birthdayReminders = $this->prepareBirthdayReminders($userRow['birthday_reminders'] ?? null);
+
         $pageMeta = [
             'title' => 'Личный кабинет — Bunch flowers',
             'description' => 'Управляйте профилем, адресами, заказами и подписками.',
@@ -75,7 +80,10 @@ class AccountController extends Controller
             'activeSubscriptions',
             'cartShortcut',
             'ordersLink',
-            'notificationOptions'
+            'notificationOptions',
+            'birthdayReminderDays',
+            'birthdayReminderLeadDays',
+            'birthdayReminders'
         ));
     }
 
@@ -261,6 +269,54 @@ class AccountController extends Controller
         }
 
         return preg_replace('/\D+/', '', (string) $raw) ?? '';
+    }
+
+    private function prepareBirthdayReminders(?string $raw): array
+    {
+        $items = [];
+        if ($raw) {
+            $decoded = json_decode($raw, true);
+            if (is_array($decoded)) {
+                $items = $decoded;
+            }
+        }
+
+        if (!$items) {
+            $items = [
+                [
+                    'id' => 1,
+                    'recipient' => 'Анна Смирнова',
+                    'occasion' => 'День рождения',
+                    'date' => '2024-04-12',
+                ],
+                [
+                    'id' => 2,
+                    'recipient' => 'Мария Иванова',
+                    'occasion' => 'Юбилей',
+                    'date' => '2024-05-03',
+                ],
+                [
+                    'id' => 3,
+                    'recipient' => 'Владимир К.',
+                    'occasion' => 'День рождения',
+                    'date' => '2024-06-19',
+                ],
+            ];
+        }
+
+        $normalized = [];
+        foreach ($items as $index => $item) {
+            $dateRaw = $item['date'] ?? null;
+            $normalized[] = [
+                'id' => $item['id'] ?? ($index + 1),
+                'recipient' => $item['recipient'] ?? 'Получатель',
+                'occasion' => $item['occasion'] ?? 'Повод',
+                'date_raw' => $dateRaw ? (string) $dateRaw : '',
+                'date' => $this->formatDate($dateRaw),
+            ];
+        }
+
+        return $normalized;
     }
 
     private function getNotificationOptions(): array

@@ -52,6 +52,8 @@ CREATE TABLE users (
   email VARCHAR(100) NULL,
 
   is_active TINYINT(1) NOT NULL DEFAULT 1, -- активен ли пользователь для операций и рассылок
+  birthday_reminder_days TINYINT UNSIGNED NOT NULL DEFAULT 3,
+  birthday_reminders JSON NULL,
 
   pin_hash VARCHAR(255) NOT NULL,          -- password_hash(pin)
   pin_updated_at DATETIME NULL,            -- когда PIN в последний раз меняли

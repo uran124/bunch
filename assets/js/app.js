@@ -1406,9 +1406,79 @@ function initPinModal() {
     });
 }
 
+function initBirthdayReminders() {
+    const modal = document.querySelector('[data-birthday-reminder-modal]');
+    const triggers = Array.from(document.querySelectorAll('[data-birthday-reminder-edit]'));
+    if (!modal || !triggers.length) return;
+
+    const closeButtons = modal.querySelectorAll('[data-birthday-reminder-close]');
+    const form = modal.querySelector('[data-birthday-reminder-form]');
+    const deleteButton = modal.querySelector('[data-birthday-reminder-delete]');
+    const recipientInput = modal.querySelector('[data-birthday-reminder-field="recipient"]');
+    const occasionInput = modal.querySelector('[data-birthday-reminder-field="occasion"]');
+    const dateInput = modal.querySelector('[data-birthday-reminder-field="date"]');
+    const status = document.querySelector('[data-birthday-reminder-status]');
+
+    const open = (data) => {
+        if (recipientInput) recipientInput.value = data.recipient || '';
+        if (occasionInput) occasionInput.value = data.occasion || '';
+        if (dateInput) dateInput.value = data.date || '';
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    };
+
+    const close = () => {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    };
+
+    const showStatus = (message) => {
+        if (!status) return;
+        status.textContent = message;
+        status.classList.remove('hidden');
+        setTimeout(() => status.classList.add('hidden'), 2500);
+    };
+
+    triggers.forEach((trigger) => {
+        trigger.addEventListener('click', (event) => {
+            event.preventDefault();
+            open({
+                id: trigger.dataset.birthdayReminderId,
+                recipient: trigger.dataset.birthdayReminderRecipient,
+                occasion: trigger.dataset.birthdayReminderOccasion,
+                date: trigger.dataset.birthdayReminderDate,
+            });
+        });
+    });
+
+    closeButtons.forEach((button) => button.addEventListener('click', close));
+
+    modal.addEventListener('click', (event) => {
+        if (event.target === modal) {
+            close();
+        }
+    });
+
+    if (form) {
+        form.addEventListener('submit', (event) => {
+            event.preventDefault();
+            close();
+            showStatus('Изменения сохранены.');
+        });
+    }
+
+    if (deleteButton) {
+        deleteButton.addEventListener('click', () => {
+            close();
+            showStatus('Напоминание удалено.');
+        });
+    }
+}
+
 function initAccountPage() {
     initNotificationToggles();
     initPinModal();
+    initBirthdayReminders();
 }
 
 if (pageId === 'account') {
