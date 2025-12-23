@@ -109,6 +109,24 @@
                                         <span class="text-base font-semibold text-slate-900"><?php echo htmlspecialchars($order['total'], ENT_QUOTES, 'UTF-8'); ?></span>
                                     </div>
                                 </div>
+                                <div class="flex flex-col items-end gap-2">
+                                    <a
+                                        href="<?php echo htmlspecialchars($order['editLink'], ENT_QUOTES, 'UTF-8'); ?>"
+                                        class="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md <?php echo $order['canEdit'] ? '' : 'pointer-events-none opacity-50'; ?>"
+                                        <?php echo $order['canEdit'] ? '' : 'aria-disabled="true"'; ?>
+                                    >
+                                        <span class="material-symbols-rounded text-base">edit</span>
+                                        Изменить
+                                    </a>
+                                    <a
+                                        href="<?php echo htmlspecialchars($order['paymentLink'], ENT_QUOTES, 'UTF-8'); ?>"
+                                        class="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-600 px-3 py-1 text-xs font-semibold text-white shadow-sm shadow-amber-200 transition hover:-translate-y-0.5 hover:shadow-md <?php echo $order['canPay'] ? '' : 'pointer-events-none bg-slate-200 text-slate-500 shadow-none opacity-70'; ?>"
+                                        <?php echo $order['canPay'] ? '' : 'aria-disabled="true"'; ?>
+                                    >
+                                        <span class="material-symbols-rounded text-base">payments</span>
+                                        Оплатить
+                                    </a>
+                                </div>
                             </article>
                         <?php endforeach; ?>
                     </div>
