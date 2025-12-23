@@ -70,8 +70,7 @@ class AuthController extends Controller
                         $this->logger->logEvent('LOGIN_SUCCESS', ['user_id' => $user['id'], 'phone' => $normalizedPhone]);
                         $this->analytics->track('login_success', ['user_id' => $user['id']]);
 
-                        header('Location: /?page=account');
-                        exit;
+                        $this->redirectAfterAuth('/?page=account');
                     }
                 }
             }
@@ -122,8 +121,7 @@ class AuthController extends Controller
                             $this->logger->logEvent('LOGIN_SUCCESS', ['user_id' => $existingByChat['id'], 'phone' => $existingByChat['phone'] ?? null]);
                             $this->analytics->track('login_success', ['user_id' => $existingByChat['id'], 'source' => 'register_code']);
 
-                            header('Location: /?page=home');
-                            exit;
+                            $this->redirectAfterAuth('/?page=home');
                         }
 
                         $data = [
@@ -198,8 +196,7 @@ class AuthController extends Controller
                         Session::remove('register_verification');
 
                         Auth::login($userId);
-                        header('Location: /?page=account');
-                        exit;
+                        $this->redirectAfterAuth('/?page=account');
                     } else {
                         $stage = 'details';
                         $prefillName = $name;
@@ -337,8 +334,7 @@ class AuthController extends Controller
                             Session::remove('recover_verification');
                             Auth::login((int) $verification['user_id']);
                             Session::set('auth_notice', 'PIN обновлён, вход выполнен. Мы перенаправили вас на главную.');
-                            header('Location: /?page=home');
-                            exit;
+                            $this->redirectAfterAuth('/?page=home');
                         }
                     } else {
                         $stage = 'reset';
@@ -421,5 +417,19 @@ class AuthController extends Controller
         ];
 
         return implode('', $digits);
+    }
+
+    private function redirectAfterAuth(string $fallback): void
+    {
+        $redirect = Session::get('auth_redirect');
+        Session::remove('auth_redirect');
+
+        if (!empty($redirect) && is_string($redirect) && str_starts_with($redirect, '/')) {
+            header('Location: ' . $redirect);
+            exit;
+        }
+
+        header('Location: ' . $fallback);
+        exit;
     }
 }

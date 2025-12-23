@@ -91,9 +91,10 @@ $router->post('cart-checkout', [CartController::class, 'checkout']);
 $router->post('account-notifications', [AccountController::class, 'updateNotifications']);
 $router->post('account-pin', [AccountController::class, 'updatePin']);
 
-$publicPages = ['login', 'register', 'recover', 'api-dadata-clean-address'];
+$publicPages = ['home', 'promo', 'login', 'register', 'recover', 'api-dadata-clean-address'];
 
 if (!Auth::check() && !in_array($page, $publicPages, true)) {
+    Session::set('auth_redirect', $_SERVER['REQUEST_URI'] ?? '/');
     header('Location: /?page=login');
     exit;
 }
