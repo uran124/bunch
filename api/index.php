@@ -23,6 +23,11 @@ header('Content-Type: application/json; charset=utf-8');
 $path = trim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/');
 $resource = ltrim(substr($path, strlen('api/')), '/');
 
+if (str_starts_with($resource, 'account/addresses')) {
+    handleAccountAddresses($resource);
+    exit;
+}
+
 switch ($resource) {
     case 'delivery/zones':
         handleDeliveryZones();
@@ -154,6 +159,80 @@ function handleDadataCleanAddress(): void
         'error' => $response['error'] ?? 'Не удалось получить ответ от DaData',
         'status' => $response['status'],
     ], JSON_UNESCAPED_UNICODE);
+}
+
+function handleAccountAddresses(string $resource): void
+{
+    if (!Auth::check()) {
+        http_response_code(401);
+        echo json_encode(['error' => 'Требуется авторизация']);
+        return;
+    }
+
+    $userId = (int) Auth::userId();
+    $segments = array_values(array_filter(explode('/', $resource)));
+    $addressId = isset($segments[2]) ? (int) $segments[2] : null;
+    $action = $segments[3] ?? null;
+
+    $payload = json_decode(file_get_contents('php://input'), true) ?: $_POST;
+    $addressModel = new UserAddress();
+
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'primary' && $addressId) {
+        $updated = $addressModel->setPrimaryForUser($userId, $addressId);
+        if (!$updated) {
+            http_response_code(404);
+            echo json_encode(['error' => 'Адрес не найден']);
+            return;
+        }
+        echo json_encode(['ok' => true]);
+        return;
+    }
+
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$addressId) {
+        $addressText = trim((string) ($payload['address_text'] ?? ''));
+        if ($addressText === '') {
+            http_response_code(422);
+            echo json_encode(['error' => 'Адрес не указан']);
+            return;
+        }
+
+        $addressId = $addressModel->createForUser($userId, $payload);
+        echo json_encode(['ok' => true, 'id' => $addressId]);
+        return;
+    }
+
+    if (($_SERVER['REQUEST_METHOD'] === 'PUT' || $_SERVER['REQUEST_METHOD'] === 'PATCH') && $addressId) {
+        $addressText = trim((string) ($payload['address_text'] ?? ''));
+        if ($addressText === '') {
+            http_response_code(422);
+            echo json_encode(['error' => 'Адрес не указан']);
+            return;
+        }
+
+        $updated = $addressModel->updateForUser($userId, $addressId, $payload);
+        if (!$updated) {
+            http_response_code(404);
+            echo json_encode(['error' => 'Адрес не найден']);
+            return;
+        }
+
+        echo json_encode(['ok' => true]);
+        return;
+    }
+
+    if ($_SERVER['REQUEST_METHOD'] === 'DELETE' && $addressId) {
+        $deleted = $addressModel->archiveForUser($userId, $addressId);
+        if (!$deleted) {
+            http_response_code(404);
+            echo json_encode(['error' => 'Адрес не найден']);
+            return;
+        }
+        echo json_encode(['ok' => true]);
+        return;
+    }
+
+    http_response_code(405);
+    echo json_encode(['error' => 'Method not allowed']);
 }
 
 function handleLotteryTickets(): void
