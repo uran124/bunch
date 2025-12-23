@@ -155,7 +155,7 @@
             return { formatted, digits: limited };
         };
 
-        const setPhoneValue = (value) => {
+const setPhoneValue = (value) => {
             const { formatted, digits } = formatPhone(value);
             phoneInput.value = formatted;
 
@@ -172,6 +172,13 @@
                 lockPinInputs(true);
             }
         };
+
+        phoneInput.addEventListener('focus', () => {
+            if (!phoneInput.value.trim()) {
+                setPhoneValue('+7 ');
+            }
+            focusPhoneInput();
+        });
 
         phoneInput.addEventListener('focus', () => {
             if (!phoneInput.value.trim()) {
