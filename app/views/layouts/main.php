@@ -80,6 +80,17 @@ if ($isAuthPage) {
         <?php echo $content; ?>
     </main>
 
+    <footer class="border-t border-slate-200 bg-white/90 backdrop-blur">
+        <div class="mx-auto flex w-full max-w-6xl flex-col gap-2 px-4 py-4 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between">
+            <span>© <?php echo date('Y'); ?> Bunch flowers</span>
+            <div class="flex flex-wrap items-center gap-3">
+                <a class="font-semibold text-slate-600 underline underline-offset-2 transition hover:text-rose-600" href="/?page=policy">Политика обработки персональных данных</a>
+                <a class="font-semibold text-slate-600 underline underline-offset-2 transition hover:text-rose-600" href="/?page=consent">Согласие на обработку персональных данных</a>
+                <a class="font-semibold text-slate-600 underline underline-offset-2 transition hover:text-rose-600" href="/?page=offer">Пользовательское соглашение</a>
+            </div>
+        </div>
+    </footer>
+
     <?php include __DIR__ . '/../partials/bottom-nav.php'; ?>
 
     <?php
@@ -103,6 +114,75 @@ if ($isAuthPage) {
             </div>
         </footer>
     <?php endif; ?>
+
+    <div
+        class="fixed inset-x-0 bottom-0 z-50 hidden border-t border-slate-200 bg-white px-4 py-4 text-sm text-slate-700 shadow-[0_-10px_30px_rgba(15,23,42,0.12)]"
+        data-cookie-banner
+    >
+        <div class="mx-auto flex w-full max-w-6xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div class="space-y-1">
+                <p class="text-base font-semibold text-slate-900">Cookie на сайте</p>
+                <p class="text-sm text-slate-600">
+                    Мы используем cookie, чтобы сайт работал корректно, а также для аналитики и маркетинга (Яндекс.Метрика, Google Analytics, пиксель VK).
+                    Вы можете принять все cookie или настроить выбор. Подробнее — в
+                    <a class="text-rose-600 underline underline-offset-2" href="/?page=policy">Политике обработки персональных данных</a>.
+                </p>
+            </div>
+            <div class="flex flex-wrap gap-2">
+                <button class="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-rose-200 hover:text-rose-600" data-cookie-settings-open>
+                    Настроить
+                </button>
+                <button class="rounded-xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white shadow-md shadow-rose-200 transition hover:-translate-y-0.5 hover:bg-rose-700" data-cookie-accept-all>
+                    Принять все
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/40 px-4 py-6" data-cookie-settings>
+        <div class="w-full max-w-xl space-y-4 rounded-3xl bg-white p-6 shadow-2xl">
+            <div class="flex items-start justify-between gap-3">
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Настройки cookie</p>
+                    <h2 class="text-xl font-semibold text-slate-900">Выберите категории cookie</h2>
+                </div>
+                <button type="button" class="rounded-full border border-slate-200 p-2 text-slate-500 transition hover:border-rose-200 hover:text-rose-600" data-cookie-settings-close>
+                    <span class="material-symbols-rounded text-base">close</span>
+                </button>
+            </div>
+            <div class="space-y-3 text-sm text-slate-600">
+                <label class="flex items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-slate-50 p-3">
+                    <span>
+                        <span class="font-semibold text-slate-800">Обязательные</span>
+                        <span class="block text-xs text-slate-500">Работа сайта, безопасность, корзина.</span>
+                    </span>
+                    <input type="checkbox" checked disabled class="h-5 w-5 accent-rose-600">
+                </label>
+                <label class="flex items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-slate-50 p-3">
+                    <span>
+                        <span class="font-semibold text-slate-800">Аналитика</span>
+                        <span class="block text-xs text-slate-500">Яндекс.Метрика, Google Analytics.</span>
+                    </span>
+                    <input type="checkbox" class="h-5 w-5 accent-rose-600" data-cookie-analytics>
+                </label>
+                <label class="flex items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-slate-50 p-3">
+                    <span>
+                        <span class="font-semibold text-slate-800">Маркетинг</span>
+                        <span class="block text-xs text-slate-500">Пиксель VK.</span>
+                    </span>
+                    <input type="checkbox" class="h-5 w-5 accent-rose-600" data-cookie-marketing>
+                </label>
+            </div>
+            <div class="flex flex-wrap justify-end gap-2">
+                <button class="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-rose-200 hover:text-rose-600" data-cookie-settings-close>
+                    Отменить
+                </button>
+                <button class="rounded-xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white shadow-md shadow-rose-200 transition hover:-translate-y-0.5 hover:bg-rose-700" data-cookie-save>
+                    Сохранить выбор
+                </button>
+            </div>
+        </div>
+    </div>
 
     <script type="module" src="/assets/js/app.js"></script>
 </body>
