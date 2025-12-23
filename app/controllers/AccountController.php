@@ -37,6 +37,7 @@ class AccountController extends Controller
         ];
 
         $addresses = $this->addressModel->getByUserId($userId);
+        $deliveryZoneModel = new DeliveryZone();
 
         $activeOrdersRaw = $this->orderModel->getActiveOrdersForUser($userId);
         $activeOrders = array_map([$this, 'mapOrderToView'], $activeOrdersRaw);
@@ -68,6 +69,11 @@ class AccountController extends Controller
         $cartShortcut = $this->buildCartShortcut($cart->getItems());
         $ordersLink = '/?page=orders';
 
+        $deliveryZones = $deliveryZoneModel->getZones(true, true);
+        $deliveryPricingVersion = $deliveryZoneModel->getPricingVersion();
+        $testAddresses = $deliveryZoneModel->getTestAddresses();
+        $dadataConfig = $this->getDadataSettings();
+
         $this->render('account', compact(
             'user',
             'addresses',
@@ -83,7 +89,11 @@ class AccountController extends Controller
             'notificationOptions',
             'birthdayReminderDays',
             'birthdayReminderLeadDays',
-            'birthdayReminders'
+            'birthdayReminders',
+            'deliveryZones',
+            'deliveryPricingVersion',
+            'dadataConfig',
+            'testAddresses'
         ));
     }
 

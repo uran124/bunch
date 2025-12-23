@@ -189,7 +189,31 @@ function handleAccountAddresses(string $resource): void
     }
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$addressId) {
+        $settlement = trim((string) ($payload['settlement'] ?? ''));
+        $street = trim((string) ($payload['street'] ?? ''));
+        $house = trim((string) ($payload['house'] ?? ''));
+        $recipientName = trim((string) ($payload['recipient_name'] ?? ''));
+        $recipientPhone = trim((string) ($payload['recipient_phone'] ?? ''));
+        $payload['zone_calculated_at'] = normalizeZoneCalculatedAt($payload['zone_calculated_at'] ?? null);
+
+        if ($settlement === '' || $street === '' || $house === '') {
+            http_response_code(422);
+            echo json_encode(['error' => 'Укажите город, улицу и номер дома']);
+            return;
+        }
+
+        if ($recipientName === '' || $recipientPhone === '') {
+            http_response_code(422);
+            echo json_encode(['error' => 'Укажите имя и телефон получателя']);
+            return;
+        }
+
         $addressText = trim((string) ($payload['address_text'] ?? ''));
+        if ($addressText === '') {
+            $addressText = buildAddressText($settlement, $street, $house, (string) ($payload['apartment'] ?? ''));
+            $payload['address_text'] = $addressText;
+        }
+
         if ($addressText === '') {
             http_response_code(422);
             echo json_encode(['error' => 'Адрес не указан']);
@@ -202,7 +226,31 @@ function handleAccountAddresses(string $resource): void
     }
 
     if (($_SERVER['REQUEST_METHOD'] === 'PUT' || $_SERVER['REQUEST_METHOD'] === 'PATCH') && $addressId) {
+        $settlement = trim((string) ($payload['settlement'] ?? ''));
+        $street = trim((string) ($payload['street'] ?? ''));
+        $house = trim((string) ($payload['house'] ?? ''));
+        $recipientName = trim((string) ($payload['recipient_name'] ?? ''));
+        $recipientPhone = trim((string) ($payload['recipient_phone'] ?? ''));
+        $payload['zone_calculated_at'] = normalizeZoneCalculatedAt($payload['zone_calculated_at'] ?? null);
+
+        if ($settlement === '' || $street === '' || $house === '') {
+            http_response_code(422);
+            echo json_encode(['error' => 'Укажите город, улицу и номер дома']);
+            return;
+        }
+
+        if ($recipientName === '' || $recipientPhone === '') {
+            http_response_code(422);
+            echo json_encode(['error' => 'Укажите имя и телефон получателя']);
+            return;
+        }
+
         $addressText = trim((string) ($payload['address_text'] ?? ''));
+        if ($addressText === '') {
+            $addressText = buildAddressText($settlement, $street, $house, (string) ($payload['apartment'] ?? ''));
+            $payload['address_text'] = $addressText;
+        }
+
         if ($addressText === '') {
             http_response_code(422);
             echo json_encode(['error' => 'Адрес не указан']);
@@ -233,6 +281,34 @@ function handleAccountAddresses(string $resource): void
 
     http_response_code(405);
     echo json_encode(['error' => 'Method not allowed']);
+}
+
+function buildAddressText(string $settlement, string $street, string $house, string $apartment = ''): string
+{
+    $parts = array_filter([
+        $settlement,
+        $street,
+        $house !== '' ? 'д. ' . $house : null,
+        $apartment !== '' ? 'кв/офис ' . $apartment : null,
+    ]);
+
+    return $parts ? implode(', ', $parts) : '';
+}
+
+function normalizeZoneCalculatedAt(?string $value): ?string
+{
+    $value = trim((string) $value);
+    if ($value === '') {
+        return null;
+    }
+
+    try {
+        $dt = new DateTimeImmutable($value);
+    } catch (Throwable $e) {
+        return null;
+    }
+
+    return $dt->format('Y-m-d H:i:s');
 }
 
 function handleLotteryTickets(): void
