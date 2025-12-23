@@ -70,7 +70,12 @@ class AdminController extends Controller
             [
                 'title' => 'Настройка сервисов',
                 'items' => [
-                    ['label' => 'Онлайн оплата', 'description' => 'Платёжные шлюзы и возвраты'],
+                    [
+                        'label' => 'Онлайн оплата',
+                        'description' => 'Платёжные шлюзы и возвраты',
+                        'cta' => 'Настроить',
+                        'href' => '/?page=admin-services-payment',
+                    ],
                     ['label' => 'Веб-аналитика яндекс метрика', 'description' => 'События, цели и конверсии'],
                     ['label' => 'Подключение к ЦРМ', 'description' => 'Синхронизация контактов и сделок'],
                     [
@@ -1102,6 +1107,21 @@ class AdminController extends Controller
             'zones' => $zoneModel->getZones(false, true),
             'deliveryPricingVersion' => $zoneModel->getPricingVersion(),
             'testAddresses' => $zoneModel->getTestAddresses(),
+        ]);
+    }
+
+    public function serviceOnlinePayment(): void
+    {
+        $pageMeta = [
+            'title' => 'Настройка сервисов · онлайн оплата — админ-панель Bunch',
+            'description' => 'Подключение платёжных шлюзов, реквизиты и webhooks.',
+            'h1' => 'Онлайн оплата',
+            'headerTitle' => 'Bunch Admin',
+            'headerSubtitle' => 'Сервисы · Платёжные шлюзы',
+        ];
+
+        $this->render('admin-services-payment', [
+            'pageMeta' => $pageMeta,
         ]);
     }
 
