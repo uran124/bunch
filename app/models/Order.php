@@ -45,6 +45,89 @@ class Order extends Model
         return $this->getOrdersByStatuses($userId, ['delivered', 'cancelled'], $limit, $offset);
     }
 
+    public function getUserOrderDetail(int $orderId, int $userId): ?array
+    {
+        $stmt = $this->db->prepare('SELECT * FROM orders WHERE id = :id AND user_id = :user_id LIMIT 1');
+        $stmt->execute([
+            'id' => $orderId,
+            'user_id' => $userId,
+        ]);
+
+        $order = $stmt->fetch();
+
+        if (!$order) {
+            return null;
+        }
+
+        $items = $this->getItems($orderId);
+
+        return $this->mapUserOrder($order, $items);
+    }
+
+    public function updateUserOrder(int $orderId, int $userId, array $data): bool
+    {
+        $allowedDeliveryTypes = ['pickup', 'delivery'];
+        $deliveryType = in_array($data['delivery_type'] ?? 'pickup', $allowedDeliveryTypes, true)
+            ? $data['delivery_type']
+            : 'pickup';
+
+        $scheduledDate = $this->normalizeDate($data['scheduled_date'] ?? null);
+        $scheduledTime = $this->normalizeTime($data['scheduled_time'] ?? null);
+
+        $addressText = $this->emptyToNull($data['address_text'] ?? null);
+        if ($deliveryType !== 'delivery') {
+            $addressText = null;
+        }
+
+        $stmt = $this->db->prepare(
+            'UPDATE orders SET delivery_type = :delivery_type, scheduled_date = :scheduled_date, scheduled_time = :scheduled_time, address_text = :address_text, recipient_name = :recipient_name, recipient_phone = :recipient_phone, comment = :comment, updated_at = NOW() WHERE id = :id AND user_id = :user_id AND status = :status'
+        );
+
+        $stmt->execute([
+            'id' => $orderId,
+            'user_id' => $userId,
+            'status' => 'new',
+            'delivery_type' => $deliveryType,
+            'scheduled_date' => $scheduledDate,
+            'scheduled_time' => $scheduledTime,
+            'address_text' => $addressText,
+            'recipient_name' => $this->emptyToNull($data['recipient_name'] ?? null),
+            'recipient_phone' => $this->emptyToNull($data['recipient_phone'] ?? null),
+            'comment' => $this->emptyToNull($data['comment'] ?? null),
+        ]);
+
+        if ($stmt->rowCount() > 0) {
+            return true;
+        }
+
+        $checkStmt = $this->db->prepare(
+            'SELECT COUNT(*) FROM orders WHERE id = :id AND user_id = :user_id AND status = :status'
+        );
+        $checkStmt->execute([
+            'id' => $orderId,
+            'user_id' => $userId,
+            'status' => 'new',
+        ]);
+
+        return (int) $checkStmt->fetchColumn() > 0;
+    }
+
+    public function markPaidForUser(int $orderId, int $userId): bool
+    {
+        $stmt = $this->db->prepare(
+            'UPDATE orders SET status = :status, updated_at = NOW() WHERE id = :id AND user_id = :user_id AND status = :current_status'
+        );
+
+        $stmt->execute([
+            'id' => $orderId,
+            'user_id' => $userId,
+            'status' => 'confirmed',
+            'current_status' => 'new',
+        ]);
+
+        return $stmt->rowCount() > 0;
+    }
+
     public function countCompletedOrdersForUser(int $userId): int
     {
         $stmt = $this->db->prepare(
@@ -351,6 +434,60 @@ class Order extends Model
         ];
     }
 
+    private function mapUserOrder(array $order, array $items = []): array
+    {
+        $scheduled = $this->formatDeliveryWindow($order['scheduled_date'] ?? null, $order['scheduled_time'] ?? null);
+        $items = $items ?: $this->getItems((int) $order['id']);
+
+        $itemsPayload = array_map(function (array $item): array {
+            $qty = (int) $item['qty'];
+            $price = (float) $item['price'];
+
+            return [
+                'title' => $item['product_name'] ?? ($item['name'] ?? 'Товар'),
+                'qty' => $qty,
+                'unit' => $this->formatPrice($price),
+                'total' => $this->formatPrice($price * $qty),
+                'image' => $item['photo_url'] ?? '/assets/images/products/bouquet.svg',
+            ];
+        }, $items);
+
+        $scheduledTimeRaw = $order['scheduled_time'] ?? null;
+        if ($scheduledTimeRaw) {
+            $scheduledTimeRaw = substr((string) $scheduledTimeRaw, 0, 5);
+        }
+
+        $address = null;
+        if (!empty($order['address_id'])) {
+            $addressStmt = $this->db->prepare('SELECT * FROM user_addresses WHERE id = :id LIMIT 1');
+            $addressStmt->execute(['id' => $order['address_id']]);
+            $addressRow = $addressStmt->fetch();
+            $address = $addressRow ? UserAddress::formatAddress($addressRow) : null;
+        } elseif (!empty($order['address_text'])) {
+            $address = $order['address_text'];
+        }
+
+        return [
+            'id' => (int) $order['id'],
+            'number' => '№' . str_pad((string) $order['id'], 4, '0', STR_PAD_LEFT),
+            'status' => $order['status'],
+            'statusLabel' => $this->mapOrderStatus($order['status']),
+            'createdAt' => $order['created_at'] ?? null,
+            'total' => $this->formatPrice((float) $order['total_amount']),
+            'deliveryType' => $this->mapDeliveryType($order['delivery_type'] ?? 'pickup'),
+            'deliveryTypeValue' => $order['delivery_type'] ?? 'pickup',
+            'scheduled' => $scheduled,
+            'scheduled_date_raw' => $order['scheduled_date'] ?? null,
+            'scheduled_time_raw' => $scheduledTimeRaw,
+            'address' => $address,
+            'addressTextRaw' => $order['address_text'] ?? null,
+            'recipientNameRaw' => $order['recipient_name'] ?? null,
+            'recipientPhoneRaw' => $order['recipient_phone'] ?? null,
+            'commentRaw' => $order['comment'] ?? null,
+            'items' => $itemsPayload,
+        ];
+    }
+
     private function formatPrice(float $amount): string
     {
         return number_format($amount, 0, ',', ' ') . ' ₽';
@@ -441,6 +578,10 @@ class Order extends Model
             'scheduled_date' => $order['scheduled_date'] ?? null,
             'scheduled_time' => $order['scheduled_time'] ?? null,
             'address' => $address,
+            'address_text' => $order['address_text'] ?? null,
+            'recipient_name' => $order['recipient_name'] ?? null,
+            'recipient_phone' => $order['recipient_phone'] ?? null,
+            'comment' => $order['comment'] ?? null,
             'items' => $items,
         ];
     }

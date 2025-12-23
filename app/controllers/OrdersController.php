@@ -64,6 +64,134 @@ class OrdersController extends Controller
         ]);
     }
 
+    public function edit(): void
+    {
+        $userId = Auth::userId();
+        $orderId = (int) ($_GET['id'] ?? 0);
+
+        if (!$userId || $orderId <= 0) {
+            Session::set('auth_notice', 'Заказ не найден.');
+            header('Location: /?page=orders');
+            exit;
+        }
+
+        $order = $this->orderModel->getUserOrderDetail($orderId, $userId);
+
+        if (!$order) {
+            Session::set('auth_notice', 'Заказ не найден.');
+            header('Location: /?page=orders');
+            exit;
+        }
+
+        if ($order['status'] !== 'new') {
+            Session::set('auth_notice', 'Изменение доступно только для новых заказов.');
+            header('Location: /?page=orders');
+            exit;
+        }
+
+        $pageMeta = [
+            'title' => 'Редактирование заказа — Bunch flowers',
+            'description' => 'Изменение параметров заказа перед оплатой.',
+            'headerTitle' => 'Bunch flowers',
+            'headerSubtitle' => 'Редактирование заказа',
+        ];
+
+        $this->render('order-edit', [
+            'pageMeta' => $pageMeta,
+            'order' => $order,
+        ]);
+    }
+
+    public function update(): void
+    {
+        $userId = Auth::userId();
+        $orderId = (int) ($_POST['order_id'] ?? 0);
+
+        if (!$userId || $orderId <= 0) {
+            Session::set('auth_notice', 'Не удалось обновить заказ.');
+            header('Location: /?page=orders');
+            exit;
+        }
+
+        $updated = $this->orderModel->updateUserOrder($orderId, $userId, $_POST);
+
+        if (!$updated) {
+            Session::set('auth_notice', 'Изменение доступно только для новых заказов.');
+            header('Location: /?page=orders');
+            exit;
+        }
+
+        Session::set('auth_notice', 'Заказ обновлён. Можно переходить к оплате.');
+        header('Location: /?page=orders');
+        exit;
+    }
+
+    public function payment(): void
+    {
+        $userId = Auth::userId();
+        $orderId = (int) ($_GET['id'] ?? 0);
+
+        if (!$userId || $orderId <= 0) {
+            Session::set('auth_notice', 'Заказ не найден.');
+            header('Location: /?page=orders');
+            exit;
+        }
+
+        $order = $this->orderModel->getUserOrderDetail($orderId, $userId);
+
+        if (!$order) {
+            Session::set('auth_notice', 'Заказ не найден.');
+            header('Location: /?page=orders');
+            exit;
+        }
+
+        if ($order['status'] !== 'new') {
+            Session::set('auth_notice', 'Этот заказ уже оплачен или в работе.');
+            header('Location: /?page=orders');
+            exit;
+        }
+
+        $pageMeta = [
+            'title' => 'Оплата заказа — Bunch flowers',
+            'description' => 'Оплата заказа через активный платёжный шлюз.',
+            'headerTitle' => 'Bunch flowers',
+            'headerSubtitle' => 'Оплата заказа',
+        ];
+
+        $this->render('order-payment', [
+            'pageMeta' => $pageMeta,
+            'order' => $order,
+            'gateway' => [
+                'name' => 'Robokassa',
+                'link' => '/?page=admin-services-payment',
+            ],
+        ]);
+    }
+
+    public function pay(): void
+    {
+        $userId = Auth::userId();
+        $orderId = (int) ($_POST['order_id'] ?? 0);
+
+        if (!$userId || $orderId <= 0) {
+            Session::set('auth_notice', 'Не удалось начать оплату.');
+            header('Location: /?page=orders');
+            exit;
+        }
+
+        $paid = $this->orderModel->markPaidForUser($orderId, $userId);
+
+        if (!$paid) {
+            Session::set('auth_notice', 'Оплата доступна только для новых заказов.');
+            header('Location: /?page=orders');
+            exit;
+        }
+
+        Session::set('auth_notice', 'Оплата прошла успешно. Заказ передан в работу.');
+        header('Location: /?page=orders');
+        exit;
+    }
+
     private function mapOrder(array $order): array
     {
         $items = $order['items'] ?? [];
@@ -87,6 +215,10 @@ class OrdersController extends Controller
             'deliveryType' => $this->mapDeliveryType($order['delivery_type'] ?? 'pickup'),
             'scheduled' => implode(' · ', $scheduledParts),
             'address' => $order['address'] ?? null,
+            'editLink' => '/?page=order-edit&id=' . (int) $order['id'],
+            'paymentLink' => '/?page=order-payment&id=' . (int) $order['id'],
+            'canEdit' => $order['status'] === 'new',
+            'canPay' => $order['status'] === 'new',
             'item' => $firstItem ? [
                 'title' => $firstItem['product_name'] ?? ($firstItem['name'] ?? 'Товар'),
                 'qty' => (int) $firstItem['qty'],

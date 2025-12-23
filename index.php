@@ -40,6 +40,8 @@ $router->get('subscription', [SubscriptionController::class, 'index']);
 $router->get('promo', [PromoController::class, 'index']);
 $router->get('orders', [OrdersController::class, 'index']);
 $router->get('orders-history', [OrdersController::class, 'history']);
+$router->get('order-edit', [OrdersController::class, 'edit']);
+$router->get('order-payment', [OrdersController::class, 'payment']);
 $router->get('account', [AccountController::class, 'index']);
 $router->get('login', [AuthController::class, 'login']);
 $router->get('logout', [AuthController::class, 'logout']);
@@ -92,6 +94,8 @@ $router->post('cart-add', [CartController::class, 'add']);
 $router->post('cart-update', [CartController::class, 'update']);
 $router->post('cart-remove', [CartController::class, 'remove']);
 $router->post('cart-checkout', [CartController::class, 'checkout']);
+$router->post('order-edit', [OrdersController::class, 'update']);
+$router->post('order-payment', [OrdersController::class, 'pay']);
 $router->post('account-notifications', [AccountController::class, 'updateNotifications']);
 $router->post('account-pin', [AccountController::class, 'updatePin']);
 
