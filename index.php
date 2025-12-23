@@ -45,6 +45,9 @@ $router->get('login', [AuthController::class, 'login']);
 $router->get('logout', [AuthController::class, 'logout']);
 $router->get('register', [AuthController::class, 'register']);
 $router->get('recover', [AuthController::class, 'recover']);
+$router->get('policy', [LegalController::class, 'policy']);
+$router->get('consent', [LegalController::class, 'consent']);
+$router->get('offer', [LegalController::class, 'offer']);
 $router->get('admin', [AdminController::class, 'index']);
 $router->get('admin-users', [AdminController::class, 'users']);
 $router->get('admin-user', [AdminController::class, 'user']);
@@ -91,7 +94,7 @@ $router->post('cart-checkout', [CartController::class, 'checkout']);
 $router->post('account-notifications', [AccountController::class, 'updateNotifications']);
 $router->post('account-pin', [AccountController::class, 'updatePin']);
 
-$publicPages = ['home', 'promo', 'login', 'register', 'recover', 'api-dadata-clean-address'];
+$publicPages = ['home', 'promo', 'login', 'register', 'recover', 'policy', 'consent', 'offer', 'api-dadata-clean-address'];
 
 if (!Auth::check() && !in_array($page, $publicPages, true)) {
     Session::set('auth_redirect', $_SERVER['REQUEST_URI'] ?? '/');

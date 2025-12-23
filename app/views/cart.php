@@ -311,6 +311,9 @@
                                 Телефон получателя
                                 <input type="tel" class="rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm focus:border-rose-300 focus:outline-none" placeholder="+7 (999) 123-45-67" data-recipient-phone>
                             </label>
+                            <p class="text-xs text-slate-500 sm:col-span-2">
+                                Передавая данные получателя, вы подтверждаете, что имеете право их передать.
+                            </p>
                         </div>
                     </div>
 
@@ -363,6 +366,12 @@
                     <span class="material-symbols-rounded text-base">done_all</span>
                     Оформить заказ
                 </button>
+                <p class="text-xs text-slate-500">
+                    Нажимая «Оформить заказ», вы соглашаетесь с
+                    <a class="font-semibold text-rose-600 underline underline-offset-2" href="/?page=offer">Пользовательским соглашением</a>
+                    и
+                    <a class="font-semibold text-rose-600 underline underline-offset-2" href="/?page=policy">Политикой обработки персональных данных</a>.
+                </p>
             </aside>
         </div>
 

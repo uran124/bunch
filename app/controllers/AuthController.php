@@ -90,6 +90,8 @@ class AuthController extends Controller
         $prefillName = '';
         $prefillPhone = '';
         $prefillEmail = '';
+        $consentPersonalChecked = false;
+        $consentMarketingChecked = false;
 
         $sessionVerification = Session::get('register_verification');
         if ($sessionVerification) {
@@ -149,6 +151,8 @@ class AuthController extends Controller
                     $phone = trim($_POST['phone'] ?? '');
                     $email = trim($_POST['email'] ?? '');
                     $pin = $this->collectPin($_POST);
+                    $consentPersonalChecked = isset($_POST['consent_personal']);
+                    $consentMarketingChecked = isset($_POST['consent_marketing']);
 
                     if ($name === '') {
                         $errors[] = 'Укажите ваше имя.';
@@ -164,6 +168,10 @@ class AuthController extends Controller
 
                     if (!preg_match('/^\d{4}$/', $pin)) {
                         $errors[] = 'PIN должен состоять из 4 цифр.';
+                    }
+
+                    if (!$consentPersonalChecked) {
+                        $errors[] = 'Для регистрации нужно согласие на обработку персональных данных.';
                     }
 
                     if (empty($errors)) {
@@ -215,6 +223,8 @@ class AuthController extends Controller
             'prefillName' => $prefillName,
             'prefillPhone' => $prefillPhone,
             'prefillEmail' => $prefillEmail,
+            'consentPersonalChecked' => $consentPersonalChecked,
+            'consentMarketingChecked' => $consentMarketingChecked,
         ]);
     }
 

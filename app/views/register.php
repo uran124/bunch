@@ -174,6 +174,37 @@
                 </div>
 
                 <div class="flex justify-center">
+                    <div class="w-full max-w-xs space-y-3 text-xs text-slate-600">
+                        <label class="flex items-start gap-2 rounded-2xl border border-rose-100 bg-white/80 p-3">
+                            <input
+                                type="checkbox"
+                                name="consent_personal"
+                                required
+                                class="mt-0.5 h-4 w-4 accent-rose-600"
+                                <?php echo !empty($consentPersonalChecked) ? 'checked' : ''; ?>
+                            >
+                            <span>
+                                Я даю ИП Карлову Юрию Владимировичу (ОГРНИП 314245219700025, ИНН 245210307415) согласие на обработку моих персональных данных для регистрации и использования сайта bunchflowers.ru, оформления и исполнения заказов, связи со мной по вопросам заказа (включая доставку и оплату), а также для обеспечения работы и безопасности сайта. Обработка может включать сбор, запись, систематизацию, накопление, хранение, уточнение, использование, передачу (в объёме, необходимом для выполнения заказа — например, курьерам/службе такси и банку-эквайеру), обезличивание, блокирование и удаление данных. Я ознакомлен(а) с
+                                <a class="font-semibold text-rose-600 underline underline-offset-2" href="/?page=policy">Политикой обработки персональных данных</a>
+                                и понимаю, что могу отозвать согласие, направив обращение на
+                                <a class="font-semibold text-rose-600 underline underline-offset-2" href="mailto:937794@gmail.com">937794@gmail.com</a>.
+                            </span>
+                        </label>
+                        <label class="flex items-start gap-2 rounded-2xl border border-slate-100 bg-white/80 p-3">
+                            <input
+                                type="checkbox"
+                                name="consent_marketing"
+                                class="mt-0.5 h-4 w-4 accent-rose-600"
+                                <?php echo !empty($consentMarketingChecked) ? 'checked' : ''; ?>
+                            >
+                            <span>
+                                Хочу получать акции и напоминания (SMS/мессенджеры/e-mail).
+                            </span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="flex justify-center">
                     <div class="w-full max-w-xs">
                         <button
                             type="submit"
