@@ -353,8 +353,14 @@ function initOrderFlow() {
     const timeInput = orderSection.querySelector('[data-order-time]');
     const deliveryExtra = orderSection.querySelector('[data-delivery-extra]');
     const addressSelect = orderSection.querySelector('[data-address-select]');
-    const addressInput = orderSection.querySelector('[data-address-input]');
+    const settlementInput = orderSection.querySelector('[data-address-settlement]');
+    const streetInput = orderSection.querySelector('[data-address-street]');
+    const houseInput = orderSection.querySelector('[data-address-house]');
     const apartmentInput = orderSection.querySelector('[data-address-apartment]');
+    const entranceInput = orderSection.querySelector('[data-address-entrance]');
+    const floorInput = orderSection.querySelector('[data-address-floor]');
+    const intercomInput = orderSection.querySelector('[data-address-intercom]');
+    const addressCommentInput = orderSection.querySelector('[data-address-comment]');
     const addressNew = orderSection.querySelector('[data-address-new]');
     const addressSuggestionList = document.createElement('div');
     const deliveryHint = orderSection.querySelector('[data-delivery-pricing-hint]');
@@ -431,6 +437,14 @@ function initOrderFlow() {
 
     const normalizeText = (value = '') => value.trim().toLowerCase();
 
+    const composeBaseAddress = () => {
+        const settlement = settlementInput?.value?.trim() || '';
+        const street = streetInput?.value?.trim() || '';
+        const house = houseInput?.value?.trim() || '';
+
+        return [settlement, street, house ? `д. ${house}` : null].filter(Boolean).join(', ');
+    };
+
     const highlightMode = (mode) => {
         modeButtons.forEach((btn) => {
             const isActive = btn.dataset.orderMode === mode;
@@ -459,7 +473,7 @@ function initOrderFlow() {
     };
 
     const composeAddressText = () => {
-        const baseAddress = (addressInput?.value || '').trim();
+        const baseAddress = composeBaseAddress();
         const apartment = (apartmentInput?.value || '').trim();
 
         return [baseAddress, apartment ? `кв/офис ${apartment}` : null].filter(Boolean).join(', ');
@@ -482,17 +496,30 @@ function initOrderFlow() {
     };
 
     const setAddressFromSelect = () => {
-        if (!addressSelect || !addressInput) return;
+        if (!addressSelect) return;
         const selectedOption = addressSelect.selectedOptions[0];
         if (selectedOption) {
             const chosen = findAddressById(selectedOption.value);
-            addressInput.value = selectedOption.dataset.addressText || '';
+            if (settlementInput) settlementInput.value = chosen?.raw?.settlement || '';
+            if (streetInput) streetInput.value = chosen?.raw?.street || '';
+            if (houseInput) houseInput.value = chosen?.raw?.house || '';
             if (apartmentInput) {
                 apartmentInput.value = chosen?.raw?.apartment || '';
             }
+            if (entranceInput) entranceInput.value = chosen?.raw?.entrance || '';
+            if (floorInput) floorInput.value = chosen?.raw?.floor || '';
+            if (intercomInput) intercomInput.value = chosen?.raw?.intercom || '';
+            if (addressCommentInput) addressCommentInput.value = chosen?.raw?.delivery_comment || '';
             setRecipientFromAddress(chosen);
         } else {
+            if (settlementInput) settlementInput.value = '';
+            if (streetInput) streetInput.value = '';
+            if (houseInput) houseInput.value = '';
             if (apartmentInput) apartmentInput.value = '';
+            if (entranceInput) entranceInput.value = '';
+            if (floorInput) floorInput.value = '';
+            if (intercomInput) intercomInput.value = '';
+            if (addressCommentInput) addressCommentInput.value = '';
             setRecipientFromAddress(null);
         }
     };
@@ -527,16 +554,22 @@ function initOrderFlow() {
         if (addressSelect) {
             addressSelect.selectedIndex = -1;
         }
-        if (addressInput) {
-            addressInput.value = '';
-            addressInput.focus();
+        if (settlementInput) settlementInput.value = '';
+        if (streetInput) {
+            streetInput.value = '';
+            streetInput.focus();
         }
+        if (houseInput) houseInput.value = '';
         if (apartmentInput) apartmentInput.value = '';
+        if (entranceInput) entranceInput.value = '';
+        if (floorInput) floorInput.value = '';
+        if (intercomInput) intercomInput.value = '';
+        if (addressCommentInput) addressCommentInput.value = '';
         setRecipientFromAddress(null);
     });
 
-    if (addressInput) {
-        const addressWrapper = addressInput.parentElement;
+    if (streetInput) {
+        const addressWrapper = streetInput.parentElement;
         if (addressWrapper) {
             addressWrapper.classList.add('relative');
             addressSuggestionList.className =
@@ -546,7 +579,7 @@ function initOrderFlow() {
     }
 
     document.addEventListener('click', (event) => {
-        if (!addressSuggestionList.contains(event.target) && addressInput !== event.target) {
+        if (!addressSuggestionList.contains(event.target) && streetInput !== event.target) {
             addressSuggestionList.classList.add('hidden');
         }
     });
@@ -625,7 +658,7 @@ const formatAddressFromDadata = (data) => {
     };
 
     const renderSuggestions = (suggestions) => {
-        if (!addressInput || !addressSuggestionList) return;
+        if (!streetInput || !addressSuggestionList) return;
 
         addressSuggestionList.innerHTML = '';
         if (!suggestions.length) {
@@ -647,7 +680,17 @@ const formatAddressFromDadata = (data) => {
             `;
 
             row.addEventListener('click', () => {
-                addressInput.value = formatted;
+                const data = item.data || {};
+                if (settlementInput) {
+                    settlementInput.value =
+                        data.settlement_with_type || data.city_with_type || data.region_with_type || '';
+                }
+                if (streetInput) {
+                    streetInput.value = data.street_with_type || '';
+                }
+                if (houseInput) {
+                    houseInput.value = data.house || '';
+                }
                 addressSuggestionList.classList.add('hidden');
                 setTimeout(updateDeliveryQuote, 50);
             });
@@ -745,9 +788,10 @@ const formatAddressFromDadata = (data) => {
     };
 
     const updateDeliveryQuote = async () => {
-        if (!addressInput || currentMode !== 'delivery') return;
+        if (currentMode !== 'delivery') return;
+        const baseAddress = composeBaseAddress();
         const addressText = composeAddressText();
-        if (!addressText) {
+        if (!baseAddress) {
             setDeliveryHint('Введите адрес, чтобы получить подсказку DaData, геокодировать точку и определить зону доставки.');
             lastDeliveryQuote = null;
             updateDeliveryPriceDisplay(0);
@@ -757,7 +801,7 @@ const formatAddressFromDadata = (data) => {
         setDeliveryHint('Ищем адрес в DaData и определяем зону...', 'muted');
 
         try {
-            const geocoded = await geocodeWithDadata(addressText);
+            const geocoded = await geocodeWithDadata(baseAddress);
             if (!geocoded) {
                 useFallbackDeliveryQuote(
                     addressText,
@@ -798,10 +842,13 @@ const formatAddressFromDadata = (data) => {
         }
     };
 
-    addressInput?.addEventListener('blur', updateDeliveryQuote);
-    addressInput?.addEventListener('change', updateDeliveryQuote);
-    addressInput?.addEventListener('input', (event) => debouncedSuggest(event.target.value || ''));
-    addressInput?.addEventListener('focus', (event) => debouncedSuggest(event.target.value || ''));
+    [settlementInput, streetInput, houseInput].forEach((field) => {
+        if (!field) return;
+        field.addEventListener('blur', updateDeliveryQuote);
+        field.addEventListener('change', updateDeliveryQuote);
+        field.addEventListener('input', () => debouncedSuggest(composeBaseAddress()));
+        field.addEventListener('focus', () => debouncedSuggest(composeBaseAddress()));
+    });
 
     const collectPayload = () => {
         const payload = {
@@ -828,8 +875,28 @@ const formatAddressFromDadata = (data) => {
                 payload.address = {};
             }
 
+            payload.address.settlement = settlementInput?.value || '';
+            payload.address.street = streetInput?.value || '';
+            payload.address.house = houseInput?.value || '';
+
             if (apartmentInput) {
                 payload.address.apartment = apartmentInput.value || '';
+            }
+
+            if (entranceInput) {
+                payload.address.entrance = entranceInput.value || '';
+            }
+
+            if (floorInput) {
+                payload.address.floor = floorInput.value || '';
+            }
+
+            if (intercomInput) {
+                payload.address.intercom = intercomInput.value || '';
+            }
+
+            if (addressCommentInput) {
+                payload.address.delivery_comment = addressCommentInput.value || '';
             }
 
             if (lastDeliveryQuote) {
@@ -882,10 +949,6 @@ const formatAddressFromDadata = (data) => {
     };
 
     submitButton.addEventListener('click', submitOrder);
-
-    if (addresses.length && !addressInput?.value) {
-        addressInput.value = orderSection.dataset.primaryAddress || addresses[0]?.address || '';
-    }
 
     setRecipientMode('self');
     toggleDelivery('pickup');

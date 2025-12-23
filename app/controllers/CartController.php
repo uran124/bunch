@@ -176,6 +176,8 @@ class CartController extends Controller
         $addressText = trim((string) ($payload['address_text'] ?? ''));
         
         $recipient = $payload['recipient'] ?? [];
+        $recipientName = trim((string) ($recipient['name'] ?? ''));
+        $recipientPhone = trim((string) ($recipient['phone'] ?? ''));
         $comment = trim((string) ($payload['comment'] ?? ''));
 
         $addressModel = new UserAddress();
@@ -200,6 +202,17 @@ class CartController extends Controller
             }
         }
 
+        if ($mode === 'delivery' && ($recipientName === '' || $recipientPhone === '')) {
+            $userModel = new User();
+            $userProfile = $userModel->findById((int) $userId) ?? [];
+            if ($recipientName === '') {
+                $recipientName = trim((string) ($userProfile['name'] ?? ''));
+            }
+            if ($recipientPhone === '') {
+                $recipientPhone = trim((string) ($userProfile['phone'] ?? ''));
+            }
+        }
+
         if ($mode === 'delivery' && $addressId === null) {
             $hasAddressPayload = $addressText !== '' || array_filter($addressDetails);
             if (!$hasAddressPayload) {
@@ -211,6 +224,22 @@ class CartController extends Controller
                 return;
             }
 
+            $settlement = trim((string) ($addressDetails['settlement'] ?? ''));
+            $street = trim((string) ($addressDetails['street'] ?? ''));
+            $house = trim((string) ($addressDetails['house'] ?? ''));
+
+            if ($settlement === '' || $street === '' || $house === '') {
+                http_response_code(400);
+                echo json_encode(['error' => 'Укажите город, улицу и номер дома']);
+                return;
+            }
+
+            if ($recipientName === '' || $recipientPhone === '') {
+                http_response_code(400);
+                echo json_encode(['error' => 'Укажите имя и телефон получателя']);
+                return;
+            }
+
             try {
                 $zoneCalculatedAt = $this->normalizeZoneCalculatedAt(
                     $payload['zone_calculated_at'] ?? ($addressDetails['zone_calculated_at'] ?? null)
@@ -218,8 +247,8 @@ class CartController extends Controller
                 $addressPayload = array_merge($addressDetails, [
                     'address_text' => $addressText,
 
-                    'recipient_name' => $recipient['name'] ?? null,
-                    'recipient_phone' => $recipient['phone'] ?? null,
+                    'recipient_name' => $recipientName ?: null,
+                    'recipient_phone' => $recipientPhone ?: null,
                     'zone_id' => $payload['zone_id'] ?? ($addressDetails['zone_id'] ?? null),
                     'zone_version' => $payload['zone_version'] ?? $payload['delivery_pricing_version'] ?? null,
                     'zone_calculated_at' => $zoneCalculatedAt,
@@ -260,8 +289,8 @@ class CartController extends Controller
                 'delivery_price' => $payload['delivery_price'] ?? null,
                 'zone_id' => $payload['zone_id'] ?? null,
                 'delivery_pricing_version' => $payload['delivery_pricing_version'] ?? null,
-                'recipient_name' => $recipient['name'] ?? null,
-                'recipient_phone' => $recipient['phone'] ?? null,
+                'recipient_name' => $recipientName ?: null,
+                'recipient_phone' => $recipientPhone ?: null,
                 'comment' => $comment,
             ]);
 
