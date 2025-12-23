@@ -1937,3 +1937,101 @@ if (pageId === 'promo') {
     initLotteryModal();
     initAuctionModal();
 }
+
+function initCookieConsent() {
+    const banner = document.querySelector('[data-cookie-banner]');
+    const settingsModal = document.querySelector('[data-cookie-settings]');
+    if (!banner || !settingsModal) return;
+
+    const analyticsToggle = settingsModal.querySelector('[data-cookie-analytics]');
+    const marketingToggle = settingsModal.querySelector('[data-cookie-marketing]');
+    const acceptAllButton = banner.querySelector('[data-cookie-accept-all]');
+    const openSettingsButton = banner.querySelector('[data-cookie-settings-open]');
+    const closeButtons = settingsModal.querySelectorAll('[data-cookie-settings-close]');
+    const saveButton = settingsModal.querySelector('[data-cookie-save]');
+
+    const storageKey = 'bunch_cookie_preferences';
+
+    const readPrefs = () => {
+        try {
+            const raw = localStorage.getItem(storageKey);
+            return raw ? JSON.parse(raw) : null;
+        } catch (e) {
+            return null;
+        }
+    };
+
+    const writePrefs = (prefs) => {
+        localStorage.setItem(storageKey, JSON.stringify(prefs));
+    };
+
+    const applyPrefs = (prefs) => {
+        if (!prefs) return;
+        if (prefs.analytics) {
+            // Здесь можно подключить Яндекс.Метрику / Google Analytics после согласия.
+        }
+        if (prefs.marketing) {
+            // Здесь можно подключить пиксель VK после согласия.
+        }
+    };
+
+    const setBannerVisible = (isVisible) => {
+        banner.classList.toggle('hidden', !isVisible);
+    };
+
+    const openSettings = () => {
+        const prefs = readPrefs();
+        analyticsToggle.checked = prefs?.analytics ?? false;
+        marketingToggle.checked = prefs?.marketing ?? false;
+        settingsModal.classList.remove('hidden');
+        settingsModal.classList.add('flex');
+    };
+
+    const closeSettings = () => {
+        settingsModal.classList.add('hidden');
+        settingsModal.classList.remove('flex');
+    };
+
+    const saveSettings = () => {
+        const prefs = {
+            necessary: true,
+            analytics: analyticsToggle.checked,
+            marketing: marketingToggle.checked,
+            savedAt: new Date().toISOString(),
+        };
+        writePrefs(prefs);
+        applyPrefs(prefs);
+        closeSettings();
+        setBannerVisible(false);
+    };
+
+    const acceptAll = () => {
+        const prefs = {
+            necessary: true,
+            analytics: true,
+            marketing: true,
+            savedAt: new Date().toISOString(),
+        };
+        writePrefs(prefs);
+        applyPrefs(prefs);
+        setBannerVisible(false);
+    };
+
+    const existing = readPrefs();
+    if (existing) {
+        applyPrefs(existing);
+        setBannerVisible(false);
+    } else {
+        setBannerVisible(true);
+    }
+
+    openSettingsButton?.addEventListener('click', openSettings);
+    acceptAllButton?.addEventListener('click', acceptAll);
+    saveButton?.addEventListener('click', saveSettings);
+    closeButtons.forEach((btn) => btn.addEventListener('click', closeSettings));
+    settingsModal.addEventListener('click', (event) => {
+        if (event.target === settingsModal) closeSettings();
+    });
+}
+
+initCookieConsent();
