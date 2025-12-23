@@ -189,12 +189,19 @@
                 $hasSavedAddresses = !empty($addresses);
                 $primaryAddress = $hasSavedAddresses ? $addresses[0] : null;
                 $primaryAddressBase = '';
+                $primaryAddressSettlement = '';
+                $primaryAddressStreet = '';
+                $primaryAddressHouse = '';
 
                 if ($primaryAddress) {
+                    $primaryAddressSettlement = $primaryAddress['raw']['settlement'] ?? '';
+                    $primaryAddressStreet = $primaryAddress['raw']['street'] ?? '';
+                    $primaryAddressHouse = $primaryAddress['raw']['house'] ?? '';
+
                     $primaryAddressBase = implode(', ', array_filter([
-                        $primaryAddress['raw']['settlement'] ?? null,
-                        $primaryAddress['raw']['street'] ?? null,
-                        isset($primaryAddress['raw']['house']) ? 'д. ' . $primaryAddress['raw']['house'] : null,
+                        $primaryAddressSettlement ?: null,
+                        $primaryAddressStreet ?: null,
+                        $primaryAddressHouse !== '' ? 'д. ' . $primaryAddressHouse : null,
                     ]));
 
                     if (!$primaryAddressBase) {
@@ -264,16 +271,38 @@
                             </div>
                         <?php endif; ?>
 
-                        <label class="flex flex-col gap-1 text-sm font-semibold text-slate-700">
-                            Улица, номер дома
-                            <input
-                                type="text"
-                                placeholder="Город, улица, дом"
-                                value="<?php echo htmlspecialchars($primaryAddressBase, ENT_QUOTES, 'UTF-8'); ?>"
-                                class="rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm focus:border-rose-300 focus:outline-none"
-                                data-address-input
-                            >
-                        </label>
+                        <div class="grid gap-3 sm:grid-cols-3">
+                            <label class="flex flex-col gap-1 text-sm font-semibold text-slate-700 sm:col-span-3">
+                                Город
+                                <input
+                                    type="text"
+                                    placeholder="Красноярск"
+                                    value="<?php echo htmlspecialchars($primaryAddressSettlement, ENT_QUOTES, 'UTF-8'); ?>"
+                                    class="rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm focus:border-rose-300 focus:outline-none"
+                                    data-address-settlement
+                                >
+                            </label>
+                            <label class="flex flex-col gap-1 text-sm font-semibold text-slate-700 sm:col-span-2">
+                                Улица
+                                <input
+                                    type="text"
+                                    placeholder="Карла Маркса"
+                                    value="<?php echo htmlspecialchars($primaryAddressStreet, ENT_QUOTES, 'UTF-8'); ?>"
+                                    class="rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm focus:border-rose-300 focus:outline-none"
+                                    data-address-street
+                                >
+                            </label>
+                            <label class="flex flex-col gap-1 text-sm font-semibold text-slate-700">
+                                Дом
+                                <input
+                                    type="text"
+                                    placeholder="12"
+                                    value="<?php echo htmlspecialchars($primaryAddressHouse, ENT_QUOTES, 'UTF-8'); ?>"
+                                    class="rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm focus:border-rose-300 focus:outline-none"
+                                    data-address-house
+                                >
+                            </label>
+                        </div>
 
                         <label class="flex flex-col gap-1 text-sm font-semibold text-slate-700">
                             Квартира/Офис
@@ -286,7 +315,50 @@
                             >
                         </label>
 
-                        
+                        <div class="grid gap-3 sm:grid-cols-3">
+                            <label class="flex flex-col gap-1 text-sm font-semibold text-slate-700">
+                                Подъезд
+                                <input
+                                    type="text"
+                                    placeholder="1"
+                                    value="<?php echo htmlspecialchars($primaryAddress['raw']['entrance'] ?? '', ENT_QUOTES, 'UTF-8'); ?>"
+                                    class="rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm focus:border-rose-300 focus:outline-none"
+                                    data-address-entrance
+                                >
+                            </label>
+                            <label class="flex flex-col gap-1 text-sm font-semibold text-slate-700">
+                                Этаж
+                                <input
+                                    type="text"
+                                    placeholder="5"
+                                    value="<?php echo htmlspecialchars($primaryAddress['raw']['floor'] ?? '', ENT_QUOTES, 'UTF-8'); ?>"
+                                    class="rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm focus:border-rose-300 focus:outline-none"
+                                    data-address-floor
+                                >
+                            </label>
+                            <label class="flex flex-col gap-1 text-sm font-semibold text-slate-700">
+                                Домофон
+                                <input
+                                    type="text"
+                                    placeholder="24"
+                                    value="<?php echo htmlspecialchars($primaryAddress['raw']['intercom'] ?? '', ENT_QUOTES, 'UTF-8'); ?>"
+                                    class="rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm focus:border-rose-300 focus:outline-none"
+                                    data-address-intercom
+                                >
+                            </label>
+                        </div>
+
+                        <label class="flex flex-col gap-1 text-sm font-semibold text-slate-700">
+                            Комментарий к адресу
+                            <textarea
+                                rows="2"
+                                class="rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm focus:border-rose-300 focus:outline-none"
+                                placeholder="Например, домофон не работает"
+                                data-address-comment
+                            ><?php echo htmlspecialchars($primaryAddress['raw']['delivery_comment'] ?? '', ENT_QUOTES, 'UTF-8'); ?></textarea>
+                        </label>
+
+                        <p class="text-xs font-semibold" data-delivery-pricing-hint></p>
 
                         <div class="space-y-2">
                             <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Получатель</p>
@@ -319,8 +391,8 @@
 
                     <div class="space-y-2 rounded-xl border border-slate-100 bg-slate-50 p-3">
                         <label class="flex flex-col gap-1 text-sm font-semibold text-slate-700">
-                            Комментарий
-                            <textarea rows="3" class="rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm focus:border-rose-300 focus:outline-none" placeholder="Подъезд, домофон, пожелания по букету" data-order-comment></textarea>
+                            Комментарий к заказу
+                            <textarea rows="3" class="rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm focus:border-rose-300 focus:outline-none" placeholder="Пожелания по букету или доставке" data-order-comment></textarea>
                         </label>
                     </div>
                 </section>
