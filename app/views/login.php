@@ -53,10 +53,10 @@
                     <span>PIN-код</span>
                 </label>
                 <div class="grid grid-cols-4 gap-2.5" id="pin-inputs">
-                    <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" autocomplete="off" class="w-full aspect-square rounded-xl border border-rose-200 bg-white/90 backdrop-blur-sm text-center text-xl font-bold text-slate-900 outline-none transition focus:border-rose-600 focus:shadow-lg focus:shadow-rose-500/20 focus:scale-105" aria-label="Первая цифра PIN">
-                    <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" autocomplete="off" class="w-full aspect-square rounded-xl border border-rose-200 bg-white/90 backdrop-blur-sm text-center text-xl font-bold text-slate-900 outline-none transition focus:border-rose-600 focus:shadow-lg focus:shadow-rose-500/20 focus:scale-105" aria-label="Вторая цифра PIN">
-                    <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" autocomplete="off" class="w-full aspect-square rounded-xl border border-rose-200 bg-white/90 backdrop-blur-sm text-center text-xl font-bold text-slate-900 outline-none transition focus:border-rose-600 focus:shadow-lg focus:shadow-rose-500/20 focus:scale-105" aria-label="Третья цифра PIN">
-                    <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" autocomplete="off" class="w-full aspect-square rounded-xl border border-rose-200 bg-white/90 backdrop-blur-sm text-center text-xl font-bold text-slate-900 outline-none transition focus:border-rose-600 focus:shadow-lg focus:shadow-rose-500/20 focus:scale-105" aria-label="Четвертая цифра PIN">
+                    <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" autocomplete="one-time-code" class="w-full aspect-square rounded-xl border border-rose-200 bg-white/90 backdrop-blur-sm text-center text-xl font-bold text-slate-900 outline-none transition focus:border-rose-600 focus:shadow-lg focus:shadow-rose-500/20 focus:scale-105" aria-label="Первая цифра PIN">
+                    <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" autocomplete="one-time-code" class="w-full aspect-square rounded-xl border border-rose-200 bg-white/90 backdrop-blur-sm text-center text-xl font-bold text-slate-900 outline-none transition focus:border-rose-600 focus:shadow-lg focus:shadow-rose-500/20 focus:scale-105" aria-label="Вторая цифра PIN">
+                    <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" autocomplete="one-time-code" class="w-full aspect-square rounded-xl border border-rose-200 bg-white/90 backdrop-blur-sm text-center text-xl font-bold text-slate-900 outline-none transition focus:border-rose-600 focus:shadow-lg focus:shadow-rose-500/20 focus:scale-105" aria-label="Третья цифра PIN">
+                    <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" autocomplete="one-time-code" class="w-full aspect-square rounded-xl border border-rose-200 bg-white/90 backdrop-blur-sm text-center text-xl font-bold text-slate-900 outline-none transition focus:border-rose-600 focus:shadow-lg focus:shadow-rose-500/20 focus:scale-105" aria-label="Четвертая цифра PIN">
                 </div>
                 <input type="hidden" name="pin" id="pin" required minlength="4" maxlength="4">
             </div>
@@ -84,15 +84,38 @@
         const hiddenPin = document.getElementById('pin');
         const form = document.getElementById('login-form');
 
-        // Очистка всех PIN-полей при загрузке
-        pinInputs.forEach(input => {
-            input.value = '';
-            input.setAttribute('autocomplete', 'off');
-        });
+        const lockPinInputs = (shouldLock, shouldClear = false) => {
+            pinInputs.forEach((input) => {
+                if (shouldLock) {
+                    input.setAttribute('readonly', 'readonly');
+                    input.value = '';
+                } else {
+                    input.removeAttribute('readonly');
+                    if (shouldClear) {
+                        input.value = '';
+                    }
+                }
+                input.setAttribute('autocomplete', 'one-time-code');
+            });
+            if (shouldLock || shouldClear) {
+                hiddenPin.value = '';
+            }
+        };
 
-        if (phoneInput) {
+        const focusPhoneInput = () => {
+            if (!phoneInput) {
+                return;
+            }
             phoneInput.focus();
-        }
+            requestAnimationFrame(() => {
+                phoneInput.setSelectionRange(phoneInput.value.length, phoneInput.value.length);
+            });
+        };
+
+        lockPinInputs(true);
+        setTimeout(() => {
+            focusPhoneInput();
+        }, 0);
 
         let lastPhoneDigits = '';
 
@@ -132,21 +155,21 @@
             return { formatted, digits: limited };
         };
 
-        const setPhoneValue = (value) => {
+const setPhoneValue = (value) => {
             const { formatted, digits } = formatPhone(value);
             phoneInput.value = formatted;
 
             const shouldMoveToPin = digits.length === 10 && lastPhoneDigits.length < 10;
+            const shouldLockPin = digits.length < 10 && lastPhoneDigits.length === 10;
             lastPhoneDigits = digits;
 
             if (shouldMoveToPin) {
                 requestAnimationFrame(() => {
-                    pinInputs.forEach((input) => {
-                        input.value = '';
-                    });
-                    hiddenPin.value = '';
+                    lockPinInputs(false, true);
                     pinInputs[0].focus();
                 });
+            } else if (shouldLockPin) {
+                lockPinInputs(true);
             }
         };
 
@@ -154,9 +177,14 @@
             if (!phoneInput.value.trim()) {
                 setPhoneValue('+7 ');
             }
-            requestAnimationFrame(() => {
-                phoneInput.setSelectionRange(phoneInput.value.length, phoneInput.value.length);
-            });
+            focusPhoneInput();
+        });
+
+        phoneInput.addEventListener('focus', () => {
+            if (!phoneInput.value.trim()) {
+                setPhoneValue('+7 ');
+            }
+            focusPhoneInput();
         });
 
         phoneInput.addEventListener('input', () => {
