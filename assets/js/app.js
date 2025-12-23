@@ -3,7 +3,8 @@ let cartSubtotal = Number(document.querySelector('[data-cart-bouquet-total]')?.d
 let deliveryPrice = Number(document.querySelector('[data-delivery-total]')?.dataset.amount || 0);
 
 function formatCurrency(value) {
-    return Number(value || 0).toLocaleString('ru-RU', { maximumFractionDigits: 0 }) + ' ₽';
+    const number = Number(value || 0);
+    return `${number.toLocaleString('ru-RU', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} ₽`;
 }
 
 function updateCartIndicator(count) {
@@ -1638,11 +1639,6 @@ function initAccountAddresses() {
 
 if (pageId === 'orders') {
     initOrdersHistory();
-}
-
-function formatCurrency(value) {
-    const number = Number(value || 0);
-    return `${number.toLocaleString('ru-RU', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} ₽`;
 }
 
 async function fetchJson(url, options) {
