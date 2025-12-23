@@ -1479,10 +1479,161 @@ function initAccountPage() {
     initNotificationToggles();
     initPinModal();
     initBirthdayReminders();
+    initAccountAddresses();
 }
 
 if (pageId === 'account') {
     initAccountPage();
+}
+
+function initAccountAddresses() {
+    const modal = document.querySelector('[data-address-modal]');
+    if (!modal) return;
+
+    const form = modal.querySelector('[data-address-form]');
+    const title = modal.querySelector('[data-address-title]');
+    const status = modal.querySelector('[data-address-status]');
+    const closeButton = modal.querySelector('[data-address-close]');
+    const fields = Array.from(modal.querySelectorAll('[data-address-field]'));
+    const triggers = document.querySelectorAll('[data-address-action]');
+
+    let activeAddressId = null;
+
+    const resetFields = () => {
+        fields.forEach((field) => {
+            field.value = '';
+        });
+    };
+
+    const fillField = (key, value) => {
+        const field = fields.find((item) => item.dataset.addressField === key);
+        if (field) field.value = value || '';
+    };
+
+    const showError = (message) => {
+        if (!status) return;
+        status.textContent = message;
+        status.classList.remove('hidden');
+    };
+
+    const clearStatus = () => {
+        if (!status) return;
+        status.textContent = '';
+        status.classList.add('hidden');
+    };
+
+    const openModal = (mode, dataset = {}) => {
+        clearStatus();
+        resetFields();
+        activeAddressId = null;
+
+        if (mode === 'edit') {
+            activeAddressId = Number(dataset.addressId || 0) || null;
+            if (title) title.textContent = 'Редактировать адрес';
+            fillField('label', dataset.addressLabel);
+            fillField('address_text', dataset.addressText);
+            fillField('recipient_name', dataset.addressRecipientName);
+            fillField('recipient_phone', dataset.addressRecipientPhone);
+            fillField('entrance', dataset.addressEntrance);
+            fillField('floor', dataset.addressFloor);
+            fillField('intercom', dataset.addressIntercom);
+            fillField('delivery_comment', dataset.addressComment);
+        } else {
+            if (title) title.textContent = 'Новый адрес';
+        }
+
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    };
+
+    const closeModal = () => {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        clearStatus();
+        resetFields();
+        activeAddressId = null;
+    };
+
+    const sendRequest = async (url, options) => {
+        try {
+            await fetchJson(url, options);
+            window.location.reload();
+        } catch (error) {
+            showError(error.message);
+        }
+    };
+
+    triggers.forEach((button) => {
+        button.addEventListener('click', () => {
+            const action = button.dataset.addressAction;
+            if (action === 'new') {
+                openModal('new');
+                return;
+            }
+
+            const card = button.closest('[data-address-id]');
+            if (!card) return;
+
+            if (action === 'edit') {
+                openModal('edit', card.dataset);
+                return;
+            }
+
+            const addressId = Number(card.dataset.addressId || 0);
+            if (!addressId) return;
+
+            if (action === 'delete') {
+                if (!window.confirm('Удалить этот адрес?')) {
+                    return;
+                }
+                sendRequest(`/api/account/addresses/${addressId}`, { method: 'DELETE' });
+                return;
+            }
+
+            if (action === 'primary') {
+                sendRequest(`/api/account/addresses/${addressId}/primary`, { method: 'POST' });
+            }
+        });
+    });
+
+    if (closeButton) {
+        closeButton.addEventListener('click', closeModal);
+    }
+
+    modal.addEventListener('click', (event) => {
+        if (event.target === modal) closeModal();
+    });
+
+    if (form) {
+        form.addEventListener('submit', (event) => {
+            event.preventDefault();
+            clearStatus();
+
+            const payload = fields.reduce((acc, field) => {
+                acc[field.dataset.addressField] = field.value;
+                return acc;
+            }, {});
+
+            if (!payload.address_text || !payload.address_text.trim()) {
+                showError('Укажите адрес доставки.');
+                return;
+            }
+
+            if (activeAddressId) {
+                sendRequest(`/api/account/addresses/${activeAddressId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                });
+            } else {
+                sendRequest('/api/account/addresses', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                });
+            }
+        });
+    }
 }
 
 if (pageId === 'orders') {

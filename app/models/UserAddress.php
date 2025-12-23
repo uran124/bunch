@@ -71,6 +71,64 @@ class UserAddress extends Model
         $stmt->execute(['id' => $addressId, 'user_id' => $userId]);
     }
 
+    public function updateForUser(int $userId, int $addressId, array $data): bool
+    {
+        $sql = 'UPDATE user_addresses SET
+            label = :label,
+            address_text = :address_text,
+            recipient_name = :recipient_name,
+            recipient_phone = :recipient_phone,
+            entrance = :entrance,
+            floor = :floor,
+            intercom = :intercom,
+            delivery_comment = :delivery_comment,
+            updated_at = NOW()
+            WHERE id = :id AND user_id = :user_id AND is_archived = 0';
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([
+            'label' => $this->emptyToNull($data['label'] ?? null),
+            'address_text' => $this->emptyToNull($data['address_text'] ?? null),
+            'recipient_name' => $this->emptyToNull($data['recipient_name'] ?? null),
+            'recipient_phone' => $this->emptyToNull($data['recipient_phone'] ?? null),
+            'entrance' => $this->emptyToNull($data['entrance'] ?? null),
+            'floor' => $this->emptyToNull($data['floor'] ?? null),
+            'intercom' => $this->emptyToNull($data['intercom'] ?? null),
+            'delivery_comment' => $this->emptyToNull($data['delivery_comment'] ?? null),
+            'id' => $addressId,
+            'user_id' => $userId,
+        ]);
+
+        return $stmt->rowCount() > 0;
+    }
+
+    public function archiveForUser(int $userId, int $addressId): bool
+    {
+        $stmt = $this->db->prepare('UPDATE user_addresses SET is_archived = 1, is_active = 0, is_default = 0 WHERE id = :id AND user_id = :user_id');
+        $stmt->execute(['id' => $addressId, 'user_id' => $userId]);
+
+        return $stmt->rowCount() > 0;
+    }
+
+    public function setPrimaryForUser(int $userId, int $addressId): bool
+    {
+        $this->db->beginTransaction();
+
+        try {
+            $resetStmt = $this->db->prepare('UPDATE user_addresses SET is_default = 0 WHERE user_id = :user_id AND is_archived = 0');
+            $resetStmt->execute(['user_id' => $userId]);
+
+            $setStmt = $this->db->prepare('UPDATE user_addresses SET is_default = 1, last_used_at = NOW() WHERE id = :id AND user_id = :user_id AND is_archived = 0');
+            $setStmt->execute(['id' => $addressId, 'user_id' => $userId]);
+
+            $this->db->commit();
+            return $setStmt->rowCount() > 0;
+        } catch (Throwable $e) {
+            $this->db->rollBack();
+            throw $e;
+        }
+    }
+
     public function getByUserId(int $userId): array
     {
         $stmt = $this->db->prepare('SELECT * FROM user_addresses WHERE user_id = :user_id AND is_archived = 0 ORDER BY is_default DESC, COALESCE(last_used_at, created_at) DESC');
