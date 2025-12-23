@@ -1496,7 +1496,66 @@ function initAccountAddresses() {
     const status = modal.querySelector('[data-address-status]');
     const closeButton = modal.querySelector('[data-address-close]');
     const fields = Array.from(modal.querySelectorAll('[data-address-field]'));
+    const settlementField = modal.querySelector('[data-address-field="settlement"]');
+    const streetField = modal.querySelector('[data-address-field="street"]');
+    const houseField = modal.querySelector('[data-address-field="house"]');
+    const apartmentField = modal.querySelector('[data-address-field="apartment"]');
+    const addressTextField = modal.querySelector('[data-address-field="address_text"]');
+    const recipientField = modal.querySelector('[data-address-field="recipient_name"]');
+    const phoneField = modal.querySelector('[data-address-field="recipient_phone"]');
+    const zoneLabel = modal.querySelector('[data-address-zone-label]');
+    const addressPreview = modal.querySelector('[data-address-preview]');
     const triggers = document.querySelectorAll('[data-address-action]');
+    const addressSuggestionList = document.createElement('div');
+
+    const deliveryZones = (() => {
+        try {
+            return JSON.parse(modal.dataset.deliveryZones || '[]');
+        } catch (e) {
+            return [];
+        }
+    })();
+
+    const testAddresses = (() => {
+        try {
+            return JSON.parse(modal.dataset.testAddresses || '[]');
+        } catch (e) {
+            return [];
+        }
+    })();
+
+    let dadataConfig = (() => {
+        try {
+            return JSON.parse(modal.dataset.dadataConfig || '{}');
+        } catch (e) {
+            return {};
+        }
+    })();
+
+    const mergeCredentialsFromStorage = (config) => {
+        try {
+            const cached = localStorage.getItem('dadataCredentials');
+            if (cached) {
+                const parsed = JSON.parse(cached);
+                if (parsed && typeof parsed === 'object') {
+                    return {
+                        ...config,
+                        apiKey: config.apiKey || parsed.apiKey || '',
+                        secretKey: config.secretKey || parsed.secretKey || '',
+                    };
+                }
+            }
+        } catch (e) {
+            console.error('Не удалось загрузить ключи DaData из localStorage', e);
+        }
+
+        return config;
+    };
+
+    dadataConfig = mergeCredentialsFromStorage(dadataConfig);
+
+    const deliveryPricingVersion = modal.dataset.deliveryPricingVersion || null;
+    let lastSuggestionRequestId = 0;
 
     let activeAddressId = null;
 
@@ -1504,6 +1563,265 @@ function initAccountAddresses() {
         fields.forEach((field) => {
             field.value = '';
         });
+    };
+
+    const normalizeText = (value = '') => value.trim().toLowerCase();
+
+    const composeBaseAddress = () => {
+        const settlement = settlementField?.value?.trim() || '';
+        const street = streetField?.value?.trim() || '';
+        const house = houseField?.value?.trim() || '';
+
+        return [settlement, street, house ? `д. ${house}` : null].filter(Boolean).join(', ');
+    };
+
+    const composeAddressText = () => {
+        const base = composeBaseAddress();
+        const apartment = apartmentField?.value?.trim() || '';
+        return [base, apartment ? `кв/офис ${apartment}` : null].filter(Boolean).join(', ');
+    };
+
+    const updateAddressPreview = () => {
+        const text = composeAddressText();
+        if (addressTextField) {
+            addressTextField.value = text;
+        }
+        if (addressPreview) {
+            addressPreview.textContent = text ? `Итоговый адрес: ${text}` : 'Полный адрес будет сформирован автоматически.';
+        }
+    };
+
+    const setZoneLabel = (text, tone = 'muted') => {
+        if (!zoneLabel) return;
+        zoneLabel.value = text;
+        zoneLabel.classList.toggle('text-emerald-700', tone === 'success');
+        zoneLabel.classList.toggle('text-amber-700', tone === 'warn');
+        zoneLabel.classList.toggle('text-slate-700', tone === 'muted');
+    };
+
+    const setHiddenField = (key, value) => {
+        const field = fields.find((item) => item.dataset.addressField === key);
+        if (field) field.value = value || '';
+    };
+
+    const buildPolygon = (zone) => {
+        const closed = [...(zone.polygon || [])];
+        const first = zone.polygon?.[0];
+        if (first) {
+            const last = zone.polygon[zone.polygon.length - 1];
+            if (first[0] !== last[0] || first[1] !== last[1]) {
+                closed.push(first);
+            }
+        }
+        return turf.polygon([closed]);
+    };
+
+    const findZoneForPoint = (coords) => {
+        if (!Array.isArray(coords) || coords.length < 2) return null;
+        const point = turf.point(coords);
+        for (const zone of deliveryZones) {
+            const polygon = buildPolygon(zone);
+            if (turf.booleanPointInPolygon(point, polygon)) {
+                return zone;
+            }
+        }
+        return null;
+    };
+
+    const DADATA_CENTER = { lat: 56.233717, lon: 92.8426 };
+
+    const formatAddressFromDadata = (data) => {
+        if (!data) return '';
+
+        const cityName = data.city || data.settlement || '';
+        const cityLabel = data.settlement_with_type || data.city_with_type || '';
+        const street = data.street_with_type || '';
+        const house = data.house ? `д ${data.house}` : '';
+
+        return [cityLabel || cityName, street, house].filter(Boolean).join(', ');
+    };
+
+    const isKrasnoyarskAddress = (data) => {
+        if (!data) return false;
+        const cityName = data.city || data.settlement || '';
+        const cityLabel = data.settlement_with_type || data.city_with_type || '';
+
+        return (cityName || cityLabel).toLowerCase().includes('красноярск');
+    };
+
+    const renderSuggestions = (suggestions) => {
+        if (!streetField) return;
+
+        addressSuggestionList.innerHTML = '';
+        if (!suggestions.length) {
+            addressSuggestionList.classList.add('hidden');
+            return;
+        }
+
+        suggestions.forEach((item) => {
+            const formatted = formatAddressFromDadata(item.data) || item.value || '';
+            const row = document.createElement('button');
+            row.type = 'button';
+            row.className =
+                'flex w-full items-start gap-2 rounded-xl px-3 py-2 text-left text-sm font-semibold text-slate-800 hover:bg-rose-50';
+            row.innerHTML = `
+                <span class="material-symbols-rounded text-base text-rose-500">location_on</span>
+                <span class="flex-1">
+                    <span class="block">${formatted}</span>
+                </span>
+            `;
+
+            row.addEventListener('click', () => {
+                const data = item.data || {};
+                if (settlementField) {
+                    settlementField.value = data.settlement_with_type || data.city_with_type || data.region_with_type || '';
+                }
+                if (streetField) {
+                    streetField.value = data.street_with_type || '';
+                }
+                if (houseField) {
+                    houseField.value = data.house || '';
+                }
+                updateAddressPreview();
+                addressSuggestionList.classList.add('hidden');
+                setTimeout(updateDeliveryZone, 50);
+            });
+
+            addressSuggestionList.appendChild(row);
+        });
+
+        addressSuggestionList.classList.remove('hidden');
+    };
+
+    const fetchSuggestions = async (query, requestId) => {
+        if (!query || query.length < 3) return [];
+
+        if (dadataConfig.apiKey) {
+            const response = await fetch('https://suggestions.dadata.ru/suggestions/api/4_1/rs/suggest/address', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Accept: 'application/json',
+                    Authorization: `Token ${dadataConfig.apiKey}`,
+                },
+                body: JSON.stringify({
+                    query,
+                    count: 10,
+                    locations_geo: [
+                        {
+                            lat: DADATA_CENTER.lat,
+                            lon: DADATA_CENTER.lon,
+                            radius_meters: 60000,
+                        },
+                    ],
+                }),
+            }).catch(() => null);
+
+            if (response?.ok) {
+                const data = await response.json().catch(() => null);
+                if (requestId === lastSuggestionRequestId) {
+                    const suggestions = data?.suggestions || [];
+                    return suggestions.sort((a, b) => {
+                        const aIsKrasnoyarsk = isKrasnoyarskAddress(a?.data) ? 0 : 1;
+                        const bIsKrasnoyarsk = isKrasnoyarskAddress(b?.data) ? 0 : 1;
+                        return aIsKrasnoyarsk - bIsKrasnoyarsk;
+                    });
+                }
+            }
+        }
+
+        return testAddresses
+            .filter((item) => normalizeText(item.label).includes(normalizeText(query)))
+            .map((item) => ({
+                value: item.label,
+                data: { city_with_type: item.label, street_with_type: '' },
+            }));
+    };
+
+    const debouncedSuggest = (() => {
+        let timer;
+        return (value) => {
+            clearTimeout(timer);
+            timer = setTimeout(async () => {
+                lastSuggestionRequestId += 1;
+                const requestId = lastSuggestionRequestId;
+                const suggestions = await fetchSuggestions(value.trim(), requestId);
+                renderSuggestions(suggestions);
+            }, 250);
+        };
+    })();
+
+    const geocodeWithDadata = async (addressText) => {
+        if (!addressText || !dadataConfig.apiKey || !dadataConfig.secretKey) return null;
+
+        const response = await fetch('/api/dadata/clean-address', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+            body: JSON.stringify({ query: addressText }),
+        });
+
+        if (!response.ok) return null;
+        const data = await response.json().catch(() => null);
+        if (!Array.isArray(data) || !data[0]) return null;
+        const row = data[0];
+        if (!row.geo_lon || !row.geo_lat) return null;
+
+        return {
+            lon: Number(row.geo_lon),
+            lat: Number(row.geo_lat),
+            qc: row.qc_geo,
+            label: formatAddressFromDadata(row) || row.result || addressText,
+        };
+    };
+
+    const updateDeliveryZone = async () => {
+        const baseAddress = composeBaseAddress();
+        updateAddressPreview();
+
+        if (!baseAddress) {
+            setZoneLabel('Введите город, улицу и дом для определения зоны.', 'muted');
+            ['lat', 'lon', 'zone_id', 'zone_version', 'zone_calculated_at', 'location_source', 'geo_quality', 'last_delivery_price_hint'].forEach(
+                (key) => setHiddenField(key, ''),
+            );
+            return;
+        }
+
+        setZoneLabel('Определяем зону доставки...', 'muted');
+
+        try {
+            const geocoded = await geocodeWithDadata(baseAddress);
+            if (!geocoded) {
+                setZoneLabel('Не удалось определить координаты. Проверьте адрес.', 'warn');
+                ['lat', 'lon', 'zone_id', 'zone_version', 'zone_calculated_at', 'location_source', 'geo_quality', 'last_delivery_price_hint'].forEach(
+                    (key) => setHiddenField(key, ''),
+                );
+                return;
+            }
+
+            const zone = findZoneForPoint([geocoded.lon, geocoded.lat]);
+            setHiddenField('lat', geocoded.lat);
+            setHiddenField('lon', geocoded.lon);
+            setHiddenField('location_source', 'dadata');
+            setHiddenField('geo_quality', geocoded.qc ?? '');
+            setHiddenField('zone_calculated_at', new Date().toISOString());
+            setHiddenField('zone_version', deliveryPricingVersion || '');
+
+            if (!zone) {
+                setZoneLabel('Адрес найден, но зона не определена.', 'warn');
+                setHiddenField('zone_id', '');
+                setHiddenField('last_delivery_price_hint', '');
+                return;
+            }
+
+            setHiddenField('zone_id', zone.id);
+            setHiddenField('last_delivery_price_hint', zone.price);
+            setZoneLabel(`Зона «${zone.name}» · ${zone.price.toLocaleString('ru-RU')} ₽`, 'success');
+        } catch (e) {
+            setZoneLabel('Ошибка при определении зоны доставки.', 'warn');
+        }
     };
 
     const fillField = (key, value) => {
@@ -1533,14 +1851,41 @@ function initAccountAddresses() {
             if (title) title.textContent = 'Редактировать адрес';
             fillField('label', dataset.addressLabel);
             fillField('address_text', dataset.addressText);
+            fillField('settlement', dataset.addressSettlement);
+            fillField('street', dataset.addressStreet);
+            fillField('house', dataset.addressHouse);
+            fillField('apartment', dataset.addressApartment);
             fillField('recipient_name', dataset.addressRecipientName);
             fillField('recipient_phone', dataset.addressRecipientPhone);
             fillField('entrance', dataset.addressEntrance);
             fillField('floor', dataset.addressFloor);
             fillField('intercom', dataset.addressIntercom);
             fillField('delivery_comment', dataset.addressComment);
+            fillField('zone_id', dataset.addressZoneId);
+            fillField('zone_version', dataset.addressZoneVersion);
+            fillField('zone_calculated_at', dataset.addressZoneCalculatedAt);
+            fillField('location_source', dataset.addressLocationSource);
+            fillField('geo_quality', dataset.addressGeoQuality);
+            fillField('lat', dataset.addressLat);
+            fillField('lon', dataset.addressLon);
+            fillField('last_delivery_price_hint', dataset.addressLastDeliveryPriceHint);
         } else {
             if (title) title.textContent = 'Новый адрес';
+        }
+
+        updateAddressPreview();
+        const zoneId = Number(dataset.addressZoneId || 0);
+        if (zoneId) {
+            const zone = deliveryZones.find((item) => Number(item.id) === zoneId);
+            if (zone) {
+                setZoneLabel(`Зона «${zone.name}» · ${zone.price.toLocaleString('ru-RU')} ₽`, 'success');
+            } else {
+                setZoneLabel('Зона доставки не найдена.', 'warn');
+            }
+        } else if (mode === 'edit' && composeBaseAddress()) {
+            setZoneLabel('Зона доставки будет определена при сохранении.', 'warn');
+        } else {
+            setZoneLabel('Введите город, улицу и дом для определения зоны.', 'muted');
         }
 
         modal.classList.remove('hidden');
@@ -1553,6 +1898,9 @@ function initAccountAddresses() {
         clearStatus();
         resetFields();
         activeAddressId = null;
+        addressSuggestionList.classList.add('hidden');
+        if (zoneLabel) zoneLabel.value = '';
+        if (addressPreview) addressPreview.textContent = 'Полный адрес будет сформирован автоматически.';
     };
 
     const sendRequest = async (url, options) => {
@@ -1597,6 +1945,35 @@ function initAccountAddresses() {
         });
     });
 
+    if (streetField) {
+        const wrapper = streetField.parentElement;
+        if (wrapper) {
+            wrapper.classList.add('relative');
+            addressSuggestionList.className =
+                'absolute left-0 right-0 top-full z-30 mt-1 hidden overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg';
+            wrapper.appendChild(addressSuggestionList);
+        }
+    }
+
+    document.addEventListener('click', (event) => {
+        if (!addressSuggestionList.contains(event.target) && streetField !== event.target) {
+            addressSuggestionList.classList.add('hidden');
+        }
+    });
+
+    [settlementField, streetField, houseField].forEach((field) => {
+        if (!field) return;
+        field.addEventListener('input', () => {
+            updateAddressPreview();
+            debouncedSuggest(composeBaseAddress());
+        });
+        field.addEventListener('focus', () => debouncedSuggest(composeBaseAddress()));
+        field.addEventListener('blur', updateDeliveryZone);
+        field.addEventListener('change', updateDeliveryZone);
+    });
+
+    apartmentField?.addEventListener('input', updateAddressPreview);
+
     if (closeButton) {
         closeButton.addEventListener('click', closeModal);
     }
@@ -1610,13 +1987,40 @@ function initAccountAddresses() {
             event.preventDefault();
             clearStatus();
 
+            updateAddressPreview();
+
             const payload = fields.reduce((acc, field) => {
                 acc[field.dataset.addressField] = field.value;
                 return acc;
             }, {});
 
+            if (!payload.settlement || !payload.settlement.trim()) {
+                showError('Укажите город доставки.');
+                return;
+            }
+
+            if (!payload.street || !payload.street.trim()) {
+                showError('Укажите улицу доставки.');
+                return;
+            }
+
+            if (!payload.house || !payload.house.trim()) {
+                showError('Укажите номер дома.');
+                return;
+            }
+
             if (!payload.address_text || !payload.address_text.trim()) {
-                showError('Укажите адрес доставки.');
+                showError('Не удалось сформировать адрес. Проверьте поля.');
+                return;
+            }
+
+            if (!payload.recipient_name || !payload.recipient_name.trim()) {
+                showError('Укажите имя получателя.');
+                return;
+            }
+
+            if (!payload.recipient_phone || !payload.recipient_phone.trim()) {
+                showError('Укажите телефон получателя.');
                 return;
             }
 

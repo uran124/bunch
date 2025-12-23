@@ -95,13 +95,25 @@
                             class="flex items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-slate-50/60 px-4 py-3"
                             data-address-id="<?php echo (int) ($address['raw']['id'] ?? 0); ?>"
                             data-address-label="<?php echo htmlspecialchars($address['label'] ?? 'Адрес', ENT_QUOTES, 'UTF-8'); ?>"
-                            data-address-text="<?php echo htmlspecialchars($address['address'], ENT_QUOTES, 'UTF-8'); ?>"
+                            data-address-text="<?php echo htmlspecialchars($address['raw']['address_text'] ?? $address['address'], ENT_QUOTES, 'UTF-8'); ?>"
+                            data-address-settlement="<?php echo htmlspecialchars($address['raw']['settlement'] ?? '', ENT_QUOTES, 'UTF-8'); ?>"
+                            data-address-street="<?php echo htmlspecialchars($address['raw']['street'] ?? '', ENT_QUOTES, 'UTF-8'); ?>"
+                            data-address-house="<?php echo htmlspecialchars($address['raw']['house'] ?? '', ENT_QUOTES, 'UTF-8'); ?>"
+                            data-address-apartment="<?php echo htmlspecialchars($address['raw']['apartment'] ?? '', ENT_QUOTES, 'UTF-8'); ?>"
                             data-address-recipient-name="<?php echo htmlspecialchars($recipientNameRaw, ENT_QUOTES, 'UTF-8'); ?>"
                             data-address-recipient-phone="<?php echo htmlspecialchars($recipientPhoneRaw, ENT_QUOTES, 'UTF-8'); ?>"
                             data-address-entrance="<?php echo htmlspecialchars($address['raw']['entrance'] ?? '', ENT_QUOTES, 'UTF-8'); ?>"
                             data-address-floor="<?php echo htmlspecialchars($address['raw']['floor'] ?? '', ENT_QUOTES, 'UTF-8'); ?>"
                             data-address-intercom="<?php echo htmlspecialchars($address['raw']['intercom'] ?? '', ENT_QUOTES, 'UTF-8'); ?>"
                             data-address-comment="<?php echo htmlspecialchars($address['raw']['delivery_comment'] ?? '', ENT_QUOTES, 'UTF-8'); ?>"
+                            data-address-zone-id="<?php echo htmlspecialchars((string) ($address['raw']['zone_id'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
+                            data-address-zone-version="<?php echo htmlspecialchars((string) ($address['raw']['zone_version'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
+                            data-address-zone-calculated-at="<?php echo htmlspecialchars((string) ($address['raw']['zone_calculated_at'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
+                            data-address-location-source="<?php echo htmlspecialchars((string) ($address['raw']['location_source'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
+                            data-address-geo-quality="<?php echo htmlspecialchars((string) ($address['raw']['geo_quality'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
+                            data-address-lat="<?php echo htmlspecialchars((string) ($address['raw']['lat'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
+                            data-address-lon="<?php echo htmlspecialchars((string) ($address['raw']['lon'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
+                            data-address-last-delivery-price-hint="<?php echo htmlspecialchars((string) ($address['raw']['last_delivery_price_hint'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
                         >
                             <div class="space-y-1">
                                 <p class="text-sm font-semibold text-slate-900">
@@ -493,7 +505,14 @@
         </div>
     </div>
 
-    <div class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/40 p-4 backdrop-blur" data-address-modal>
+    <div
+        class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/40 p-4 backdrop-blur"
+        data-address-modal
+        data-delivery-zones="<?php echo htmlspecialchars(json_encode($deliveryZones ?? [], JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8'); ?>"
+        data-delivery-pricing-version="<?php echo htmlspecialchars($deliveryPricingVersion ?? '', ENT_QUOTES, 'UTF-8'); ?>"
+        data-dadata-config="<?php echo htmlspecialchars(json_encode($dadataConfig ?? [], JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8'); ?>"
+        data-test-addresses="<?php echo htmlspecialchars(json_encode($testAddresses ?? [], JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8'); ?>"
+    >
         <div class="w-full max-w-lg rounded-3xl border border-slate-200 bg-white p-6 shadow-xl">
             <div class="flex items-start justify-between gap-3">
                 <div>
@@ -510,10 +529,30 @@
                     <label class="text-xs font-semibold uppercase tracking-[0.06em] text-slate-500" for="account-address-label">Название</label>
                     <input id="account-address-label" type="text" class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900 focus:border-rose-300 focus:bg-white focus:outline-none" data-address-field="label" placeholder="Дом / Офис">
                 </div>
-                <div class="space-y-2">
-                    <label class="text-xs font-semibold uppercase tracking-[0.06em] text-slate-500" for="account-address-text">Адрес</label>
-                    <textarea id="account-address-text" rows="2" class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900 focus:border-rose-300 focus:bg-white focus:outline-none" data-address-field="address_text" placeholder="Улица, дом, подъезд"></textarea>
+                <div class="grid gap-3 sm:grid-cols-3">
+                    <div class="space-y-2 sm:col-span-3">
+                        <label class="text-xs font-semibold uppercase tracking-[0.06em] text-slate-500" for="account-address-settlement">Город</label>
+                        <input id="account-address-settlement" type="text" class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900 focus:border-rose-300 focus:bg-white focus:outline-none" data-address-field="settlement" placeholder="Красноярск">
+                    </div>
+                    <div class="space-y-2 sm:col-span-2">
+                        <label class="text-xs font-semibold uppercase tracking-[0.06em] text-slate-500" for="account-address-street">Улица</label>
+                        <input id="account-address-street" type="text" class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900 focus:border-rose-300 focus:bg-white focus:outline-none" data-address-field="street" placeholder="Карла Маркса">
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-xs font-semibold uppercase tracking-[0.06em] text-slate-500" for="account-address-house">Дом</label>
+                        <input id="account-address-house" type="text" class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900 focus:border-rose-300 focus:bg-white focus:outline-none" data-address-field="house" placeholder="12">
+                    </div>
                 </div>
+                <p class="text-xs font-semibold text-slate-500" data-address-preview>Полный адрес будет сформирован автоматически.</p>
+                <input type="hidden" data-address-field="address_text">
+                <input type="hidden" data-address-field="lat">
+                <input type="hidden" data-address-field="lon">
+                <input type="hidden" data-address-field="location_source">
+                <input type="hidden" data-address-field="geo_quality">
+                <input type="hidden" data-address-field="zone_id">
+                <input type="hidden" data-address-field="zone_version">
+                <input type="hidden" data-address-field="zone_calculated_at">
+                <input type="hidden" data-address-field="last_delivery_price_hint">
                 <div class="grid gap-3 sm:grid-cols-2">
                     <div class="space-y-2">
                         <label class="text-xs font-semibold uppercase tracking-[0.06em] text-slate-500" for="account-address-recipient">Получатель</label>
@@ -522,6 +561,16 @@
                     <div class="space-y-2">
                         <label class="text-xs font-semibold uppercase tracking-[0.06em] text-slate-500" for="account-address-phone">Телефон получателя</label>
                         <input id="account-address-phone" type="tel" class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900 focus:border-rose-300 focus:bg-white focus:outline-none" data-address-field="recipient_phone">
+                    </div>
+                </div>
+                <div class="grid gap-3 sm:grid-cols-2">
+                    <div class="space-y-2">
+                        <label class="text-xs font-semibold uppercase tracking-[0.06em] text-slate-500" for="account-address-apartment">Квартира / офис</label>
+                        <input id="account-address-apartment" type="text" class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900 focus:border-rose-300 focus:bg-white focus:outline-none" data-address-field="apartment">
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-xs font-semibold uppercase tracking-[0.06em] text-slate-500" for="account-address-zone">Зона доставки</label>
+                        <input id="account-address-zone" type="text" class="w-full rounded-2xl border border-slate-200 bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-700" data-address-zone-label readonly>
                     </div>
                 </div>
                 <div class="grid gap-3 sm:grid-cols-3">
