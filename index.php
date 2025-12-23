@@ -102,7 +102,7 @@ if (!Auth::check() && !in_array($page, $publicPages, true)) {
     exit;
 }
 
-if (Auth::check() && in_array($page, $publicPages, true)) {
+if (Auth::check() && in_array($page, $publicPages, true) && $page !== 'home') {
     header('Location: /?page=home');
     exit;
 }
