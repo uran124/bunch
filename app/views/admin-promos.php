@@ -1,5 +1,6 @@
 <?php /** @var array $lotteries */ ?>
 <?php /** @var array $auctions */ ?>
+<?php /** @var array $promoItems */ ?>
 <?php $pageMeta = $pageMeta ?? []; ?>
 
 <section class="flex flex-col gap-6">
@@ -200,6 +201,85 @@
                 <div class="text-sm font-semibold text-slate-900"><?php echo number_format($auction['current_price'], 2, '.', ' '); ?> ₽</div>
                 <div class="text-sm text-slate-600">
                     <?php echo $auction['winner_last4'] !== '----' ? 'Победитель: …' . $auction['winner_last4'] : 'Победитель не выбран'; ?>
+                </div>
+            </article>
+        <?php endforeach; ?>
+    </div>
+
+    <div class="grid gap-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-rose-50/60 ring-1 ring-transparent lg:grid-cols-[1.1fr_1fr]">
+        <div class="space-y-3">
+            <p class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Разовые товары</p>
+            <h2 class="text-xl font-semibold text-slate-900">Акции с ограниченным количеством</h2>
+            <p class="text-sm text-slate-600">Разовые товары без привязки к поставкам: укажите количество (если не заполнено — товар всего один) и дату окончания акции (если не указано — ограничение только по наличию).</p>
+        </div>
+        <form action="/?page=admin-promo-item-save" method="post" class="grid gap-3">
+            <label class="flex flex-col gap-2 text-sm font-semibold text-slate-700">
+                Название акции
+                <input name="title" required class="rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-sm focus:border-rose-300 focus:outline-none focus:ring-2 focus:ring-rose-200">
+            </label>
+            <label class="flex flex-col gap-2 text-sm font-semibold text-slate-700">
+                Описание
+                <textarea name="description" rows="2" class="rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-sm focus:border-rose-300 focus:outline-none focus:ring-2 focus:ring-rose-200"></textarea>
+            </label>
+            <div class="grid gap-3 sm:grid-cols-2">
+                <label class="flex flex-col gap-2 text-sm font-semibold text-slate-700">
+                    Цена, ₽
+                    <input name="price" type="number" step="0.01" min="1" required class="rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-sm focus:border-rose-300 focus:outline-none focus:ring-2 focus:ring-rose-200">
+                </label>
+                <label class="flex flex-col gap-2 text-sm font-semibold text-slate-700">
+                    Количество
+                    <input name="quantity" type="number" min="1" placeholder="Если не заполнено — 1 шт" class="rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-sm focus:border-rose-300 focus:outline-none focus:ring-2 focus:ring-rose-200">
+                </label>
+            </div>
+            <div class="grid gap-3 sm:grid-cols-2">
+                <label class="flex flex-col gap-2 text-sm font-semibold text-slate-700">
+                    Действует до
+                    <input name="ends_at" type="datetime-local" class="rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-sm focus:border-rose-300 focus:outline-none focus:ring-2 focus:ring-rose-200">
+                </label>
+                <label class="flex flex-col gap-2 text-sm font-semibold text-slate-700">
+                    Бейдж/метка
+                    <input name="label" placeholder="Например, Limited" class="rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-sm focus:border-rose-300 focus:outline-none focus:ring-2 focus:ring-rose-200">
+                </label>
+            </div>
+            <label class="flex flex-col gap-2 text-sm font-semibold text-slate-700">
+                Фото (URL)
+                <input name="photo_url" class="rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-sm focus:border-rose-300 focus:outline-none focus:ring-2 focus:ring-rose-200">
+            </label>
+            <label class="inline-flex items-center gap-2 text-sm font-semibold text-slate-700">
+                <input type="checkbox" name="is_active" checked class="h-4 w-4 rounded border-slate-300 text-rose-600 focus:ring-rose-200">
+                Активна
+            </label>
+            <button class="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-200 transition hover:-translate-y-0.5">
+                <span class="material-symbols-rounded text-base">local_offer</span>
+                Добавить разовую акцию
+            </button>
+        </form>
+    </div>
+
+    <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm shadow-rose-50/60 ring-1 ring-transparent">
+        <div class="grid grid-cols-[70px_1.4fr_1fr_1fr_1fr] items-center gap-4 border-b border-slate-100 bg-slate-50 px-5 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <span>ID</span>
+            <span>Разовая акция</span>
+            <span>Количество</span>
+            <span>Цена</span>
+            <span>Срок / статус</span>
+        </div>
+        <?php if (empty($promoItems)): ?>
+            <div class="px-5 py-4 text-sm text-slate-500">Разовые акции ещё не добавлены.</div>
+        <?php endif; ?>
+        <?php foreach ($promoItems as $promo): ?>
+            <?php $quantity = $promo['quantity'] !== null ? (int) $promo['quantity'] : 1; ?>
+            <article class="grid grid-cols-[70px_1.4fr_1fr_1fr_1fr] items-center gap-4 border-b border-slate-100 px-5 py-4 last:border-b-0">
+                <div class="text-sm font-semibold text-slate-900">#<?php echo (int) $promo['id']; ?></div>
+                <div class="space-y-1">
+                    <div class="text-base font-semibold text-slate-900"><?php echo htmlspecialchars($promo['title'], ENT_QUOTES, 'UTF-8'); ?></div>
+                    <div class="text-sm text-slate-500"><?php echo $promo['label'] ? htmlspecialchars($promo['label'], ENT_QUOTES, 'UTF-8') : 'Разовая акция'; ?></div>
+                </div>
+                <div class="text-sm text-slate-700"><?php echo $quantity; ?> шт</div>
+                <div class="text-sm font-semibold text-rose-700"><?php echo number_format($promo['price'], 2, '.', ' '); ?> ₽</div>
+                <div class="space-y-1 text-sm text-slate-600">
+                    <div class="font-semibold text-slate-900"><?php echo $promo['is_active'] ? 'Активна' : 'Выключена'; ?></div>
+                    <div><?php echo $promo['ends_at'] ? htmlspecialchars($promo['ends_at'], ENT_QUOTES, 'UTF-8') : 'Только по наличию'; ?></div>
                 </div>
             </article>
         <?php endforeach; ?>

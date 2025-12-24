@@ -223,7 +223,34 @@ CREATE TABLE promos (
   COLLATE=utf8mb4_unicode_ci;
 
 -- =========================
--- 4.1. Лотереи
+-- 4.1. Разовые промо-товары
+-- =========================
+
+CREATE TABLE promo_items (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+
+  title       VARCHAR(150) NOT NULL,
+  slug        VARCHAR(150) NOT NULL UNIQUE,
+  description TEXT NULL,
+
+  price       DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+  quantity    INT UNSIGNED NULL,
+  ends_at     DATETIME NULL,
+
+  label     VARCHAR(60) NULL,
+  photo_url TEXT NULL,
+
+  is_active TINYINT(1) NOT NULL DEFAULT 1,
+
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_unicode_ci;
+
+-- =========================
+-- 4.2. Лотереи
 -- =========================
 
 CREATE TABLE lotteries (
