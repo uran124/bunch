@@ -501,11 +501,13 @@ class AdminController extends Controller
 
         $lotteryModel = new Lottery();
         $auctionModel = new AuctionLot();
+        $promoItemModel = new PromoItem();
 
         $this->render('admin-promos', [
             'pageMeta' => $pageMeta,
             'lotteries' => $lotteryModel->getAdminList(),
             'auctions' => $auctionModel->getAdminList(),
+            'promoItems' => $promoItemModel->getAdminList(),
             'message' => $_GET['status'] ?? null,
         ]);
     }
@@ -577,6 +579,45 @@ class AdminController extends Controller
                 'starts_at' => $startsAt !== '' ? $startsAt : null,
                 'ends_at' => $endsAt !== '' ? $endsAt : null,
                 'status' => $status,
+            ]);
+        } catch (Throwable $e) {
+            header('Location: /?page=admin-promos&status=error');
+            return;
+        }
+
+        header('Location: /?page=admin-promos&status=saved');
+    }
+
+    public function savePromoItem(): void
+    {
+        $title = trim($_POST['title'] ?? '');
+        $description = trim($_POST['description'] ?? '');
+        $price = (float) ($_POST['price'] ?? 0);
+        $quantityRaw = trim($_POST['quantity'] ?? '');
+        $endsAt = trim($_POST['ends_at'] ?? '');
+        $label = trim($_POST['label'] ?? '');
+        $photoUrl = trim($_POST['photo_url'] ?? '');
+        $isActive = isset($_POST['is_active']) ? 1 : 0;
+
+        if ($title === '' || $price <= 0) {
+            header('Location: /?page=admin-promos&status=error');
+            return;
+        }
+
+        $quantity = $quantityRaw !== '' ? max(1, (int) $quantityRaw) : 1;
+
+        $promoItemModel = new PromoItem();
+
+        try {
+            $promoItemModel->create([
+                'title' => $title,
+                'description' => $description !== '' ? $description : null,
+                'price' => $price,
+                'quantity' => $quantity,
+                'ends_at' => $endsAt !== '' ? $endsAt : null,
+                'label' => $label !== '' ? $label : null,
+                'photo_url' => $photoUrl !== '' ? $photoUrl : null,
+                'is_active' => $isActive,
             ]);
         } catch (Throwable $e) {
             header('Location: /?page=admin-promos&status=error');

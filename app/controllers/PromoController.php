@@ -14,35 +14,30 @@ class PromoController extends Controller
 
         $auctionModel = new AuctionLot();
         $lotteryModel = new Lottery();
+        $promoItemModel = new PromoItem();
         $auctions = $auctionModel->getPromoList();
         $lotteries = $lotteryModel->getPromoList();
 
-        $oneTimeItems = [
-            [
-                'title' => 'Флеш-распродажа 6 часов: роза Freedom',
-                'price' => '75 ₽ за стебель',
-                'stock' => 'Осталось 120 стеблей',
-                'period' => 'Доступно до 16:00',
-                'label' => 'Sale',
-                'photo' => 'https://images.unsplash.com/photo-1501004318641-b39e6451bec6?auto=format&fit=crop&w=1200&q=80',
-            ],
-            [
-                'title' => 'Разовая поставка: пионы Sarah Bernhardt',
-                'price' => '389 ₽ · упаковка 10 шт',
-                'stock' => 'Только самовывоз',
-                'period' => 'Поставка 15.06, выдача до 18:00',
-                'label' => 'One-time',
-                'photo' => 'https://images.unsplash.com/photo-1438109491414-7198515b166b?auto=format&fit=crop&w=1200&q=80',
-            ],
-            [
-                'title' => 'Разовая акция на эвкалипт Cinerea',
-                'price' => '59 ₽ за ветку',
-                'stock' => 'Осталось 35 шт',
-                'period' => 'Только 14.06',
-                'label' => 'Limited',
-                'photo' => 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=1200&q=80',
-            ],
-        ];
+        $promoItems = $promoItemModel->getActiveList();
+        $oneTimeItems = array_map(function (array $item): array {
+            $quantity = $item['quantity'] !== null ? (int) $item['quantity'] : 1;
+            $stockText = $quantity > 1 ? 'Осталось ' . $quantity . ' шт' : 'Осталось 1 шт';
+            $periodText = 'Ограничено наличием';
+
+            if (!empty($item['ends_at'])) {
+                $endsAt = new DateTime($item['ends_at']);
+                $periodText = 'До ' . $endsAt->format('d.m H:i');
+            }
+
+            return [
+                'title' => $item['title'],
+                'price' => number_format((float) $item['price'], 0, '.', ' ') . ' ₽',
+                'stock' => $stockText,
+                'period' => $periodText,
+                'label' => $item['label'] ?: 'Разовая акция',
+                'photo' => $item['photo_url'],
+            ];
+        }, $promoItems);
 
         $this->render('promo', [
             'pageMeta' => $pageMeta,
