@@ -1,6 +1,7 @@
 <?php /** @var array $lotteries */ ?>
 <?php /** @var array $auctions */ ?>
 <?php /** @var array $promoItems */ ?>
+<?php /** @var array $promoCategories */ ?>
 <?php $pageMeta = $pageMeta ?? []; ?>
 
 <section class="flex flex-col gap-6">
@@ -27,6 +28,26 @@
             <?php echo $message === 'saved' ? 'Изменения сохранены.' : 'Проверьте корректность данных и попробуйте снова.'; ?>
         </div>
     <?php endif; ?>
+
+    <div class="grid gap-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-rose-50/60 ring-1 ring-transparent lg:grid-cols-[1.1fr_1fr]">
+        <div class="space-y-3">
+            <p class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Категории акций</p>
+            <h2 class="text-xl font-semibold text-slate-900">Управление видимостью</h2>
+            <p class="text-sm text-slate-600">Отключенные категории не отображаются в пользовательском разделе «Акции».</p>
+        </div>
+        <form action="/?page=admin-promo-categories-save" method="post" class="grid gap-3">
+            <?php foreach ($promoCategories as $category): ?>
+                <label class="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700">
+                    <span><?php echo htmlspecialchars($category['title'], ENT_QUOTES, 'UTF-8'); ?></span>
+                    <input type="checkbox" name="categories[<?php echo htmlspecialchars($category['code'], ENT_QUOTES, 'UTF-8'); ?>]" value="1" class="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-200" <?php echo $category['is_active'] ? 'checked' : ''; ?>>
+                </label>
+            <?php endforeach; ?>
+            <button class="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-200 transition hover:-translate-y-0.5">
+                <span class="material-symbols-rounded text-base">tune</span>
+                Сохранить категории
+            </button>
+        </form>
+    </div>
 
     <div class="grid gap-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-rose-50/60 ring-1 ring-transparent lg:grid-cols-[1.1fr_1fr]">
         <div class="space-y-3">

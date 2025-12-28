@@ -7,18 +7,17 @@ class PromoController extends Controller
     {
         $pageMeta = [
             'title' => 'Акции и спецпредложения — Bunch flowers',
-            'description' => 'Аукционы, лотереи и разовые товары с ограниченным количеством.',
+            'description' => 'Разовые акции и спецпредложения с ограниченным количеством.',
             'headerTitle' => 'Bunch flowers',
             'headerSubtitle' => 'Акции и спецпредложения',
         ];
 
-        $auctionModel = new AuctionLot();
-        $lotteryModel = new Lottery();
         $promoItemModel = new PromoItem();
-        $auctions = $auctionModel->getPromoList();
-        $lotteries = $lotteryModel->getPromoList();
+        $promoCategoryModel = new PromoCategory();
+        $promoCategories = $promoCategoryModel->getMap();
 
-        $promoItems = $promoItemModel->getActiveList();
+        $showPromoItems = (bool) ($promoCategories['promo']['is_active'] ?? true);
+        $promoItems = $showPromoItems ? $promoItemModel->getActiveList() : [];
         $oneTimeItems = array_map(function (array $item): array {
             $quantity = $item['quantity'] !== null ? (int) $item['quantity'] : 1;
             $stockText = $quantity > 1 ? 'Осталось ' . $quantity . ' шт' : 'Осталось 1 шт';
@@ -41,9 +40,8 @@ class PromoController extends Controller
 
         $this->render('promo', [
             'pageMeta' => $pageMeta,
-            'auctions' => $auctions,
-            'lotteries' => $lotteries,
             'oneTimeItems' => $oneTimeItems,
+            'promoCategories' => $promoCategories,
         ]);
     }
 }

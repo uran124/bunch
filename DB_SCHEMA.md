@@ -227,6 +227,25 @@ CREATE TABLE promo_items (
 
 ---
 
+## 5.2. Таблица `promo_categories`
+
+Категории раздела «Акции» и их активность на витрине.
+
+```sql
+CREATE TABLE promo_categories (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  code VARCHAR(40) NOT NULL UNIQUE,
+  title VARCHAR(120) NOT NULL,
+  is_active TINYINT(1) NOT NULL DEFAULT 1,
+  sort_order INT NOT NULL DEFAULT 0,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+```
+
+---
+
 ## 6. Лотереи
 
 Лотерея — товар `product_type = 'lottery'` + фиксированный пул билетов.

@@ -90,6 +90,7 @@ $router->post('admin-product-delete', [AdminController::class, 'deleteProduct'])
 $router->post('admin-lottery-save', [AdminController::class, 'saveLottery']);
 $router->post('admin-auction-save', [AdminController::class, 'saveAuctionLot']);
 $router->post('admin-promo-item-save', [AdminController::class, 'savePromoItem']);
+$router->post('admin-promo-categories-save', [AdminController::class, 'savePromoCategories']);
 $router->post('admin-order-update', [AdminController::class, 'updateOneTimeOrder']);
 $router->post('cart-add', [CartController::class, 'add']);
 $router->post('cart-update', [CartController::class, 'update']);
