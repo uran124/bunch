@@ -502,12 +502,14 @@ class AdminController extends Controller
         $lotteryModel = new Lottery();
         $auctionModel = new AuctionLot();
         $promoItemModel = new PromoItem();
+        $promoCategoryModel = new PromoCategory();
 
         $this->render('admin-promos', [
             'pageMeta' => $pageMeta,
             'lotteries' => $lotteryModel->getAdminList(),
             'auctions' => $auctionModel->getAdminList(),
             'promoItems' => $promoItemModel->getAdminList(),
+            'promoCategories' => $promoCategoryModel->getAll(),
             'message' => $_GET['status'] ?? null,
         ]);
     }
@@ -619,6 +621,26 @@ class AdminController extends Controller
                 'photo_url' => $photoUrl !== '' ? $photoUrl : null,
                 'is_active' => $isActive,
             ]);
+        } catch (Throwable $e) {
+            header('Location: /?page=admin-promos&status=error');
+            return;
+        }
+
+        header('Location: /?page=admin-promos&status=saved');
+    }
+
+    public function savePromoCategories(): void
+    {
+        $categories = $_POST['categories'] ?? [];
+
+        $promoCategoryModel = new PromoCategory();
+
+        try {
+            $statusMap = [];
+            foreach ($categories as $code => $value) {
+                $statusMap[$code] = 1;
+            }
+            $promoCategoryModel->updateStatuses($statusMap);
         } catch (Throwable $e) {
             header('Location: /?page=admin-promos&status=error');
             return;
