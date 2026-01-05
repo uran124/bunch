@@ -167,6 +167,26 @@ class Product extends Model
         $stmt->execute(['id' => $id]);
     }
 
+    public function hasBlockingRelations(int $id): bool
+    {
+        $checks = [
+            'SELECT 1 FROM cart_items WHERE product_id = :id LIMIT 1',
+            'SELECT 1 FROM order_items WHERE product_id = :id LIMIT 1',
+            'SELECT 1 FROM subscriptions WHERE product_id = :id LIMIT 1',
+        ];
+
+        foreach ($checks as $sql) {
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute(['id' => $id]);
+
+            if ($stmt->fetchColumn()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public function setAttributes(int $productId, array $attributeIds): void
     {
         $this->db->prepare('DELETE FROM product_attributes WHERE product_id = :product_id')->execute(['product_id' => $productId]);

@@ -484,7 +484,17 @@ class AdminController extends Controller
         }
 
         $productModel = new Product();
-        $productModel->deleteProduct($productId);
+        if ($productModel->hasBlockingRelations($productId)) {
+            header('Location: /?page=admin-products&status=delete-blocked');
+            return;
+        }
+
+        try {
+            $productModel->deleteProduct($productId);
+        } catch (\PDOException $exception) {
+            header('Location: /?page=admin-products&status=delete-blocked');
+            return;
+        }
 
         header('Location: /?page=admin-products&status=deleted');
     }

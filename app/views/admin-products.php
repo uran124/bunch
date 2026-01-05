@@ -26,19 +26,28 @@
     </header>
 
     <?php if (!empty($message)): ?>
-        <div class="flex items-start gap-3 rounded-xl border <?php echo $message === 'error' ? 'border-rose-200 bg-rose-50 text-rose-800' : 'border-emerald-200 bg-emerald-50 text-emerald-800'; ?> px-4 py-3 text-sm">
-            <span class="material-symbols-rounded text-lg"><?php echo $message === 'error' ? 'error' : ($message === 'deleted' ? 'delete' : 'check_circle'); ?></span>
+        <?php $isError = in_array($message, ['error', 'delete-blocked'], true); ?>
+        <div class="flex items-start gap-3 rounded-xl border <?php echo $isError ? 'border-rose-200 bg-rose-50 text-rose-800' : 'border-emerald-200 bg-emerald-50 text-emerald-800'; ?> px-4 py-3 text-sm">
+            <span class="material-symbols-rounded text-lg"><?php echo $isError ? 'error' : ($message === 'deleted' ? 'delete' : 'check_circle'); ?></span>
             <div>
                 <p class="font-semibold">
                     <?php if ($message === 'error'): ?>
                         Заполните обязательные поля: поставку и базовую цену.
+                    <?php elseif ($message === 'delete-blocked'): ?>
+                        Нельзя удалить товар с активными заказами, подписками или в корзинах.
                     <?php elseif ($message === 'deleted'): ?>
                         Товар удалён.
                     <?php else: ?>
                         Товар сохранён.
                     <?php endif; ?>
                 </p>
-                <p>Карточка обновляется с выбранными атрибутами и ценовыми уровнями.</p>
+                <?php if ($message === 'delete-blocked'): ?>
+                    <p>Удалите связи с заказами, подписками или корзинами и попробуйте снова.</p>
+                <?php elseif ($message === 'error'): ?>
+                    <p>Карточка сохраняется только при заполнении обязательных полей.</p>
+                <?php else: ?>
+                    <p>Карточка обновляется с выбранными атрибутами и ценовыми уровнями.</p>
+                <?php endif; ?>
             </div>
         </div>
     <?php endif; ?>
