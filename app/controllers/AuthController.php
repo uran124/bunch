@@ -279,7 +279,9 @@ class AuthController extends Controller
                         $this->analytics->track('tg_code_sent', ['purpose' => 'recover', 'user_id' => $user['id']]);
 
                         $safeCode = $this->formatTelegramCode($code);
-                        $this->telegram->sendMessage($chatId, "Код для смены PIN: {$safeCode}\nВведите его на странице восстановления на сайте.");
+                        $this->telegram->sendMessage($chatId, "Код для смены PIN: {$safeCode}\nВведите его на странице восстановления на сайте.", [
+                            'parse_mode' => 'HTML',
+                        ]);
 
                         $successMessage = 'Одноразовый код отправлен в Telegram.';
                     }
@@ -432,7 +434,9 @@ class AuthController extends Controller
 
     private function formatTelegramCode(string $code): string
     {
-        return '{' . $code . '}';
+        $safe = htmlspecialchars($code, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+
+        return "<code>{$safe}</code>";
     }
 
     private function redirectAfterAuth(string $fallback): void

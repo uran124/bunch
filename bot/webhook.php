@@ -138,7 +138,9 @@ function handleRegistrationCode(
     $safeCode = formatTelegramCode($code);
 
     $telegram->sendMessage($chatId, 'Ваш код для регистрации на сайте:');
-    $telegram->sendMessage($chatId, $safeCode);
+    $telegram->sendMessage($chatId, $safeCode, [
+        'parse_mode' => 'HTML',
+    ]);
 
     $logger->logEvent('TG_REG_CODE_SENT', ['user_id' => $userId, 'chat_id' => $chatId, 'phone' => $phone]);
     $analytics->track('tg_code_sent', ['purpose' => 'register', 'user_id' => $userId]);
@@ -169,7 +171,9 @@ function handleRecoveryCode(
     $analytics->track('tg_code_sent', ['purpose' => 'recover', 'user_id' => $user['id']]);
 
     $telegram->sendMessage($chatId, 'Код для смены PIN:');
-    $telegram->sendMessage($chatId, $safeCode);
+    $telegram->sendMessage($chatId, $safeCode, [
+        'parse_mode' => 'HTML',
+    ]);
 }
 
 function normalisePhone(string $phone): string
@@ -200,5 +204,7 @@ function extractPhoneFromText(string $text): ?string
 
 function formatTelegramCode(string $code): string
 {
-    return '{' . $code . '}';
+    $safe = htmlspecialchars($code, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+
+    return "<code>{$safe}</code>";
 }
