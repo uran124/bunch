@@ -520,12 +520,47 @@ class AdminController extends Controller
         $promoItemModel = new PromoItem();
         $promoCategoryModel = new PromoCategory();
 
+        $loadErrors = [];
+
+        try {
+            $lotteries = $lotteryModel->getAdminList();
+        } catch (Throwable $e) {
+            $lotteries = [];
+            $loadErrors[] = 'lotteries';
+            error_log('Admin promos load error (lotteries): ' . $e->getMessage());
+        }
+
+        try {
+            $auctions = $auctionModel->getAdminList();
+        } catch (Throwable $e) {
+            $auctions = [];
+            $loadErrors[] = 'auctions';
+            error_log('Admin promos load error (auctions): ' . $e->getMessage());
+        }
+
+        try {
+            $promoItems = $promoItemModel->getAdminList();
+        } catch (Throwable $e) {
+            $promoItems = [];
+            $loadErrors[] = 'promoItems';
+            error_log('Admin promos load error (promoItems): ' . $e->getMessage());
+        }
+
+        try {
+            $promoCategories = $promoCategoryModel->getAll();
+        } catch (Throwable $e) {
+            $promoCategories = [];
+            $loadErrors[] = 'promoCategories';
+            error_log('Admin promos load error (promoCategories): ' . $e->getMessage());
+        }
+
         $this->render('admin-promos', [
             'pageMeta' => $pageMeta,
-            'lotteries' => $lotteryModel->getAdminList(),
-            'auctions' => $auctionModel->getAdminList(),
-            'promoItems' => $promoItemModel->getAdminList(),
-            'promoCategories' => $promoCategoryModel->getAll(),
+            'lotteries' => $lotteries,
+            'auctions' => $auctions,
+            'promoItems' => $promoItems,
+            'promoCategories' => $promoCategories,
+            'loadErrors' => $loadErrors,
             'message' => $_GET['status'] ?? null,
         ]);
     }

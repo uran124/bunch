@@ -2,6 +2,7 @@
 <?php /** @var array $auctions */ ?>
 <?php /** @var array $promoItems */ ?>
 <?php /** @var array $promoCategories */ ?>
+<?php /** @var array $loadErrors */ ?>
 <?php $pageMeta = $pageMeta ?? []; ?>
 
 <section class="flex flex-col gap-6">
@@ -26,6 +27,21 @@
     <?php if (!empty($message)): ?>
         <div class="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
             <?php echo $message === 'saved' ? 'Изменения сохранены.' : 'Проверьте корректность данных и попробуйте снова.'; ?>
+        </div>
+    <?php endif; ?>
+
+    <?php if (!empty($loadErrors)): ?>
+        <?php
+        $loadErrorLabels = [
+            'lotteries' => 'лотереи',
+            'auctions' => 'аукционы',
+            'promoItems' => 'разовые акции',
+            'promoCategories' => 'категории акций',
+        ];
+        $visibleErrors = array_values(array_intersect_key($loadErrorLabels, array_flip($loadErrors)));
+        ?>
+        <div class="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+            Не удалось загрузить разделы: <?php echo htmlspecialchars(implode(', ', $visibleErrors), ENT_QUOTES, 'UTF-8'); ?>. Проверьте логи сервера.
         </div>
     <?php endif; ?>
 
