@@ -3,6 +3,14 @@
 
 class Subscription extends Model
 {
+    public function countActive(): int
+    {
+        $stmt = $this->db->prepare("SELECT COUNT(*) FROM subscriptions WHERE status = 'active'");
+        $stmt->execute();
+
+        return (int) $stmt->fetchColumn();
+    }
+
     public function getActiveForUser(int $userId): ?array
     {
         $stmt = $this->db->prepare(

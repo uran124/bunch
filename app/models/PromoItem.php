@@ -5,6 +5,14 @@ class PromoItem extends Model
 {
     protected string $table = 'promo_items';
 
+    public function countActive(): int
+    {
+        $stmt = $this->db->prepare("SELECT COUNT(*) FROM {$this->table} WHERE is_active = 1");
+        $stmt->execute();
+
+        return (int) $stmt->fetchColumn();
+    }
+
     public function getAdminList(): array
     {
         $stmt = $this->db->query("SELECT * FROM {$this->table} ORDER BY created_at DESC");

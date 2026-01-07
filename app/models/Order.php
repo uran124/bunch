@@ -138,6 +138,16 @@ class Order extends Model
         return (int) $stmt->fetchColumn();
     }
 
+    public function countOneTimeByStatus(string $status): int
+    {
+        $stmt = $this->db->prepare(
+            "SELECT COUNT(*) FROM orders WHERE status = :status AND delivery_type <> 'subscription'"
+        );
+        $stmt->execute(['status' => $status]);
+
+        return (int) $stmt->fetchColumn();
+    }
+
     private function getOrdersByStatuses(int $userId, array $statuses, int $limit = 50, int $offset = 0): array
     {
         if (empty($statuses)) {
