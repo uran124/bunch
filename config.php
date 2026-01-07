@@ -24,16 +24,6 @@ if (!defined('APP_ENV')) {
 if (!defined('APP_DEBUG')) {
     define('APP_DEBUG', false);
 }
-// Telegram бот
-if (!defined('TG_BOT_TOKEN')) {
-    define('TG_BOT_TOKEN', getenv('TG_BOT_TOKEN') ?: '8385667370:AAER94mzvJLtTtI1IWj2tHnQuen55xfrNsE');
-}
-if (!defined('TG_BOT_USERNAME')) {
-    define('TG_BOT_USERNAME', getenv('TG_BOT_USERNAME') ?: '@bunchflowersBot');
-}
-if (!defined('TG_WEBHOOK_SECRET')) {
-    define('TG_WEBHOOK_SECRET', getenv('TG_WEBHOOK_SECRET') ?: 'bfb');
-}
 // Таймзона
 date_default_timezone_set('Asia/Krasnoyarsk');
 

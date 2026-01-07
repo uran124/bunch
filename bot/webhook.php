@@ -20,8 +20,12 @@ $unknownLogger = new Logger('telegram_unknown.log');
 $appLogger = new Logger();
 $analytics = new Analytics();
 $verificationModel = new VerificationCode();
+$settings = new Setting();
+$defaults = $settings->getTelegramDefaults();
+$webhookSecret = $settings->get(Setting::TG_WEBHOOK_SECRET, $defaults[Setting::TG_WEBHOOK_SECRET] ?? '');
+$botToken = $settings->get(Setting::TG_BOT_TOKEN, $defaults[Setting::TG_BOT_TOKEN] ?? '');
 
-if (!isset($_GET['secret']) || $_GET['secret'] !== TG_WEBHOOK_SECRET) {
+if (!isset($_GET['secret']) || $_GET['secret'] !== $webhookSecret) {
     http_response_code(403);
     $unknownLogger->logRaw(date('c') . ' invalid secret ' . ($_GET['secret'] ?? ''));
     exit;
@@ -54,7 +58,12 @@ if (!$chatId) {
     exit;
 }
 
-$telegram = new Telegram(TG_BOT_TOKEN);
+if ($botToken === '') {
+    $unknownLogger->logRaw(date('c') . ' missing TG_BOT_TOKEN');
+    exit;
+}
+
+$telegram = new Telegram($botToken);
 $userModel = new User();
 
 if ($text === '/start') {

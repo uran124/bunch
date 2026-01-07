@@ -84,6 +84,12 @@ class AdminController extends Controller
                         'cta' => 'Настроить',
                         'href' => '/?page=admin-services-delivery',
                     ],
+                    [
+                        'label' => 'Телеграм бот',
+                        'description' => 'Токен, username и секрет для вебхука',
+                        'cta' => 'Настроить',
+                        'href' => '/?page=admin-services-telegram',
+                    ],
                 ],
             ],
             [
@@ -1181,6 +1187,46 @@ class AdminController extends Controller
             'deliveryPricingVersion' => $zoneModel->getPricingVersion(),
             'testAddresses' => $zoneModel->getTestAddresses(),
         ]);
+    }
+
+    public function serviceTelegram(): void
+    {
+        $pageMeta = [
+            'title' => 'Настройка сервисов · Telegram бот — админ-панель Bunch',
+            'description' => 'Храним токен бота, username и секрет для вебхука в базе данных.',
+            'h1' => 'Телеграм бот',
+            'headerTitle' => 'Bunch Admin',
+            'headerSubtitle' => 'Сервисы · Телеграм бот',
+        ];
+
+        $settings = new Setting();
+        $defaults = $settings->getTelegramDefaults();
+
+        $this->render('admin-services-telegram', [
+            'pageMeta' => $pageMeta,
+            'status' => $_GET['status'] ?? null,
+            'settings' => [
+                'botToken' => $settings->get(Setting::TG_BOT_TOKEN, $defaults[Setting::TG_BOT_TOKEN] ?? ''),
+                'botUsername' => $settings->get(Setting::TG_BOT_USERNAME, $defaults[Setting::TG_BOT_USERNAME] ?? ''),
+                'webhookSecret' => $settings->get(Setting::TG_WEBHOOK_SECRET, $defaults[Setting::TG_WEBHOOK_SECRET] ?? ''),
+            ],
+        ]);
+    }
+
+    public function saveServiceTelegram(): void
+    {
+        $settings = new Setting();
+
+        $botToken = trim($_POST['bot_token'] ?? '');
+        $botUsername = trim($_POST['bot_username'] ?? '');
+        $webhookSecret = trim($_POST['webhook_secret'] ?? '');
+
+        $settings->set(Setting::TG_BOT_TOKEN, $botToken);
+        $settings->set(Setting::TG_BOT_USERNAME, $botUsername);
+        $settings->set(Setting::TG_WEBHOOK_SECRET, $webhookSecret);
+
+        header('Location: /?page=admin-services-telegram&status=saved');
+        exit;
     }
 
     public function serviceOnlinePayment(): void
