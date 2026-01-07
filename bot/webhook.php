@@ -196,7 +196,7 @@ function handleRegistrationCode(
 
         $telegram->sendMessage(
             $chatId,
-            "Вы уже зарегестрированны на bunch! Используйте ссылку чтобы войти: https://bunchflowers.ru/?page=login, чтобы восстановить пароль: https://bunchflowers.ru/?page=recover введите код для воставления: {$code}"
+            "Вы уже зарегестрированны на bunch! Используйте ссылку чтобы войти: https://bunchflowers.ru/?page=login, чтобы восстановить пароль: https://bunchflowers.ru/?page=recover введите код для воставления: <code>{$code}</code>"
         );
 
         $logger->logEvent('TG_ALREADY_REGISTERED_CODE_SENT', [
