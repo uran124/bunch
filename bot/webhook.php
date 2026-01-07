@@ -180,6 +180,32 @@ function handleRegistrationCode(
     ?string $fallbackName = null
 ): void {
     $phone = $phone ? normalisePhone($phone) : null;
+    $existingByChat = $userModel->findByTelegramChatId($chatId);
+
+    if ($existingByChat) {
+        $code = $verificationModel->createCode(
+            $chatId,
+            'recover',
+            $existingByChat['phone'],
+            (int) $existingByChat['id'],
+            $username,
+            $existingByChat['name'] ?? null
+        );
+
+        $userModel->linkTelegram((int) $existingByChat['id'], $chatId, $username);
+
+        $telegram->sendMessage(
+            $chatId,
+            "Вы уже зарегестрированны на bunch! Используйте ссылку чтобы войти: https://bunchflowers.ru/?page=login, чтобы восстановить пароль: https://bunchflowers.ru/?page=recover введите код для воставления: {$code}"
+        );
+
+        $logger->logEvent('TG_ALREADY_REGISTERED_CODE_SENT', [
+            'user_id' => $existingByChat['id'],
+            'chat_id' => $chatId,
+        ]);
+        $analytics->track('tg_code_sent', ['purpose' => 'recover', 'user_id' => $existingByChat['id']]);
+        return;
+    }
 
     $existing = $phone ? $userModel->findByPhone($phone) : $userModel->findByTelegramChatId($chatId);
     $userId = $existing ? (int) $existing['id'] : null;
