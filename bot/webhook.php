@@ -57,7 +57,13 @@ if (!$chatId) {
 $telegram = new Telegram(TG_BOT_TOKEN);
 $userModel = new User();
 
-if (isStartCommand($text)) {
+$startPayload = getStartPayload($text);
+if ($startPayload !== null) {
+    if ($startPayload !== '' && isRecoveryStartPayload($startPayload)) {
+        handleRecoveryCode($telegram, $userModel, $verificationModel, $chatId, $username, $appLogger, $analytics);
+        exit;
+    }
+
     handleRegistrationCode($telegram, $userModel, $verificationModel, $chatId, $username, null, $appLogger, $analytics, $contact, $fromName);
     exit;
 }
@@ -220,7 +226,22 @@ function formatTelegramCode(string $code): string
     return "<code>{$safe}</code>";
 }
 
-function isStartCommand(string $text): bool
+function getStartPayload(string $text): ?string
 {
-    return $text !== '' && preg_match('/^\/start(?:@[\w_]+)?(?:\s|$)/u', $text) === 1;
+    if ($text === '') {
+        return null;
+    }
+
+    if (preg_match('/^\/start(?:@[\w_]+)?(?:\s+(.*))?$/u', $text, $matches) !== 1) {
+        return null;
+    }
+
+    return trim($matches[1] ?? '');
+}
+
+function isRecoveryStartPayload(string $payload): bool
+{
+    $normalized = mb_strtolower(trim($payload));
+
+    return $normalized === 'recover';
 }
