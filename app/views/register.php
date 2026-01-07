@@ -48,7 +48,7 @@
                         <li>Введите код ниже</li>
                     </ol>
                     <a
-                        href="https://t.me/<?php echo htmlspecialchars($botUsername ?? '', ENT_QUOTES, 'UTF-8'); ?>"
+                        href="https://t.me/<?php echo htmlspecialchars($botUsername ?? '', ENT_QUOTES, 'UTF-8'); ?>?start=register"
                         target="_blank"
                         rel="noopener noreferrer"
                         class="group relative overflow-hidden rounded-xl bg-gradient-to-r from-rose-600 to-rose-700 px-4 py-2.5 text-center text-xs font-semibold text-white shadow-lg shadow-rose-500/25 transition hover:shadow-xl hover:shadow-rose-500/40 hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-1.5"
