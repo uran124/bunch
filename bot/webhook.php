@@ -25,13 +25,24 @@ $defaults = $settings->getTelegramDefaults();
 $webhookSecret = $settings->get(Setting::TG_WEBHOOK_SECRET, $defaults[Setting::TG_WEBHOOK_SECRET] ?? '');
 $botToken = $settings->get(Setting::TG_BOT_TOKEN, $defaults[Setting::TG_BOT_TOKEN] ?? '');
 
-if (!isset($_GET['secret']) || $_GET['secret'] !== $webhookSecret) {
+$requestBody = file_get_contents('php://input');
+$providedSecret = getProvidedSecret();
+
+if ($providedSecret === null || $providedSecret !== $webhookSecret) {
     http_response_code(403);
-    $unknownLogger->logRaw(date('c') . ' invalid secret ' . ($_GET['secret'] ?? ''));
+    $unknownLogger->logRaw(date('c') . ' invalid secret ' . ($providedSecret ?? ''));
+    $unknownLogger->logRaw(date('c') . ' webhook request ' . json_encode([
+        'ip' => getRequestIp(),
+        'method' => $_SERVER['REQUEST_METHOD'] ?? null,
+        'uri' => $_SERVER['REQUEST_URI'] ?? null,
+        'query' => $_GET,
+        'headers' => getRequestHeaders(),
+        'body' => $requestBody,
+    ], JSON_UNESCAPED_UNICODE));
     exit;
 }
 
-$input = file_get_contents('php://input');
+$input = $requestBody;
 $update = json_decode($input, true);
 
 if (!$update) {
@@ -91,6 +102,53 @@ if ($contact || $phoneFromText) {
 
 $unknownLogger->logRaw(date('c') . ' unhandled message: ' . $input);
 $telegram->sendMessage($chatId, 'Не понял запрос. Нажмите «Получить код» или отправьте номер телефона (можно с пробелами).');
+
+function getRequestHeaders(): array
+{
+    if (function_exists('getallheaders')) {
+        return getallheaders();
+    }
+
+    $headers = [];
+    foreach ($_SERVER as $key => $value) {
+        if (str_starts_with($key, 'HTTP_')) {
+            $name = str_replace('_', '-', strtolower(substr($key, 5)));
+            $headers[$name] = $value;
+        }
+    }
+
+    return $headers;
+}
+
+function getProvidedSecret(): ?string
+{
+    if (isset($_GET['secret']) && $_GET['secret'] !== '') {
+        return $_GET['secret'];
+    }
+
+    if (!empty($_SERVER['HTTP_X_TELEGRAM_BOT_API_SECRET_TOKEN'])) {
+        return (string) $_SERVER['HTTP_X_TELEGRAM_BOT_API_SECRET_TOKEN'];
+    }
+
+    $headers = getRequestHeaders();
+    foreach ($headers as $name => $value) {
+        if (strtolower($name) === 'x-telegram-bot-api-secret-token') {
+            return (string) $value;
+        }
+    }
+
+    return null;
+}
+
+function getRequestIp(): ?string
+{
+    if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+        $parts = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']);
+        return trim($parts[0]);
+    }
+
+    return $_SERVER['REMOTE_ADDR'] ?? null;
+}
 
 function requestPhone(Telegram $telegram, int $chatId): void
 {
