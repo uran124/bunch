@@ -124,9 +124,35 @@ class AdminController extends Controller
             'footerRight' => 'Рабочая среда · Asia/Krasnoyarsk',
         ];
 
+        $orderModel = new Order();
+        $subscriptionModel = new Subscription();
+        $supplyModel = new Supply();
+        $promoItemModel = new PromoItem();
+
+        $oneTimeNewCount = $orderModel->countOneTimeByStatus('new');
+        $activeSubscriptions = $subscriptionModel->countActive();
+        $activePromos = $promoItemModel->countActive();
+
+        $deliveryWindow = $supplyModel->getNextDeliveryWindow();
+        $currentSupply = $deliveryWindow['current_supply'] ?? null;
+        $orderedStems = 0;
+        if ($currentSupply) {
+            $orderedStems = (int) ($currentSupply['packs_reserved'] ?? 0) * (int) ($currentSupply['stems_per_pack'] ?? 0);
+        }
+
+        $monitoring = [
+            'one_time_new' => $oneTimeNewCount,
+            'active_subscriptions' => $activeSubscriptions,
+            'ordered_stems' => $orderedStems,
+            'active_promos' => $activePromos,
+            'current_supply_date' => $deliveryWindow['current_date'] ?? null,
+            'next_supply_date' => $deliveryWindow['next_date'] ?? null,
+        ];
+
         $this->render('admin', [
             'sections' => $sections,
             'pageMeta' => $pageMeta,
+            'monitoring' => $monitoring,
         ]);
     }
 

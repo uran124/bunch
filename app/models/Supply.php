@@ -13,6 +13,64 @@ class Supply extends Model
         return array_map(fn(array $row) => $this->appendDerivedFields($row), $rows);
     }
 
+    public function getNextDeliveryWindow(): array
+    {
+        $supplies = $this->getAdminList();
+        $today = new DateTimeImmutable('today');
+        $upcoming = [];
+
+        foreach ($supplies as $supply) {
+            $nextDelivery = $supply['next_delivery'] ?? null;
+            if (!$nextDelivery) {
+                continue;
+            }
+
+            try {
+                $date = new DateTimeImmutable($nextDelivery);
+            } catch (Exception $e) {
+                continue;
+            }
+
+            $upcoming[] = [
+                'date' => $date,
+                'supply' => $supply,
+            ];
+        }
+
+        if (!$upcoming) {
+            return [
+                'current_date' => null,
+                'next_date' => null,
+                'current_supply' => null,
+            ];
+        }
+
+        usort($upcoming, static function (array $left, array $right): int {
+            return $left['date']->getTimestamp() <=> $right['date']->getTimestamp();
+        });
+
+        $currentIndex = null;
+        foreach ($upcoming as $index => $entry) {
+            if ($entry['date'] >= $today) {
+                $currentIndex = $index;
+                break;
+            }
+        }
+
+        if ($currentIndex === null) {
+            $currentIndex = count($upcoming) - 1;
+        }
+
+        $current = $upcoming[$currentIndex];
+        $next = $upcoming[$currentIndex + 1] ?? null;
+
+        return [
+            'current_date' => $current['date']->format('Y-m-d'),
+            'next_date' => $next ? $next['date']->format('Y-m-d') : null,
+            'current_supply' => $current['supply'],
+        ];
+    }
+
     public function findById(int $id): ?array
     {
         $stmt = $this->db->prepare("SELECT * FROM {$this->table} WHERE id = :id LIMIT 1");
