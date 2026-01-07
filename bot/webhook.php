@@ -57,7 +57,7 @@ if (!$chatId) {
 $telegram = new Telegram(TG_BOT_TOKEN);
 $userModel = new User();
 
-if ($text === '/start') {
+if ($text === '/start' || str_starts_with($text, '/start ')) {
     handleRegistrationCode($telegram, $userModel, $verificationModel, $chatId, $username, null, $appLogger, $analytics, $contact, $fromName);
     exit;
 }
