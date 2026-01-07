@@ -57,13 +57,7 @@ if (!$chatId) {
 $telegram = new Telegram(TG_BOT_TOKEN);
 $userModel = new User();
 
-$startPayload = getStartPayload($text);
-if ($startPayload !== null) {
-    if ($startPayload !== '' && isRecoveryStartPayload($startPayload)) {
-        handleRecoveryCode($telegram, $userModel, $verificationModel, $chatId, $username, $appLogger, $analytics);
-        exit;
-    }
-
+if ($text === '/start') {
     handleRegistrationCode($telegram, $userModel, $verificationModel, $chatId, $username, null, $appLogger, $analytics, $contact, $fromName);
     exit;
 }
@@ -101,7 +95,7 @@ function requestPhone(Telegram $telegram, int $chatId): void
         'one_time_keyboard' => true,
     ];
 
-    $telegram->sendMessage($chatId, 'Отправьте свой номер, чтобы завершить регистрацию.', [
+    $telegram->sendMessage($chatId, 'Отправьте свой номер, и я вышлю одноразовый код из 5 цифр для сайта.', [
         'reply_markup' => json_encode($keyboard, JSON_UNESCAPED_UNICODE),
     ]);
 }
@@ -124,13 +118,6 @@ function handleRegistrationCode(
     $userId = $existing ? (int) $existing['id'] : null;
     $name = $existing['name'] ?? null;
 
-    $shouldRequestPhone = false;
-    if (!$existing && !$phone) {
-        $shouldRequestPhone = true;
-        $logger->logEvent('TG_REG_PHONE_REQUESTED', ['chat_id' => $chatId]);
-        $analytics->track('tg_phone_requested', ['purpose' => 'register']);
-    }
-
     if ($contact) {
         $firstName = trim($contact['first_name'] ?? '');
         $lastName = trim($contact['last_name'] ?? '');
@@ -148,16 +135,9 @@ function handleRegistrationCode(
     $codePhone = $phone ?? ($existing['phone'] ?? null);
 
     $code = $verificationModel->createCode($chatId, 'register', $codePhone, $userId, $username, $name);
-    $safeCode = formatTelegramCode($code);
 
     $telegram->sendMessage($chatId, 'Ваш код для регистрации на сайте:');
-    $telegram->sendMessage($chatId, $safeCode, [
-        'parse_mode' => 'HTML',
-    ]);
-
-    if ($shouldRequestPhone) {
-        requestPhone($telegram, $chatId);
-    }
+    $telegram->sendMessage($chatId, $code);
 
     $logger->logEvent('TG_REG_CODE_SENT', ['user_id' => $userId, 'chat_id' => $chatId, 'phone' => $phone]);
     $analytics->track('tg_code_sent', ['purpose' => 'register', 'user_id' => $userId]);
@@ -180,7 +160,6 @@ function handleRecoveryCode(
     }
 
     $code = $verificationModel->createCode($chatId, 'recover', $user['phone'], (int) $user['id'], $username, $user['name'] ?? null);
-    $safeCode = formatTelegramCode($code);
 
     $userModel->linkTelegram((int) $user['id'], $chatId, $username);
 
@@ -188,9 +167,7 @@ function handleRecoveryCode(
     $analytics->track('tg_code_sent', ['purpose' => 'recover', 'user_id' => $user['id']]);
 
     $telegram->sendMessage($chatId, 'Код для смены PIN:');
-    $telegram->sendMessage($chatId, $safeCode, [
-        'parse_mode' => 'HTML',
-    ]);
+    $telegram->sendMessage($chatId, $code);
 }
 
 function normalisePhone(string $phone): string
@@ -217,31 +194,4 @@ function extractPhoneFromText(string $text): ?string
     }
 
     return '+' . $digits;
-}
-
-function formatTelegramCode(string $code): string
-{
-    $safe = htmlspecialchars($code, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-
-    return "<code>{$safe}</code>";
-}
-
-function getStartPayload(string $text): ?string
-{
-    if ($text === '') {
-        return null;
-    }
-
-    if (preg_match('/^\/start(?:@[\w_]+)?(?:\s+(.*))?$/u', $text, $matches) !== 1) {
-        return null;
-    }
-
-    return trim($matches[1] ?? '');
-}
-
-function isRecoveryStartPayload(string $payload): bool
-{
-    $normalized = mb_strtolower(trim($payload));
-
-    return $normalized === 'recover';
 }
