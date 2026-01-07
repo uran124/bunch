@@ -7,6 +7,7 @@ class AuthController extends Controller
     private Logger $logger;
     private Analytics $analytics;
     private VerificationCode $verificationModel;
+    private Setting $settings;
     private ?Telegram $telegram = null;
     private string $botUsername = '';
     private const MAX_FAILED_ATTEMPTS = 5;
@@ -19,10 +20,14 @@ class AuthController extends Controller
         $this->logger = new Logger();
         $this->analytics = new Analytics();
         $this->verificationModel = new VerificationCode();
-        $this->botUsername = ltrim(trim(TG_BOT_USERNAME), '@');
+        $this->settings = new Setting();
+        $defaults = $this->settings->getTelegramDefaults();
+        $botUsernameRaw = $this->settings->get(Setting::TG_BOT_USERNAME, $defaults[Setting::TG_BOT_USERNAME] ?? '');
+        $this->botUsername = ltrim(trim($botUsernameRaw ?? ''), '@');
 
-        if (TG_BOT_TOKEN !== '') {
-            $this->telegram = new Telegram(TG_BOT_TOKEN);
+        $botToken = $this->settings->get(Setting::TG_BOT_TOKEN, $defaults[Setting::TG_BOT_TOKEN] ?? '');
+        if ($botToken !== '') {
+            $this->telegram = new Telegram($botToken);
         }
     }
 

@@ -67,6 +67,7 @@ $router->get('admin-orders-subscriptions', [AdminController::class, 'ordersSubsc
 $router->get('admin-orders-wholesale', [AdminController::class, 'ordersWholesale']);
 $router->get('admin-services-payment', [AdminController::class, 'serviceOnlinePayment']);
 $router->get('admin-services-delivery', [AdminController::class, 'serviceDelivery']);
+$router->get('admin-services-telegram', [AdminController::class, 'serviceTelegram']);
 $router->get('admin-content-static', [AdminController::class, 'contentStatic']);
 $router->get('admin-content-products', [AdminController::class, 'contentProducts']);
 $router->get('admin-content-sections', [AdminController::class, 'contentSections']);
@@ -87,6 +88,7 @@ $router->post('admin-attribute-value-save', [AdminController::class, 'saveAttrib
 $router->post('admin-attribute-value-delete', [AdminController::class, 'deleteAttributeValue']);
 $router->post('admin-product-save', [AdminController::class, 'saveProduct']);
 $router->post('admin-product-delete', [AdminController::class, 'deleteProduct']);
+$router->post('admin-services-telegram', [AdminController::class, 'saveServiceTelegram']);
 $router->post('admin-lottery-save', [AdminController::class, 'saveLottery']);
 $router->post('admin-auction-save', [AdminController::class, 'saveAuctionLot']);
 $router->post('admin-promo-item-save', [AdminController::class, 'savePromoItem']);

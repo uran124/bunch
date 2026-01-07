@@ -24,7 +24,11 @@ class BroadcastMessage extends Model
 
     public function sendNow(int $messageId, string $body, array $groupIds): void
     {
-        if (TG_BOT_TOKEN === '') {
+        $settings = new Setting();
+        $defaults = $settings->getTelegramDefaults();
+        $botToken = $settings->get(Setting::TG_BOT_TOKEN, $defaults[Setting::TG_BOT_TOKEN] ?? '');
+
+        if ($botToken === '') {
             (new Logger('telegram_errors.log'))->logRaw(date('c') . ' missing TG_BOT_TOKEN for broadcast ' . $messageId);
 
             return;
@@ -38,7 +42,7 @@ class BroadcastMessage extends Model
             return;
         }
 
-        $telegram = new Telegram(TG_BOT_TOKEN);
+        $telegram = new Telegram($botToken);
 
         foreach ($chatIds as $chatId) {
             $telegram->sendMessage($chatId, $body);
