@@ -57,7 +57,7 @@ if (!$chatId) {
 $telegram = new Telegram(TG_BOT_TOKEN);
 $userModel = new User();
 
-if ($text === '/start' || str_starts_with($text, '/start ')) {
+if (isStartCommand($text)) {
     handleRegistrationCode($telegram, $userModel, $verificationModel, $chatId, $username, null, $appLogger, $analytics, $contact, $fromName);
     exit;
 }
@@ -117,6 +117,13 @@ function handleRegistrationCode(
     $existing = $phone ? $userModel->findByPhone($phone) : $userModel->findByTelegramChatId($chatId);
     $userId = $existing ? (int) $existing['id'] : null;
     $name = $existing['name'] ?? null;
+
+    if (!$existing && !$phone) {
+        requestPhone($telegram, $chatId);
+        $logger->logEvent('TG_REG_PHONE_REQUESTED', ['chat_id' => $chatId]);
+        $analytics->track('tg_phone_requested', ['purpose' => 'register']);
+        return;
+    }
 
     if ($contact) {
         $firstName = trim($contact['first_name'] ?? '');
@@ -207,4 +214,9 @@ function formatTelegramCode(string $code): string
     $safe = htmlspecialchars($code, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 
     return "<code>{$safe}</code>";
+}
+
+function isStartCommand(string $text): bool
+{
+    return $text !== '' && preg_match('/^\/start(?:@[\w_]+)?(?:\s|$)/u', $text) === 1;
 }
