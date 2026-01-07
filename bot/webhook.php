@@ -25,13 +25,23 @@ $defaults = $settings->getTelegramDefaults();
 $webhookSecret = $settings->get(Setting::TG_WEBHOOK_SECRET, $defaults[Setting::TG_WEBHOOK_SECRET] ?? '');
 $botToken = $settings->get(Setting::TG_BOT_TOKEN, $defaults[Setting::TG_BOT_TOKEN] ?? '');
 
+$requestBody = file_get_contents('php://input');
+
 if (!isset($_GET['secret']) || $_GET['secret'] !== $webhookSecret) {
     http_response_code(403);
     $unknownLogger->logRaw(date('c') . ' invalid secret ' . ($_GET['secret'] ?? ''));
+    $unknownLogger->logRaw(date('c') . ' webhook request ' . json_encode([
+        'ip' => getRequestIp(),
+        'method' => $_SERVER['REQUEST_METHOD'] ?? null,
+        'uri' => $_SERVER['REQUEST_URI'] ?? null,
+        'query' => $_GET,
+        'headers' => getRequestHeaders(),
+        'body' => $requestBody,
+    ], JSON_UNESCAPED_UNICODE));
     exit;
 }
 
-$input = file_get_contents('php://input');
+$input = $requestBody;
 $update = json_decode($input, true);
 
 if (!$update) {
@@ -91,6 +101,33 @@ if ($contact || $phoneFromText) {
 
 $unknownLogger->logRaw(date('c') . ' unhandled message: ' . $input);
 $telegram->sendMessage($chatId, 'Не понял запрос. Нажмите «Получить код» или отправьте номер телефона (можно с пробелами).');
+
+function getRequestHeaders(): array
+{
+    if (function_exists('getallheaders')) {
+        return getallheaders();
+    }
+
+    $headers = [];
+    foreach ($_SERVER as $key => $value) {
+        if (str_starts_with($key, 'HTTP_')) {
+            $name = str_replace('_', '-', strtolower(substr($key, 5)));
+            $headers[$name] = $value;
+        }
+    }
+
+    return $headers;
+}
+
+function getRequestIp(): ?string
+{
+    if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+        $parts = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']);
+        return trim($parts[0]);
+    }
+
+    return $_SERVER['REMOTE_ADDR'] ?? null;
+}
 
 function requestPhone(Telegram $telegram, int $chatId): void
 {
