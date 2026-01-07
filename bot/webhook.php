@@ -95,7 +95,7 @@ function requestPhone(Telegram $telegram, int $chatId): void
         'one_time_keyboard' => true,
     ];
 
-    $telegram->sendMessage($chatId, 'Отправьте свой номер, и я вышлю одноразовый код из 5 цифр для сайта.', [
+    $telegram->sendMessage($chatId, 'Отправьте свой номер, чтобы завершить регистрацию.', [
         'reply_markup' => json_encode($keyboard, JSON_UNESCAPED_UNICODE),
     ]);
 }
@@ -118,11 +118,11 @@ function handleRegistrationCode(
     $userId = $existing ? (int) $existing['id'] : null;
     $name = $existing['name'] ?? null;
 
+    $shouldRequestPhone = false;
     if (!$existing && !$phone) {
-        requestPhone($telegram, $chatId);
+        $shouldRequestPhone = true;
         $logger->logEvent('TG_REG_PHONE_REQUESTED', ['chat_id' => $chatId]);
         $analytics->track('tg_phone_requested', ['purpose' => 'register']);
-        return;
     }
 
     if ($contact) {
@@ -148,6 +148,10 @@ function handleRegistrationCode(
     $telegram->sendMessage($chatId, $safeCode, [
         'parse_mode' => 'HTML',
     ]);
+
+    if ($shouldRequestPhone) {
+        requestPhone($telegram, $chatId);
+    }
 
     $logger->logEvent('TG_REG_CODE_SENT', ['user_id' => $userId, 'chat_id' => $chatId, 'phone' => $phone]);
     $analytics->track('tg_code_sent', ['purpose' => 'register', 'user_id' => $userId]);
