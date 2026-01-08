@@ -352,18 +352,14 @@ function initOrderFlow() {
     const dateInput = orderSection.querySelector('[data-order-date]');
     const timeInput = orderSection.querySelector('[data-order-time]');
     const deliveryExtra = orderSection.querySelector('[data-delivery-extra]');
-    const addressSelect = orderSection.querySelector('[data-address-select]');
-    const settlementInput = orderSection.querySelector('[data-address-settlement]');
+    const addressButtons = Array.from(orderSection.querySelectorAll('[data-address-option]'));
     const streetInput = orderSection.querySelector('[data-address-street]');
-    const houseInput = orderSection.querySelector('[data-address-house]');
     const apartmentInput = orderSection.querySelector('[data-address-apartment]');
-    const entranceInput = orderSection.querySelector('[data-address-entrance]');
-    const floorInput = orderSection.querySelector('[data-address-floor]');
-    const intercomInput = orderSection.querySelector('[data-address-intercom]');
     const addressCommentInput = orderSection.querySelector('[data-address-comment]');
     const addressNew = orderSection.querySelector('[data-address-new]');
     const addressSuggestionList = document.createElement('div');
     const deliveryHint = orderSection.querySelector('[data-delivery-pricing-hint]');
+    const deliveryRow = document.querySelector('[data-delivery-row]');
     const recipientButtons = Array.from(orderSection.querySelectorAll('.recipient-btn'));
     const recipientExtra = orderSection.querySelectorAll('[data-recipient-extra]');
     const recipientName = orderSection.querySelector('[data-recipient-name]');
@@ -437,13 +433,7 @@ function initOrderFlow() {
 
     const normalizeText = (value = '') => value.trim().toLowerCase();
 
-    const composeBaseAddress = () => {
-        const settlement = settlementInput?.value?.trim() || '';
-        const street = streetInput?.value?.trim() || '';
-        const house = houseInput?.value?.trim() || '';
-
-        return [settlement, street, house ? `д. ${house}` : null].filter(Boolean).join(', ');
-    };
+    const composeBaseAddress = () => (streetInput?.value?.trim() || '');
 
     const highlightMode = (mode) => {
         modeButtons.forEach((btn) => {
@@ -495,33 +485,33 @@ function initOrderFlow() {
         }
     };
 
-    const setAddressFromSelect = () => {
-        if (!addressSelect) return;
-        const selectedOption = addressSelect.selectedOptions[0];
-        if (selectedOption) {
-            const chosen = findAddressById(selectedOption.value);
-            if (settlementInput) settlementInput.value = chosen?.raw?.settlement || '';
-            if (streetInput) streetInput.value = chosen?.raw?.street || '';
-            if (houseInput) houseInput.value = chosen?.raw?.house || '';
-            if (apartmentInput) {
-                apartmentInput.value = chosen?.raw?.apartment || '';
-            }
-            if (entranceInput) entranceInput.value = chosen?.raw?.entrance || '';
-            if (floorInput) floorInput.value = chosen?.raw?.floor || '';
-            if (intercomInput) intercomInput.value = chosen?.raw?.intercom || '';
-            if (addressCommentInput) addressCommentInput.value = chosen?.raw?.delivery_comment || '';
-            setRecipientFromAddress(chosen);
-        } else {
-            if (settlementInput) settlementInput.value = '';
-            if (streetInput) streetInput.value = '';
-            if (houseInput) houseInput.value = '';
-            if (apartmentInput) apartmentInput.value = '';
-            if (entranceInput) entranceInput.value = '';
-            if (floorInput) floorInput.value = '';
-            if (intercomInput) intercomInput.value = '';
-            if (addressCommentInput) addressCommentInput.value = '';
-            setRecipientFromAddress(null);
+    let selectedAddressId = null;
+
+    const setActiveAddressButton = (id) => {
+        addressButtons.forEach((button) => {
+            const isActive = id !== null && Number(button.dataset.addressId || 0) === Number(id);
+            button.classList.toggle('border-rose-200', isActive);
+            button.classList.toggle('bg-rose-50', isActive);
+            button.classList.toggle('text-rose-700', isActive);
+            button.classList.toggle('shadow-sm', isActive);
+            button.classList.toggle('border-slate-200', !isActive);
+            button.classList.toggle('bg-white', !isActive);
+            button.classList.toggle('text-slate-700', !isActive);
+        });
+    };
+
+    const setAddressFromButton = (button) => {
+        if (!button) return;
+        selectedAddressId = Number(button.dataset.addressId || 0) || null;
+        setActiveAddressButton(selectedAddressId);
+        const chosen = findAddressById(selectedAddressId);
+        const streetValue = [chosen?.raw?.street || '', chosen?.raw?.house || ''].filter(Boolean).join(', ');
+        if (streetInput) streetInput.value = streetValue || chosen?.address || '';
+        if (apartmentInput) {
+            apartmentInput.value = chosen?.raw?.apartment || '';
         }
+        if (addressCommentInput) addressCommentInput.value = chosen?.raw?.delivery_comment || '';
+        setRecipientFromAddress(chosen);
     };
 
     const toggleDelivery = (mode) => {
@@ -529,10 +519,16 @@ function initOrderFlow() {
         if (deliveryExtra) {
             deliveryExtra.hidden = mode !== 'delivery';
         }
+        if (deliveryRow) {
+            deliveryRow.hidden = mode !== 'delivery';
+        }
         highlightMode(mode);
 
         if (mode === 'delivery') {
-            setAddressFromSelect();
+            const defaultButton = addressButtons.find((button) => button.hasAttribute('data-address-primary')) || addressButtons[0];
+            if (defaultButton && selectedAddressId === null) {
+                setAddressFromButton(defaultButton);
+            }
             updateDeliveryQuote();
         } else {
             lastDeliveryQuote = null;
@@ -548,22 +544,21 @@ function initOrderFlow() {
         button.addEventListener('click', () => setRecipientMode(button.dataset.recipientMode || 'self'));
     });
 
-    addressSelect?.addEventListener('change', setAddressFromSelect);
+    addressButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+            setAddressFromButton(button);
+            updateDeliveryQuote();
+        });
+    });
 
     addressNew?.addEventListener('click', () => {
-        if (addressSelect) {
-            addressSelect.selectedIndex = -1;
-        }
-        if (settlementInput) settlementInput.value = '';
+        selectedAddressId = null;
+        setActiveAddressButton(null);
         if (streetInput) {
             streetInput.value = '';
             streetInput.focus();
         }
-        if (houseInput) houseInput.value = '';
         if (apartmentInput) apartmentInput.value = '';
-        if (entranceInput) entranceInput.value = '';
-        if (floorInput) floorInput.value = '';
-        if (intercomInput) intercomInput.value = '';
         if (addressCommentInput) addressCommentInput.value = '';
         setRecipientFromAddress(null);
     });
@@ -638,7 +633,7 @@ function initOrderFlow() {
         updateDeliveryPriceDisplay(price);
     };
 
-const formatAddressFromDadata = (data) => {
+    const formatAddressFromDadata = (data) => {
         if (!data) return '';
 
         const cityName = data.city || data.settlement || '';
@@ -681,15 +676,8 @@ const formatAddressFromDadata = (data) => {
 
             row.addEventListener('click', () => {
                 const data = item.data || {};
-                if (settlementInput) {
-                    settlementInput.value =
-                        data.settlement_with_type || data.city_with_type || data.region_with_type || '';
-                }
                 if (streetInput) {
-                    streetInput.value = data.street_with_type || '';
-                }
-                if (houseInput) {
-                    houseInput.value = data.house || '';
+                    streetInput.value = formatAddressFromDadata(data) || item.value || '';
                 }
                 addressSuggestionList.classList.add('hidden');
                 setTimeout(updateDeliveryQuote, 50);
@@ -842,7 +830,7 @@ const formatAddressFromDadata = (data) => {
         }
     };
 
-    [settlementInput, streetInput, houseInput].forEach((field) => {
+    [streetInput].forEach((field) => {
         if (!field) return;
         field.addEventListener('blur', updateDeliveryQuote);
         field.addEventListener('change', updateDeliveryQuote);
@@ -859,7 +847,7 @@ const formatAddressFromDadata = (data) => {
         };
 
         if (currentMode === 'delivery') {
-            payload.address_id = addressSelect ? Number(addressSelect.value || 0) || null : null;
+            payload.address_id = selectedAddressId;
             payload.address_text = composeAddressText();
 
             const activeRecipient = orderSection.querySelector('.recipient-btn.border-rose-100') || orderSection.querySelector('[data-recipient-mode="self"]');
@@ -875,24 +863,10 @@ const formatAddressFromDadata = (data) => {
                 payload.address = {};
             }
 
-            payload.address.settlement = settlementInput?.value || '';
             payload.address.street = streetInput?.value || '';
-            payload.address.house = houseInput?.value || '';
 
             if (apartmentInput) {
                 payload.address.apartment = apartmentInput.value || '';
-            }
-
-            if (entranceInput) {
-                payload.address.entrance = entranceInput.value || '';
-            }
-
-            if (floorInput) {
-                payload.address.floor = floorInput.value || '';
-            }
-
-            if (intercomInput) {
-                payload.address.intercom = intercomInput.value || '';
             }
 
             if (addressCommentInput) {

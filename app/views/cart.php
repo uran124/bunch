@@ -6,7 +6,12 @@
 
 <div class="space-y-6">
     <section class="space-y-2">
-        <h1 class="text-2xl font-bold tracking-tight text-slate-900">Товары в корзине:</h1>
+        <h1>
+            <p class="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.08em] text-rose-600">
+                <span class="material-symbols-rounded text-base">cart</span>
+                Ваша корзина
+            </p>
+        </h1>
     </section>
 
     <?php if ($isEmpty): ?>
@@ -71,73 +76,67 @@
                         data-product-id="<?php echo (int) $item['product_id']; ?>"
                         data-selected-attributes="<?php echo htmlspecialchars(json_encode(array_values($selectedAttributeIds), JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8'); ?>"
                     >
-                        <div class="flex flex-col gap-3 sm:flex-row">
-                            <div class="h-28 w-28 overflow-hidden rounded-xl bg-slate-100 shadow-inner">
-                                <?php if (!empty($item['photo_url'])): ?>
-                                    <img src="<?php echo htmlspecialchars($item['photo_url'], ENT_QUOTES, 'UTF-8'); ?>" alt="<?php echo htmlspecialchars($item['name'], ENT_QUOTES, 'UTF-8'); ?>" class="h-full w-full object-cover">
-                                <?php else: ?>
-                                    <div class="flex h-full w-full items-center justify-center text-slate-400">
-                                        <span class="material-symbols-rounded text-xl">image</span>
-                                    </div>
-                                <?php endif; ?>
-                            </div>
-                            <div class="flex-1 space-y-3">
-                                <div class="flex flex-col gap-2">
-                                    <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                                        <a
-                                            href="#"
-                                            class="group flex-1 space-y-1 rounded-xl border border-transparent p-1 transition hover:border-rose-100 hover:bg-rose-50/40"
-                                            data-attribute-modal-trigger
-                                            data-attribute-title="<?php echo htmlspecialchars($item['name'], ENT_QUOTES, 'UTF-8'); ?>"
-                                            data-attribute-data="<?php echo htmlspecialchars(json_encode($attributeTableData, JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8'); ?>"
-                                        >
-                                            <p class="text-base font-semibold leading-tight text-slate-900">
-                                                <?php echo htmlspecialchars($item['name'], ENT_QUOTES, 'UTF-8'); ?>
-                                                <?php if (!empty($item['stem_height_cm'])): ?>
-                                                    <span class="text-xs font-semibold uppercase tracking-wide text-slate-400">· <?php echo (int) $item['stem_height_cm']; ?> см</span>
-                                                <?php endif; ?>
-                                            </p>
-                                            <div class="flex flex-col gap-0.5 text-xs text-slate-600" data-attribute-preview>
-                                                <?php foreach ($previewAttributes as $line): ?>
-                                                    <span class="inline-flex items-center gap-1">
-                                                        <span class="h-1.5 w-1.5 rounded-full bg-rose-200"></span>
-                                                        <?php echo htmlspecialchars($line, ENT_QUOTES, 'UTF-8'); ?>
-                                                    </span>
-                                                <?php endforeach; ?>
-                                            </div>
-                                            <p class="text-[11px] font-semibold text-rose-600 underline underline-offset-2">Все атрибуты</p>
-                                        </a>
-                                        <div class="shrink-0 text-right sm:min-w-[150px]">
-                                            <p class="text-lg font-bold text-rose-600" data-line-total><?php echo number_format((float) ($item['line_total'] ?? 0), 0, '.', ' '); ?> ₽</p>
+                        <div class="flex flex-col gap-3">
+                            <div class="flex items-start gap-3">
+                                <div class="h-28 w-28 overflow-hidden rounded-xl bg-slate-100 shadow-inner">
+                                    <?php if (!empty($item['photo_url'])): ?>
+                                        <img src="<?php echo htmlspecialchars($item['photo_url'], ENT_QUOTES, 'UTF-8'); ?>" alt="<?php echo htmlspecialchars($item['name'], ENT_QUOTES, 'UTF-8'); ?>" class="h-full w-full object-cover">
+                                    <?php else: ?>
+                                        <div class="flex h-full w-full items-center justify-center text-slate-400">
+                                            <span class="material-symbols-rounded text-xl">image</span>
                                         </div>
-                                    </div>
+                                    <?php endif; ?>
                                 </div>
-
-                                <div class="flex items-center justify-between gap-3 rounded-xl bg-slate-50 px-3 py-2" data-quantity-control>
-                                    <div class="flex items-center gap-2">
-                                        <button type="button" class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 transition hover:border-rose-200 hover:text-rose-600" data-qty-decrease>
-                                            <span class="material-symbols-rounded text-base">remove</span>
-                                        </button>
-                                        <input
-                                            type="number"
-                                            min="1"
-                                            step="1"
-                                            value="<?php echo (int) $item['qty']; ?>"
-                                            class="h-9 w-16 rounded-lg border border-slate-200 bg-white text-center text-sm font-semibold text-slate-800 shadow-inner focus:border-rose-300 focus:outline-none"
-                                            data-qty-input
-                                        >
-                                        <button type="button" class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 transition hover:border-rose-200 hover:text-rose-600" data-qty-increase>
-                                            <span class="material-symbols-rounded text-base">add</span>
-                                        </button>
+                                <a
+                                    href="#"
+                                    class="group flex-1 space-y-1 rounded-xl border border-transparent p-1 transition hover:border-rose-100 hover:bg-rose-50/40"
+                                    data-attribute-modal-trigger
+                                    data-attribute-title="<?php echo htmlspecialchars($item['name'], ENT_QUOTES, 'UTF-8'); ?>"
+                                    data-attribute-data="<?php echo htmlspecialchars(json_encode($attributeTableData, JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8'); ?>"
+                                >
+                                    <p class="text-base font-semibold leading-tight text-slate-900">
+                                        <?php echo htmlspecialchars($item['name'], ENT_QUOTES, 'UTF-8'); ?>
+                                        <?php if (!empty($item['stem_height_cm'])): ?>
+                                            <span class="text-xs font-semibold uppercase tracking-wide text-slate-400">· <?php echo (int) $item['stem_height_cm']; ?> см</span>
+                                        <?php endif; ?>
+                                    </p>
+                                    <div class="flex flex-col gap-0.5 text-xs text-slate-600" data-attribute-preview>
+                                        <?php foreach ($previewAttributes as $line): ?>
+                                            <span class="inline-flex items-center gap-1">
+                                                <span class="h-1.5 w-1.5 rounded-full bg-rose-200"></span>
+                                                <?php echo htmlspecialchars($line, ENT_QUOTES, 'UTF-8'); ?>
+                                            </span>
+                                        <?php endforeach; ?>
                                     </div>
-                                    <button
-                                        type="button"
-                                        class="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-rose-100 bg-white text-rose-600 shadow-sm shadow-rose-100 transition hover:-translate-y-0.5 hover:bg-rose-50"
-                                        data-remove-item
+                                    <p class="text-[11px] font-semibold text-rose-600 underline underline-offset-2">Все атрибуты</p>
+                                </a>
+                            </div>
+
+                            <div class="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-slate-50 px-3 py-2" data-quantity-control>
+                                <p class="text-lg font-bold text-rose-600" data-line-total><?php echo number_format((float) ($item['line_total'] ?? 0), 0, '.', ' '); ?> ₽</p>
+                                <div class="flex items-center gap-2">
+                                    <button type="button" class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 transition hover:border-rose-200 hover:text-rose-600" data-qty-decrease>
+                                        <span class="material-symbols-rounded text-base">remove</span>
+                                    </button>
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        step="1"
+                                        value="<?php echo (int) $item['qty']; ?>"
+                                        class="h-9 w-16 rounded-lg border border-slate-200 bg-white text-center text-sm font-semibold text-slate-800 shadow-inner focus:border-rose-300 focus:outline-none"
+                                        data-qty-input
                                     >
-                                        <span class="material-symbols-rounded text-base">delete</span>
+                                    <button type="button" class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 transition hover:border-rose-200 hover:text-rose-600" data-qty-increase>
+                                        <span class="material-symbols-rounded text-base">add</span>
                                     </button>
                                 </div>
+                                <button
+                                    type="button"
+                                    class="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-rose-100 bg-white text-rose-600 shadow-sm shadow-rose-100 transition hover:-translate-y-0.5 hover:bg-rose-50"
+                                    data-remove-item
+                                >
+                                    <span class="material-symbols-rounded text-base">delete</span>
+                                </button>
                             </div>
                         </div>
 
@@ -192,11 +191,13 @@
                 $primaryAddressSettlement = '';
                 $primaryAddressStreet = '';
                 $primaryAddressHouse = '';
+                $primaryAddressLine = '';
 
                 if ($primaryAddress) {
                     $primaryAddressSettlement = $primaryAddress['raw']['settlement'] ?? '';
                     $primaryAddressStreet = $primaryAddress['raw']['street'] ?? '';
                     $primaryAddressHouse = $primaryAddress['raw']['house'] ?? '';
+                    $primaryAddressLine = trim(trim($primaryAddressStreet) . ($primaryAddressHouse !== '' ? ', ' . $primaryAddressHouse : ''));
 
                     $primaryAddressBase = implode(', ', array_filter([
                         $primaryAddressSettlement ?: null,
@@ -206,6 +207,9 @@
 
                     if (!$primaryAddressBase) {
                         $primaryAddressBase = $primaryAddress['address'] ?? '';
+                    }
+                    if (!$primaryAddressLine) {
+                        $primaryAddressLine = $primaryAddress['address'] ?? '';
                     }
                 }
                 ?>
@@ -231,15 +235,11 @@
                         </button>
                     </div>
 
-                    <div class="grid gap-3 sm:grid-cols-2" data-schedule-fields>
-                        <label class="flex flex-col gap-1 text-sm font-semibold text-slate-700">
-                            Дата
-                            <input type="date" value="<?php echo htmlspecialchars($today, ENT_QUOTES, 'UTF-8'); ?>" class="rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm focus:border-rose-300 focus:outline-none" data-order-date>
-                        </label>
-                        <label class="flex flex-col gap-1 text-sm font-semibold text-slate-700">
-                            Время
-                            <input type="time" class="rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm focus:border-rose-300 focus:outline-none" placeholder="Ближайшее" data-order-time>
-                        </label>
+                    <div class="flex flex-wrap items-center gap-3" data-schedule-fields>
+                        <span class="material-symbols-rounded text-base text-slate-400">calendar_today</span>
+                        <input type="date" value="<?php echo htmlspecialchars($today, ENT_QUOTES, 'UTF-8'); ?>" class="rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm focus:border-rose-300 focus:outline-none" data-order-date>
+                        <span class="material-symbols-rounded text-base text-slate-400">schedule</span>
+                        <input type="time" class="rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm focus:border-rose-300 focus:outline-none" placeholder="Ближайшее" data-order-time>
                     </div>
 
                     <div class="space-y-3 rounded-xl border border-dashed border-rose-100 bg-rose-50/50 p-3" data-delivery-extra hidden>
@@ -249,60 +249,45 @@
                         </div>
 
                         <?php if ($hasSavedAddresses): ?>
-                            <div class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-                                <label class="flex flex-1 flex-col gap-1 text-sm font-semibold text-slate-700">
-                                    Сохраненные адреса
-                                    <select class="rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm focus:border-rose-300 focus:outline-none" data-address-select>
-                                        <?php foreach ($addresses as $address): ?>
-                                            <option
-                                                value="<?php echo (int) ($address['raw']['id'] ?? 0); ?>"
-                                                data-address-text="<?php echo htmlspecialchars($address['address'], ENT_QUOTES, 'UTF-8'); ?>"
-                                                <?php echo !empty($address['is_primary']) ? 'selected' : ''; ?>
-                                            >
-                                                <?php echo htmlspecialchars($address['label'] . ' — ' . $address['address'], ENT_QUOTES, 'UTF-8'); ?>
-                                            </option>
-                                        <?php endforeach; ?>
-                                    </select>
-                                </label>
+                            <div class="flex flex-wrap items-center gap-2" data-address-options>
+                                <?php foreach ($addresses as $index => $address): ?>
+                                    <?php
+                                    $addressStreet = $address['raw']['street'] ?? '';
+                                    $addressHouse = $address['raw']['house'] ?? '';
+                                    $addressLabel = trim(trim($addressStreet) . ($addressHouse !== '' ? ', ' . $addressHouse : ''));
+                                    $addressLabel = $addressLabel !== '' ? $addressLabel : ($address['address'] ?? '');
+                                    $addressLabel .= ' ' . ($index + 1);
+                                    $isPrimary = !empty($address['is_primary']) || ($index === 0 && empty(array_filter($addresses, static fn($row) => !empty($row['is_primary']))));
+                                    ?>
+                                    <button
+                                        type="button"
+                                        class="address-btn inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm transition"
+                                        data-address-option
+                                        data-address-id="<?php echo (int) ($address['raw']['id'] ?? 0); ?>"
+                                        data-address-text="<?php echo htmlspecialchars($address['address'], ENT_QUOTES, 'UTF-8'); ?>"
+                                        <?php echo $isPrimary ? 'data-address-primary' : ''; ?>
+                                    >
+                                        <span class="material-symbols-rounded text-base">home</span>
+                                        <?php echo htmlspecialchars($addressLabel, ENT_QUOTES, 'UTF-8'); ?>
+                                    </button>
+                                <?php endforeach; ?>
                                 <button type="button" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-rose-200 hover:text-rose-700" data-address-new>
                                     <span class="material-symbols-rounded text-base">add_location_alt</span>
-                                    Другой адрес
+                                    Новый адрес
                                 </button>
                             </div>
                         <?php endif; ?>
 
-                        <div class="grid gap-3 sm:grid-cols-3">
-                            <label class="flex flex-col gap-1 text-sm font-semibold text-slate-700 sm:col-span-3">
-                                Город
-                                <input
-                                    type="text"
-                                    placeholder="Красноярск"
-                                    value="<?php echo htmlspecialchars($primaryAddressSettlement, ENT_QUOTES, 'UTF-8'); ?>"
-                                    class="rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm focus:border-rose-300 focus:outline-none"
-                                    data-address-settlement
-                                >
-                            </label>
-                            <label class="flex flex-col gap-1 text-sm font-semibold text-slate-700 sm:col-span-2">
-                                Улица
-                                <input
-                                    type="text"
-                                    placeholder="Карла Маркса"
-                                    value="<?php echo htmlspecialchars($primaryAddressStreet, ENT_QUOTES, 'UTF-8'); ?>"
-                                    class="rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm focus:border-rose-300 focus:outline-none"
-                                    data-address-street
-                                >
-                            </label>
-                            <label class="flex flex-col gap-1 text-sm font-semibold text-slate-700">
-                                Дом
-                                <input
-                                    type="text"
-                                    placeholder="12"
-                                    value="<?php echo htmlspecialchars($primaryAddressHouse, ENT_QUOTES, 'UTF-8'); ?>"
-                                    class="rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm focus:border-rose-300 focus:outline-none"
-                                    data-address-house
-                                >
-                            </label>
-                        </div>
+                        <label class="flex flex-col gap-1 text-sm font-semibold text-slate-700">
+                            Улица
+                            <input
+                                type="text"
+                                placeholder="Карла Маркса, 12"
+                                value="<?php echo htmlspecialchars($primaryAddressLine, ENT_QUOTES, 'UTF-8'); ?>"
+                                class="rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm focus:border-rose-300 focus:outline-none"
+                                data-address-street
+                            >
+                        </label>
 
                         <label class="flex flex-col gap-1 text-sm font-semibold text-slate-700">
                             Квартира/Офис
@@ -314,39 +299,6 @@
                                 data-address-apartment
                             >
                         </label>
-
-                        <div class="grid gap-3 sm:grid-cols-3">
-                            <label class="flex flex-col gap-1 text-sm font-semibold text-slate-700">
-                                Подъезд
-                                <input
-                                    type="text"
-                                    placeholder="1"
-                                    value="<?php echo htmlspecialchars($primaryAddress['raw']['entrance'] ?? '', ENT_QUOTES, 'UTF-8'); ?>"
-                                    class="rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm focus:border-rose-300 focus:outline-none"
-                                    data-address-entrance
-                                >
-                            </label>
-                            <label class="flex flex-col gap-1 text-sm font-semibold text-slate-700">
-                                Этаж
-                                <input
-                                    type="text"
-                                    placeholder="5"
-                                    value="<?php echo htmlspecialchars($primaryAddress['raw']['floor'] ?? '', ENT_QUOTES, 'UTF-8'); ?>"
-                                    class="rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm focus:border-rose-300 focus:outline-none"
-                                    data-address-floor
-                                >
-                            </label>
-                            <label class="flex flex-col gap-1 text-sm font-semibold text-slate-700">
-                                Домофон
-                                <input
-                                    type="text"
-                                    placeholder="24"
-                                    value="<?php echo htmlspecialchars($primaryAddress['raw']['intercom'] ?? '', ENT_QUOTES, 'UTF-8'); ?>"
-                                    class="rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm focus:border-rose-300 focus:outline-none"
-                                    data-address-intercom
-                                >
-                            </label>
-                        </div>
 
                         <label class="flex flex-col gap-1 text-sm font-semibold text-slate-700">
                             Комментарий к адресу
@@ -365,11 +317,11 @@
                             <div class="flex flex-wrap gap-2">
                                 <button type="button" class="recipient-btn inline-flex items-center gap-2 rounded-xl border border-rose-100 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700 shadow-sm" data-recipient-mode="self">
                                     <span class="material-symbols-rounded text-base">person</span>
-                                    Получаю я
+                                    Я
                                 </button>
                                 <button type="button" class="recipient-btn inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm" data-recipient-mode="other">
                                     <span class="material-symbols-rounded text-base">group</span>
-                                    Получает другой человек
+                                    Другой человек
                                 </button>
                             </div>
                         </div>
@@ -421,7 +373,7 @@
                                 <?php echo number_format((float) ($totals['total'] ?? 0), 0, '.', ' '); ?> ₽
                             </span>
                         </div>
-                        <div class="flex items-center justify-between">
+                        <div class="flex items-center justify-between" data-delivery-row>
                             <span>Стоимость доставки</span>
                             <span data-delivery-total data-amount="0">0 ₽</span>
                         </div>
