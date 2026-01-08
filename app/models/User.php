@@ -121,6 +121,15 @@ SQL;
         ]);
     }
 
+    public function setRole(int $userId, string $role): void
+    {
+        $stmt = $this->db->prepare('UPDATE users SET role = :role, updated_at = NOW() WHERE id = :id');
+        $stmt->execute([
+            'id' => $userId,
+            'role' => $role,
+        ]);
+    }
+
     public function updateProfileAndPin(
         int $userId,
         string $name,

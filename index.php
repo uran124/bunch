@@ -80,6 +80,7 @@ $router->post('recover', [AuthController::class, 'recover']);
 $router->post('admin-users-toggle', [AdminController::class, 'toggleUserActive']);
 $router->post('admin-group-create', [AdminController::class, 'saveGroup']);
 $router->post('admin-broadcast', [AdminController::class, 'createBroadcast']);
+$router->post('admin-user-role', [AdminController::class, 'updateUserRole']);
 $router->post('admin-supply-standing', [AdminController::class, 'createStandingSupply']);
 $router->post('admin-supply-single', [AdminController::class, 'createSingleSupply']);
 $router->post('admin-supply-update', [AdminController::class, 'updateSupply']);
