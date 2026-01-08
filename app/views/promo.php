@@ -6,14 +6,16 @@ $hasPromos = !empty($oneTimeItems);
 ?>
 
 <section class="space-y-4 sm:space-y-6">
-    <div class="space-y-1">
-        <h1>
-            <p class="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.08em] text-rose-600">
-                <span class="material-symbols-rounded text-base">history</span>
-                Акции и спецпредложения
-            </p>
-        </h1>
-    </div>
+    <header class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+        <div class="space-y-1">
+            <h1>
+                <p class="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.08em] text-rose-600">
+                    <span class="material-symbols-rounded text-base"></span>
+                     Акции и спецпредложения 
+                </p>
+            </h1>
+        </div>
+    </header>
     <?php if (!$hasPromos): ?>
         <div class="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-500 shadow-sm">
             Пока нет активных предложений. Загляните позже — мы регулярно обновляем подборку акций.
