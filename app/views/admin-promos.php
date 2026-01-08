@@ -53,9 +53,10 @@
         </div>
         <form action="/?page=admin-promo-categories-save" method="post" class="grid gap-3">
             <?php foreach ($promoCategories as $category): ?>
+                <?php $isActiveCategory = !empty($category['is_active']); ?>
                 <label class="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700">
                     <span><?php echo htmlspecialchars($category['title'], ENT_QUOTES, 'UTF-8'); ?></span>
-                    <input type="checkbox" name="categories[<?php echo htmlspecialchars($category['code'], ENT_QUOTES, 'UTF-8'); ?>]" value="1" class="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-200" <?php echo $category['is_active'] ? 'checked' : ''; ?>>
+                    <input type="checkbox" name="categories[<?php echo htmlspecialchars($category['code'], ENT_QUOTES, 'UTF-8'); ?>]" value="1" class="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-200" <?php echo $isActiveCategory ? 'checked' : ''; ?>>
                 </label>
             <?php endforeach; ?>
             <button class="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-200 transition hover:-translate-y-0.5">
@@ -127,6 +128,12 @@
             <div class="px-5 py-4 text-sm text-slate-500">Лотереи ещё не созданы.</div>
         <?php endif; ?>
         <?php foreach ($lotteries as $lottery): ?>
+            <?php
+            $ticketPrice = (float) ($lottery['ticket_price'] ?? 0);
+            $ticketsPaid = (int) ($lottery['tickets_paid'] ?? 0);
+            $ticketsTotal = (int) ($lottery['tickets_total'] ?? 0);
+            $ticketsFree = (int) ($lottery['tickets_free'] ?? max(0, $ticketsTotal - $ticketsPaid));
+            ?>
             <article class="grid grid-cols-[70px_1.2fr_1fr_1fr_1fr] items-center gap-4 border-b border-slate-100 px-5 py-4 last:border-b-0">
                 <div class="text-sm font-semibold text-slate-900">#<?php echo (int) $lottery['id']; ?></div>
                 <div class="space-y-1">
@@ -134,10 +141,10 @@
                     <div class="text-sm text-slate-500">Фото: <?php echo $lottery['photo'] ? 'есть' : '—'; ?></div>
                 </div>
                 <div class="text-sm text-slate-700">
-                    <?php echo (int) $lottery['tickets_paid']; ?>/<?php echo (int) $lottery['tickets_total']; ?>
-                    <span class="text-xs text-slate-500">(свободно <?php echo (int) $lottery['tickets_free']; ?>)</span>
+                    <?php echo $ticketsPaid; ?>/<?php echo $ticketsTotal; ?>
+                    <span class="text-xs text-slate-500">(свободно <?php echo $ticketsFree; ?>)</span>
                 </div>
-                <div class="text-sm font-semibold text-rose-700"><?php echo number_format($lottery['ticket_price'], 2, '.', ' '); ?> ₽</div>
+                <div class="text-sm font-semibold text-rose-700"><?php echo number_format($ticketPrice, 2, '.', ' '); ?> ₽</div>
                 <div class="space-y-1 text-sm text-slate-600">
                     <div class="font-semibold text-slate-900"><?php echo htmlspecialchars($lottery['status'], ENT_QUOTES, 'UTF-8'); ?></div>
                     <div><?php echo htmlspecialchars($lottery['draw_at'], ENT_QUOTES, 'UTF-8'); ?></div>
@@ -224,6 +231,7 @@
             <div class="px-5 py-4 text-sm text-slate-500">Аукционы ещё не созданы.</div>
         <?php endif; ?>
         <?php foreach ($auctions as $auction): ?>
+            <?php $currentPrice = (float) ($auction['current_price'] ?? 0); ?>
             <article class="grid grid-cols-[70px_1.4fr_1fr_1fr_1fr_1fr] items-center gap-4 border-b border-slate-100 px-5 py-4 last:border-b-0">
                 <div class="text-sm font-semibold text-slate-900">#<?php echo (int) $auction['id']; ?></div>
                 <div class="space-y-1">
@@ -235,7 +243,7 @@
                     <?php echo $auction['starts_at'] ? htmlspecialchars($auction['starts_at'], ENT_QUOTES, 'UTF-8') : '—'; ?><br>
                     <?php echo $auction['ends_at'] ? htmlspecialchars($auction['ends_at'], ENT_QUOTES, 'UTF-8') : '—'; ?>
                 </div>
-                <div class="text-sm font-semibold text-slate-900"><?php echo number_format($auction['current_price'], 2, '.', ' '); ?> ₽</div>
+                <div class="text-sm font-semibold text-slate-900"><?php echo number_format($currentPrice, 2, '.', ' '); ?> ₽</div>
                 <div class="text-sm text-slate-600">
                     <?php echo $auction['winner_last4'] !== '----' ? 'Победитель: …' . $auction['winner_last4'] : 'Победитель не выбран'; ?>
                 </div>
@@ -305,7 +313,11 @@
             <div class="px-5 py-4 text-sm text-slate-500">Разовые акции ещё не добавлены.</div>
         <?php endif; ?>
         <?php foreach ($promoItems as $promo): ?>
-            <?php $quantity = $promo['quantity'] !== null ? (int) $promo['quantity'] : 1; ?>
+            <?php
+            $quantity = $promo['quantity'] !== null ? (int) $promo['quantity'] : 1;
+            $promoPrice = (float) ($promo['price'] ?? 0);
+            $promoActive = !empty($promo['is_active']);
+            ?>
             <article class="grid grid-cols-[70px_1.4fr_1fr_1fr_1fr] items-center gap-4 border-b border-slate-100 px-5 py-4 last:border-b-0">
                 <div class="text-sm font-semibold text-slate-900">#<?php echo (int) $promo['id']; ?></div>
                 <div class="space-y-1">
@@ -313,9 +325,9 @@
                     <div class="text-sm text-slate-500"><?php echo $promo['label'] ? htmlspecialchars($promo['label'], ENT_QUOTES, 'UTF-8') : 'Разовая акция'; ?></div>
                 </div>
                 <div class="text-sm text-slate-700"><?php echo $quantity; ?> шт</div>
-                <div class="text-sm font-semibold text-rose-700"><?php echo number_format($promo['price'], 2, '.', ' '); ?> ₽</div>
+                <div class="text-sm font-semibold text-rose-700"><?php echo number_format($promoPrice, 2, '.', ' '); ?> ₽</div>
                 <div class="space-y-1 text-sm text-slate-600">
-                    <div class="font-semibold text-slate-900"><?php echo $promo['is_active'] ? 'Активна' : 'Выключена'; ?></div>
+                    <div class="font-semibold text-slate-900"><?php echo $promoActive ? 'Активна' : 'Выключена'; ?></div>
                     <div><?php echo $promo['ends_at'] ? htmlspecialchars($promo['ends_at'], ENT_QUOTES, 'UTF-8') : 'Только по наличию'; ?></div>
                 </div>
             </article>
