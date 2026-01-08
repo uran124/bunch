@@ -135,7 +135,7 @@ if (!Auth::check() && !in_array($page, $publicPages, true)) {
     exit;
 }
 
-if (Auth::check() && in_array($page, $publicPages, true) && !in_array($page, ['home', 'promo'], true)) {
+if (Auth::check() && in_array($page, ['login', 'register', 'recover'], true)) {
     header('Location: /?page=home');
     exit;
 }
