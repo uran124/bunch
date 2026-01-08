@@ -1121,7 +1121,6 @@ class AdminController extends Controller
         $query = trim($_GET['q'] ?? '');
         $statusFilter = $_GET['status_filter'] ?? 'all';
         $paymentFilter = $_GET['payment_filter'] ?? 'all';
-        $selectedId = isset($_GET['id']) ? (int) $_GET['id'] : null;
 
         $pageMeta = [
             'title' => 'Заказы · разовые покупки — админ-панель Bunch',
@@ -1153,11 +1152,62 @@ class AdminController extends Controller
                     'refund' => 'Возврат',
                 ],
             ],
-            'selectedOrder' => $selectedId ? $orderModel->getAdminOrderDetail($selectedId) : null,
             'query' => $query,
             'activeFilters' => [
                 'status' => $statusFilter,
                 'payment' => $paymentFilter,
+            ],
+            'message' => $_GET['result'] ?? null,
+        ]);
+    }
+
+    public function orderOneTimeEdit(): void
+    {
+        $orderId = isset($_GET['id']) ? (int) $_GET['id'] : 0;
+        $query = trim($_GET['q'] ?? '');
+        $statusFilter = $_GET['status_filter'] ?? 'all';
+        $paymentFilter = $_GET['payment_filter'] ?? 'all';
+
+        if ($orderId <= 0) {
+            header('Location: /?page=admin-orders-one-time');
+            return;
+        }
+
+        $orderModel = new Order();
+        $order = $orderModel->getAdminOrderDetail($orderId);
+
+        if (!$order) {
+            header('Location: /?page=admin-orders-one-time');
+            return;
+        }
+
+        $pageMeta = [
+            'title' => 'Карточка заказа — разовые покупки · админ-панель Bunch',
+            'description' => 'Редактирование статуса, доставки и контактных данных.',
+            'h1' => 'Карточка заказа',
+            'headerTitle' => 'Bunch Admin',
+            'headerSubtitle' => 'Заказы · Разовые покупки',
+        ];
+
+        $this->render('admin-order-one-time-edit', [
+            'pageMeta' => $pageMeta,
+            'selectedOrder' => $order,
+            'filters' => [
+                'status' => [
+                    'all' => 'Все',
+                    'new' => 'Новый',
+                    'confirmed' => 'Принят',
+                    'assembled' => 'Собран',
+                    'delivering' => 'В доставке',
+                    'delivered' => 'Доставлен',
+                    'cancelled' => 'Отменён',
+                ],
+            ],
+            'returnQuery' => [
+                'page' => 'admin-orders-one-time',
+                'q' => $query,
+                'status_filter' => $statusFilter,
+                'payment_filter' => $paymentFilter,
             ],
             'message' => $_GET['result'] ?? null,
         ]);
@@ -1193,7 +1243,16 @@ class AdminController extends Controller
 
         $orderModel->updateAdminOrder($orderId, $payload);
 
+        $returnUrl = trim($_POST['return_url'] ?? '');
         $query = ['page' => 'admin-orders-one-time', 'id' => $orderId, 'result' => 'updated'];
+
+        if ($returnUrl !== '') {
+            parse_str($returnUrl, $returnParams);
+            if (is_array($returnParams)) {
+                $returnParams['result'] = 'updated';
+                $query = $returnParams;
+            }
+        }
 
         header('Location: /?' . http_build_query($query));
     }
