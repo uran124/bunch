@@ -24,7 +24,7 @@
     <section class="space-y-2">
         <h1>
             <p class="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.08em] text-rose-600">
-                <span class="material-symbols-rounded text-base">cart</span>
+                <span class="material-symbols-rounded text-base">shopping_cart</span>
                 Ваша корзина
             </p>
         </h1>
