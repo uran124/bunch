@@ -103,9 +103,33 @@ $router->post('order-payment', [OrdersController::class, 'pay']);
 $router->post('account-notifications', [AccountController::class, 'updateNotifications']);
 $router->post('account-pin', [AccountController::class, 'updatePin']);
 
-$publicPages = ['home', 'promo', 'login', 'register', 'recover', 'policy', 'consent', 'offer', 'api-dadata-clean-address'];
+$publicPages = [
+    'home',
+    'promo',
+    'login',
+    'register',
+    'recover',
+    'policy',
+    'consent',
+    'offer',
+    'api-dadata-clean-address',
+    'cart-add',
+    'cart-update',
+    'cart-remove',
+];
 
 if (!Auth::check() && !in_array($page, $publicPages, true)) {
+    $requestedWith = strtolower((string) ($_SERVER['HTTP_X_REQUESTED_WITH'] ?? ''));
+    $acceptHeader = strtolower((string) ($_SERVER['HTTP_ACCEPT'] ?? ''));
+    $isAjax = $requestedWith === 'xmlhttprequest' || str_contains($acceptHeader, 'application/json');
+
+    if ($isAjax) {
+        http_response_code(401);
+        header('Content-Type: application/json');
+        echo json_encode(['error' => 'Требуется авторизация']);
+        exit;
+    }
+
     Session::set('auth_redirect', $_SERVER['REQUEST_URI'] ?? '/');
     header('Location: /?page=login');
     exit;
