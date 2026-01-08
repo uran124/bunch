@@ -1,11 +1,172 @@
+<?php
+$pageMeta = $pageMeta ?? [];
+$pageTitle = $pageMeta['title'] ?? 'Bunch flowers — панель';
+$pageDescription = $pageMeta['description'] ?? 'Панель управления Bunch flowers.';
+$currentPage = $_GET['page'] ?? trim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/') ?: 'home';
+$authPages = ['login', 'register', 'recover'];
+$isAuthPage = in_array($currentPage, $authPages, true);
+$isAdminPage = str_starts_with($currentPage, 'admin');
+$mainClasses = 'mx-auto flex w-full max-w-6xl flex-1 flex-col gap-4 px-3 py-3 pb-[calc(6.5rem+env(safe-area-inset-bottom))] sm:gap-6 sm:px-4 sm:pt-8 sm:pb-[calc(6.5rem+env(safe-area-inset-bottom))]';
+if ($isAuthPage) {
+    $mainClasses .= ' items-center justify-center';
+}
+if ($isAdminPage) {
+    $mainClasses = 'mx-auto flex w-full max-w-7xl flex-1 flex-col gap-5 px-4 pb-10 pt-6 pl-20 sm:pl-24';
+}
+$bodyClasses = 'min-h-screen antialiased font-["Manrope",system-ui,sans-serif] flex flex-col pb-[calc(6.5rem+env(safe-area-inset-bottom))]';
+if ($isAdminPage) {
+    $bodyClasses .= ' bg-slate-950 text-slate-100';
+} else {
+    $bodyClasses .= ' bg-slate-50 text-slate-900';
+}
+$adminNavigation = [
+    [
+        'title' => 'Главная',
+        'items' => [
+            [
+                'label' => 'Обзор',
+                'href' => '/?page=admin',
+                'page' => 'admin',
+                'icon' => 'dashboard',
+            ],
+        ],
+    ],
+    [
+        'title' => 'Пользователи',
+        'items' => [
+            [
+                'label' => 'Пользователи',
+                'href' => '/?page=admin-users',
+                'page' => 'admin-users',
+                'icon' => 'group',
+            ],
+            [
+                'label' => 'Рассылки',
+                'href' => '/?page=admin-broadcast',
+                'page' => 'admin-broadcast',
+                'icon' => 'campaign',
+            ],
+        ],
+    ],
+    [
+        'title' => 'Каталог',
+        'items' => [
+            [
+                'label' => 'Товары',
+                'href' => '/?page=admin-products',
+                'page' => 'admin-products',
+                'icon' => 'inventory_2',
+            ],
+            [
+                'label' => 'Акции',
+                'href' => '/?page=admin-promos',
+                'page' => 'admin-promos',
+                'icon' => 'local_offer',
+            ],
+            [
+                'label' => 'Атрибуты',
+                'href' => '/?page=admin-attributes',
+                'page' => 'admin-attributes',
+                'icon' => 'tune',
+            ],
+            [
+                'label' => 'Поставки',
+                'href' => '/?page=admin-supplies',
+                'page' => 'admin-supplies',
+                'icon' => 'local_shipping',
+            ],
+        ],
+    ],
+    [
+        'title' => 'Заказы',
+        'items' => [
+            [
+                'label' => 'Разовые',
+                'href' => '/?page=admin-orders-one-time',
+                'page' => 'admin-orders-one-time',
+                'icon' => 'shopping_bag',
+            ],
+            [
+                'label' => 'Подписки',
+                'href' => '/?page=admin-orders-subscriptions',
+                'page' => 'admin-orders-subscriptions',
+                'icon' => 'autorenew',
+            ],
+            [
+                'label' => 'Мелкий опт',
+                'href' => '/?page=admin-orders-wholesale',
+                'page' => 'admin-orders-wholesale',
+                'icon' => 'inventory',
+            ],
+        ],
+    ],
+    [
+        'title' => 'Сервисы',
+        'items' => [
+            [
+                'label' => 'Онлайн-оплата',
+                'href' => '/?page=admin-services-payment',
+                'page' => 'admin-services-payment',
+                'icon' => 'payments',
+            ],
+            [
+                'label' => 'Веб-аналитика',
+                'href' => '#',
+                'page' => '',
+                'icon' => 'monitoring',
+                'disabled' => true,
+            ],
+            [
+                'label' => 'Интеграция CRM',
+                'href' => '#',
+                'page' => '',
+                'icon' => 'hub',
+                'disabled' => true,
+            ],
+            [
+                'label' => 'Доставка',
+                'href' => '/?page=admin-services-delivery',
+                'page' => 'admin-services-delivery',
+                'icon' => 'map',
+            ],
+            [
+                'label' => 'Telegram бот',
+                'href' => '/?page=admin-services-telegram',
+                'page' => 'admin-services-telegram',
+                'icon' => 'send',
+            ],
+        ],
+    ],
+    [
+        'title' => 'Контент',
+        'items' => [
+            [
+                'label' => 'Статика',
+                'href' => '/?page=admin-content-static',
+                'page' => 'admin-content-static',
+                'icon' => 'text_snippet',
+            ],
+            [
+                'label' => 'Товары',
+                'href' => '/?page=admin-content-products',
+                'page' => 'admin-content-products',
+                'icon' => 'photo_library',
+            ],
+            [
+                'label' => 'Разделы',
+                'href' => '/?page=admin-content-sections',
+                'page' => 'admin-content-sections',
+                'icon' => 'category',
+            ],
+        ],
+    ],
+];
+?>
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <?php $pageMeta = $pageMeta ?? []; ?>
-    <?php $pageTitle = $pageMeta['title'] ?? 'Bunch flowers — панель'; ?>
-    <?php $pageDescription = $pageMeta['description'] ?? 'Панель управления Bunch flowers.'; ?>
     <title><?php echo htmlspecialchars($pageTitle, ENT_QUOTES, 'UTF-8'); ?></title>
     <meta name="description" content="<?php echo htmlspecialchars($pageDescription, ENT_QUOTES, 'UTF-8'); ?>">
     <link rel="icon" href="/favicon.ico" sizes="any">
@@ -28,26 +189,107 @@
         href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0&display=swap"
         rel="stylesheet">
     <script src="/assets/js/tailwindcss.js"></script>
+    <?php if ($isAdminPage): ?>
+        <style>
+            body[data-page^="admin"] {
+                background-color: #0b1120;
+                color: #e2e8f0;
+            }
+            body[data-page^="admin"] .bg-white {
+                background-color: #0f172a !important;
+            }
+            body[data-page^="admin"] .bg-slate-50 {
+                background-color: #111827 !important;
+            }
+            body[data-page^="admin"] .bg-emerald-50 {
+                background-color: rgba(16, 185, 129, 0.12) !important;
+            }
+            body[data-page^="admin"] .border-slate-200,
+            body[data-page^="admin"] .border-slate-100 {
+                border-color: #1e293b !important;
+            }
+            body[data-page^="admin"] .text-slate-900 {
+                color: #f8fafc !important;
+            }
+            body[data-page^="admin"] .text-slate-800 {
+                color: #e2e8f0 !important;
+            }
+            body[data-page^="admin"] .text-slate-700 {
+                color: #cbd5f5 !important;
+            }
+            body[data-page^="admin"] .text-slate-600 {
+                color: #94a3b8 !important;
+            }
+            body[data-page^="admin"] .text-slate-500,
+            body[data-page^="admin"] .text-slate-400 {
+                color: #64748b !important;
+            }
+            body[data-page^="admin"] .ring-slate-800 {
+                --tw-ring-color: #1e293b !important;
+            }
+        </style>
+    <?php endif; ?>
 </head>
-<?php
-$currentPage = $_GET['page'] ?? trim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/') ?: 'home';
-$authPages = ['login', 'register', 'recover'];
-$isAuthPage = in_array($currentPage, $authPages, true);
-$isAdminPage = str_starts_with($currentPage, 'admin');
-$mainClasses = 'mx-auto flex w-full max-w-6xl flex-1 flex-col gap-4 px-3 py-3 pb-[calc(6.5rem+env(safe-area-inset-bottom))] sm:gap-6 sm:px-4 sm:pt-8 sm:pb-[calc(6.5rem+env(safe-area-inset-bottom))]';
-if ($isAuthPage) {
-    $mainClasses .= ' items-center justify-center';
-}
-?>
 <body
-    class="min-h-screen bg-slate-50 text-slate-900 antialiased font-[\"Manrope\",system-ui,sans-serif] flex flex-col pb-[calc(6.5rem+env(safe-area-inset-bottom))]"
+    class="<?php echo htmlspecialchars($bodyClasses, ENT_QUOTES, 'UTF-8'); ?>"
     data-page="<?php echo htmlspecialchars($currentPage, ENT_QUOTES, 'UTF-8'); ?>"
 >
-    <header class="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur">
-        <div class="mx-auto flex w-full max-w-6xl items-center justify-between px-3 py-2">
+    <?php if ($isAdminPage): ?>
+        <aside class="group fixed left-0 top-0 z-40 flex h-screen w-16 flex-col border-r border-slate-800 bg-slate-950/95 shadow-2xl shadow-slate-900/40 backdrop-blur transition-[width] duration-300 hover:w-64">
+            <div class="flex items-center gap-3 px-4 py-5">
+                <span class="material-symbols-rounded text-2xl text-rose-400">settings_suggest</span>
+                <span class="text-sm font-semibold text-white opacity-0 transition duration-300 group-hover:opacity-100">Bunch Admin</span>
+            </div>
+            <nav class="flex-1 space-y-4 px-2 pb-6" aria-label="Админ-навигация">
+                <?php foreach ($adminNavigation as $section): ?>
+                    <div class="space-y-2">
+                        <p class="px-3 text-[10px] font-semibold uppercase tracking-[0.3em] text-slate-500 opacity-0 transition duration-300 group-hover:opacity-100">
+                            <?php echo htmlspecialchars($section['title'], ENT_QUOTES, 'UTF-8'); ?>
+                        </p>
+                        <ul class="space-y-1">
+                            <?php foreach ($section['items'] as $item): ?>
+                                <?php
+                                $isActive = isset($item['page']) && $item['page'] !== '' && $currentPage === $item['page'];
+                                $isDisabled = (bool) ($item['disabled'] ?? false);
+                                $itemClasses = 'flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition';
+                                if ($isActive) {
+                                    $itemClasses .= ' bg-slate-800 text-white shadow-lg shadow-slate-900/30';
+                                } elseif ($isDisabled) {
+                                    $itemClasses .= ' text-slate-600';
+                                } else {
+                                    $itemClasses .= ' text-slate-300 hover:bg-slate-800/70 hover:text-white';
+                                }
+                                ?>
+                                <li>
+                                    <a
+                                        class="<?php echo htmlspecialchars($itemClasses, ENT_QUOTES, 'UTF-8'); ?>"
+                                        href="<?php echo htmlspecialchars($item['href'], ENT_QUOTES, 'UTF-8'); ?>"
+                                        <?php if ($isDisabled): ?>aria-disabled="true"<?php endif; ?>
+                                    >
+                                        <span class="material-symbols-rounded text-xl"><?php echo htmlspecialchars($item['icon'], ENT_QUOTES, 'UTF-8'); ?></span>
+                                        <span class="whitespace-nowrap opacity-0 transition duration-300 group-hover:opacity-100">
+                                            <?php echo htmlspecialchars($item['label'], ENT_QUOTES, 'UTF-8'); ?>
+                                        </span>
+                                    </a>
+                                </li>
+                            <?php endforeach; ?>
+                        </ul>
+                    </div>
+                <?php endforeach; ?>
+            </nav>
+            <div class="px-3 pb-5">
+                <a class="flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-semibold text-slate-300 transition hover:bg-slate-800/70 hover:text-white" href="/">
+                    <span class="material-symbols-rounded text-xl text-rose-400">arrow_back</span>
+                    <span class="whitespace-nowrap opacity-0 transition duration-300 group-hover:opacity-100">На сайт</span>
+                </a>
+            </div>
+        </aside>
+    <?php endif; ?>
+    <header class="<?php echo htmlspecialchars($isAdminPage ? 'sticky top-0 z-30 border-b border-slate-800 bg-slate-950/80 backdrop-blur' : 'sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur', ENT_QUOTES, 'UTF-8'); ?>">
+        <div class="<?php echo htmlspecialchars($isAdminPage ? 'mx-auto flex w-full max-w-7xl items-center justify-between px-4 py-3 pl-20 sm:pl-24' : 'mx-auto flex w-full max-w-6xl items-center justify-between px-3 py-2', ENT_QUOTES, 'UTF-8'); ?>">
             <div>
                 <?php if ($isAdminPage): ?>
-                    <a class="text-lg font-semibold tracking-tight text-slate-900" href="/?page=admin">
+                    <a class="text-lg font-semibold tracking-tight text-white" href="/?page=admin">
                         bunch admin
                     </a>
                 <?php else: ?>
@@ -64,8 +306,8 @@ if ($isAuthPage) {
             </div>
             <div class="hidden items-center gap-3 sm:flex">
                 <?php if ($isAdminPage): ?>
-                    <a class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md" href="/">
-                        <span class="material-symbols-rounded text-lg text-rose-500">arrow_back</span>
+                    <a class="inline-flex items-center gap-2 rounded-full border border-slate-700 bg-slate-900 px-3 py-2 text-sm font-semibold text-slate-200 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-500 hover:text-white" href="/">
+                        <span class="material-symbols-rounded text-lg text-rose-400">arrow_back</span>
                         На сайт
                     </a>
                 <?php else: ?>
