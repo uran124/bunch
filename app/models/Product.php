@@ -189,46 +189,62 @@ class Product extends Model
 
     public function getBlockingRelations(int $id): array
     {
-        $ordersStmt = $this->db->prepare(
-            'SELECT DISTINCT o.id
-            FROM order_items oi
-            INNER JOIN orders o ON o.id = oi.order_id
-            WHERE oi.product_id = :id
-            ORDER BY o.created_at DESC
-            LIMIT 10'
-        );
-        $ordersStmt->execute(['id' => $id]);
-        $orders = $ordersStmt->fetchAll();
-        $orders = array_map(function (array $order): array {
-            $orderId = (int) ($order['id'] ?? 0);
-            return [
-                'id' => $orderId,
-                'number' => 'B-' . str_pad((string) $orderId, 4, '0', STR_PAD_LEFT),
-            ];
-        }, $orders);
+        $orders = [];
+        $subscriptions = [];
+        $carts = [];
 
-        $subscriptionsStmt = $this->db->prepare(
-            'SELECT s.id, s.user_id, s.status, u.name, u.phone
-            FROM subscriptions s
-            INNER JOIN users u ON u.id = s.user_id
-            WHERE s.product_id = :id
-            ORDER BY s.created_at DESC
-            LIMIT 10'
-        );
-        $subscriptionsStmt->execute(['id' => $id]);
-        $subscriptions = $subscriptionsStmt->fetchAll();
+        try {
+            $ordersStmt = $this->db->prepare(
+                'SELECT DISTINCT o.id
+                FROM order_items oi
+                INNER JOIN orders o ON o.id = oi.order_id
+                WHERE oi.product_id = :id
+                ORDER BY o.created_at DESC
+                LIMIT 10'
+            );
+            $ordersStmt->execute(['id' => $id]);
+            $orders = $ordersStmt->fetchAll();
+            $orders = array_map(function (array $order): array {
+                $orderId = (int) ($order['id'] ?? 0);
+                return [
+                    'id' => $orderId,
+                    'number' => 'B-' . str_pad((string) $orderId, 4, '0', STR_PAD_LEFT),
+                ];
+            }, $orders);
+        } catch (\PDOException $exception) {
+            error_log('Product blocking relations load error (orders): ' . $exception->getMessage());
+        }
 
-        $cartsStmt = $this->db->prepare(
-            'SELECT DISTINCT c.id, c.user_id, u.name, u.phone
-            FROM cart_items ci
-            INNER JOIN carts c ON c.id = ci.cart_id
-            LEFT JOIN users u ON u.id = c.user_id
-            WHERE ci.product_id = :id
-            ORDER BY c.updated_at DESC
-            LIMIT 10'
-        );
-        $cartsStmt->execute(['id' => $id]);
-        $carts = $cartsStmt->fetchAll();
+        try {
+            $subscriptionsStmt = $this->db->prepare(
+                'SELECT s.id, s.user_id, s.status, u.name, u.phone
+                FROM subscriptions s
+                INNER JOIN users u ON u.id = s.user_id
+                WHERE s.product_id = :id
+                ORDER BY s.created_at DESC
+                LIMIT 10'
+            );
+            $subscriptionsStmt->execute(['id' => $id]);
+            $subscriptions = $subscriptionsStmt->fetchAll();
+        } catch (\PDOException $exception) {
+            error_log('Product blocking relations load error (subscriptions): ' . $exception->getMessage());
+        }
+
+        try {
+            $cartsStmt = $this->db->prepare(
+                'SELECT DISTINCT c.id, c.user_id, u.name, u.phone
+                FROM cart_items ci
+                INNER JOIN carts c ON c.id = ci.cart_id
+                LEFT JOIN users u ON u.id = c.user_id
+                WHERE ci.product_id = :id
+                ORDER BY c.updated_at DESC
+                LIMIT 10'
+            );
+            $cartsStmt->execute(['id' => $id]);
+            $carts = $cartsStmt->fetchAll();
+        } catch (\PDOException $exception) {
+            error_log('Product blocking relations load error (carts): ' . $exception->getMessage());
+        }
 
         return [
             'orders' => $orders ?: [],
