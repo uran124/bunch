@@ -332,15 +332,9 @@
     }
 
     function updateCartIndicator(count) {
-        document.querySelectorAll('[data-cart-count]').forEach((badge) => {
-            badge.textContent = count;
-            if (Number(count) > 0) {
-                badge.classList.remove('hidden');
-                badge.classList.add('flex');
-            } else {
-                badge.classList.add('hidden');
-                badge.classList.remove('flex');
-            }
+        const isActive = Number(count) > 0;
+        document.querySelectorAll('[data-cart-indicator]').forEach((indicator) => {
+            indicator.dataset.cartActive = isActive ? 'true' : 'false';
         });
     }
 
