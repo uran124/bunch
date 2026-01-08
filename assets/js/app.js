@@ -360,6 +360,28 @@ function initOrderFlow() {
     const recipientPhone = orderSection.querySelector('[data-recipient-phone]');
     const commentInput = orderSection.querySelector('[data-order-comment]');
 
+    const attachPicker = (input) => {
+        if (!input) return;
+
+        const openPicker = () => {
+            if (typeof input.showPicker === 'function') {
+                try {
+                    input.showPicker();
+                } catch (error) {
+                    // Safari throws if showPicker is called without focus.
+                }
+            }
+        };
+
+        input.addEventListener('click', () => {
+            input.focus({ preventScroll: true });
+            requestAnimationFrame(openPicker);
+        });
+    };
+
+    attachPicker(dateInput);
+    attachPicker(timeInput);
+
     const addresses = (() => {
         try {
             return JSON.parse(orderSection.dataset.addresses || '[]');

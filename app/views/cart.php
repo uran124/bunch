@@ -4,6 +4,22 @@
 
 <?php $isEmpty = empty($items); ?>
 
+<style>
+    [data-order-flow] .order-datetime-input {
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: textfield;
+        cursor: pointer;
+    }
+
+    [data-order-flow] .order-datetime-input::-webkit-calendar-picker-indicator,
+    [data-order-flow] .order-datetime-input::-webkit-clear-button,
+    [data-order-flow] .order-datetime-input::-webkit-inner-spin-button {
+        display: none;
+        -webkit-appearance: none;
+    }
+</style>
+
 <div class="space-y-6">
     <section class="space-y-2">
         <h1>
@@ -237,9 +253,9 @@
 
                     <div class="flex flex-wrap items-center gap-3" data-schedule-fields>
                         <span class="material-symbols-rounded text-base text-slate-400">calendar_today</span>
-                        <input type="date" value="<?php echo htmlspecialchars($today, ENT_QUOTES, 'UTF-8'); ?>" class="rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm focus:border-rose-300 focus:outline-none" data-order-date>
+                        <input type="date" value="<?php echo htmlspecialchars($today, ENT_QUOTES, 'UTF-8'); ?>" class="order-datetime-input rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm focus:border-rose-300 focus:outline-none" data-order-date>
                         <span class="material-symbols-rounded text-base text-slate-400">schedule</span>
-                        <input type="time" class="rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm focus:border-rose-300 focus:outline-none" placeholder="Ближайшее" data-order-time>
+                        <input type="time" class="order-datetime-input rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm focus:border-rose-300 focus:outline-none" placeholder="Ближайшее" data-order-time>
                     </div>
 
                     <div class="space-y-3 rounded-xl border border-dashed border-rose-100 bg-rose-50/50 p-3" data-delivery-extra hidden>
