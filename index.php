@@ -63,6 +63,7 @@ $router->get('admin-supply-standing', [AdminController::class, 'supplyStandingFo
 $router->get('admin-supply-single', [AdminController::class, 'supplySingleForm']);
 $router->get('admin-supply-edit', [AdminController::class, 'editSupply']);
 $router->get('admin-orders-one-time', [AdminController::class, 'ordersOneTime']);
+$router->get('admin-order-one-time-edit', [AdminController::class, 'orderOneTimeEdit']);
 $router->get('admin-orders-subscriptions', [AdminController::class, 'ordersSubscriptions']);
 $router->get('admin-orders-wholesale', [AdminController::class, 'ordersWholesale']);
 $router->get('admin-services-payment', [AdminController::class, 'serviceOnlinePayment']);

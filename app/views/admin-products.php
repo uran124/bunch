@@ -49,7 +49,7 @@
                                 <div>
                                     <span class="font-semibold text-rose-800">Заказы:</span>
                                     <?php foreach ($blockedRelations['orders'] as $index => $order): ?>
-                                        <a href="/?page=admin-orders-one-time&id=<?php echo (int) $order['id']; ?>" class="font-semibold text-rose-700 underline-offset-4 hover:underline">#<?php echo htmlspecialchars($order['number'], ENT_QUOTES, 'UTF-8'); ?></a><?php echo $index + 1 < count($blockedRelations['orders']) ? ', ' : ''; ?>
+                                        <a href="/?page=admin-order-one-time-edit&id=<?php echo (int) $order['id']; ?>" class="font-semibold text-rose-700 underline-offset-4 hover:underline">#<?php echo htmlspecialchars($order['number'], ENT_QUOTES, 'UTF-8'); ?></a><?php echo $index + 1 < count($blockedRelations['orders']) ? ', ' : ''; ?>
                                     <?php endforeach; ?>
                                 </div>
                             <?php endif; ?>
