@@ -231,9 +231,9 @@ class CartController extends Controller
             $street = trim((string) ($addressDetails['street'] ?? ''));
             $house = trim((string) ($addressDetails['house'] ?? ''));
 
-            if ($settlement === '' || $street === '' || $house === '') {
+            if ($street === '' || $house === '') {
                 http_response_code(400);
-                echo json_encode(['error' => 'Укажите город, улицу и номер дома']);
+                echo json_encode(['error' => 'Укажите улицу и номер дома']);
                 return;
             }
 
