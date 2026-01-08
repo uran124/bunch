@@ -58,6 +58,9 @@ class CartController extends Controller
         $productId = (int) ($payload['product_id'] ?? 0);
         $qty = (int) ($payload['qty'] ?? 0);
         $attributes = $payload['attributes'] ?? [];
+        if (!is_array($attributes)) {
+            $attributes = [];
+        }
 
         if ($productId <= 0 || $qty <= 0) {
             http_response_code(400);
