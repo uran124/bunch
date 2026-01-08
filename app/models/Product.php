@@ -190,7 +190,7 @@ class Product extends Model
     public function getBlockingRelations(int $id): array
     {
         $ordersStmt = $this->db->prepare(
-            'SELECT DISTINCT o.id, o.number
+            'SELECT DISTINCT o.id
             FROM order_items oi
             INNER JOIN orders o ON o.id = oi.order_id
             WHERE oi.product_id = :id
@@ -199,6 +199,13 @@ class Product extends Model
         );
         $ordersStmt->execute(['id' => $id]);
         $orders = $ordersStmt->fetchAll();
+        $orders = array_map(function (array $order): array {
+            $orderId = (int) ($order['id'] ?? 0);
+            return [
+                'id' => $orderId,
+                'number' => 'B-' . str_pad((string) $orderId, 4, '0', STR_PAD_LEFT),
+            ];
+        }, $orders);
 
         $subscriptionsStmt = $this->db->prepare(
             'SELECT s.id, s.user_id, s.status, u.name, u.phone
