@@ -187,6 +187,49 @@ class Product extends Model
         return false;
     }
 
+    public function getBlockingRelations(int $id): array
+    {
+        $ordersStmt = $this->db->prepare(
+            'SELECT DISTINCT o.id, o.number
+            FROM order_items oi
+            INNER JOIN orders o ON o.id = oi.order_id
+            WHERE oi.product_id = :id
+            ORDER BY o.created_at DESC
+            LIMIT 10'
+        );
+        $ordersStmt->execute(['id' => $id]);
+        $orders = $ordersStmt->fetchAll();
+
+        $subscriptionsStmt = $this->db->prepare(
+            'SELECT s.id, s.user_id, s.status, u.name, u.phone
+            FROM subscriptions s
+            INNER JOIN users u ON u.id = s.user_id
+            WHERE s.product_id = :id
+            ORDER BY s.created_at DESC
+            LIMIT 10'
+        );
+        $subscriptionsStmt->execute(['id' => $id]);
+        $subscriptions = $subscriptionsStmt->fetchAll();
+
+        $cartsStmt = $this->db->prepare(
+            'SELECT DISTINCT c.id, c.user_id, u.name, u.phone
+            FROM cart_items ci
+            INNER JOIN carts c ON c.id = ci.cart_id
+            LEFT JOIN users u ON u.id = c.user_id
+            WHERE ci.product_id = :id
+            ORDER BY c.updated_at DESC
+            LIMIT 10'
+        );
+        $cartsStmt->execute(['id' => $id]);
+        $carts = $cartsStmt->fetchAll();
+
+        return [
+            'orders' => $orders ?: [],
+            'subscriptions' => $subscriptions ?: [],
+            'carts' => $carts ?: [],
+        ];
+    }
+
     public function setAttributes(int $productId, array $attributeIds): void
     {
         $this->db->prepare('DELETE FROM product_attributes WHERE product_id = :product_id')->execute(['product_id' => $productId]);

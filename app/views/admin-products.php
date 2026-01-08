@@ -5,6 +5,7 @@
 <?php /** @var array|null $editingProduct */ ?>
 <?php $pageMeta = $pageMeta ?? []; ?>
 <?php $message = $message ?? null; ?>
+<?php $blockedRelations = $blockedRelations ?? []; ?>
 
 <section class="flex flex-col gap-6">
     <header class="flex flex-wrap items-start justify-between gap-4">
@@ -42,6 +43,43 @@
                 </p>
                 <?php if ($message === 'delete-blocked'): ?>
                     <p>Удалите связи с заказами, подписками или корзинами и попробуйте снова.</p>
+                    <?php if (!empty($blockedRelations)): ?>
+                        <div class="mt-2 space-y-1 text-sm text-rose-700">
+                            <?php if (!empty($blockedRelations['orders'])): ?>
+                                <div>
+                                    <span class="font-semibold text-rose-800">Заказы:</span>
+                                    <?php foreach ($blockedRelations['orders'] as $index => $order): ?>
+                                        <a href="/?page=admin-orders-one-time&id=<?php echo (int) $order['id']; ?>" class="font-semibold text-rose-700 underline-offset-4 hover:underline">#<?php echo htmlspecialchars($order['number'], ENT_QUOTES, 'UTF-8'); ?></a><?php echo $index + 1 < count($blockedRelations['orders']) ? ', ' : ''; ?>
+                                    <?php endforeach; ?>
+                                </div>
+                            <?php endif; ?>
+                            <?php if (!empty($blockedRelations['subscriptions'])): ?>
+                                <div>
+                                    <span class="font-semibold text-rose-800">Подписки:</span>
+                                    <?php foreach ($blockedRelations['subscriptions'] as $index => $subscription): ?>
+                                        <a href="/?page=admin-user&id=<?php echo (int) $subscription['user_id']; ?>" class="font-semibold text-rose-700 underline-offset-4 hover:underline">
+                                            <?php echo htmlspecialchars($subscription['name'] ?? 'Клиент', ENT_QUOTES, 'UTF-8'); ?>
+                                        </a><?php echo $index + 1 < count($blockedRelations['subscriptions']) ? ', ' : ''; ?>
+                                    <?php endforeach; ?>
+                                </div>
+                            <?php endif; ?>
+                            <?php if (!empty($blockedRelations['carts'])): ?>
+                                <div>
+                                    <span class="font-semibold text-rose-800">Корзины:</span>
+                                    <?php foreach ($blockedRelations['carts'] as $index => $cart): ?>
+                                        <?php if (!empty($cart['user_id'])): ?>
+                                            <a href="/?page=admin-user&id=<?php echo (int) $cart['user_id']; ?>" class="font-semibold text-rose-700 underline-offset-4 hover:underline">
+                                                <?php echo htmlspecialchars($cart['name'] ?? 'Клиент', ENT_QUOTES, 'UTF-8'); ?>
+                                            </a>
+                                        <?php else: ?>
+                                            <span class="font-semibold text-rose-700">Гостевая корзина #<?php echo (int) $cart['id']; ?></span>
+                                        <?php endif; ?>
+                                        <?php echo $index + 1 < count($blockedRelations['carts']) ? ', ' : ''; ?>
+                                    <?php endforeach; ?>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                    <?php endif; ?>
                 <?php elseif ($message === 'error'): ?>
                     <p>Карточка сохраняется только при заполнении обязательных полей.</p>
                 <?php else: ?>

@@ -421,6 +421,13 @@ class AdminController extends Controller
             'supplies' => $supplyOptions,
         ];
 
+        $blockedRelations = null;
+        $blockedProductId = isset($_GET['product_id']) ? (int) $_GET['product_id'] : null;
+
+        if (($_GET['status'] ?? null) === 'delete-blocked' && $blockedProductId) {
+            $blockedRelations = $productModel->getBlockingRelations($blockedProductId);
+        }
+
         $this->render('admin-products', [
             'pageMeta' => $pageMeta,
             'products' => $productModel->getAdminList(),
@@ -430,6 +437,7 @@ class AdminController extends Controller
             'editingProduct' => isset($_GET['edit_id']) ? $productModel->getWithRelations((int) $_GET['edit_id']) : null,
             'selectedSupplyId' => $selectedSupplyId,
             'message' => $_GET['status'] ?? null,
+            'blockedRelations' => $blockedRelations,
         ]);
     }
 
@@ -517,14 +525,14 @@ class AdminController extends Controller
 
         $productModel = new Product();
         if ($productModel->hasBlockingRelations($productId)) {
-            header('Location: /?page=admin-products&status=delete-blocked');
+            header('Location: /?page=admin-products&status=delete-blocked&product_id=' . $productId);
             return;
         }
 
         try {
             $productModel->deleteProduct($productId);
         } catch (\PDOException $exception) {
-            header('Location: /?page=admin-products&status=delete-blocked');
+            header('Location: /?page=admin-products&status=delete-blocked&product_id=' . $productId);
             return;
         }
 
