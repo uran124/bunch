@@ -218,20 +218,44 @@ class AdminController extends Controller
         $userModel = new User();
         $userRecord = $userModel->findById($userId);
         $user = null;
+        $roleOptions = [
+            'admin' => 'Администратор',
+            'manager' => 'Менеджер',
+            'florist' => 'Флорист',
+            'courier' => 'Курьер',
+            'customer' => 'Покупатель',
+        ];
+        $statusLabels = [
+            'new' => 'Новый',
+            'confirmed' => 'Подтверждён',
+            'assembled' => 'Собран',
+            'delivering' => 'В доставке',
+            'delivered' => 'Доставлен',
+            'cancelled' => 'Отменён',
+        ];
 
         if ($userRecord) {
             $orderModel = new Order();
-            $recentOrders = array_merge(
-                $orderModel->getActiveOrdersForUser($userId),
-                $orderModel->getCompletedOrdersForUser($userId, 5, 0)
-            );
+            $latestActive = $orderModel->getLatestActiveForUser($userId);
+            $latestCompleted = $orderModel->getCompletedOrdersForUser($userId, 1, 0);
+            $recentOrders = array_filter(array_merge(
+                $latestActive ? [$latestActive] : [],
+                $latestCompleted
+            ));
             $lastOrderDate = '';
+            $lastOrderStatus = 'Нет заказов';
 
             if (!empty($recentOrders)) {
                 usort($recentOrders, static function (array $left, array $right): int {
                     return strcmp($right['created_at'], $left['created_at']);
                 });
                 $lastOrderDate = (new DateTime($recentOrders[0]['created_at']))->format('Y-m-d');
+                $lastOrderStatus = $statusLabels[$recentOrders[0]['status']] ?? 'В обработке';
+            }
+
+            $role = $userRecord['role'] ?? 'customer';
+            if (!array_key_exists($role, $roleOptions)) {
+                $role = 'customer';
             }
 
             $user = [
@@ -240,17 +264,10 @@ class AdminController extends Controller
                 'phone' => $userRecord['phone'] ?? '',
                 'active' => (bool) ($userRecord['is_active'] ?? true),
                 'lastOrder' => $lastOrderDate ?: 'Нет заказов',
+                'lastOrderStatus' => $lastOrderStatus,
+                'role' => $role,
+                'roleLabel' => $roleOptions[$role],
             ];
-        } else {
-            $users = $this->getUserFixtures();
-            $user = $users[0] ?? null;
-
-            foreach ($users as $candidate) {
-                if ($candidate['id'] === $userId) {
-                    $user = $candidate;
-                    break;
-                }
-            }
         }
 
         if (!$user) {
@@ -259,32 +276,140 @@ class AdminController extends Controller
             return;
         }
 
-        $orders = $this->getUserOrders($userId);
+        $orderModel = new Order();
+        $activeOrdersRaw = $orderModel->getActiveOrdersForUser($userId);
+        $activeOrders = array_map(static function (array $order) use ($statusLabels): array {
+            $createdAt = new DateTime($order['created_at']);
+            $scheduledParts = [];
+            if (!empty($order['scheduled_date'])) {
+                $scheduledParts[] = (new DateTime($order['scheduled_date']))->format('d.m.Y');
+            }
+            if (!empty($order['scheduled_time'])) {
+                $scheduledParts[] = substr($order['scheduled_time'], 0, 5);
+            }
+            $scheduledLabel = $scheduledParts ? implode(', ', $scheduledParts) : 'Время уточняется';
+
+            return [
+                'id' => (int) $order['id'],
+                'number' => '#' . (int) $order['id'],
+                'date' => $createdAt->format('d.m.Y'),
+                'sum' => number_format((float) $order['total_amount'], 0, '.', ' ') . ' ₽',
+                'status' => $statusLabels[$order['status']] ?? 'В обработке',
+                'schedule' => $scheduledLabel,
+            ];
+        }, $activeOrdersRaw);
+
         $perPage = 10;
         $currentPage = max(1, (int) ($_GET['p'] ?? 1));
-        $totalPages = max(1, (int) ceil(count($orders) / $perPage));
+        $completedCount = $orderModel->countCompletedOrdersForUser($userId);
+        $totalPages = max(1, (int) ceil($completedCount / $perPage));
         $currentPage = min($currentPage, $totalPages);
-        $ordersPage = array_slice($orders, ($currentPage - 1) * $perPage, $perPage);
+        $completedOrdersRaw = $orderModel->getCompletedOrdersForUser(
+            $userId,
+            $perPage,
+            ($currentPage - 1) * $perPage
+        );
+        $ordersPage = array_map(static function (array $order) use ($statusLabels): array {
+            $createdAt = new DateTime($order['created_at']);
+
+            return [
+                'number' => '#' . (int) $order['id'],
+                'date' => $createdAt->format('d.m.Y'),
+                'sum' => number_format((float) $order['total_amount'], 0, '.', ' ') . ' ₽',
+                'status' => $statusLabels[$order['status']] ?? 'В обработке',
+            ];
+        }, $completedOrdersRaw);
+
+        $addressModel = new UserAddress();
+        $addresses = array_map(static function (array $address): array {
+            $raw = $address['raw'] ?? [];
+            $commentParts = [];
+            if (!empty($raw['recipient_name'])) {
+                $commentParts[] = 'Получатель: ' . $raw['recipient_name'];
+            }
+            if (!empty($raw['recipient_phone'])) {
+                $commentParts[] = 'Тел.: ' . $raw['recipient_phone'];
+            }
+            if (!empty($raw['delivery_comment'])) {
+                $commentParts[] = $raw['delivery_comment'];
+            }
+
+            return [
+                'title' => $address['label'],
+                'address' => $address['address'],
+                'comment' => $commentParts ? implode(' · ', $commentParts) : 'Комментариев нет',
+                'is_primary' => (bool) ($address['is_primary'] ?? false),
+            ];
+        }, $addressModel->getByUserId($userId));
+
+        $subscriptionModel = new Subscription();
+        $activeSubscriptionsRaw = $subscriptionModel->getActiveListForUser($userId);
+        $activeSubscriptions = array_map(static function (array $subscription): array {
+            $nextDate = $subscription['next_delivery_date']
+                ? (new DateTime($subscription['next_delivery_date']))->format('d.m.Y')
+                : 'Не задано';
+            $planLabel = match ($subscription['plan']) {
+                'weekly' => 'Еженедельно',
+                'biweekly' => 'Раз в 2 недели',
+                'monthly' => 'Ежемесячно',
+                default => 'Гибкий график',
+            };
+
+            return [
+                'title' => $subscription['product_name'] . ' × ' . $subscription['qty'],
+                'status' => 'Активна',
+                'nextDelivery' => $nextDate,
+                'tier' => $planLabel,
+                'price' => number_format((float) $subscription['product_price'], 0, '.', ' ') . ' ₽',
+            ];
+        }, $activeSubscriptionsRaw);
 
         $pageMeta['h1'] = 'Клиент: ' . $user['name'];
         $pageMeta['footerLeft'] = 'Последний заказ: ' . $user['lastOrder'];
         $pageMeta['footerRight'] = 'Статус: ' . ($user['active'] ? 'Активен' : 'Не активен');
 
+        $message = $_GET['message'] ?? null;
+
         $this->render('admin-user', [
             'pageMeta' => $pageMeta,
             'user' => $user,
+            'roleOptions' => $roleOptions,
+            'roleMessage' => $message === 'role-updated'
+                ? 'Роль пользователя обновлена.'
+                : ($message === 'role-error' ? 'Не удалось обновить роль.' : null),
+            'roleMessageTone' => $message === 'role-error' ? 'text-rose-600' : 'text-emerald-600',
+            'activeOrders' => $activeOrders,
             'orders' => $ordersPage,
             'totalPages' => $totalPages,
             'currentPage' => $currentPage,
-            'addresses' => [
-                ['title' => 'Дом', 'address' => 'Красноярск, ул. Карла Маркса, 12', 'comment' => 'Домофон 24, 3 подъезд'],
-                ['title' => 'Работа', 'address' => 'Красноярск, пр-т Мира, 47', 'comment' => 'Офис на 5 этаже'],
-            ],
-            'subscriptions' => [
-                ['title' => 'Еженедельная доставка', 'status' => 'Активна', 'nextDelivery' => 'Каждый вторник', 'tier' => 'Лояльность: 7%'],
-                ['title' => 'Корпоративная подписка', 'status' => 'Пауза', 'nextDelivery' => 'Возобновление с 12.06', 'tier' => 'Бонусы копятся'],
-            ],
+            'addresses' => $addresses,
+            'subscriptions' => $activeSubscriptions,
         ]);
+    }
+
+    public function updateUserRole(): void
+    {
+        $userId = (int) ($_POST['user_id'] ?? 0);
+        $role = trim((string) ($_POST['role'] ?? ''));
+        $roleOptions = ['admin', 'manager', 'florist', 'courier', 'customer'];
+
+        if ($userId <= 0 || !in_array($role, $roleOptions, true)) {
+            header('Location: /?page=admin-user&id=' . $userId . '&message=role-error');
+            return;
+        }
+
+        $userModel = new User();
+        $user = $userModel->findById($userId);
+
+        if (!$user) {
+            http_response_code(404);
+            echo 'Пользователь не найден';
+            return;
+        }
+
+        $userModel->setRole($userId, $role);
+
+        header('Location: /?page=admin-user&id=' . $userId . '&message=role-updated');
     }
 
     public function groupCreate(): void

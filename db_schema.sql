@@ -52,6 +52,7 @@ CREATE TABLE users (
   email VARCHAR(100) NULL,
 
   is_active TINYINT(1) NOT NULL DEFAULT 1, -- активен ли пользователь для операций и рассылок
+  role ENUM('admin', 'manager', 'florist', 'courier', 'customer') NOT NULL DEFAULT 'customer',
   birthday_reminder_days TINYINT UNSIGNED NOT NULL DEFAULT 3,
   birthday_reminders JSON NULL,
 

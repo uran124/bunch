@@ -2,6 +2,10 @@
 <?php /** @var array $orders */ ?>
 <?php /** @var int $totalPages */ ?>
 <?php /** @var int $currentPage */ ?>
+<?php /** @var array $roleOptions */ ?>
+<?php /** @var string|null $roleMessage */ ?>
+<?php /** @var string $roleMessageTone */ ?>
+<?php /** @var array $activeOrders */ ?>
 <?php $pageMeta = $pageMeta ?? []; ?>
 
 <section class="flex flex-col gap-6">
@@ -39,6 +43,7 @@
                 <p class="text-sm font-semibold text-slate-700">Контакты</p>
                 <div class="text-base font-semibold text-slate-900"><?php echo htmlspecialchars($user['name'], ENT_QUOTES, 'UTF-8'); ?></div>
                 <div class="text-sm text-slate-500">Телефон: <?php echo htmlspecialchars($user['phone'], ENT_QUOTES, 'UTF-8'); ?></div>
+                <div class="text-sm text-slate-500">Роль: <?php echo htmlspecialchars($user['roleLabel'], ENT_QUOTES, 'UTF-8'); ?></div>
                 <div class="flex flex-wrap gap-2 text-xs text-slate-500">
                     <span class="inline-flex items-center gap-1 rounded-full bg-slate-50 px-3 py-1 font-semibold ring-1 ring-slate-200">
                         <span class="material-symbols-rounded text-base text-emerald-500">check_circle</span>
@@ -54,18 +59,46 @@
                 <div class="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3">
                     <p class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Последний заказ</p>
                     <div class="mt-1 text-lg font-semibold text-slate-900"><?php echo htmlspecialchars($user['lastOrder'], ENT_QUOTES, 'UTF-8'); ?></div>
-                    <p class="text-sm text-slate-500">Статус: доставлен</p>
+                    <p class="text-sm text-slate-500">Статус: <?php echo htmlspecialchars($user['lastOrderStatus'], ENT_QUOTES, 'UTF-8'); ?></p>
                 </div>
                 <div class="rounded-xl border border-rose-100 bg-rose-50 px-4 py-3">
                     <p class="text-xs font-semibold uppercase tracking-[0.08em] text-rose-600">Рассылки</p>
                     <div class="mt-1 text-lg font-semibold text-rose-700">Телеграм-бот</div>
                     <p class="text-sm text-rose-600">Напоминания и акции уходят в личный чат.</p>
                 </div>
+                <div class="rounded-xl border border-slate-100 bg-white px-4 py-3 sm:col-span-2">
+                    <p class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Роль пользователя</p>
+                    <form class="mt-2 flex flex-wrap items-center gap-3" action="/?page=admin-user-role" method="post">
+                        <input type="hidden" name="user_id" value="<?php echo (int) $user['id']; ?>">
+                        <select
+                            name="role"
+                            class="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700"
+                        >
+                            <?php foreach ($roleOptions as $value => $label): ?>
+                                <option value="<?php echo htmlspecialchars($value, ENT_QUOTES, 'UTF-8'); ?>" <?php echo $value === $user['role'] ? 'selected' : ''; ?>>
+                                    <?php echo htmlspecialchars($label, ENT_QUOTES, 'UTF-8'); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                        <button
+                            type="submit"
+                            class="inline-flex items-center gap-2 rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-rose-200 transition hover:-translate-y-0.5 hover:shadow-md"
+                        >
+                            <span class="material-symbols-rounded text-base">save</span>
+                            Сохранить
+                        </button>
+                        <?php if (!empty($roleMessage)): ?>
+                            <span class="text-sm font-semibold <?php echo htmlspecialchars($roleMessageTone, ENT_QUOTES, 'UTF-8'); ?>">
+                                <?php echo htmlspecialchars($roleMessage, ENT_QUOTES, 'UTF-8'); ?>
+                            </span>
+                        <?php endif; ?>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
 
-    <div class="grid gap-4 md:grid-cols-2">
+    <div class="grid gap-4 lg:grid-cols-3">
         <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <header class="mb-3 flex items-center justify-between">
                 <div>
@@ -75,6 +108,11 @@
                 <button class="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm">Изменить</button>
             </header>
             <div class="space-y-3">
+                <?php if (empty($addresses)): ?>
+                    <div class="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-sm text-slate-500">
+                        Адреса не добавлены. Клиент ещё не оформлял доставку.
+                    </div>
+                <?php endif; ?>
                 <?php foreach ($addresses as $address): ?>
                     <article class="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3">
                         <div class="flex items-start justify-between gap-3">
@@ -83,9 +121,43 @@
                                 <p class="text-sm text-slate-600"><?php echo htmlspecialchars($address['address'], ENT_QUOTES, 'UTF-8'); ?></p>
                                 <p class="text-xs text-slate-500"><?php echo htmlspecialchars($address['comment'], ENT_QUOTES, 'UTF-8'); ?></p>
                             </div>
+                            <?php if (!empty($address['is_primary'])): ?>
+                                <span class="inline-flex items-center gap-1 rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-600 ring-1 ring-slate-200">
+                                    <span class="material-symbols-rounded text-base">location_on</span>
+                                    Основной
+                                </span>
+                            <?php endif; ?>
+                        </div>
+                    </article>
+                <?php endforeach; ?>
+            </div>
+        </section>
+
+        <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <header class="mb-3 flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Заказы</p>
+                    <h2 class="text-lg font-semibold text-slate-900">Невыполненные</h2>
+                </div>
+                <span class="inline-flex items-center gap-2 rounded-lg border border-rose-100 bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-700 shadow-sm">В работе</span>
+            </header>
+            <div class="space-y-3">
+                <?php if (empty($activeOrders)): ?>
+                    <div class="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-sm text-slate-500">
+                        Активных заказов нет, все доставки завершены.
+                    </div>
+                <?php endif; ?>
+                <?php foreach ($activeOrders as $order): ?>
+                    <article class="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="space-y-1">
+                                <p class="text-sm font-semibold text-slate-900"><?php echo htmlspecialchars($order['number'], ENT_QUOTES, 'UTF-8'); ?></p>
+                                <p class="text-sm text-slate-600"><?php echo htmlspecialchars($order['date'], ENT_QUOTES, 'UTF-8'); ?> · <?php echo htmlspecialchars($order['sum'], ENT_QUOTES, 'UTF-8'); ?></p>
+                                <p class="text-xs text-slate-500">Доставка: <?php echo htmlspecialchars($order['schedule'], ENT_QUOTES, 'UTF-8'); ?></p>
+                            </div>
                             <span class="inline-flex items-center gap-1 rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-600 ring-1 ring-slate-200">
-                                <span class="material-symbols-rounded text-base">location_on</span>
-                                Основной
+                                <span class="material-symbols-rounded text-base">autorenew</span>
+                                <?php echo htmlspecialchars($order['status'], ENT_QUOTES, 'UTF-8'); ?>
                             </span>
                         </div>
                     </article>
@@ -97,18 +169,23 @@
             <header class="mb-3 flex items-center justify-between">
                 <div>
                     <p class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Подписки</p>
-                    <h2 class="text-lg font-semibold text-slate-900">Текущие программы</h2>
+                    <h2 class="text-lg font-semibold text-slate-900">Активные программы</h2>
                 </div>
                 <button class="inline-flex items-center gap-2 rounded-lg border border-rose-100 bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-700 shadow-sm">Настроить</button>
             </header>
             <div class="space-y-3">
+                <?php if (empty($subscriptions)): ?>
+                    <div class="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-sm text-slate-500">
+                        Активных подписок пока нет.
+                    </div>
+                <?php endif; ?>
                 <?php foreach ($subscriptions as $subscription): ?>
                     <article class="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3">
                         <div class="flex items-start justify-between gap-3">
                             <div class="space-y-1">
                                 <p class="text-sm font-semibold text-slate-900"><?php echo htmlspecialchars($subscription['title'], ENT_QUOTES, 'UTF-8'); ?></p>
-                                <p class="text-sm text-slate-600"><?php echo htmlspecialchars($subscription['nextDelivery'], ENT_QUOTES, 'UTF-8'); ?></p>
-                                <p class="text-xs text-slate-500"><?php echo htmlspecialchars($subscription['tier'], ENT_QUOTES, 'UTF-8'); ?></p>
+                                <p class="text-sm text-slate-600">Следующая доставка: <?php echo htmlspecialchars($subscription['nextDelivery'], ENT_QUOTES, 'UTF-8'); ?></p>
+                                <p class="text-xs text-slate-500"><?php echo htmlspecialchars($subscription['tier'], ENT_QUOTES, 'UTF-8'); ?> · <?php echo htmlspecialchars($subscription['price'], ENT_QUOTES, 'UTF-8'); ?></p>
                             </div>
                             <span class="inline-flex items-center gap-1 rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-600 ring-1 ring-slate-200">
                                 <span class="material-symbols-rounded text-base">autorenew</span>
@@ -141,9 +218,14 @@
                 <span>Сумма</span>
                 <span>Статус</span>
             </div>
+            <?php if (empty($orders)): ?>
+                <div class="px-4 py-6 text-sm text-slate-500">
+                    История заказов пока пуста.
+                </div>
+            <?php endif; ?>
             <?php foreach ($orders as $order): ?>
                 <div class="grid grid-cols-[1fr_1fr_1fr_auto] items-center gap-3 px-4 py-3 text-sm text-slate-700">
-                    <span class="font-semibold text-slate-900">#<?php echo htmlspecialchars($order['number'], ENT_QUOTES, 'UTF-8'); ?></span>
+                    <span class="font-semibold text-slate-900"><?php echo htmlspecialchars($order['number'], ENT_QUOTES, 'UTF-8'); ?></span>
                     <span><?php echo htmlspecialchars($order['date'], ENT_QUOTES, 'UTF-8'); ?></span>
                     <span class="font-semibold text-slate-900"><?php echo htmlspecialchars($order['sum'], ENT_QUOTES, 'UTF-8'); ?></span>
                     <span class="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold <?php echo $order['status'] === 'Отменён' ? 'bg-amber-50 text-amber-700 ring-1 ring-amber-200' : 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200'; ?>">
