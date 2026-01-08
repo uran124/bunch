@@ -56,6 +56,7 @@ $router->get('admin-user', [AdminController::class, 'user']);
 $router->get('admin-broadcast', [AdminController::class, 'broadcasts']);
 $router->get('admin-group-create', [AdminController::class, 'groupCreate']);
 $router->get('admin-products', [AdminController::class, 'catalogProducts']);
+$router->get('admin-product-form', [AdminController::class, 'productForm']);
 $router->get('admin-promos', [AdminController::class, 'catalogPromos']);
 $router->get('admin-attributes', [AdminController::class, 'catalogAttributes']);
 $router->get('admin-supplies', [AdminController::class, 'catalogSupplies']);

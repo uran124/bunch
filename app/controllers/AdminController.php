@@ -435,14 +435,9 @@ class AdminController extends Controller
         ];
 
         $supplyModel = new Supply();
-        $supplies = $supplyModel->getAdminList();
-
-        $attributeModel = new AttributeModel();
         $productModel = new Product();
 
-        $supplyOptions = array_column($supplies, 'flower_name');
-
-        $selectedSupplyId = isset($_GET['create_from_supply']) ? (int) $_GET['create_from_supply'] : null;
+        $supplyOptions = array_column($supplyModel->getAdminList(), 'flower_name');
 
         $filters = [
             'active' => ['Все', 'Активные', 'Неактивные'],
@@ -460,12 +455,39 @@ class AdminController extends Controller
             'pageMeta' => $pageMeta,
             'products' => $productModel->getAdminList(),
             'filters' => $filters,
-            'supplies' => $supplies,
-            'attributes' => $attributeModel->getAllWithValues(),
-            'editingProduct' => isset($_GET['edit_id']) ? $productModel->getWithRelations((int) $_GET['edit_id']) : null,
-            'selectedSupplyId' => $selectedSupplyId,
             'message' => $_GET['status'] ?? null,
             'blockedRelations' => $blockedRelations,
+        ]);
+    }
+
+    public function productForm(): void
+    {
+        $productModel = new Product();
+        $editingProduct = isset($_GET['edit_id']) ? $productModel->getWithRelations((int) $_GET['edit_id']) : null;
+
+        $pageMeta = [
+            'title' => ($editingProduct ? 'Редактирование товара' : 'Новый товар') . ' — админ-панель Bunch',
+            'description' => 'Создание и редактирование карточек товара.',
+            'h1' => $editingProduct ? 'Редактирование товара' : 'Новый товар',
+            'headerTitle' => 'Bunch Admin',
+            'headerSubtitle' => 'Каталог · Товары',
+        ];
+
+        $supplyModel = new Supply();
+        $attributeModel = new AttributeModel();
+
+        $selectedSupplyId = isset($_GET['create_from_supply']) ? (int) $_GET['create_from_supply'] : null;
+        if (!$selectedSupplyId && isset($_GET['supply_id'])) {
+            $selectedSupplyId = (int) $_GET['supply_id'];
+        }
+
+        $this->render('admin-product-form', [
+            'pageMeta' => $pageMeta,
+            'supplies' => $supplyModel->getAdminList(),
+            'attributes' => $attributeModel->getAllWithValues(),
+            'editingProduct' => $editingProduct,
+            'selectedSupplyId' => $selectedSupplyId,
+            'message' => $_GET['status'] ?? null,
         ]);
     }
 
@@ -491,7 +513,13 @@ class AdminController extends Controller
         $supply = $supplyModel->findById($supplyId);
 
         if (!$supply || $price <= 0) {
-            header('Location: /?page=admin-products&status=error');
+            $redirect = '/?page=admin-product-form&status=error';
+            if ($productId > 0) {
+                $redirect .= '&edit_id=' . $productId;
+            } elseif ($supplyId > 0) {
+                $redirect .= '&supply_id=' . $supplyId;
+            }
+            header('Location: ' . $redirect);
             return;
         }
 
@@ -539,7 +567,7 @@ class AdminController extends Controller
         $productModel->setPriceTiers($productId, $tiers);
         $productModel->setAttributes($productId, $attributeIds);
 
-        header('Location: /?page=admin-products&status=saved');
+        header('Location: /?page=admin-product-form&status=saved&edit_id=' . $productId);
     }
 
     public function deleteProduct(): void
