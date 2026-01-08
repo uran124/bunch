@@ -3,6 +3,22 @@
 
 class AdminController extends Controller
 {
+    private function logAdminError(string $context, Throwable $e): void
+    {
+        $logFile = __DIR__ . '/../../storage/logs/error.log';
+        $timestamp = date('Y-m-d H:i:s');
+        $message = sprintf(
+            "[%s] %s: %s in %s:%d\n",
+            $timestamp,
+            $context,
+            $e->getMessage(),
+            $e->getFile(),
+            $e->getLine()
+        );
+
+        error_log($message, 3, $logFile);
+    }
+
     public function index(): void
     {
         $sections = [
@@ -742,7 +758,7 @@ class AdminController extends Controller
         } catch (Throwable $e) {
             $lotteries = [];
             $loadErrors[] = 'lotteries';
-            error_log('Admin promos load error (lotteries): ' . $e->getMessage());
+            $this->logAdminError('Admin promos load error (lotteries)', $e);
         }
 
         try {
@@ -750,7 +766,7 @@ class AdminController extends Controller
         } catch (Throwable $e) {
             $auctions = [];
             $loadErrors[] = 'auctions';
-            error_log('Admin promos load error (auctions): ' . $e->getMessage());
+            $this->logAdminError('Admin promos load error (auctions)', $e);
         }
 
         try {
@@ -758,7 +774,7 @@ class AdminController extends Controller
         } catch (Throwable $e) {
             $promoItems = [];
             $loadErrors[] = 'promoItems';
-            error_log('Admin promos load error (promoItems): ' . $e->getMessage());
+            $this->logAdminError('Admin promos load error (promoItems)', $e);
         }
 
         try {
@@ -766,7 +782,7 @@ class AdminController extends Controller
         } catch (Throwable $e) {
             $promoCategories = [];
             $loadErrors[] = 'promoCategories';
-            error_log('Admin promos load error (promoCategories): ' . $e->getMessage());
+            $this->logAdminError('Admin promos load error (promoCategories)', $e);
         }
 
         $this->render('admin-promos', [
@@ -808,6 +824,7 @@ class AdminController extends Controller
                 'photo_url' => $photo !== '' ? $photo : null,
             ]);
         } catch (Throwable $e) {
+            $this->logAdminError('Admin promos save lottery error', $e);
             header('Location: /?page=admin-promos&status=error');
             return;
         }
@@ -849,6 +866,7 @@ class AdminController extends Controller
                 'status' => $status,
             ]);
         } catch (Throwable $e) {
+            $this->logAdminError('Admin promos save auction error', $e);
             header('Location: /?page=admin-promos&status=error');
             return;
         }
@@ -888,6 +906,7 @@ class AdminController extends Controller
                 'is_active' => $isActive,
             ]);
         } catch (Throwable $e) {
+            $this->logAdminError('Admin promos save promo item error', $e);
             header('Location: /?page=admin-promos&status=error');
             return;
         }
@@ -908,6 +927,7 @@ class AdminController extends Controller
             }
             $promoCategoryModel->updateStatuses($statusMap);
         } catch (Throwable $e) {
+            $this->logAdminError('Admin promos save promo categories error', $e);
             header('Location: /?page=admin-promos&status=error');
             return;
         }
