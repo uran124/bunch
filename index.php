@@ -1,6 +1,74 @@
 <?php
 require_once __DIR__ . '/config.php';
 
+$logDir = __DIR__ . '/storage/logs';
+$logFile = $logDir . '/error.log';
+
+if (!is_dir($logDir)) {
+    mkdir($logDir, 0755, true);
+}
+
+$logError = static function (string $context, Throwable $e) use ($logFile): void {
+    $timestamp = date('Y-m-d H:i:s');
+    $message = sprintf(
+        "[%s] %s: %s in %s:%d\n",
+        $timestamp,
+        $context,
+        $e->getMessage(),
+        $e->getFile(),
+        $e->getLine()
+    );
+
+    error_log($message, 3, $logFile);
+};
+
+set_exception_handler(static function (Throwable $e) use ($logError): void {
+    $logError('Unhandled exception', $e);
+
+    if (!headers_sent()) {
+        http_response_code(500);
+        header('Content-Type: text/html; charset=UTF-8');
+    }
+
+    if (defined('APP_ENV') && APP_ENV === 'dev') {
+        echo 'Ошибка: ' . htmlspecialchars($e->getMessage(), ENT_QUOTES, 'UTF-8');
+        return;
+    }
+
+    echo 'Сервис временно недоступен';
+});
+
+set_error_handler(static function (int $severity, string $message, string $file, int $line): bool {
+    if (!(error_reporting() & $severity)) {
+        return false;
+    }
+
+    throw new ErrorException($message, 0, $severity, $file, $line);
+});
+
+register_shutdown_function(static function () use ($logFile): void {
+    $error = error_get_last();
+    if ($error === null) {
+        return;
+    }
+
+    $fatalTypes = [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR];
+    if (!in_array($error['type'], $fatalTypes, true)) {
+        return;
+    }
+
+    $timestamp = date('Y-m-d H:i:s');
+    $message = sprintf(
+        "[%s] Shutdown error: %s in %s:%d\n",
+        $timestamp,
+        $error['message'],
+        $error['file'],
+        $error['line']
+    );
+
+    error_log($message, 3, $logFile);
+});
+
 spl_autoload_register(function (string $class): void {
     $paths = [
         __DIR__ . '/app/core/' . $class . '.php',
