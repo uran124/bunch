@@ -6,29 +6,13 @@ $hasPromos = !empty($oneTimeItems);
 ?>
 
 <section class="space-y-4 sm:space-y-6">
-    <div class="relative overflow-hidden rounded-3xl border border-slate-200 bg-gradient-to-r from-rose-50 via-white to-emerald-50 p-6 shadow-sm sm:p-8">
-        <div class="space-y-3 sm:max-w-3xl">
-            <p class="text-xs font-semibold uppercase tracking-[0.24em] text-rose-500">Акции и спецпредложения</p>
-            <h1 class="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Разовые акции и лимитированные предложения</h1>
-            <p class="text-sm leading-relaxed text-slate-600 sm:text-base">
-                Здесь собираем предложения с ограниченным количеством и сезонные спеццены.
-                Успейте забрать редкие позиции, пока они доступны.
+    <div class="space-y-1">
+        <h1>
+            <p class="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.08em] text-rose-600">
+                <span class="material-symbols-rounded text-base">history</span>
+                Акции и спецпредложения
             </p>
-            <div class="flex flex-wrap gap-2">
-                <span class="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-100">
-                    <span class="material-symbols-rounded text-base">verified</span>
-                    Прозрачные условия
-                </span>
-                <span class="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1 text-xs font-semibold text-rose-700 ring-1 ring-rose-100">
-                    <span class="material-symbols-rounded text-base">hourglass_empty</span>
-                    Лимиты по времени и количеству
-                </span>
-            </div>
-        </div>
-        <div class="pointer-events-none absolute inset-0 opacity-20" aria-hidden="true">
-            <div class="absolute -left-10 -top-10 h-40 w-40 rounded-full bg-rose-200 blur-3xl"></div>
-            <div class="absolute bottom-0 right-0 h-40 w-40 rounded-full bg-emerald-200 blur-3xl"></div>
-        </div>
+        </h1>
     </div>
     <?php if (!$hasPromos): ?>
         <div class="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-500 shadow-sm">
