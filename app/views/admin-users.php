@@ -31,7 +31,12 @@
             <?php foreach ($users as $user): ?>
                 <article class="flex flex-wrap items-center justify-between gap-3 py-3" data-user-card="<?php echo (int) $user['id']; ?>">
                     <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-4">
-                        <span class="text-base font-semibold text-slate-900"><?php echo htmlspecialchars($user['name'] ?? 'Без имени', ENT_QUOTES, 'UTF-8'); ?></span>
+                        <a
+                            href="/?page=admin-user&id=<?php echo (int) $user['id']; ?>"
+                            class="text-base font-semibold text-slate-900 transition hover:text-rose-600"
+                        >
+                            <?php echo htmlspecialchars($user['name'] ?? 'Без имени', ENT_QUOTES, 'UTF-8'); ?>
+                        </a>
                         <span class="text-sm text-slate-500"><?php echo htmlspecialchars($user['phone'], ENT_QUOTES, 'UTF-8'); ?></span>
                     </div>
                     <label class="relative inline-flex h-9 w-16 cursor-pointer items-center" aria-label="Активность пользователя">

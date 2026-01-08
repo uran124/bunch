@@ -215,13 +215,41 @@ class AdminController extends Controller
         ];
 
         $userId = (int) ($_GET['id'] ?? 1);
-        $users = $this->getUserFixtures();
-        $user = $users[0] ?? null;
+        $userModel = new User();
+        $userRecord = $userModel->findById($userId);
+        $user = null;
 
-        foreach ($users as $candidate) {
-            if ($candidate['id'] === $userId) {
-                $user = $candidate;
-                break;
+        if ($userRecord) {
+            $orderModel = new Order();
+            $recentOrders = array_merge(
+                $orderModel->getActiveOrdersForUser($userId),
+                $orderModel->getCompletedOrdersForUser($userId, 5, 0)
+            );
+            $lastOrderDate = '';
+
+            if (!empty($recentOrders)) {
+                usort($recentOrders, static function (array $left, array $right): int {
+                    return strcmp($right['created_at'], $left['created_at']);
+                });
+                $lastOrderDate = (new DateTime($recentOrders[0]['created_at']))->format('Y-m-d');
+            }
+
+            $user = [
+                'id' => (int) $userRecord['id'],
+                'name' => $userRecord['name'] ?: 'Без имени',
+                'phone' => $userRecord['phone'] ?? '',
+                'active' => (bool) ($userRecord['is_active'] ?? true),
+                'lastOrder' => $lastOrderDate ?: 'Нет заказов',
+            ];
+        } else {
+            $users = $this->getUserFixtures();
+            $user = $users[0] ?? null;
+
+            foreach ($users as $candidate) {
+                if ($candidate['id'] === $userId) {
+                    $user = $candidate;
+                    break;
+                }
             }
         }
 
