@@ -33,6 +33,7 @@
 $currentPage = $_GET['page'] ?? trim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/') ?: 'home';
 $authPages = ['login', 'register', 'recover'];
 $isAuthPage = in_array($currentPage, $authPages, true);
+$isAdminPage = str_starts_with($currentPage, 'admin');
 $mainClasses = 'mx-auto flex w-full max-w-6xl flex-1 flex-col gap-4 px-3 py-3 pb-[calc(6.5rem+env(safe-area-inset-bottom))] sm:gap-6 sm:px-4 sm:pt-8 sm:pb-[calc(6.5rem+env(safe-area-inset-bottom))]';
 if ($isAuthPage) {
     $mainClasses .= ' items-center justify-center';
@@ -45,25 +46,38 @@ if ($isAuthPage) {
     <header class="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur">
         <div class="mx-auto flex w-full max-w-6xl items-center justify-between px-3 py-2">
             <div>
-                <a class="flex items-center gap-3 text-lg font-semibold tracking-tight text-slate-900" href="/?page=home">
-                    <img
-                        alt="Bunch flowers"
-                        class="h-8 w-auto"
-                        src="/bunchlogo.svg"
-                        width="143"
-                    >
-                    <span class="sr-only"><?php echo htmlspecialchars($pageMeta['headerTitle'] ?? 'Bunch flowers', ENT_QUOTES, 'UTF-8'); ?></span>
-                </a>
+                <?php if ($isAdminPage): ?>
+                    <a class="text-lg font-semibold tracking-tight text-slate-900" href="/?page=admin">
+                        bunch admin
+                    </a>
+                <?php else: ?>
+                    <a class="flex items-center gap-3 text-lg font-semibold tracking-tight text-slate-900" href="/?page=home">
+                        <img
+                            alt="Bunch flowers"
+                            class="h-8 w-auto"
+                            src="/bunchlogo.svg"
+                            width="143"
+                        >
+                        <span class="sr-only"><?php echo htmlspecialchars($pageMeta['headerTitle'] ?? 'Bunch flowers', ENT_QUOTES, 'UTF-8'); ?></span>
+                    </a>
+                <?php endif; ?>
             </div>
             <div class="hidden items-center gap-3 sm:flex">
-                <button class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
-                    <span class="material-symbols-rounded text-base">notifications</span>
-                    Уведомления
-                </button>
-                <button class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
-                    <span class="material-symbols-rounded text-lg text-rose-500">support_agent</span>
-                    Поддержка
-                </button>
+                <?php if ($isAdminPage): ?>
+                    <a class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md" href="/">
+                        <span class="material-symbols-rounded text-lg text-rose-500">arrow_back</span>
+                        На сайт
+                    </a>
+                <?php else: ?>
+                    <button class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+                        <span class="material-symbols-rounded text-base">notifications</span>
+                        Уведомления
+                    </button>
+                    <button class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+                        <span class="material-symbols-rounded text-lg text-rose-500">support_agent</span>
+                        Поддержка
+                    </button>
+                <?php endif; ?>
             </div>
         </div>
     </header>
@@ -80,25 +94,27 @@ if ($isAuthPage) {
         <?php echo $content; ?>
     </main>
 
-    <footer class="border-t border-slate-200 bg-white/90 backdrop-blur">
-        <div class="mx-auto flex w-full max-w-6xl flex-col gap-2 px-4 py-4 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between">
-            <span>© <?php echo date('Y'); ?> Bunch flowers</span>
-            <div class="flex flex-wrap items-center gap-3">
-                <a class="font-semibold text-slate-600 underline underline-offset-2 transition hover:text-rose-600" href="/?page=policy">Политика обработки персональных данных</a>
-                <a class="font-semibold text-slate-600 underline underline-offset-2 transition hover:text-rose-600" href="/?page=consent">Согласие на обработку персональных данных</a>
-                <a class="font-semibold text-slate-600 underline underline-offset-2 transition hover:text-rose-600" href="/?page=offer">Пользовательское соглашение</a>
+    <?php if (!$isAdminPage): ?>
+        <footer class="border-t border-slate-200 bg-white/90 backdrop-blur">
+            <div class="mx-auto flex w-full max-w-6xl flex-col gap-2 px-4 py-4 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between">
+                <span>© <?php echo date('Y'); ?> Bunch flowers</span>
+                <div class="flex flex-wrap items-center gap-3">
+                    <a class="font-semibold text-slate-600 underline underline-offset-2 transition hover:text-rose-600" href="/?page=policy">Политика обработки персональных данных</a>
+                    <a class="font-semibold text-slate-600 underline underline-offset-2 transition hover:text-rose-600" href="/?page=consent">Согласие на обработку персональных данных</a>
+                    <a class="font-semibold text-slate-600 underline underline-offset-2 transition hover:text-rose-600" href="/?page=offer">Пользовательское соглашение</a>
+                </div>
             </div>
-        </div>
-    </footer>
+        </footer>
 
-    <?php include __DIR__ . '/../partials/bottom-nav.php'; ?>
+        <?php include __DIR__ . '/../partials/bottom-nav.php'; ?>
+    <?php endif; ?>
 
     <?php
     $footerLeft = trim((string) ($pageMeta['footerLeft'] ?? ''));
     $footerRight = trim((string) ($pageMeta['footerRight'] ?? ''));
     ?>
 
-    <?php if ($footerLeft !== '' || $footerRight !== ''): ?>
+    <?php if (!$isAdminPage && ($footerLeft !== '' || $footerRight !== '')): ?>
         <footer class="border-t border-slate-200 bg-white/90 backdrop-blur">
             <div class="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-4 text-sm text-slate-500">
                 <?php if ($footerLeft !== ''): ?>
