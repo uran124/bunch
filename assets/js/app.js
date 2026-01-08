@@ -486,6 +486,39 @@ function initOrderFlow() {
         return [baseAddress, apartment ? `кв/офис ${apartment}` : null].filter(Boolean).join(', ');
     };
 
+    const parseManualAddress = (rawValue) => {
+        const parts = rawValue
+            .split(',')
+            .map((part) => part.trim())
+            .filter(Boolean);
+
+        if (!parts.length) {
+            return { settlement: '', street: '', house: '' };
+        }
+
+        if (parts.length >= 3) {
+            return {
+                settlement: parts[0],
+                street: parts[1],
+                house: parts.slice(2).join(', '),
+            };
+        }
+
+        if (parts.length === 2) {
+            return {
+                settlement: '',
+                street: parts[0],
+                house: parts[1],
+            };
+        }
+
+        return {
+            settlement: '',
+            street: parts[0],
+            house: '',
+        };
+    };
+
     const setRecipientFromAddress = (address) => {
         const recipientNameValue = address?.raw?.recipient_name || '';
         const recipientPhoneValue = address?.raw?.recipient_phone || '';
@@ -971,18 +1004,18 @@ function initOrderFlow() {
             payload.address.house = lastDeliveryQuote?.house || chosenAddress?.raw?.house || '';
 
             const rawStreet = streetInput?.value || '';
-            const [streetPart, housePart] = rawStreet.split(',');
+            const parsedManual = parseManualAddress(rawStreet);
 
             if (!payload.address.street) {
-                payload.address.street = (streetPart || rawStreet).trim();
+                payload.address.street = parsedManual.street || rawStreet.trim();
             }
 
             if (!payload.address.house) {
-                payload.address.house = (housePart || '').replace(/^д\\.?/i, '').trim();
+                payload.address.house = (parsedManual.house || '').replace(/^д\\.?/i, '').trim();
             }
 
             if (!payload.address.settlement) {
-                payload.address.settlement = defaultSettlement;
+                payload.address.settlement = parsedManual.settlement || defaultSettlement;
             }
 
             if (apartmentInput) {
