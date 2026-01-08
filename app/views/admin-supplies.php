@@ -92,8 +92,8 @@
                 $isStanding = !empty($supply['is_standing']);
                 $hasProduct = !empty($supply['has_product_card']);
                 $hasWholesale = !empty($supply['has_wholesale_card']);
-                $retailCreateHref = '/?page=admin-products&create_from_supply=' . (int) $supply['id'] . '#product-form';
-                $wholesaleCreateHref = '/?page=admin-products&create_from_supply=' . (int) $supply['id'] . '#product-form';
+                $retailCreateHref = '/?page=admin-product-form&create_from_supply=' . (int) $supply['id'];
+                $wholesaleCreateHref = '/?page=admin-product-form&create_from_supply=' . (int) $supply['id'];
                 ?>
                 <article id="supply-<?php echo (int) $supply['id']; ?>" class="grid grid-cols-[1.2fr_1fr_1fr_1fr_110px] items-center gap-4 border-b border-slate-100 px-5 py-4 last:border-b-0">
                     <div class="space-y-1">
