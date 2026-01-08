@@ -234,6 +234,7 @@
                     data-order-flow
                     data-addresses="<?php echo htmlspecialchars(json_encode($addresses, JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8'); ?>"
                     data-primary-address="<?php echo htmlspecialchars($primaryAddress['address'] ?? '', ENT_QUOTES, 'UTF-8'); ?>"
+                    data-default-settlement="<?php echo htmlspecialchars($primaryAddressSettlement ?? '', ENT_QUOTES, 'UTF-8'); ?>"
                     data-delivery-zones="<?php echo htmlspecialchars(json_encode($deliveryZones, JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8'); ?>"
                     data-delivery-pricing-version="<?php echo htmlspecialchars($deliveryPricingVersion ?? '', ENT_QUOTES, 'UTF-8'); ?>"
                     data-dadata-config="<?php echo htmlspecialchars(json_encode($dadataConfig ?? [], JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8'); ?>"
@@ -272,7 +273,6 @@
                                     $addressHouse = $address['raw']['house'] ?? '';
                                     $addressLabel = trim(trim($addressStreet) . ($addressHouse !== '' ? ', ' . $addressHouse : ''));
                                     $addressLabel = $addressLabel !== '' ? $addressLabel : ($address['address'] ?? '');
-                                    $addressLabel .= ' ' . ($index + 1);
                                     $isPrimary = !empty($address['is_primary']) || ($index === 0 && empty(array_filter($addresses, static fn($row) => !empty($row['is_primary']))));
                                     ?>
                                     <button
@@ -295,7 +295,7 @@
                         <?php endif; ?>
 
                         <label class="flex flex-col gap-1 text-sm font-semibold text-slate-700">
-                            Улица
+                            Улица, номер дома
                             <input
                                 type="text"
                                 placeholder="Карла Маркса, 12"

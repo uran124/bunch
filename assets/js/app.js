@@ -439,6 +439,7 @@ function initOrderFlow() {
     const fallbackDeliveryPrice = Number(
         orderSection.dataset.deliveryFallback || dadataConfig.defaultDeliveryPrice || 0,
     ) || 350;
+    const defaultSettlement = orderSection.dataset.defaultSettlement || '';
     const deliveryPricingVersion = orderSection.dataset.deliveryPricingVersion || null;
     let lastDeliveryQuote = null;
     let lastSuggestionRequestId = 0;
@@ -641,6 +642,9 @@ function initOrderFlow() {
             zone_calculated_at: new Date().toISOString(),
             location_source: 'fallback',
             geo_quality: null,
+            settlement: '',
+            street: '',
+            house: '',
         };
 
         const priceText = price.toLocaleString('ru-RU');
@@ -654,7 +658,7 @@ function initOrderFlow() {
 
         const cityName = data.city || data.settlement || '';
         const cityLabel = data.settlement_with_type || data.city_with_type || '';
-        const street = data.street_with_type || '';
+        const street = data.street_with_type || data.street || '';
         const house = data.house ? `д ${data.house}` : '';
 
         return [cityLabel || cityName, street, house].filter(Boolean).join(', ');
@@ -788,6 +792,60 @@ function initOrderFlow() {
             lat: Number(row.geo_lat),
             qc: row.qc_geo,
             label: formatAddressFromDadata(row) || row.result || addressText,
+            settlement:
+                row.settlement_with_type ||
+                row.city_with_type ||
+                row.settlement ||
+                row.city ||
+                row.region_with_type ||
+                row.region ||
+                '',
+            street: row.street_with_type || row.street || '',
+            house: row.house || '',
+        };
+    };
+
+    const buildQuoteFromSavedAddress = (address) => {
+        const lat = Number(address?.raw?.lat || 0);
+        const lon = Number(address?.raw?.lon || 0);
+        if (!lat || !lon) return null;
+
+        const zoneFromPoint = findZoneForPoint([lon, lat]);
+        const zoneFromId = deliveryZones.find((zone) => Number(zone.id) === Number(address?.raw?.zone_id || 0));
+        const zone = zoneFromPoint || zoneFromId || null;
+        if (!zone) {
+            return {
+                address_text: composeAddressText(),
+                label: address?.address || composeAddressText() || 'Адрес доставки',
+                lat,
+                lon,
+                zone_id: address?.raw?.zone_id || null,
+                delivery_price: Number(address?.raw?.last_delivery_price_hint || fallbackDeliveryPrice || 0),
+                zone_version: address?.raw?.zone_version || deliveryPricingVersion,
+                zone_calculated_at: address?.raw?.zone_calculated_at || new Date().toISOString(),
+                location_source: address?.raw?.location_source || 'stored',
+                geo_quality: address?.raw?.geo_quality || null,
+                settlement: address?.raw?.settlement || '',
+                street: address?.raw?.street || '',
+                house: address?.raw?.house || '',
+                missing_zone: true,
+            };
+        }
+
+        return {
+            address_text: composeAddressText(),
+            label: address?.address || composeAddressText() || 'Адрес доставки',
+            lat,
+            lon,
+            zone_id: zone.id,
+            delivery_price: zone.price,
+            zone_version: address?.raw?.zone_version || deliveryPricingVersion,
+            zone_calculated_at: address?.raw?.zone_calculated_at || new Date().toISOString(),
+            location_source: address?.raw?.location_source || 'stored',
+            geo_quality: address?.raw?.geo_quality || null,
+            settlement: address?.raw?.settlement || '',
+            street: address?.raw?.street || '',
+            house: address?.raw?.house || '',
         };
     };
 
@@ -799,6 +857,31 @@ function initOrderFlow() {
             setDeliveryHint('Введите адрес, чтобы получить подсказку DaData, геокодировать точку и определить зону доставки.');
             lastDeliveryQuote = null;
             updateDeliveryPriceDisplay(0);
+            return;
+        }
+
+        const chosenAddress = selectedAddressId ? findAddressById(selectedAddressId) : null;
+        const savedQuote = chosenAddress ? buildQuoteFromSavedAddress(chosenAddress) : null;
+        if (savedQuote) {
+            const zoneName = deliveryZones.find((zone) => Number(zone.id) === Number(savedQuote.zone_id))?.name || '';
+            lastDeliveryQuote = savedQuote;
+            if (savedQuote.missing_zone) {
+                setDeliveryHint(
+                    `${savedQuote.label} — зона не найдена, применили цену ${savedQuote.delivery_price.toLocaleString('ru-RU')} ₽.`,
+                    'warn',
+                );
+            } else {
+                setDeliveryHint(
+                    `${savedQuote.label}${zoneName ? ` в зоне «${zoneName}»` : ''}. Доставка ${savedQuote.delivery_price.toLocaleString('ru-RU')} ₽`,
+                    'success',
+                );
+            }
+            updateDeliveryPriceDisplay(savedQuote.delivery_price);
+            return;
+        }
+
+        if (chosenAddress) {
+            useFallbackDeliveryQuote(addressText, 'Для сохранённого адреса нет координат или зоны.');
             return;
         }
 
@@ -834,6 +917,9 @@ function initOrderFlow() {
                 zone_calculated_at: new Date().toISOString(),
                 location_source: 'dadata',
                 geo_quality: geocoded.qc,
+                settlement: geocoded.settlement || '',
+                street: geocoded.street || '',
+                house: geocoded.house || '',
             };
 
             setDeliveryHint(
@@ -879,7 +965,25 @@ function initOrderFlow() {
                 payload.address = {};
             }
 
-            payload.address.street = streetInput?.value || '';
+            const chosenAddress = selectedAddressId ? findAddressById(selectedAddressId) : null;
+            payload.address.settlement = lastDeliveryQuote?.settlement || chosenAddress?.raw?.settlement || '';
+            payload.address.street = lastDeliveryQuote?.street || chosenAddress?.raw?.street || '';
+            payload.address.house = lastDeliveryQuote?.house || chosenAddress?.raw?.house || '';
+
+            const rawStreet = streetInput?.value || '';
+            const [streetPart, housePart] = rawStreet.split(',');
+
+            if (!payload.address.street) {
+                payload.address.street = (streetPart || rawStreet).trim();
+            }
+
+            if (!payload.address.house) {
+                payload.address.house = (housePart || '').replace(/^д\\.?/i, '').trim();
+            }
+
+            if (!payload.address.settlement) {
+                payload.address.settlement = defaultSettlement;
+            }
 
             if (apartmentInput) {
                 payload.address.apartment = apartmentInput.value || '';
