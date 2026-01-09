@@ -66,10 +66,10 @@
                                 <img
                                     src="<?php echo htmlspecialchars($product['photo_url'], ENT_QUOTES, 'UTF-8'); ?>"
                                     alt="<?php echo htmlspecialchars($product['name'], ENT_QUOTES, 'UTF-8'); ?>"
-                                    class="h-64 w-full rounded-t-3xl object-cover"
+                                    class="aspect-square w-full rounded-t-3xl object-cover"
                                 >
                             <?php else: ?>
-                                <div class="flex h-64 w-full items-center justify-center rounded-t-3xl bg-slate-100 text-slate-400">
+                                <div class="flex aspect-square w-full items-center justify-center rounded-t-3xl bg-slate-100 text-slate-400">
                                     <span class="material-symbols-rounded text-4xl">image</span>
                                 </div>
                             <?php endif; ?>
