@@ -30,10 +30,11 @@ class PromoItem extends Model
     {
         $slug = $this->generateSlug($payload['title']);
 
-        $sql = "INSERT INTO {$this->table} (title, slug, description, price, quantity, ends_at, label, photo_url, is_active) VALUES (:title, :slug, :description, :price, :quantity, :ends_at, :label, :photo_url, :is_active)";
+        $sql = "INSERT INTO {$this->table} (product_id, title, slug, description, price, quantity, ends_at, label, photo_url, is_active) VALUES (:product_id, :title, :slug, :description, :price, :quantity, :ends_at, :label, :photo_url, :is_active)";
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute([
+            'product_id' => $payload['product_id'] ?? null,
             'title' => $payload['title'],
             'slug' => $slug,
             'description' => $payload['description'],

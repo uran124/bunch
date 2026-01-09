@@ -25,7 +25,8 @@ $hasPromos = !empty($oneTimeItems);
     <?php if ($hasPromos): ?>
         <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" data-promo-items>
             <?php foreach ($oneTimeItems as $item): ?>
-                <article class="flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm" data-promo-item data-promo-type="promo">
+                <?php $productId = (int) ($item['product_id'] ?? 0); ?>
+                <article class="flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm" data-promo-item data-promo-type="promo" data-product-card data-product-id="<?php echo $productId; ?>">
                     <?php if (!empty($item['photo'])): ?>
                         <img src="<?php echo htmlspecialchars($item['photo'], ENT_QUOTES, 'UTF-8'); ?>" alt="<?php echo htmlspecialchars($item['title'], ENT_QUOTES, 'UTF-8'); ?>" class="aspect-square w-full object-cover">
                     <?php else: ?>
@@ -46,9 +47,9 @@ $hasPromos = !empty($oneTimeItems);
                         <h3 class="text-sm font-semibold leading-tight text-slate-900 sm:text-base"><?php echo htmlspecialchars($item['title'], ENT_QUOTES, 'UTF-8'); ?></h3>
                         <p class="text-base font-semibold text-rose-700 sm:text-lg"><?php echo htmlspecialchars($item['price'], ENT_QUOTES, 'UTF-8'); ?></p>
                         <p class="text-xs text-slate-600 sm:text-sm"><?php echo htmlspecialchars($item['stock'], ENT_QUOTES, 'UTF-8'); ?></p>
-                        <button class="mt-auto inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-800 transition hover:-translate-y-0.5 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700 sm:px-4 sm:py-3 sm:text-sm">
-                            <span class="material-symbols-rounded text-base">add_shopping_cart</span>
-                            Забронировать
+                        <button type="button" data-add-to-cart <?php echo $productId > 0 ? '' : 'disabled'; ?> class="mt-auto inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-800 transition hover:-translate-y-0.5 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700 disabled:cursor-not-allowed disabled:opacity-60 sm:px-4 sm:py-3 sm:text-sm">
+                            <span class="material-symbols-rounded text-base">shopping_cart</span>
+                            В корзину
                         </button>
                     </div>
                 </article>
@@ -56,3 +57,56 @@ $hasPromos = !empty($oneTimeItems);
         </div>
     <?php endif; ?>
 </section>
+
+<script>
+    function updateCartIndicator(count) {
+        const isActive = Number(count) > 0;
+        document.querySelectorAll('[data-cart-indicator]').forEach((indicator) => {
+            indicator.dataset.cartActive = isActive ? 'true' : 'false';
+        });
+    }
+
+    async function addPromoItemToCart(productId) {
+        const response = await fetch('/?page=cart-add', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+            body: JSON.stringify({ product_id: productId, qty: 1, attributes: [] }),
+        });
+
+        if (!response.ok) {
+            throw new Error('Не удалось добавить товар в корзину');
+        }
+
+        const data = await response.json();
+        if (!data.ok) {
+            throw new Error(data.error || 'Ошибка добавления в корзину');
+        }
+
+        updateCartIndicator(data.totals?.count || 0);
+    }
+
+    document.querySelectorAll('[data-product-card][data-product-id]').forEach((card) => {
+        const productId = Number(card.dataset.productId || 0);
+        if (productId <= 0) {
+            return;
+        }
+
+        card.querySelectorAll('[data-add-to-cart]').forEach((button) => {
+            button.addEventListener('click', async () => {
+                button.disabled = true;
+                button.classList.add('opacity-70');
+                try {
+                    await addPromoItemToCart(productId);
+                } catch (error) {
+                    alert(error.message || 'Ошибка добавления в корзину');
+                } finally {
+                    button.disabled = false;
+                    button.classList.remove('opacity-70');
+                }
+            });
+        });
+    });
+</script>

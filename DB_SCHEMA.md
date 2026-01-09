@@ -207,6 +207,11 @@ CREATE TABLE promos (
 CREATE TABLE promo_items (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
+  product_id INT UNSIGNED NULL,
+  CONSTRAINT fk_promo_items_product
+    FOREIGN KEY (product_id) REFERENCES products(id)
+    ON DELETE SET NULL,
+
   title       VARCHAR(150) NOT NULL,
   slug        VARCHAR(150) NOT NULL UNIQUE,
   description TEXT NULL,
@@ -222,7 +227,9 @@ CREATE TABLE promo_items (
 
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-    ON UPDATE CURRENT_TIMESTAMP
+    ON UPDATE CURRENT_TIMESTAMP,
+
+  INDEX idx_promo_items_product (product_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 ```
 
