@@ -59,7 +59,7 @@
                         data-product-card
                         data-base-price="<?php echo $basePrice; ?>"
                         data-price-tiers='<?php echo $priceTiersJson; ?>'
-                        class="snap-center shrink-0 w-[92%] max-w-xl rounded-3xl border border-slate-200 bg-white shadow-xl shadow-slate-200/70 transition md:w-[480px]"
+                        class="snap-center shrink-0 w-[82%] max-w-xl rounded-3xl border border-slate-200 bg-white shadow-xl shadow-slate-200/70 transition md:w-[480px]"
                     >
                         <div class="relative">
                             <?php if (!empty($product['photo_url'])): ?>
