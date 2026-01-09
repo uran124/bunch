@@ -33,16 +33,26 @@ class Product extends Model
 
     public function getAdminList(): array
     {
-        $sql = "SELECT p.*, s.flower_name, s.variety, s.country AS supply_country, s.stem_height_cm AS supply_height, s.stem_weight_g AS supply_weight, s.photo_url AS supply_photo, s.id AS supply_id FROM {$this->table} p LEFT JOIN supplies s ON p.supply_id = s.id ORDER BY p.created_at DESC";
+        $sql = "SELECT p.*, s.flower_name, s.variety, s.country AS supply_country, s.stem_height_cm AS supply_height, s.stem_weight_g AS supply_weight, s.photo_url AS supply_photo, s.id AS supply_id, s.is_standing AS supply_is_standing, s.actual_delivery_date AS supply_actual_delivery_date, s.planned_delivery_date AS supply_planned_delivery_date, s.first_delivery_date AS supply_first_delivery_date, s.periodicity AS supply_periodicity, s.skip_date AS supply_skip_date FROM {$this->table} p LEFT JOIN supplies s ON p.supply_id = s.id ORDER BY p.created_at DESC";
         $stmt = $this->db->query($sql);
         $products = $stmt->fetchAll();
 
         foreach ($products as &$product) {
             $product['price_tiers'] = $this->getPriceTiers((int) $product['id']);
             $product['attribute_ids'] = $this->getAttributeIds((int) $product['id']);
+            $product['supply_next_delivery'] = $this->calculateNextDeliveryDate($product);
         }
 
         return $products;
+    }
+
+    public function setActive(int $id, int $active): void
+    {
+        $stmt = $this->db->prepare("UPDATE {$this->table} SET is_active = :active WHERE id = :id");
+        $stmt->execute([
+            'active' => $active,
+            'id' => $id,
+        ]);
     }
 
     public function getWithRelations(int $id): ?array
@@ -165,6 +175,50 @@ class Product extends Model
     {
         $stmt = $this->db->prepare("DELETE FROM {$this->table} WHERE id = :id");
         $stmt->execute(['id' => $id]);
+    }
+
+    private function calculateNextDeliveryDate(array $product): ?string
+    {
+        if (empty($product['supply_id'])) {
+            return null;
+        }
+
+        $actualDelivery = $product['supply_actual_delivery_date'] ?? null;
+        if (!empty($actualDelivery)) {
+            return $actualDelivery;
+        }
+
+        $plannedDelivery = $product['supply_planned_delivery_date'] ?? null;
+        $isStanding = (int) ($product['supply_is_standing'] ?? 0);
+
+        if ($isStanding === 0) {
+            return $plannedDelivery ?: null;
+        }
+
+        $firstDelivery = $product['supply_first_delivery_date'] ?? null;
+        if (empty($firstDelivery)) {
+            return null;
+        }
+
+        try {
+            $intervalSpec = (($product['supply_periodicity'] ?? '') === 'biweekly') ? 'P14D' : 'P7D';
+            $start = new DateTimeImmutable($firstDelivery);
+            $today = new DateTimeImmutable('today');
+
+            $skip = null;
+            if (!empty($product['supply_skip_date'])) {
+                $skip = new DateTimeImmutable($product['supply_skip_date']);
+            }
+
+            while ($start < $today || ($skip && $start->format('Y-m-d') === $skip->format('Y-m-d'))) {
+                $start = $start->add(new DateInterval($intervalSpec));
+            }
+
+            return $start->format('Y-m-d');
+        } catch (Exception $e) {
+            error_log('Failed to calculate product next delivery date: ' . $e->getMessage());
+            return $plannedDelivery ?: null;
+        }
     }
 
     public function hasBlockingRelations(int $id): bool

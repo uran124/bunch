@@ -162,6 +162,7 @@ $router->post('admin-attribute-value-save', [AdminController::class, 'saveAttrib
 $router->post('admin-attribute-value-delete', [AdminController::class, 'deleteAttributeValue']);
 $router->post('admin-product-save', [AdminController::class, 'saveProduct']);
 $router->post('admin-product-delete', [AdminController::class, 'deleteProduct']);
+$router->post('admin-product-toggle', [AdminController::class, 'toggleProductActive']);
 $router->post('admin-services-telegram', [AdminController::class, 'saveServiceTelegram']);
 $router->post('admin-lottery-save', [AdminController::class, 'saveLottery']);
 $router->post('admin-auction-save', [AdminController::class, 'saveAuctionLot']);

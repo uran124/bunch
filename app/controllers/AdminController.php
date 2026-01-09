@@ -736,6 +736,23 @@ class AdminController extends Controller
         header('Location: /?page=admin-products&status=deleted');
     }
 
+    public function toggleProductActive(): void
+    {
+        $productId = (int) ($_POST['product_id'] ?? 0);
+
+        if ($productId <= 0) {
+            header('Location: /?page=admin-products&status=error');
+            return;
+        }
+
+        $active = isset($_POST['is_active']) ? 1 : 0;
+
+        $productModel = new Product();
+        $productModel->setActive($productId, $active);
+
+        header('Location: /?page=admin-products');
+    }
+
     public function catalogPromos(): void
     {
         $pageMeta = [
