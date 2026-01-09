@@ -29,6 +29,7 @@ class PromoController extends Controller
             }
 
             return [
+                'product_id' => (int) ($item['product_id'] ?? 0),
                 'title' => $item['title'],
                 'price' => number_format((float) $item['price'], 0, '.', ' ') . ' ₽',
                 'stock' => $stockText,

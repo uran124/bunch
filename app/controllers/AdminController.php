@@ -1018,9 +1018,24 @@ class AdminController extends Controller
         $quantity = $quantityRaw !== '' ? max(1, (int) $quantityRaw) : 1;
 
         $promoItemModel = new PromoItem();
+        $productModel = new Product();
 
         try {
+            $productId = $productModel->createCustom([
+                'name' => $title,
+                'description' => $description !== '' ? $description : null,
+                'price' => $price,
+                'article' => null,
+                'photo_url' => $photoUrl !== '' ? $photoUrl : null,
+                'category' => 'main',
+                'product_type' => 'regular',
+                'is_base' => 0,
+                'is_active' => $isActive,
+                'sort_order' => 0,
+            ]);
+
             $promoItemModel->create([
+                'product_id' => $productId,
                 'title' => $title,
                 'description' => $description !== '' ? $description : null,
                 'price' => $price,
