@@ -746,20 +746,9 @@ class AdminController extends Controller
             'headerSubtitle' => 'Каталог · Спецпредложения',
         ];
 
-        $lotteryModel = new Lottery();
         $auctionModel = new AuctionLot();
-        $promoItemModel = new PromoItem();
-        $promoCategoryModel = new PromoCategory();
 
         $loadErrors = [];
-
-        try {
-            $lotteries = $lotteryModel->getAdminList();
-        } catch (Throwable $e) {
-            $lotteries = [];
-            $loadErrors[] = 'lotteries';
-            $this->logAdminError('Admin promos load error (lotteries)', $e);
-        }
 
         try {
             $auctions = $auctionModel->getAdminList();
@@ -769,30 +758,100 @@ class AdminController extends Controller
             $this->logAdminError('Admin promos load error (auctions)', $e);
         }
 
-        try {
-            $promoItems = $promoItemModel->getAdminList();
-        } catch (Throwable $e) {
-            $promoItems = [];
-            $loadErrors[] = 'promoItems';
-            $this->logAdminError('Admin promos load error (promoItems)', $e);
-        }
-
-        try {
-            $promoCategories = $promoCategoryModel->getAll();
-        } catch (Throwable $e) {
-            $promoCategories = [];
-            $loadErrors[] = 'promoCategories';
-            $this->logAdminError('Admin promos load error (promoCategories)', $e);
-        }
+        $activeLots = array_values(array_filter($auctions, static function (array $lot): bool {
+            return ($lot['status'] ?? '') === 'active';
+        }));
+        $finishedLots = array_values(array_filter($auctions, static function (array $lot): bool {
+            return ($lot['status'] ?? '') === 'finished';
+        }));
 
         $this->render('admin-promos', [
             'pageMeta' => $pageMeta,
-            'lotteries' => $lotteries,
-            'auctions' => $auctions,
-            'promoItems' => $promoItems,
-            'promoCategories' => $promoCategories,
+            'activeLots' => $activeLots,
+            'finishedLots' => $finishedLots,
             'loadErrors' => $loadErrors,
             'message' => $_GET['status'] ?? null,
+        ]);
+    }
+
+    public function auctionCreate(): void
+    {
+        $pageMeta = [
+            'title' => 'Новый лот — админ-панель Bunch',
+            'description' => 'Создание аукционного лота для акций.',
+            'h1' => 'Новый лот',
+            'headerTitle' => 'Bunch Admin',
+            'headerSubtitle' => 'Акции · Новый лот',
+        ];
+
+        $this->render('admin-auction-create', [
+            'pageMeta' => $pageMeta,
+            'message' => $_GET['status'] ?? null,
+        ]);
+    }
+
+    public function auctionEdit(): void
+    {
+        $lotId = (int) ($_GET['id'] ?? 0);
+        if ($lotId <= 0) {
+            header('Location: /?page=admin-promos&status=error');
+            return;
+        }
+
+        $auctionModel = new AuctionLot();
+        $lot = $auctionModel->getAdminLotDetails($lotId);
+
+        if (!$lot) {
+            header('Location: /?page=admin-promos&status=error');
+            return;
+        }
+
+        $pageMeta = [
+            'title' => 'Редактирование лота — админ-панель Bunch',
+            'description' => 'Редактирование аукционного лота.',
+            'h1' => 'Редактирование лота',
+            'headerTitle' => 'Bunch Admin',
+            'headerSubtitle' => 'Акции · Редактирование',
+        ];
+
+        $this->render('admin-auction-edit', [
+            'pageMeta' => $pageMeta,
+            'lot' => $lot,
+            'message' => $_GET['status'] ?? null,
+        ]);
+    }
+
+    public function auctionView(): void
+    {
+        $lotId = (int) ($_GET['id'] ?? 0);
+        if ($lotId <= 0) {
+            header('Location: /?page=admin-promos&status=error');
+            return;
+        }
+
+        $auctionModel = new AuctionLot();
+        $lot = $auctionModel->getAdminLotDetails($lotId);
+
+        if (!$lot) {
+            header('Location: /?page=admin-promos&status=error');
+            return;
+        }
+
+        $bidModel = new AuctionBid();
+        $bids = $bidModel->getLotBids($lotId);
+
+        $pageMeta = [
+            'title' => 'Просмотр лота — админ-панель Bunch',
+            'description' => 'Детали завершённого аукциона.',
+            'h1' => 'Завершённый лот',
+            'headerTitle' => 'Bunch Admin',
+            'headerSubtitle' => 'Акции · История лота',
+        ];
+
+        $this->render('admin-auction-view', [
+            'pageMeta' => $pageMeta,
+            'lot' => $lot,
+            'bids' => $bids,
         ]);
     }
 
@@ -872,6 +931,55 @@ class AdminController extends Controller
         }
 
         header('Location: /?page=admin-promos&status=saved');
+    }
+
+    public function updateAuctionLot(): void
+    {
+        $lotId = (int) ($_POST['id'] ?? 0);
+        $title = trim($_POST['title'] ?? '');
+        $description = trim($_POST['description'] ?? '');
+        $image = trim($_POST['image'] ?? '');
+        $storePrice = (float) ($_POST['store_price'] ?? 0);
+        $startPrice = (float) ($_POST['start_price'] ?? 1);
+        $bidStep = (float) ($_POST['bid_step'] ?? 1);
+        $blitzPrice = trim($_POST['blitz_price'] ?? '');
+        $startsAt = trim($_POST['starts_at'] ?? '');
+        $endsAt = trim($_POST['ends_at'] ?? '');
+        $status = $_POST['status'] ?? 'draft';
+
+        if ($lotId <= 0 || $title === '' || $bidStep <= 0 || $startPrice <= 0) {
+            header('Location: /?page=admin-promos&status=error');
+            return;
+        }
+
+        $auctionModel = new AuctionLot();
+        $existing = $auctionModel->getAdminLotDetails($lotId);
+        if (!$existing) {
+            header('Location: /?page=admin-promos&status=error');
+            return;
+        }
+
+        try {
+            $auctionModel->updateLot($lotId, [
+                'title' => $title,
+                'description' => $description !== '' ? $description : null,
+                'image' => $image !== '' ? $image : null,
+                'store_price' => $storePrice,
+                'start_price' => $startPrice,
+                'bid_step' => $bidStep,
+                'blitz_price' => $blitzPrice !== '' ? (float) $blitzPrice : null,
+                'starts_at' => $startsAt !== '' ? $startsAt : null,
+                'ends_at' => $endsAt !== '' ? $endsAt : null,
+                'original_ends_at' => $existing['original_ends_at'],
+                'status' => $status,
+            ]);
+        } catch (Throwable $e) {
+            $this->logAdminError('Admin promos update auction error', $e);
+            header('Location: /?page=admin-promos&status=error');
+            return;
+        }
+
+        header('Location: /?page=admin-auction-edit&id=' . $lotId . '&status=saved');
     }
 
     public function savePromoItem(): void
