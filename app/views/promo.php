@@ -27,9 +27,9 @@ $hasPromos = !empty($oneTimeItems);
             <?php foreach ($oneTimeItems as $item): ?>
                 <article class="flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm" data-promo-item data-promo-type="promo">
                     <?php if (!empty($item['photo'])): ?>
-                        <img src="<?php echo htmlspecialchars($item['photo'], ENT_QUOTES, 'UTF-8'); ?>" alt="<?php echo htmlspecialchars($item['title'], ENT_QUOTES, 'UTF-8'); ?>" class="h-32 w-full object-cover">
+                        <img src="<?php echo htmlspecialchars($item['photo'], ENT_QUOTES, 'UTF-8'); ?>" alt="<?php echo htmlspecialchars($item['title'], ENT_QUOTES, 'UTF-8'); ?>" class="aspect-square w-full object-cover">
                     <?php else: ?>
-                        <div class="flex h-32 w-full items-center justify-center bg-slate-100 text-slate-400">
+                        <div class="flex aspect-square w-full items-center justify-center bg-slate-100 text-slate-400">
                             <span class="material-symbols-rounded text-3xl">image</span>
                         </div>
                     <?php endif; ?>
