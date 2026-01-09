@@ -91,52 +91,76 @@
     <?php endif; ?>
 
     <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm shadow-rose-50/60 ring-1 ring-transparent">
-        <div class="grid grid-cols-[80px_1.2fr_1fr_1fr_1fr_140px] items-center gap-4 border-b border-slate-100 bg-slate-50 px-5 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
-            <span>ID</span>
-            <span>Наименование</span>
+        <div class="grid grid-cols-[120px_1.6fr_1.2fr_120px_140px_120px_60px] items-center gap-4 border-b border-slate-100 bg-slate-50 px-5 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <span>Артикул</span>
+            <span>Название</span>
             <span>Поставка</span>
-            <span>Характеристики</span>
-            <span>Цена/Статус</span>
-            <span class="text-right">Действия</span>
+            <span>След. поставка</span>
+            <span>Стоимость</span>
+            <span>Активность</span>
+            <span class="text-right">Удалить</span>
         </div>
         <?php foreach ($products as $product): ?>
-            <article class="grid grid-cols-[80px_1.2fr_1fr_1fr_1fr_140px] items-center gap-4 border-b border-slate-100 px-5 py-4 last:border-b-0">
-                <div class="text-sm font-semibold text-slate-900">#<?php echo (int) $product['id']; ?></div>
+            <?php
+                $articleLabel = $product['article'] ?? '—';
+                $supplyTitle = trim(($product['flower_name'] ?? '') . ' ' . ($product['variety'] ?? ''));
+                if ($supplyTitle === '' && !empty($product['supply_id'])) {
+                    $supplyTitle = 'Поставка #' . (int) $product['supply_id'];
+                }
+
+                $nextDeliveryLabel = '—';
+                if (!empty($product['supply_next_delivery'])) {
+                    try {
+                        $nextDeliveryLabel = (new DateTime($product['supply_next_delivery']))->format('d.m');
+                    } catch (Exception $e) {
+                        $nextDeliveryLabel = '—';
+                    }
+                }
+
+                $prices = [(float) $product['price']];
+                foreach ($product['price_tiers'] as $tier) {
+                    $prices[] = (float) $tier['price'];
+                }
+                $minPrice = min($prices);
+                $maxPrice = max($prices);
+                $priceLabel = $minPrice < $maxPrice
+                    ? number_format($minPrice, 2) . ' - ' . number_format($maxPrice, 2)
+                    : number_format($maxPrice, 2);
+            ?>
+            <article class="grid grid-cols-[120px_1.6fr_1.2fr_120px_140px_120px_60px] items-center gap-4 border-b border-slate-100 px-5 py-4 text-sm last:border-b-0">
+                <div class="font-semibold text-slate-900"><?php echo htmlspecialchars($articleLabel, ENT_QUOTES, 'UTF-8'); ?></div>
                 <div class="space-y-1">
-                    <div class="text-base font-semibold text-slate-900"><?php echo htmlspecialchars($product['name'], ENT_QUOTES, 'UTF-8'); ?></div>
-                    <div class="text-sm text-slate-500">Артикул: <?php echo htmlspecialchars($product['article'] ?? '—', ENT_QUOTES, 'UTF-8'); ?></div>
-                    <div class="text-sm text-slate-500">Атрибуты: <?php echo !empty($product['attribute_ids']) ? count($product['attribute_ids']) : 0; ?></div>
-                </div>
-                <div class="space-y-1 text-sm text-slate-700">
-                    <div class="font-semibold text-rose-700"><?php echo htmlspecialchars(($product['flower_name'] ?? '') . ' ' . ($product['variety'] ?? ''), ENT_QUOTES, 'UTF-8'); ?></div>
-                    <div class="text-slate-500">Страна: <?php echo htmlspecialchars($product['country'] ?? $product['supply_country'] ?? '—', ENT_QUOTES, 'UTF-8'); ?></div>
-                    <div class="text-slate-500">Высота: <?php echo htmlspecialchars($product['stem_height_cm'] ?? $product['supply_height'] ?? '—', ENT_QUOTES, 'UTF-8'); ?> см · Вес: <?php echo htmlspecialchars($product['stem_weight_g'] ?? $product['supply_weight'] ?? '—', ENT_QUOTES, 'UTF-8'); ?> г</div>
-                </div>
-                <div class="text-sm text-slate-700">
-                    <div>Создан: <?php echo htmlspecialchars($product['created_at'] ?? $product['createdAt'] ?? '', ENT_QUOTES, 'UTF-8'); ?></div>
-                    <div>Обновлён: <?php echo htmlspecialchars($product['updated_at'] ?? $product['updatedAt'] ?? '', ENT_QUOTES, 'UTF-8'); ?></div>
-                </div>
-                <div class="flex flex-col gap-1 text-sm text-slate-700">
-                    <span class="rounded-full bg-slate-50 px-3 py-1 text-sm font-semibold text-slate-800 ring-1 ring-slate-200"><?php echo htmlspecialchars(number_format((float) $product['price'], 2), ENT_QUOTES, 'UTF-8'); ?> ₽</span>
-                    <?php if (!empty($product['price_tiers'])): ?>
-                        <div class="text-xs text-slate-500">
-                            <?php foreach ($product['price_tiers'] as $tier): ?>
-                                <div>от <?php echo (int) $tier['min_qty']; ?> шт — <?php echo htmlspecialchars(number_format((float) $tier['price'], 2), ENT_QUOTES, 'UTF-8'); ?> ₽</div>
-                            <?php endforeach; ?>
-                        </div>
-                    <?php endif; ?>
-                    <span class="rounded-full bg-white px-3 py-1 text-xs font-semibold uppercase tracking-wide <?php echo ($product['is_active'] ?? 0) ? 'text-emerald-700 ring-emerald-200' : 'text-slate-500 ring-slate-200'; ?> ring-1"><?php echo ($product['is_active'] ?? 0) ? 'Активен' : 'Черновик'; ?></span>
-                </div>
-                <div class="flex justify-end gap-2 text-sm font-semibold">
-                    <a href="/?page=admin-product-form&edit_id=<?php echo (int) $product['id']; ?>" class="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-2 text-slate-700 hover:-translate-y-0.5 hover:border-rose-200 hover:text-rose-700">
-                        <span class="material-symbols-rounded text-base">edit</span>
-                        Редактировать
+                    <a href="/?page=admin-product-form&edit_id=<?php echo (int) $product['id']; ?>" class="text-base font-semibold text-slate-900 underline-offset-4 hover:text-rose-600 hover:underline">
+                        <?php echo htmlspecialchars($product['name'], ENT_QUOTES, 'UTF-8'); ?>
                     </a>
+                    <div class="text-xs text-slate-500">ID: #<?php echo (int) $product['id']; ?></div>
+                </div>
+                <div class="space-y-1">
+                    <?php if (!empty($product['supply_id'])): ?>
+                        <a href="/?page=admin-supply-edit&id=<?php echo (int) $product['supply_id']; ?>" class="font-semibold text-slate-700 underline-offset-4 hover:text-emerald-700 hover:underline">
+                            <?php echo htmlspecialchars($supplyTitle !== '' ? $supplyTitle : 'Поставка', ENT_QUOTES, 'UTF-8'); ?>
+                        </a>
+                    <?php else: ?>
+                        <span class="text-slate-400">—</span>
+                    <?php endif; ?>
+                </div>
+                <div class="text-slate-700"><?php echo htmlspecialchars($nextDeliveryLabel, ENT_QUOTES, 'UTF-8'); ?></div>
+                <div class="font-semibold text-slate-900"><?php echo htmlspecialchars($priceLabel, ENT_QUOTES, 'UTF-8'); ?> ₽</div>
+                <div>
+                    <form action="/?page=admin-product-toggle" method="post">
+                        <input type="hidden" name="product_id" value="<?php echo (int) $product['id']; ?>">
+                        <label class="relative inline-flex h-8 w-14 cursor-pointer items-center" aria-label="Активность товара">
+                            <input type="checkbox" name="is_active" class="peer sr-only" onchange="this.form.submit()" <?php echo ($product['is_active'] ?? 0) ? 'checked' : ''; ?>>
+                            <span class="absolute inset-0 rounded-full bg-slate-200 transition peer-checked:bg-emerald-500"></span>
+                            <span class="absolute left-1 top-1 h-6 w-6 rounded-full bg-white shadow-sm transition peer-checked:translate-x-6 peer-checked:shadow-md"></span>
+                        </label>
+                    </form>
+                </div>
+                <div class="flex justify-end">
                     <form action="/?page=admin-product-delete" method="post" onsubmit="return confirm('Удалить товар?');">
                         <input type="hidden" name="product_id" value="<?php echo (int) $product['id']; ?>">
-                        <button type="submit" class="inline-flex items-center gap-1 rounded-lg border border-rose-100 bg-rose-50 px-3 py-2 text-rose-700 hover:-translate-y-0.5 hover:border-rose-200">
+                        <button type="submit" class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-rose-100 bg-rose-50 text-rose-700 transition hover:-translate-y-0.5 hover:border-rose-200" aria-label="Удалить товар">
                             <span class="material-symbols-rounded text-base">delete</span>
-                            Удалить
                         </button>
                     </form>
                 </div>
