@@ -75,13 +75,13 @@
                             <?php endif; ?>
                         </div>
 
-                        <div class="space-y-0 px-2 pb-6 pt-2 md:space-y-6 md:px-5 md:pt-5">
+                        <div class="space-y-0 px-2 pb-4 pt-2 md:space-y-6 md:px-5 md:pt-5">
                             <div class="space-y-1 md:space-y-2">
-                                <h2 class="text-lg font-semibold leading-snug text-slate-900 md:text-2xl"><?php echo htmlspecialchars($displayName, ENT_QUOTES, 'UTF-8'); ?></h2>
+                                <h2 class="text-base font-semibold leading-snug text-slate-900 md:text-2xl"><?php echo htmlspecialchars($displayName, ENT_QUOTES, 'UTF-8'); ?></h2>
                             </div>
 
-                            <div class="space-y-2 rounded-2xl bg-slate-50 p-3 md:space-y-3 md:p-4">
-                                <div class="flex items-center justify-between text-xs font-semibold text-slate-700 md:text-sm">
+                            <div class="space-y-2 rounded-2xl bg-slate-50 p-2 md:space-y-3 md:p-4">
+                                <div class="flex items-center justify-between text-[11px] font-semibold text-slate-700 md:text-sm">
                                     <span class="inline-flex items-center gap-2">
                                         <span class="material-symbols-rounded text-base">stacked_bar_chart</span>
                                         Количество стеблей
@@ -94,7 +94,7 @@
                                         value="1"
                                         inputmode="numeric"
                                         data-qty-value
-                                        class="w-20 rounded-lg bg-white px-3 py-2 text-lg font-bold text-slate-900 shadow-inner shadow-rose-100/60 text-center md:text-xl"
+                                        class="w-16 rounded-lg bg-white px-2 py-1.5 text-base font-bold text-slate-900 shadow-inner shadow-rose-100/60 text-center md:text-xl"
                                     >
                                 </div>
                                 <input
@@ -104,7 +104,7 @@
                                     step="1"
                                     value="1"
                                     data-qty
-                                    class="range-slider h-2 w-full appearance-none rounded-full bg-slate-200 accent-rose-500"
+                                    class="range-slider h-1.5 w-full appearance-none rounded-full bg-slate-200 accent-rose-500"
                                 >
                                 <div class="hidden justify-between text-[11px] font-semibold uppercase tracking-wide text-slate-400 md:flex">
                                     <span>1</span>
@@ -117,7 +117,7 @@
                                 <div class="space-y-3">
                                     <?php foreach ($product['attributes'] as $attribute): ?>
                                         <div
-                                            class="space-y-2 rounded-2xl border border-slate-100 bg-slate-50 p-3"
+                                            class="space-y-2 rounded-2xl border border-slate-100 bg-slate-50 p-2 md:p-3"
                                             data-attribute-group
                                             data-attribute-id="<?php echo (int) $attribute['id']; ?>"
                                             data-applies-to="<?php echo htmlspecialchars($attribute['applies_to'] ?? 'stem', ENT_QUOTES, 'UTF-8'); ?>"
@@ -143,10 +143,10 @@
                                                         data-attr-id="<?php echo (int) $attribute['id']; ?>"
                                                         data-value-id="<?php echo (int) $value['id']; ?>"
                                                         data-price-delta="<?php echo $priceDelta; ?>"
-                                                        class="inline-flex items-center gap-2 whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600"
+                                                        class="inline-flex items-center gap-2 whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600 md:text-sm"
                                                     aria-label="<?php echo htmlspecialchars($attribute['name'] . ': ' . $value['value'], ENT_QUOTES, 'UTF-8'); ?>"
                                                 >
-                                                        <span class="text-sm font-semibold text-slate-800"><?php echo htmlspecialchars($value['value'], ENT_QUOTES, 'UTF-8'); ?></span>
+                                                        <span class="text-xs font-semibold text-slate-800 md:text-sm"><?php echo htmlspecialchars($value['value'], ENT_QUOTES, 'UTF-8'); ?></span>
                                                         <?php if ($priceDelta != '0.00'): ?>
                                                             <span class="text-xs font-semibold text-rose-600">+<?php echo $priceDelta; ?> ₽</span>
                                                         <?php endif; ?>
@@ -158,9 +158,9 @@
                                 </div>
                             <?php endif; ?>
 
-                            <div class="flex items-center justify-between gap-3 rounded-2xl bg-white px-3 py-2 shadow-sm md:hidden">
-                                <span class="text-lg font-bold text-rose-600" data-actual-price>—</span>
-                                <button type="button" data-add-to-cart class="inline-flex items-center justify-center gap-2 rounded-xl bg-rose-600 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-white shadow-md shadow-rose-200 transition hover:-translate-y-0.5 hover:bg-rose-700">
+                            <div class="flex items-center justify-between gap-2 rounded-2xl bg-white px-2.5 py-1.5 shadow-sm md:hidden">
+                                <span class="text-base font-bold text-rose-600" data-actual-price>—</span>
+                                <button type="button" data-add-to-cart class="inline-flex items-center justify-center gap-2 rounded-xl bg-rose-600 px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-white shadow-md shadow-rose-200 transition hover:-translate-y-0.5 hover:bg-rose-700">
                                     <span class="material-symbols-rounded text-base">shopping_cart</span>
                                     В корзину
                                 </button>
@@ -217,6 +217,10 @@
 
     .no-scrollbar::-webkit-scrollbar {
         display: none;
+    }
+
+    .range-slider {
+        touch-action: none;
     }
 
     .no-scrollbar {

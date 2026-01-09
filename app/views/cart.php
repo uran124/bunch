@@ -20,7 +20,7 @@
     }
 </style>
 
-<div class="space-y-6">
+<div class="space-y-4 sm:space-y-6">
     <section class="space-y-2">
         <h1>
             <p class="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.08em] text-rose-600">
@@ -31,15 +31,15 @@
     </section>
 
     <?php if ($isEmpty): ?>
-        <div class="space-y-4 rounded-3xl border border-dashed border-slate-200 bg-white p-6 text-center shadow-sm">
-            <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-rose-50 text-rose-600">
+        <div class="space-y-4 rounded-3xl border border-dashed border-slate-200 bg-white p-4 text-center shadow-sm sm:p-6">
+            <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-rose-50 text-rose-600 sm:h-14 sm:w-14">
                 <span class="material-symbols-rounded text-2xl">shopping_cart</span>
             </div>
             <div class="space-y-1">
-                <h2 class="text-lg font-semibold text-slate-900">Корзина пуста</h2>
-                <p class="text-sm text-slate-600">Добавьте букет на главной странице, чтобы перейти к оформлению.</p>
+                <h2 class="text-base font-semibold text-slate-900 sm:text-lg">Корзина пуста</h2>
+                <p class="text-xs text-slate-600 sm:text-sm">Добавьте букет на главной странице, чтобы перейти к оформлению.</p>
             </div>
-            <a href="/?page=home" class="inline-flex items-center justify-center gap-2 rounded-xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white shadow-md shadow-rose-200 transition hover:-translate-y-0.5 hover:bg-rose-700">
+            <a href="/?page=home" class="inline-flex items-center justify-center gap-2 rounded-xl bg-rose-600 px-3 py-2 text-xs font-semibold text-white shadow-md shadow-rose-200 transition hover:-translate-y-0.5 hover:bg-rose-700 sm:px-4 sm:text-sm">
                 <span class="material-symbols-rounded text-base">add_shopping_cart</span>
                 Перейти в каталог
             </a>
@@ -86,7 +86,7 @@
                     }, $availableAttributes);
                     ?>
                     <article
-                        class="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg"
+                        class="space-y-4 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg sm:p-4"
                         data-cart-item
                         data-item-key="<?php echo htmlspecialchars($item['key'], ENT_QUOTES, 'UTF-8'); ?>"
                         data-product-id="<?php echo (int) $item['product_id']; ?>"
@@ -94,7 +94,7 @@
                     >
                         <div class="flex flex-col gap-3">
                             <div class="flex items-start gap-3">
-                                <div class="h-28 w-28 overflow-hidden rounded-xl bg-slate-100 shadow-inner">
+                                <div class="h-24 w-24 overflow-hidden rounded-xl bg-slate-100 shadow-inner sm:h-28 sm:w-28">
                                     <?php if (!empty($item['photo_url'])): ?>
                                         <img src="<?php echo htmlspecialchars($item['photo_url'], ENT_QUOTES, 'UTF-8'); ?>" alt="<?php echo htmlspecialchars($item['name'], ENT_QUOTES, 'UTF-8'); ?>" class="h-full w-full object-cover">
                                     <?php else: ?>
@@ -110,7 +110,7 @@
                                     data-attribute-title="<?php echo htmlspecialchars($item['name'], ENT_QUOTES, 'UTF-8'); ?>"
                                     data-attribute-data="<?php echo htmlspecialchars(json_encode($attributeTableData, JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8'); ?>"
                                 >
-                                    <p class="text-base font-semibold leading-tight text-slate-900">
+                                    <p class="text-sm font-semibold leading-tight text-slate-900 sm:text-base">
                                         <?php echo htmlspecialchars($item['name'], ENT_QUOTES, 'UTF-8'); ?>
                                         <?php if (!empty($item['stem_height_cm'])): ?>
                                             <span class="text-xs font-semibold uppercase tracking-wide text-slate-400">· <?php echo (int) $item['stem_height_cm']; ?> см</span>
@@ -129,9 +129,9 @@
                             </div>
 
                             <div class="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-slate-50 px-3 py-2" data-quantity-control>
-                                <p class="text-lg font-bold text-rose-600" data-line-total><?php echo number_format((float) ($item['line_total'] ?? 0), 0, '.', ' '); ?> ₽</p>
+                                <p class="text-base font-bold text-rose-600 sm:text-lg" data-line-total><?php echo number_format((float) ($item['line_total'] ?? 0), 0, '.', ' '); ?> ₽</p>
                                 <div class="flex items-center gap-2">
-                                    <button type="button" class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 transition hover:border-rose-200 hover:text-rose-600" data-qty-decrease>
+                                    <button type="button" class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 transition hover:border-rose-200 hover:text-rose-600 sm:h-9 sm:w-9" data-qty-decrease>
                                         <span class="material-symbols-rounded text-base">remove</span>
                                     </button>
                                     <input
@@ -139,16 +139,16 @@
                                         min="1"
                                         step="1"
                                         value="<?php echo (int) $item['qty']; ?>"
-                                        class="h-9 w-16 rounded-lg border border-slate-200 bg-white text-center text-sm font-semibold text-slate-800 shadow-inner focus:border-rose-300 focus:outline-none"
+                                        class="h-8 w-14 rounded-lg border border-slate-200 bg-white text-center text-xs font-semibold text-slate-800 shadow-inner focus:border-rose-300 focus:outline-none sm:h-9 sm:w-16 sm:text-sm"
                                         data-qty-input
                                     >
-                                    <button type="button" class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 transition hover:border-rose-200 hover:text-rose-600" data-qty-increase>
+                                    <button type="button" class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 transition hover:border-rose-200 hover:text-rose-600 sm:h-9 sm:w-9" data-qty-increase>
                                         <span class="material-symbols-rounded text-base">add</span>
                                     </button>
                                 </div>
                                 <button
                                     type="button"
-                                    class="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-rose-100 bg-white text-rose-600 shadow-sm shadow-rose-100 transition hover:-translate-y-0.5 hover:bg-rose-50"
+                                    class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-rose-100 bg-white text-rose-600 shadow-sm shadow-rose-100 transition hover:-translate-y-0.5 hover:bg-rose-50 sm:h-10 sm:w-10"
                                     data-remove-item
                                 >
                                     <span class="material-symbols-rounded text-base">delete</span>
@@ -159,7 +159,7 @@
                     </article>
                 <?php endforeach; ?>
 
-                <section class="space-y-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                <section class="space-y-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:p-4">
                     <div class="flex items-center justify-between">
                         <div>
                             <h3 class="text-base font-semibold text-slate-900">Добавить к заказу</h3>
@@ -170,8 +170,8 @@
                     <?php else: ?>
                         <div class="grid gap-3 sm:grid-cols-2">
                             <?php foreach ($accessories as $product): ?>
-                                <article class="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3 shadow-inner">
-                                    <div class="h-14 w-14 overflow-hidden rounded-lg bg-white">
+                                <article class="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-2.5 shadow-inner sm:p-3">
+                                    <div class="h-12 w-12 overflow-hidden rounded-lg bg-white sm:h-14 sm:w-14">
                                         <?php if (!empty($product['photo_url'])): ?>
                                             <img src="<?php echo htmlspecialchars($product['photo_url'], ENT_QUOTES, 'UTF-8'); ?>" alt="<?php echo htmlspecialchars($product['name'], ENT_QUOTES, 'UTF-8'); ?>" class="h-full w-full object-cover">
                                         <?php else: ?>
@@ -181,12 +181,12 @@
                                         <?php endif; ?>
                                     </div>
                                     <div class="flex-1">
-                                        <p class="text-sm font-semibold text-slate-900"><?php echo htmlspecialchars($product['name'], ENT_QUOTES, 'UTF-8'); ?></p>
-                                        <p class="text-xs text-slate-500"><?php echo number_format((float) $product['price'], 0, '.', ' '); ?> ₽</p>
+                                        <p class="text-xs font-semibold text-slate-900 sm:text-sm"><?php echo htmlspecialchars($product['name'], ENT_QUOTES, 'UTF-8'); ?></p>
+                                        <p class="text-[11px] text-slate-500 sm:text-xs"><?php echo number_format((float) $product['price'], 0, '.', ' '); ?> ₽</p>
                                     </div>
                      <button
                                         type="button"
-                                        class="inline-flex items-center gap-1 rounded-lg bg-white px-3 py-2 text-xs font-semibold text-rose-600 shadow-sm shadow-rose-100 transition hover:-translate-y-0.5"
+                                        class="inline-flex items-center gap-1 rounded-lg bg-white px-2.5 py-1.5 text-[11px] font-semibold text-rose-600 shadow-sm shadow-rose-100 transition hover:-translate-y-0.5 sm:px-3 sm:py-2 sm:text-xs"
                                         data-add-accessory
                                         data-product-id="<?php echo (int) $product['id']; ?>"
                                     >
@@ -230,7 +230,7 @@
                 }
                 ?>
                 <section
-                    class="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+                    class="space-y-4 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:p-4"
                     data-order-flow
                     data-addresses="<?php echo htmlspecialchars(json_encode($addresses, JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8'); ?>"
                     data-primary-address="<?php echo htmlspecialchars($primaryAddress['address'] ?? '', ENT_QUOTES, 'UTF-8'); ?>"
@@ -242,11 +242,11 @@
                     data-delivery-fallback="<?php echo htmlspecialchars((string) ($dadataConfig['defaultDeliveryPrice'] ?? 0), ENT_QUOTES, 'UTF-8'); ?>"
                 >
                     <div class="flex flex-wrap gap-2">
-                        <button type="button" data-order-mode="pickup" class="order-mode-btn flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 shadow-sm">
+                        <button type="button" data-order-mode="pickup" class="order-mode-btn flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700 shadow-sm sm:px-4 sm:py-2 sm:text-sm">
                             <span class="material-symbols-rounded text-base">storefront</span>
                             Самовывоз
                         </button>
-                        <button type="button" data-order-mode="delivery" class="order-mode-btn flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-800 transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700">
+                        <button type="button" data-order-mode="delivery" class="order-mode-btn flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-800 transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700 sm:px-4 sm:py-2 sm:text-sm">
                             <span class="material-symbols-rounded text-base">local_shipping</span>
                             Доставка
                         </button>
@@ -254,9 +254,9 @@
 
                     <div class="flex flex-wrap items-center gap-3" data-schedule-fields>
                         <span class="material-symbols-rounded text-base text-slate-400">calendar_today</span>
-                        <input type="date" value="<?php echo htmlspecialchars($today, ENT_QUOTES, 'UTF-8'); ?>" class="order-datetime-input rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm focus:border-rose-300 focus:outline-none" data-order-date>
+                        <input type="date" value="<?php echo htmlspecialchars($today, ENT_QUOTES, 'UTF-8'); ?>" class="order-datetime-input rounded-xl border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-800 shadow-sm focus:border-rose-300 focus:outline-none sm:px-3 sm:py-2 sm:text-sm" data-order-date>
                         <span class="material-symbols-rounded text-base text-slate-400">schedule</span>
-                        <input type="time" class="order-datetime-input rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm focus:border-rose-300 focus:outline-none" placeholder="Ближайшее" data-order-time>
+                        <input type="time" class="order-datetime-input rounded-xl border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-800 shadow-sm focus:border-rose-300 focus:outline-none sm:px-3 sm:py-2 sm:text-sm" placeholder="Ближайшее" data-order-time>
                     </div>
 
                     <div class="space-y-3 rounded-xl border border-dashed border-rose-100 bg-rose-50/50 p-3" data-delivery-extra hidden>
@@ -294,33 +294,33 @@
                             </div>
                         <?php endif; ?>
 
-                        <label class="flex flex-col gap-1 text-sm font-semibold text-slate-700">
+                        <label class="flex flex-col gap-1 text-xs font-semibold text-slate-700 sm:text-sm">
                             Улица, номер дома
                             <input
                                 type="text"
                                 placeholder="Карла Маркса, 12"
                                 value="<?php echo htmlspecialchars($primaryAddressLine, ENT_QUOTES, 'UTF-8'); ?>"
-                                class="rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm focus:border-rose-300 focus:outline-none"
+                                class="rounded-xl border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-800 shadow-sm focus:border-rose-300 focus:outline-none sm:px-3 sm:py-2 sm:text-sm"
                                 data-address-street
                             >
                         </label>
 
-                        <label class="flex flex-col gap-1 text-sm font-semibold text-slate-700">
+                        <label class="flex flex-col gap-1 text-xs font-semibold text-slate-700 sm:text-sm">
                             Квартира/Офис
                             <input
                                 type="text"
                                 placeholder="Квартира или офис"
                                 value="<?php echo htmlspecialchars($primaryAddress['raw']['apartment'] ?? '', ENT_QUOTES, 'UTF-8'); ?>"
-                                class="rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm focus:border-rose-300 focus:outline-none"
+                                class="rounded-xl border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-800 shadow-sm focus:border-rose-300 focus:outline-none sm:px-3 sm:py-2 sm:text-sm"
                                 data-address-apartment
                             >
                         </label>
 
-                        <label class="flex flex-col gap-1 text-sm font-semibold text-slate-700">
+                        <label class="flex flex-col gap-1 text-xs font-semibold text-slate-700 sm:text-sm">
                             Комментарий к адресу
                             <textarea
                                 rows="2"
-                                class="rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm focus:border-rose-300 focus:outline-none"
+                                class="rounded-xl border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-800 shadow-sm focus:border-rose-300 focus:outline-none sm:px-3 sm:py-2 sm:text-sm"
                                 placeholder="Например, домофон не работает"
                                 data-address-comment
                             ><?php echo htmlspecialchars($primaryAddress['raw']['delivery_comment'] ?? '', ENT_QUOTES, 'UTF-8'); ?></textarea>
@@ -331,11 +331,11 @@
                         <div class="space-y-2">
                             <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Получатель</p>
                             <div class="flex flex-wrap gap-2">
-                                <button type="button" class="recipient-btn inline-flex items-center gap-2 rounded-xl border border-rose-100 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700 shadow-sm" data-recipient-mode="self">
+                                <button type="button" class="recipient-btn inline-flex items-center gap-2 rounded-xl border border-rose-100 bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700 shadow-sm sm:py-2" data-recipient-mode="self">
                                     <span class="material-symbols-rounded text-base">person</span>
                                     Я
                                 </button>
-                                <button type="button" class="recipient-btn inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm" data-recipient-mode="other">
+                                <button type="button" class="recipient-btn inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm sm:py-2" data-recipient-mode="other">
                                     <span class="material-symbols-rounded text-base">group</span>
                                     Другой человек
                                 </button>
@@ -343,13 +343,13 @@
                         </div>
 
                         <div class="grid gap-3 sm:grid-cols-2" data-recipient-extra hidden>
-                            <label class="flex flex-col gap-1 text-sm font-semibold text-slate-700">
+                            <label class="flex flex-col gap-1 text-xs font-semibold text-slate-700 sm:text-sm">
                                 Имя получателя
-                                <input type="text" class="rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm focus:border-rose-300 focus:outline-none" placeholder="Для кого букет?" data-recipient-name>
+                                <input type="text" class="rounded-xl border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-800 shadow-sm focus:border-rose-300 focus:outline-none sm:px-3 sm:py-2 sm:text-sm" placeholder="Для кого букет?" data-recipient-name>
                             </label>
-                            <label class="flex flex-col gap-1 text-sm font-semibold text-slate-700">
+                            <label class="flex flex-col gap-1 text-xs font-semibold text-slate-700 sm:text-sm">
                                 Телефон получателя
-                                <input type="tel" class="rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm focus:border-rose-300 focus:outline-none" placeholder="+7 (999) 123-45-67" data-recipient-phone>
+                                <input type="tel" class="rounded-xl border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-800 shadow-sm focus:border-rose-300 focus:outline-none sm:px-3 sm:py-2 sm:text-sm" placeholder="+7 (999) 123-45-67" data-recipient-phone>
                             </label>
                             <p class="text-xs text-slate-500 sm:col-span-2">
                                 Передавая данные получателя, вы подтверждаете, что имеете право их передать.
@@ -358,17 +358,17 @@
                     </div>
 
                     <div class="space-y-2 rounded-xl border border-slate-100 bg-slate-50 p-3">
-                        <label class="flex flex-col gap-1 text-sm font-semibold text-slate-700">
+                        <label class="flex flex-col gap-1 text-xs font-semibold text-slate-700 sm:text-sm">
                             Комментарий к заказу
-                            <textarea rows="3" class="rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-800 shadow-sm focus:border-rose-300 focus:outline-none" placeholder="Пожелания по букету или доставке" data-order-comment></textarea>
+                            <textarea rows="3" class="rounded-xl border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-800 shadow-sm focus:border-rose-300 focus:outline-none sm:px-3 sm:py-2 sm:text-sm" placeholder="Пожелания по букету или доставке" data-order-comment></textarea>
                         </label>
                     </div>
                 </section>
             </div>
 
-            <aside class="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+            <aside class="space-y-4 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:p-4">
                 <div class="space-y-3">
-                    <div class="flex items-center justify-between text-lg font-bold text-rose-600">
+                    <div class="flex items-center justify-between text-base font-bold text-rose-600 sm:text-lg">
                         <span>Сумма заказа</span>
                         <span
                             data-order-grand-total
@@ -379,7 +379,7 @@
                         </span>
                     </div>
 
-                    <div class="space-y-2 rounded-xl bg-slate-50 p-3 text-sm font-semibold text-slate-800">
+                    <div class="space-y-2 rounded-xl bg-slate-50 p-3 text-xs font-semibold text-slate-800 sm:text-sm">
                         <div class="flex items-center justify-between">
                             <span>Стоимость букета</span>
                             <span
@@ -393,7 +393,7 @@
                             <span>Стоимость доставки</span>
                             <span data-delivery-total data-amount="0">0 ₽</span>
                         </div>
-                        <div class="flex items-center justify-between text-base font-bold text-rose-600">
+                        <div class="flex items-center justify-between text-sm font-bold text-rose-600 sm:text-base">
                             <span>Итого</span>
                             <span data-order-grand-total data-cart-total>
                                 <?php echo number_format((float) ($totals['total'] ?? 0), 0, '.', ' '); ?> ₽
@@ -402,11 +402,11 @@
                     </div>
                 </div>
 
-                <button class="flex w-full items-center justify-center gap-2 rounded-2xl bg-rose-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-rose-200 transition hover:-translate-y-0.5 hover:bg-rose-700" data-submit-order>
+                <button class="flex w-full items-center justify-center gap-2 rounded-2xl bg-rose-600 px-3 py-2 text-xs font-semibold text-white shadow-lg shadow-rose-200 transition hover:-translate-y-0.5 hover:bg-rose-700 sm:px-4 sm:py-3 sm:text-sm" data-submit-order>
                     <span class="material-symbols-rounded text-base">done_all</span>
                     Оформить заказ
                 </button>
-                <p class="text-xs text-slate-500">
+                <p class="text-[11px] text-slate-500 sm:text-xs">
                     Нажимая «Оформить заказ», вы соглашаетесь с
                     <a class="font-semibold text-rose-600 underline underline-offset-2" href="/?page=offer">Пользовательским соглашением</a>
                     и

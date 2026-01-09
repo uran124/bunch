@@ -1,12 +1,12 @@
-<section class="grid gap-6">
+<section class="grid gap-4 sm:gap-6">
     <header class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div class="space-y-1">
             <p class="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.08em] text-rose-600">
                 <span class="material-symbols-rounded text-base">account_circle</span>
                 Аккаунт
             </p>
-            <h1 class="text-3xl font-semibold tracking-tight text-slate-900">Личный кабинет</h1>
-            <p class="text-sm text-slate-600">Личные данные, адреса, активные заказы и подписки.</p>
+            <h1 class="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">Личный кабинет</h1>
+            <p class="text-xs text-slate-600 sm:text-sm">Личные данные, адреса, активные заказы и подписки.</p>
         </div>
         <div class="flex flex-wrap items-center gap-2 text-xs font-semibold text-emerald-700">
             <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 text-emerald-700 ring-1 ring-emerald-100">
@@ -25,14 +25,14 @@
         </div>
     </header>
 
-    <div class="grid gap-5 lg:grid-cols-3">
-        <div class="lg:col-span-2 space-y-5">
-            <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+    <div class="grid gap-4 lg:grid-cols-3 sm:gap-5">
+        <div class="lg:col-span-2 space-y-4 sm:space-y-5">
+            <div class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
                 <div class="flex items-start justify-between gap-3">
                     <div class="space-y-2">
                         <p class="text-xs font-semibold uppercase tracking-[0.06em] text-slate-500">Профиль</p>
-                        <h2 class="text-2xl font-semibold text-slate-900"><?php echo htmlspecialchars($user['name'], ENT_QUOTES, 'UTF-8'); ?></h2>
-                        <div class="grid gap-2 text-sm text-slate-700">
+                        <h2 class="text-xl font-semibold text-slate-900 sm:text-2xl"><?php echo htmlspecialchars($user['name'], ENT_QUOTES, 'UTF-8'); ?></h2>
+                        <div class="grid gap-2 text-xs text-slate-700 sm:text-sm">
                             <div class="inline-flex items-center gap-2 rounded-lg bg-slate-50 px-3 py-2 font-semibold text-slate-800">
                                 <span class="material-symbols-rounded text-base text-rose-500">call</span>
                                 <span><?php echo htmlspecialchars($user['phone'], ENT_QUOTES, 'UTF-8'); ?></span>
@@ -51,7 +51,7 @@
                         </div>
                     </div>
                     <button
-                        class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-rose-200 hover:text-rose-700"
+                        class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-rose-200 hover:text-rose-700 sm:text-sm"
                         type="button"
                     >
                         <span class="material-symbols-rounded text-base">edit</span>
@@ -60,14 +60,14 @@
                 </div>
             </div>
 
-            <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+            <div class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
                 <div class="flex items-center justify-between gap-3">
                     <div>
                         <p class="text-xs font-semibold uppercase tracking-[0.06em] text-slate-500">Адреса доставки</p>
-                        <h3 class="text-lg font-semibold text-slate-900">Управление адресами</h3>
+                        <h3 class="text-base font-semibold text-slate-900 sm:text-lg">Управление адресами</h3>
                     </div>
                     <button
-                        class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-rose-200 hover:text-rose-700"
+                        class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-rose-200 hover:text-rose-700 sm:text-sm"
                         type="button"
                         data-address-action="new"
                     >
@@ -92,7 +92,7 @@
                         $recipientLine = trim($recipientName . ($recipientPhone ? ' · ' . $recipientPhone : ''));
                         ?>
                         <div
-                            class="flex items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-slate-50/60 px-4 py-3"
+                            class="flex items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-slate-50/60 px-3 py-2.5 sm:px-4 sm:py-3"
                             data-address-id="<?php echo (int) ($address['raw']['id'] ?? 0); ?>"
                             data-address-label="<?php echo htmlspecialchars($address['label'] ?? 'Адрес', ENT_QUOTES, 'UTF-8'); ?>"
                             data-address-text="<?php echo htmlspecialchars($address['raw']['address_text'] ?? $address['address'], ENT_QUOTES, 'UTF-8'); ?>"
@@ -119,7 +119,7 @@
                                 <p class="text-sm font-semibold text-slate-900">
                                     <?php echo htmlspecialchars($address['address'], ENT_QUOTES, 'UTF-8'); ?>
                                 </p>
-                                <p class="text-sm text-slate-600">
+                                <p class="text-xs text-slate-600 sm:text-sm">
                                     <?php echo htmlspecialchars($recipientLine ?: 'Получатель не указан', ENT_QUOTES, 'UTF-8'); ?>
                                 </p>
                                 <?php if (!empty($address['is_primary'])): ?>
@@ -152,11 +152,11 @@
             </div>
 
             <?php if (!empty($activeOrder)): ?>
-                <div class="rounded-3xl border border-amber-200 bg-amber-50 p-5 shadow-sm sm:p-6">
+                <div class="rounded-3xl border border-amber-200 bg-amber-50 p-4 shadow-sm sm:p-6">
                     <div class="flex flex-wrap items-center justify-between gap-3">
                         <div class="space-y-1">
                             <p class="text-xs font-semibold uppercase tracking-[0.06em] text-amber-700">Активный заказ</p>
-                            <h3 class="text-lg font-semibold text-slate-900">Ближайшая доставка</h3>
+                            <h3 class="text-base font-semibold text-slate-900 sm:text-lg">Ближайшая доставка</h3>
                         </div>
                         <div class="flex flex-wrap items-center gap-2">
                             <span class="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-xs font-semibold text-amber-700 shadow-sm ring-1 ring-amber-100">
@@ -170,28 +170,28 @@
                         </div>
                     </div>
 
-                    <div class="mt-4 flex flex-col gap-3 rounded-2xl bg-white p-4 shadow-inner shadow-amber-100">
-                        <div class="flex items-center justify-between text-sm font-semibold text-slate-800">
+                    <div class="mt-4 flex flex-col gap-3 rounded-2xl bg-white p-3 shadow-inner shadow-amber-100 sm:p-4">
+                        <div class="flex items-center justify-between text-xs font-semibold text-slate-800 sm:text-sm">
                             <span>Заказ <?php echo htmlspecialchars($activeOrder['number'], ENT_QUOTES, 'UTF-8'); ?></span>
                             <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-600">
                                 <?php echo htmlspecialchars($activeOrder['statusLabel'], ENT_QUOTES, 'UTF-8'); ?>
                             </span>
                         </div>
                         <div class="flex items-center gap-4">
-                            <div class="h-20 w-24 overflow-hidden rounded-2xl border border-slate-100 bg-slate-100">
+                            <div class="h-16 w-20 overflow-hidden rounded-2xl border border-slate-100 bg-slate-100 sm:h-20 sm:w-24">
                                 <img
                                     src="<?php echo htmlspecialchars($activeOrder['item']['image'], ENT_QUOTES, 'UTF-8'); ?>"
                                     alt="<?php echo htmlspecialchars($activeOrder['item']['name'], ENT_QUOTES, 'UTF-8'); ?>"
                                     class="h-full w-full object-cover"
                                 >
                             </div>
-                            <div class="flex flex-1 flex-col justify-between gap-1 text-sm text-slate-700">
+                            <div class="flex flex-1 flex-col justify-between gap-1 text-xs text-slate-700 sm:text-sm">
                                 <p class="font-semibold text-slate-900"><?php echo htmlspecialchars($activeOrder['item']['name'], ENT_QUOTES, 'UTF-8'); ?></p>
                                 <p class="text-slate-600">×<?php echo (int) $activeOrder['item']['qty']; ?> · <?php echo htmlspecialchars($activeOrder['item']['unitPrice'] ?? $activeOrder['item']['price'], ENT_QUOTES, 'UTF-8'); ?></p>
                                 <p class="font-semibold text-slate-900">Сумма: <?php echo htmlspecialchars($activeOrder['total'], ENT_QUOTES, 'UTF-8'); ?></p>
                             </div>
                         </div>
-                        <div class="flex items-center gap-2 text-sm text-slate-700">
+                        <div class="flex items-center gap-2 text-xs text-slate-700 sm:text-sm">
                             <span class="material-symbols-rounded text-base text-amber-700">
                                 <?php echo $activeOrder['delivery_type'] === 'pickup' ? 'storefront' : 'local_shipping'; ?>
                             </span>
@@ -206,11 +206,11 @@
             <?php endif; ?>
 
             <?php if (!empty($activeOrders)): ?>
-                <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+                <div class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-xs font-semibold uppercase tracking-[0.06em] text-slate-500">Активные заказы</p>
-                            <h3 class="text-lg font-semibold text-slate-900">В обработке: <?php echo count($activeOrders); ?></h3>
+                            <h3 class="text-base font-semibold text-slate-900 sm:text-lg">В обработке: <?php echo count($activeOrders); ?></h3>
                         </div>
                         <a href="<?php echo htmlspecialchars($ordersLink, ENT_QUOTES, 'UTF-8'); ?>" class="inline-flex items-center gap-1 rounded-xl bg-slate-900 px-3 py-2 text-xs font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
                             <span class="material-symbols-rounded text-base">receipt_long</span>
@@ -221,7 +221,7 @@
                     <div class="mt-4 grid gap-3 sm:grid-cols-2">
                         <?php foreach ($activeOrders as $order): ?>
                             <article class="flex flex-col gap-2 rounded-2xl border border-slate-100 bg-slate-50/70 p-3">
-                                <div class="flex items-center justify-between text-sm font-semibold text-slate-900">
+                                <div class="flex items-center justify-between text-xs font-semibold text-slate-900 sm:text-sm">
                                     <span><?php echo htmlspecialchars($order['number'], ENT_QUOTES, 'UTF-8'); ?></span>
                                     <span class="inline-flex items-center gap-1 rounded-full bg-slate-900 px-2 py-0.5 text-xs font-semibold text-white">
                                         <?php echo htmlspecialchars($order['statusLabel'], ENT_QUOTES, 'UTF-8'); ?>
@@ -235,7 +235,7 @@
                                     </span>
                                     <?php echo htmlspecialchars($order['delivery_type'] === 'pickup' ? 'Самовывоз' : ($order['delivery_address'] ?? 'Доставка'), ENT_QUOTES, 'UTF-8'); ?>
                                 </p>
-                                <p class="text-sm font-semibold text-slate-900">Сумма: <?php echo htmlspecialchars($order['total'], ENT_QUOTES, 'UTF-8'); ?></p>
+                                <p class="text-xs font-semibold text-slate-900 sm:text-sm">Сумма: <?php echo htmlspecialchars($order['total'], ENT_QUOTES, 'UTF-8'); ?></p>
                             </article>
                         <?php endforeach; ?>
                     </div>
@@ -300,34 +300,34 @@
             <?php endif; ?>
         </div>
 
-        <div class="space-y-5">
-            <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+        <div class="space-y-4 sm:space-y-5">
+            <div class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
                 <div class="flex items-start justify-between gap-3">
                     <div class="space-y-1">
                         <p class="text-xs font-semibold uppercase tracking-[0.06em] text-slate-500">Быстрые действия</p>
-                        <h3 class="text-lg font-semibold text-slate-900">Текущее состояние</h3>
+                        <h3 class="text-base font-semibold text-slate-900 sm:text-lg">Текущее состояние</h3>
                     </div>
                     <span class="inline-flex items-center gap-1 rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold text-white shadow-sm">
                         <span class="material-symbols-rounded text-base">rocket_launch</span>
                         Быстро
                     </span>
                 </div>
-                <div class="mt-4 space-y-3 text-sm text-slate-800">
-                    <div class="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3">
+                <div class="mt-4 space-y-3 text-xs text-slate-800 sm:text-sm">
+                    <div class="flex items-center justify-between rounded-2xl bg-slate-50 px-3 py-2.5 sm:px-4 sm:py-3">
                         <div class="flex items-center gap-2">
                             <span class="material-symbols-rounded text-base text-emerald-500">check_circle</span>
                             <span>Активных заказов</span>
                         </div>
-                        <span class="text-base font-semibold text-slate-900"><?php echo count($activeOrders); ?></span>
+                        <span class="text-sm font-semibold text-slate-900 sm:text-base"><?php echo count($activeOrders); ?></span>
                     </div>
-                    <div class="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3">
+                    <div class="flex items-center justify-between rounded-2xl bg-slate-50 px-3 py-2.5 sm:px-4 sm:py-3">
                         <div class="flex items-center gap-2">
                             <span class="material-symbols-rounded text-base text-emerald-500">calendar_month</span>
                             <span>Активные подписки</span>
                         </div>
-                        <span class="text-base font-semibold text-slate-900"><?php echo count($activeSubscriptions); ?></span>
+                        <span class="text-sm font-semibold text-slate-900 sm:text-base"><?php echo count($activeSubscriptions); ?></span>
                     </div>
-                    <a href="<?php echo htmlspecialchars($ordersLink, ENT_QUOTES, 'UTF-8'); ?>" class="flex items-center justify-between rounded-2xl bg-rose-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+                    <a href="<?php echo htmlspecialchars($ordersLink, ENT_QUOTES, 'UTF-8'); ?>" class="flex items-center justify-between rounded-2xl bg-rose-600 px-3 py-2.5 text-xs font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md sm:px-4 sm:py-3 sm:text-sm">
                         <span class="inline-flex items-center gap-2">
                             <span class="material-symbols-rounded text-base">list_alt</span>
                             Все заказы
@@ -335,7 +335,7 @@
                         <span class="material-symbols-rounded text-base">arrow_forward</span>
                     </a>
                     <?php if (!empty($cartShortcut)): ?>
-                        <a href="/?page=cart" class="flex items-center justify-between rounded-2xl bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800 ring-1 ring-amber-100 transition hover:-translate-y-0.5 hover:shadow-sm">
+                        <a href="/?page=cart" class="flex items-center justify-between rounded-2xl bg-amber-50 px-3 py-2.5 text-xs font-semibold text-amber-800 ring-1 ring-amber-100 transition hover:-translate-y-0.5 hover:shadow-sm sm:px-4 sm:py-3 sm:text-sm">
                             <span class="inline-flex items-center gap-2">
                                 <span class="material-symbols-rounded text-base">shopping_cart</span>
                                 В корзине: <?php echo htmlspecialchars($cartShortcut['title'], ENT_QUOTES, 'UTF-8'); ?><?php echo $cartShortcut['count'] > 1 ? ' +' . ((int) $cartShortcut['count'] - 1) . ' товар' : ''; ?>
@@ -346,12 +346,12 @@
                 </div>
             </div>
 
-            <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+            <div class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
                 <div class="flex items-center justify-between gap-3">
                     <div class="space-y-1">
                         <p class="text-xs font-semibold uppercase tracking-[0.06em] text-slate-500">Уведомления</p>
-                        <h3 class="text-lg font-semibold text-slate-900">Настройка уведомлений</h3>
-                        <p class="text-sm text-slate-600">Выберите, какие события отслеживать. Настройки учитываются при рассылке из админпанели.</p>
+                        <h3 class="text-base font-semibold text-slate-900 sm:text-lg">Настройка уведомлений</h3>
+                        <p class="text-xs text-slate-600 sm:text-sm">Выберите, какие события отслеживать. Настройки учитываются при рассылке из админпанели.</p>
                     </div>
                     <span class="inline-flex items-center gap-1 rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold text-white shadow-sm">
                         <span class="material-symbols-rounded text-base">tune</span>
@@ -360,11 +360,11 @@
                 </div>
 
                 <div class="mt-4 space-y-4" id="birthday-reminders">
-                    <div class="rounded-2xl border border-slate-200 bg-slate-50/60 p-4">
+                    <div class="rounded-2xl border border-slate-200 bg-slate-50/60 p-3 sm:p-4">
                         <div class="flex flex-wrap items-center justify-between gap-3">
                             <div>
                                 <p class="text-sm font-semibold text-slate-900">Напоминать заранее</p>
-                                <p class="text-xs text-slate-500">Выберите, за сколько дней предупредить.</p>
+                                <p class="text-[11px] text-slate-500 sm:text-xs">Выберите, за сколько дней предупредить.</p>
                             </div>
                             <div class="flex flex-wrap items-center gap-2">
                                 <?php foreach ($birthdayReminderDays as $day): ?>
@@ -385,11 +385,11 @@
                         </div>
                     </div>
 
-                    <div class="rounded-2xl border border-slate-200 bg-white p-4">
+                    <div class="rounded-2xl border border-slate-200 bg-white p-3 sm:p-4">
                         <div class="flex items-center justify-between">
                             <div>
                                 <p class="text-sm font-semibold text-slate-900">Напоминания о днях рождения</p>
-                                <p class="text-xs text-slate-500">Открывайте карточку, чтобы изменить данные получателя.</p>
+                                <p class="text-[11px] text-slate-500 sm:text-xs">Открывайте карточку, чтобы изменить данные получателя.</p>
                             </div>
                             <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-700">
                                 <span class="material-symbols-rounded text-sm">celebration</span>
@@ -404,8 +404,8 @@
                             </div>
                             <?php if (!empty($birthdayReminders)): ?>
                                 <?php foreach ($birthdayReminders as $reminder): ?>
-                                    <div class="grid grid-cols-3 gap-2 rounded-xl bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700">
-                                        <?php
+                            <div class="grid grid-cols-3 gap-2 rounded-xl bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 sm:text-sm">
+                                <?php
                                         $dataAttrs = sprintf(
                                             'data-birthday-reminder-edit data-birthday-reminder-id="%s" data-birthday-reminder-recipient="%s" data-birthday-reminder-occasion="%s" data-birthday-reminder-date="%s"',
                                             htmlspecialchars((string) $reminder['id'], ENT_QUOTES, 'UTF-8'),
@@ -440,7 +440,7 @@
                             $locked = !empty($option['locked']);
                             $link = $option['link'] ?? null;
                             ?>
-                            <div class="flex items-start justify-between gap-4 rounded-2xl border border-slate-200 bg-slate-50/60 px-4 py-3">
+                            <div class="flex items-start justify-between gap-4 rounded-2xl border border-slate-200 bg-slate-50/60 px-3 py-2.5 sm:px-4 sm:py-3">
                                 <div class="flex items-start gap-3">
                                     <span class="material-symbols-rounded mt-0.5 text-base text-rose-500">notifications</span>
                                     <div class="space-y-1">
@@ -476,27 +476,27 @@
                 </div>
             </div>
 
-            <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+            <div class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
                 <div class="flex items-center justify-between">
                     <div class="space-y-1">
                         <p class="text-xs font-semibold uppercase tracking-[0.06em] text-slate-500">Безопасность</p>
-                        <h3 class="text-lg font-semibold text-slate-900">Управление входом</h3>
-                        <p class="text-sm text-slate-600">Следите за активностью аккаунта и обновляйте PIN по необходимости.</p>
+                        <h3 class="text-base font-semibold text-slate-900 sm:text-lg">Управление входом</h3>
+                        <p class="text-xs text-slate-600 sm:text-sm">Следите за активностью аккаунта и обновляйте PIN по необходимости.</p>
                     </div>
-                    <button class="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md" type="button" data-open-pin-modal>
+                    <button class="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-3 py-2 text-xs font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md sm:px-4 sm:text-sm" type="button" data-open-pin-modal>
                         <span class="material-symbols-rounded text-base">lock_reset</span>
                         Сменить PIN
                     </button>
                 </div>
-                <div class="mt-4 grid gap-2 text-sm text-slate-700">
-                    <div class="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3">
+                <div class="mt-4 grid gap-2 text-xs text-slate-700 sm:text-sm">
+                    <div class="flex items-center justify-between rounded-2xl bg-slate-50 px-3 py-2.5 sm:px-4 sm:py-3">
                         <span class="inline-flex items-center gap-2 font-semibold text-slate-800">
                             <span class="material-symbols-rounded text-base text-emerald-500">check</span>
                             Последний вход: <?php echo htmlspecialchars($lastLogin, ENT_QUOTES, 'UTF-8'); ?>
                         </span>
                         <a class="text-rose-600 hover:text-rose-700" href="/?page=logout">Выйти</a>
                     </div>
-                    <div class="flex items-center gap-2 text-xs text-slate-500">
+                    <div class="flex items-center gap-2 text-[11px] text-slate-500 sm:text-xs">
                         <span class="material-symbols-rounded text-base">info</span>
                         <span>Изменение настроек вступает в силу мгновенно и используется при сегментации уведомлений.</span>
                     </div>

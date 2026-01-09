@@ -6,7 +6,7 @@
 /** @var bool $historyHasMore */
 ?>
 
-<section class="grid gap-4 sm:gap-6">
+<section class="grid gap-3 sm:gap-6">
     <header class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div class="space-y-1"><h1>
             <p class="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.08em] text-rose-600">
@@ -21,11 +21,11 @@
     <?php if (!empty($activeSubscriptions) || !empty($activeOrders)): ?>
         <div class="sticky top-2 z-10 space-y-3">
             <?php if (!empty($activeSubscriptions)): ?>
-                <div class="rounded-3xl border border-emerald-200 bg-emerald-50 p-4 shadow-sm sm:p-5">
+                <div class="rounded-3xl border border-emerald-200 bg-emerald-50 p-3 shadow-sm sm:p-5">
                     <div class="flex items-center justify-between gap-3">
                         <div class="space-y-1">
                             <p class="text-xs font-semibold uppercase tracking-[0.06em] text-emerald-700">Активные подписки</p>
-                            <h3 class="text-lg font-semibold text-slate-900">Ближайшие списания</h3>
+                            <h3 class="text-base font-semibold text-slate-900 sm:text-lg">Ближайшие списания</h3>
                         </div>
                         <span class="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-xs font-semibold text-emerald-700 shadow-sm ring-1 ring-emerald-100">
                             <span class="material-symbols-rounded text-base">push_pin</span>
@@ -55,11 +55,11 @@
             <?php endif; ?>
 
             <?php if (!empty($activeOrders)): ?>
-                <div class="rounded-3xl border border-amber-200 bg-amber-50 p-4 shadow-sm sm:p-5">
+                <div class="rounded-3xl border border-amber-200 bg-amber-50 p-3 shadow-sm sm:p-5">
                     <div class="flex items-center justify-between gap-3">
                         <div class="space-y-1">
                             <p class="text-xs font-semibold uppercase tracking-[0.06em] text-amber-700">Активные заказы</p>
-                            <h3 class="text-lg font-semibold text-slate-900">В работе</h3>
+                            <h3 class="text-base font-semibold text-slate-900 sm:text-lg">В работе</h3>
                         </div>
                         <span class="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-xs font-semibold text-amber-700 shadow-sm ring-1 ring-amber-100">
                             <span class="material-symbols-rounded text-base">push_pin</span>
@@ -81,7 +81,7 @@
                                 };
                                 ?>
                             <article class="flex items-start gap-3 rounded-2xl bg-white p-3 shadow-inner shadow-amber-100 sm:p-4">
-                                <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 text-amber-700">
+                                <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-50 text-amber-700 sm:h-12 sm:w-12">
                                     <span class="material-symbols-rounded text-xl">local_shipping</span>
                                 </div>
                                 <div class="flex-1 space-y-2">
@@ -98,7 +98,7 @@
                                     <?php if (!empty($order['item'])): ?>
                                         <p class="text-sm font-semibold text-slate-900"><?php echo htmlspecialchars($order['item']['title'], ENT_QUOTES, 'UTF-8'); ?> ×<?php echo (int) $order['item']['qty']; ?> · <?php echo htmlspecialchars($order['item']['unit'], ENT_QUOTES, 'UTF-8'); ?></p>
                                     <?php endif; ?>
-                                    <div class="flex flex-wrap items-center justify-between gap-2 text-sm text-slate-700">
+                                    <div class="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-700 sm:text-sm">
                                         <span class="inline-flex items-center gap-1">
                                             <span class="material-symbols-rounded text-base text-amber-600"><?php echo $order['deliveryType'] === 'Доставка' ? 'local_shipping' : 'storefront'; ?></span>
                                             <span><?php echo htmlspecialchars($order['deliveryType'], ENT_QUOTES, 'UTF-8'); ?></span>
@@ -106,7 +106,7 @@
                                                 <span>· <?php echo htmlspecialchars($order['scheduled'], ENT_QUOTES, 'UTF-8'); ?></span>
                                             <?php endif; ?>
                                         </span>
-                                        <span class="text-base font-semibold text-slate-900"><?php echo htmlspecialchars($order['total'], ENT_QUOTES, 'UTF-8'); ?></span>
+                                        <span class="text-sm font-semibold text-slate-900 sm:text-base"><?php echo htmlspecialchars($order['total'], ENT_QUOTES, 'UTF-8'); ?></span>
                                     </div>
                                 </div>
                                 <div class="flex flex-col items-end gap-2">
@@ -135,11 +135,11 @@
         </div>
     <?php endif; ?>
 
-    <div class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+    <div class="rounded-3xl border border-slate-200 bg-white p-3 shadow-sm sm:p-6">
         <div class="flex flex-wrap items-center justify-between gap-3">
             <div class="space-y-1">
                 <p class="text-xs font-semibold uppercase tracking-[0.06em] text-slate-500">Выполненные заказы</p>
-                <h3 class="text-xl font-semibold text-slate-900">История покупок</h3>
+                <h3 class="text-lg font-semibold text-slate-900 sm:text-xl">История покупок</h3>
             </div>
 
         </div>
@@ -153,7 +153,7 @@
         >
             <div data-history-list class="grid gap-3">
                 <?php if (empty($completedOrders)): ?>
-                    <div class="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+                    <div class="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-3 text-xs text-slate-600 sm:p-4 sm:text-sm">
                         Выполненных заказов пока нет.
                     </div>
                 <?php else: ?>
@@ -170,7 +170,7 @@
                             };
                             ?>
                             <article class="flex gap-3 rounded-2xl border border-slate-100 bg-white p-3 shadow-sm ring-1 ring-slate-100 sm:gap-4 sm:p-4" data-order-card>
-                                <div class="h-16 w-20 overflow-hidden rounded-xl bg-slate-100">
+                                <div class="h-14 w-18 overflow-hidden rounded-xl bg-slate-100 sm:h-16 sm:w-20">
                                     <img
                                         src="<?php echo htmlspecialchars($order['item']['image'] ?? '/assets/images/products/bouquet.svg', ENT_QUOTES, 'UTF-8'); ?>"
                                     alt="<?php echo htmlspecialchars($order['item']['title'] ?? 'Товар', ENT_QUOTES, 'UTF-8'); ?>"
@@ -178,7 +178,7 @@
                                 >
                             </div>
                             <div class="flex-1 space-y-2">
-                                <div class="flex flex-wrap items-center justify-between gap-2 text-sm font-semibold text-slate-900">
+                                <div class="flex flex-wrap items-center justify-between gap-2 text-xs font-semibold text-slate-900 sm:text-sm">
                                     <div class="flex flex-wrap items-center gap-2">
                                         <span><?php echo htmlspecialchars($order['number'], ENT_QUOTES, 'UTF-8'); ?></span>
                                         <span class="text-slate-500">· <?php echo htmlspecialchars($order['createdAt'], ENT_QUOTES, 'UTF-8'); ?></span>
@@ -190,9 +190,9 @@
                                 </div>
                                 <?php if (!empty($order['item'])): ?>
                                     <p class="text-sm font-semibold text-slate-900"><?php echo htmlspecialchars($order['item']['title'], ENT_QUOTES, 'UTF-8'); ?> ×<?php echo (int) $order['item']['qty']; ?></p>
-                                    <p class="text-xs text-slate-600"><?php echo htmlspecialchars($order['item']['price'], ENT_QUOTES, 'UTF-8'); ?></p>
+                                    <p class="text-[11px] text-slate-600 sm:text-xs"><?php echo htmlspecialchars($order['item']['price'], ENT_QUOTES, 'UTF-8'); ?></p>
                                 <?php endif; ?>
-                                <div class="flex flex-wrap items-center justify-between gap-2 text-sm text-slate-700">
+                                <div class="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-700 sm:text-sm">
                                     <span class="inline-flex items-center gap-1">
                                         <span class="material-symbols-rounded text-base text-slate-500"><?php echo $order['deliveryType'] === 'Доставка' ? 'local_shipping' : 'storefront'; ?></span>
                                         <span><?php echo htmlspecialchars($order['deliveryType'], ENT_QUOTES, 'UTF-8'); ?></span>
@@ -200,7 +200,7 @@
                                             <span>· <?php echo htmlspecialchars($order['scheduled'], ENT_QUOTES, 'UTF-8'); ?></span>
                                         <?php endif; ?>
                                     </span>
-                                    <span class="text-base font-semibold text-slate-900"><?php echo htmlspecialchars($order['total'], ENT_QUOTES, 'UTF-8'); ?></span>
+                                    <span class="text-sm font-semibold text-slate-900 sm:text-base"><?php echo htmlspecialchars($order['total'], ENT_QUOTES, 'UTF-8'); ?></span>
                                 </div>
                             </div>
                         </article>
