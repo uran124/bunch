@@ -5,7 +5,7 @@
 $hasPromos = !empty($oneTimeItems);
 ?>
 
-<section class="space-y-4 sm:space-y-6">
+<section class="space-y-3 sm:space-y-6">
     <header class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div class="space-y-1">
             <h1>
@@ -23,7 +23,7 @@ $hasPromos = !empty($oneTimeItems);
     <?php endif; ?>
 
     <?php if ($hasPromos): ?>
-        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" data-promo-items>
+        <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" data-promo-items>
             <?php foreach ($oneTimeItems as $item): ?>
                 <article class="flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm" data-promo-item data-promo-type="promo">
                     <?php if (!empty($item['photo'])): ?>
@@ -33,7 +33,7 @@ $hasPromos = !empty($oneTimeItems);
                             <span class="material-symbols-rounded text-3xl">image</span>
                         </div>
                     <?php endif; ?>
-                    <div class="flex flex-1 flex-col space-y-3 p-4">
+                    <div class="flex flex-1 flex-col space-y-2 p-3 sm:space-y-3 sm:p-4">
                         <div class="flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-slate-500">
                             <span class="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2.5 py-1 text-rose-700">
                                 <?php echo htmlspecialchars($item['label'], ENT_QUOTES, 'UTF-8'); ?>
@@ -43,10 +43,10 @@ $hasPromos = !empty($oneTimeItems);
                                 <?php echo htmlspecialchars($item['period'], ENT_QUOTES, 'UTF-8'); ?>
                             </span>
                         </div>
-                        <h3 class="text-base font-semibold leading-tight text-slate-900"><?php echo htmlspecialchars($item['title'], ENT_QUOTES, 'UTF-8'); ?></h3>
-                        <p class="text-lg font-semibold text-rose-700"><?php echo htmlspecialchars($item['price'], ENT_QUOTES, 'UTF-8'); ?></p>
-                        <p class="text-sm text-slate-600"><?php echo htmlspecialchars($item['stock'], ENT_QUOTES, 'UTF-8'); ?></p>
-                        <button class="mt-auto inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-800 transition hover:-translate-y-0.5 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700">
+                        <h3 class="text-sm font-semibold leading-tight text-slate-900 sm:text-base"><?php echo htmlspecialchars($item['title'], ENT_QUOTES, 'UTF-8'); ?></h3>
+                        <p class="text-base font-semibold text-rose-700 sm:text-lg"><?php echo htmlspecialchars($item['price'], ENT_QUOTES, 'UTF-8'); ?></p>
+                        <p class="text-xs text-slate-600 sm:text-sm"><?php echo htmlspecialchars($item['stock'], ENT_QUOTES, 'UTF-8'); ?></p>
+                        <button class="mt-auto inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-800 transition hover:-translate-y-0.5 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700 sm:px-4 sm:py-3 sm:text-sm">
                             <span class="material-symbols-rounded text-base">add_shopping_cart</span>
                             Забронировать
                         </button>
