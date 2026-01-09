@@ -36,4 +36,25 @@ class AuctionBid extends Model
             ];
         }, $rows);
     }
+
+    public function getLotBids(int $lotId): array
+    {
+        $stmt = $this->db->prepare(
+            "SELECT b.id, b.amount, b.created_at, u.phone FROM auction_bids b JOIN users u ON u.id = b.user_id WHERE b.lot_id = :lot_id AND b.status = 'active' ORDER BY b.created_at DESC"
+        );
+        $stmt->execute(['lot_id' => $lotId]);
+        $rows = $stmt->fetchAll();
+
+        return array_map(static function (array $row): array {
+            $phone = preg_replace('/\D+/', '', (string) $row['phone']);
+            $last4 = $phone !== '' ? substr($phone, -4) : '----';
+
+            return [
+                'id' => (int) $row['id'],
+                'amount' => (float) $row['amount'],
+                'created_at' => $row['created_at'],
+                'phone_last4' => $last4,
+            ];
+        }, $rows);
+    }
 }

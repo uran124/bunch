@@ -126,6 +126,9 @@ $router->get('admin-group-create', [AdminController::class, 'groupCreate']);
 $router->get('admin-products', [AdminController::class, 'catalogProducts']);
 $router->get('admin-product-form', [AdminController::class, 'productForm']);
 $router->get('admin-promos', [AdminController::class, 'catalogPromos']);
+$router->get('admin-auction-create', [AdminController::class, 'auctionCreate']);
+$router->get('admin-auction-edit', [AdminController::class, 'auctionEdit']);
+$router->get('admin-auction-view', [AdminController::class, 'auctionView']);
 $router->get('admin-attributes', [AdminController::class, 'catalogAttributes']);
 $router->get('admin-supplies', [AdminController::class, 'catalogSupplies']);
 $router->get('admin-supply-standing', [AdminController::class, 'supplyStandingForm']);
@@ -162,6 +165,7 @@ $router->post('admin-product-delete', [AdminController::class, 'deleteProduct'])
 $router->post('admin-services-telegram', [AdminController::class, 'saveServiceTelegram']);
 $router->post('admin-lottery-save', [AdminController::class, 'saveLottery']);
 $router->post('admin-auction-save', [AdminController::class, 'saveAuctionLot']);
+$router->post('admin-auction-update', [AdminController::class, 'updateAuctionLot']);
 $router->post('admin-promo-item-save', [AdminController::class, 'savePromoItem']);
 $router->post('admin-promo-categories-save', [AdminController::class, 'savePromoCategories']);
 $router->post('admin-order-update', [AdminController::class, 'updateOneTimeOrder']);

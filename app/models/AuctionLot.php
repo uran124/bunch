@@ -59,6 +59,72 @@ SQL;
         }, $rows);
     }
 
+    public function getAdminLotDetails(int $lotId): ?array
+    {
+        $stmt = $this->db->prepare(
+            'SELECT l.*, u.phone AS winner_phone, b.amount AS winning_amount FROM auction_lots l LEFT JOIN users u ON u.id = l.winner_user_id LEFT JOIN auction_bids b ON b.id = l.winning_bid_id WHERE l.id = :id'
+        );
+        $stmt->execute(['id' => $lotId]);
+        $row = $stmt->fetch();
+
+        if (!$row) {
+            return null;
+        }
+
+        $this->finalizeIfEnded($lotId);
+        $stmt = $this->db->prepare(
+            'SELECT l.*, u.phone AS winner_phone, b.amount AS winning_amount FROM auction_lots l LEFT JOIN users u ON u.id = l.winner_user_id LEFT JOIN auction_bids b ON b.id = l.winning_bid_id WHERE l.id = :id'
+        );
+        $stmt->execute(['id' => $lotId]);
+        $row = $stmt->fetch();
+        if (!$row) {
+            return null;
+        }
+
+        $bidModel = new AuctionBid();
+        $currentBid = $bidModel->getCurrentBid($lotId);
+        $currentPrice = $currentBid ? (float) $currentBid['amount'] : (float) $row['start_price'];
+
+        return [
+            'id' => (int) $row['id'],
+            'title' => $row['title'],
+            'description' => $row['description'],
+            'image' => $row['image'],
+            'store_price' => (float) $row['store_price'],
+            'start_price' => (float) $row['start_price'],
+            'bid_step' => (float) $row['bid_step'],
+            'blitz_price' => $row['blitz_price'] !== null ? (float) $row['blitz_price'] : null,
+            'status' => $row['status'],
+            'starts_at' => $row['starts_at'],
+            'ends_at' => $row['ends_at'],
+            'original_ends_at' => $row['original_ends_at'],
+            'current_price' => $currentPrice,
+            'winner_last4' => $this->getLast4($row['winner_phone'] ?? ''),
+            'winning_amount' => $row['winning_amount'] !== null ? (float) $row['winning_amount'] : null,
+        ];
+    }
+
+    public function updateLot(int $lotId, array $payload): void
+    {
+        $stmt = $this->db->prepare(
+            'UPDATE auction_lots SET title = :title, description = :description, image = :image, store_price = :store_price, start_price = :start_price, bid_step = :bid_step, blitz_price = :blitz_price, starts_at = :starts_at, ends_at = :ends_at, original_ends_at = :original_ends_at, status = :status WHERE id = :id'
+        );
+        $stmt->execute([
+            'id' => $lotId,
+            'title' => $payload['title'],
+            'description' => $payload['description'],
+            'image' => $payload['image'],
+            'store_price' => $payload['store_price'],
+            'start_price' => $payload['start_price'],
+            'bid_step' => $payload['bid_step'],
+            'blitz_price' => $payload['blitz_price'],
+            'starts_at' => $payload['starts_at'],
+            'ends_at' => $payload['ends_at'],
+            'original_ends_at' => $payload['original_ends_at'],
+            'status' => $payload['status'],
+        ]);
+    }
+
     public function getPromoList(): array
     {
         $stmt = $this->db->query("SELECT * FROM auction_lots WHERE status != 'cancelled' ORDER BY starts_at DESC");
