@@ -321,6 +321,18 @@ $adminNavigation = [
                     </button>
                 <?php endif; ?>
             </div>
+            <?php if (!$isAdminPage): ?>
+                <div class="flex items-center sm:hidden">
+                    <button
+                        class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:-translate-y-0.5 hover:text-rose-600"
+                        type="button"
+                        data-info-open
+                        aria-label="Информация"
+                    >
+                        <span class="material-symbols-rounded text-xl">info</span>
+                    </button>
+                </div>
+            <?php endif; ?>
         </div>
     </header>
 
@@ -337,7 +349,7 @@ $adminNavigation = [
     </main>
 
     <?php if (!$isAdminPage): ?>
-        <footer class="border-t border-slate-200 bg-white/90 backdrop-blur">
+        <footer class="hidden border-t border-slate-200 bg-white/90 backdrop-blur sm:block">
             <div class="mx-auto flex w-full max-w-6xl flex-col gap-2 px-4 py-4 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between">
                 <span>© <?php echo date('Y'); ?> Bunch flowers</span>
                 <div class="flex flex-wrap items-center gap-3">
@@ -357,7 +369,7 @@ $adminNavigation = [
     ?>
 
     <?php if (!$isAdminPage && ($footerLeft !== '' || $footerRight !== '')): ?>
-        <footer class="border-t border-slate-200 bg-white/90 backdrop-blur">
+        <footer class="hidden border-t border-slate-200 bg-white/90 backdrop-blur sm:block">
             <div class="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-4 text-sm text-slate-500">
                 <?php if ($footerLeft !== ''): ?>
                     <span><?php echo htmlspecialchars($footerLeft, ENT_QUOTES, 'UTF-8'); ?></span>
@@ -371,6 +383,41 @@ $adminNavigation = [
                 <?php endif; ?>
             </div>
         </footer>
+    <?php endif; ?>
+
+    <?php if (!$isAdminPage): ?>
+        <div class="fixed inset-0 z-50 hidden" data-info-panel>
+            <div class="absolute inset-0 bg-slate-900/40" data-info-overlay></div>
+            <div class="absolute inset-y-0 right-0 flex w-full max-w-xs flex-col gap-6 overflow-y-auto bg-white px-5 py-6 shadow-2xl transition duration-300 ease-out translate-x-full" data-info-drawer>
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Меню</p>
+                        <h2 class="text-lg font-semibold text-slate-900">Информация</h2>
+                    </div>
+                    <button type="button" class="rounded-full border border-slate-200 p-2 text-slate-500 transition hover:border-rose-200 hover:text-rose-600" data-info-close>
+                        <span class="material-symbols-rounded text-base">close</span>
+                    </button>
+                </div>
+                <div class="space-y-3">
+                    <button class="flex w-full items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+                        <span class="material-symbols-rounded text-base">notifications</span>
+                        Уведомления
+                    </button>
+                    <button class="flex w-full items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+                        <span class="material-symbols-rounded text-lg text-rose-500">support_agent</span>
+                        Поддержка
+                    </button>
+                </div>
+                <div class="space-y-2">
+                    <p class="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Информация</p>
+                    <div class="flex flex-col gap-2 text-sm font-semibold text-slate-700">
+                        <a class="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 transition hover:border-rose-200 hover:text-rose-600" href="/?page=policy">Политика обработки персональных данных</a>
+                        <a class="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 transition hover:border-rose-200 hover:text-rose-600" href="/?page=consent">Согласие на обработку персональных данных</a>
+                        <a class="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 transition hover:border-rose-200 hover:text-rose-600" href="/?page=offer">Пользовательское соглашение</a>
+                    </div>
+                </div>
+            </div>
+        </div>
     <?php endif; ?>
 
     <div

@@ -2780,4 +2780,39 @@ function initCookieConsent() {
     });
 }
 
+function initInfoPanel() {
+    const openButton = document.querySelector('[data-info-open]');
+    const panel = document.querySelector('[data-info-panel]');
+    const drawer = panel?.querySelector('[data-info-drawer]');
+    const closeButtons = panel?.querySelectorAll('[data-info-close]');
+    const overlay = panel?.querySelector('[data-info-overlay]');
+
+    if (!openButton || !panel || !drawer) return;
+
+    const openPanel = () => {
+        panel.classList.remove('hidden');
+        requestAnimationFrame(() => {
+            drawer.classList.remove('translate-x-full');
+        });
+        document.body.classList.add('overflow-hidden');
+    };
+
+    const closePanel = () => {
+        drawer.classList.add('translate-x-full');
+        const handleTransition = () => {
+            panel.classList.add('hidden');
+            drawer.removeEventListener('transitionend', handleTransition);
+        };
+        drawer.addEventListener('transitionend', handleTransition);
+        document.body.classList.remove('overflow-hidden');
+    };
+
+    openButton.addEventListener('click', openPanel);
+    closeButtons?.forEach((button) => {
+        button.addEventListener('click', closePanel);
+    });
+    overlay?.addEventListener('click', closePanel);
+}
+
 initCookieConsent();
+initInfoPanel();
