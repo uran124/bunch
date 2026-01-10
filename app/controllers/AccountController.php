@@ -51,11 +51,6 @@ class AccountController extends Controller
         $this->notificationSettingModel->syncTypes($notificationOptions);
         $notificationSettings = $this->notificationSettingModel->getSettingsForUser($userId, $notificationOptions);
 
-        $birthdayReminderDays = range(1, 7);
-        $birthdayReminderLeadDays = (int) ($userRow['birthday_reminder_days'] ?? 3);
-        $birthdayReminderLeadDays = max(1, min(7, $birthdayReminderLeadDays));
-        $birthdayReminders = $this->prepareBirthdayReminders($userRow['birthday_reminders'] ?? null);
-
         $pageMeta = [
             'title' => 'Личный кабинет — Bunch flowers',
             'description' => 'Управляйте профилем, адресами, заказами и подписками.',
@@ -87,9 +82,6 @@ class AccountController extends Controller
             'cartShortcut',
             'ordersLink',
             'notificationOptions',
-            'birthdayReminderDays',
-            'birthdayReminderLeadDays',
-            'birthdayReminders',
             'deliveryZones',
             'deliveryPricingVersion',
             'dadataConfig',
@@ -125,6 +117,36 @@ class AccountController extends Controller
         $this->notificationSettingModel->updateSettingsForUser($userId, $preferences);
 
         echo json_encode(['ok' => true]);
+    }
+
+    public function calendar()
+    {
+        $userId = Auth::userId();
+        $userRow = $userId ? $this->userModel->findById($userId) : null;
+
+        if (!$userRow) {
+            header('Location: /?page=login');
+            exit;
+        }
+
+        $birthdayReminderDays = range(1, 7);
+        $birthdayReminderLeadDays = (int) ($userRow['birthday_reminder_days'] ?? 3);
+        $birthdayReminderLeadDays = max(1, min(7, $birthdayReminderLeadDays));
+        $birthdayReminders = $this->prepareBirthdayReminders($userRow['birthday_reminders'] ?? null);
+
+        $pageMeta = [
+            'title' => 'Ваш календарь значимых дат — Bunch flowers',
+            'description' => 'Управляйте напоминаниями о значимых датах.',
+            'headerTitle' => 'Bunch flowers',
+            'headerSubtitle' => 'Календарь',
+        ];
+
+        $this->render('account-calendar', compact(
+            'birthdayReminderDays',
+            'birthdayReminderLeadDays',
+            'birthdayReminders',
+            'pageMeta'
+        ));
     }
 
     public function updatePin(): void
@@ -368,12 +390,12 @@ class AccountController extends Controller
             ],
             [
                 'code' => 'birthday_reminders',
-                'label' => 'Напоминания о днях рождений',
+                'label' => 'Напоминания о значимых днях',
                 'description' => 'Подготовим идеи и напомним заранее.',
                 'default' => true,
                 'channel' => 'push',
                 'sort_order' => 50,
-                'link' => '/?page=account#birthday-reminders',
+                'link' => '/?page=account-calendar',
             ],
             [
                 'code' => 'holiday_preorders',
