@@ -111,6 +111,7 @@ $router->get('orders-history', [OrdersController::class, 'history']);
 $router->get('order-edit', [OrdersController::class, 'edit']);
 $router->get('order-payment', [OrdersController::class, 'payment']);
 $router->get('account', [AccountController::class, 'index']);
+$router->get('account-calendar', [AccountController::class, 'calendar']);
 $router->get('login', [AuthController::class, 'login']);
 $router->get('logout', [AuthController::class, 'logout']);
 $router->get('register', [AuthController::class, 'register']);
