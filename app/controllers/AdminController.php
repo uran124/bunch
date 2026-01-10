@@ -240,6 +240,7 @@ class AdminController extends Controller
             'florist' => 'Флорист',
             'courier' => 'Курьер',
             'customer' => 'Покупатель',
+            'wholesale' => 'Оптовый покупатель',
         ];
         $statusLabels = [
             'new' => 'Новый',
@@ -407,7 +408,7 @@ class AdminController extends Controller
     {
         $userId = (int) ($_POST['user_id'] ?? 0);
         $role = trim((string) ($_POST['role'] ?? ''));
-        $roleOptions = ['admin', 'manager', 'florist', 'courier', 'customer'];
+        $roleOptions = ['admin', 'manager', 'florist', 'courier', 'customer', 'wholesale'];
 
         if ($userId <= 0 || !in_array($role, $roleOptions, true)) {
             header('Location: /?page=admin-user&id=' . $userId . '&message=role-error');
