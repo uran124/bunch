@@ -130,6 +130,17 @@ SQL;
         ]);
     }
 
+    public function updateName(int $userId, string $name): bool
+    {
+        $stmt = $this->db->prepare('UPDATE users SET name = :name, updated_at = NOW() WHERE id = :id');
+        $stmt->execute([
+            'id' => $userId,
+            'name' => $name,
+        ]);
+
+        return $stmt->rowCount() > 0;
+    }
+
     public function updateProfileAndPin(
         int $userId,
         string $name,
