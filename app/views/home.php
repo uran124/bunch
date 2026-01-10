@@ -25,8 +25,8 @@
             <p class="mt-1 text-sm text-slate-600">Мы готовим витрину. Зайдите позже, чтобы увидеть свежие позиции и новые предложения.</p>
         </div>
     <?php else: ?>
-        <div class="relative">
-            <div class="flex snap-x gap-4 overflow-x-auto px-0 pb-20 pt-1 md:px-1" aria-label="Лента товаров">
+        <div class="relative flex min-h-[calc(100svh-6rem)] items-center sm:min-h-0">
+            <div class="flex snap-x gap-4 overflow-x-auto px-0 pb-6 pt-1 sm:pb-20 md:px-1" aria-label="Лента товаров">
                 <?php foreach ($products as $product): ?>
                     <?php
                     $cardId = 'product-card-' . $product['id'];
