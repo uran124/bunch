@@ -33,6 +33,54 @@ class LotteryTicket extends Model
         try {
             $this->releaseExpired($lotteryId);
 
+            $lotteryStmt = $this->db->prepare('SELECT ticket_price FROM lotteries WHERE id = :lottery_id');
+            $lotteryStmt->execute(['lottery_id' => $lotteryId]);
+            $ticketPrice = $lotteryStmt->fetchColumn();
+
+            if ($ticketPrice === false) {
+                throw new RuntimeException('Лотерея не найдена');
+            }
+
+            $ticketPrice = (float) $ticketPrice;
+
+            if ($ticketPrice <= 0) {
+                $existing = $this->db->prepare(
+                    "SELECT 1 FROM lottery_tickets WHERE lottery_id = :lottery_id AND user_id = :user_id AND status IN ('reserved', 'paid') LIMIT 1"
+                );
+                $existing->execute([
+                    'lottery_id' => $lotteryId,
+                    'user_id' => $userId,
+                ]);
+
+                if ($existing->fetchColumn()) {
+                    throw new RuntimeException('Вы уже получили билет в этом розыгрыше');
+                }
+
+                $settings = new Setting();
+                $defaults = $settings->getLotteryDefaults();
+                $limitRaw = $settings->get(Setting::LOTTERY_FREE_MONTHLY_LIMIT, $defaults[Setting::LOTTERY_FREE_MONTHLY_LIMIT] ?? '0');
+                $limit = (int) $limitRaw;
+
+                if ($limit > 0) {
+                    $since = (new DateTimeImmutable())->modify('-1 month')->format('Y-m-d H:i:s');
+                    $limitStmt = $this->db->prepare(
+                        "SELECT COUNT(DISTINCT t.lottery_id) FROM lottery_ticket_logs l
+                         JOIN lottery_tickets t ON t.id = l.ticket_id
+                         JOIN lotteries lo ON lo.id = t.lottery_id
+                         WHERE l.user_id = :user_id AND l.action = 'reserved' AND lo.ticket_price = 0 AND l.created_at >= :since"
+                    );
+                    $limitStmt->execute([
+                        'user_id' => $userId,
+                        'since' => $since,
+                    ]);
+
+                    $count = (int) $limitStmt->fetchColumn();
+                    if ($count >= $limit) {
+                        throw new RuntimeException('Лимит бесплатных розыгрышей на месяц исчерпан');
+                    }
+                }
+            }
+
             if ($ticketNumber !== null) {
                 $stmt = $this->db->prepare(
                     "SELECT id, ticket_number FROM lottery_tickets WHERE lottery_id = :lottery_id AND ticket_number = :ticket_number AND status = 'free' FOR UPDATE"
