@@ -7,6 +7,9 @@ $authPages = ['login', 'register', 'recover'];
 $isAuthPage = in_array($currentPage, $authPages, true);
 $isAdminPage = str_starts_with($currentPage, 'admin');
 $mainClasses = 'mx-auto flex w-full max-w-6xl flex-1 flex-col gap-4 px-3 py-3 pb-[calc(6.5rem+env(safe-area-inset-bottom))] sm:gap-6 sm:px-4 sm:pt-8 sm:pb-[calc(6.5rem+env(safe-area-inset-bottom))]';
+if ($currentPage === 'home') {
+    $mainClasses = 'mx-auto flex w-full max-w-6xl flex-1 flex-col gap-4 px-3 py-3 pb-[calc(3rem+env(safe-area-inset-bottom))] sm:gap-6 sm:px-4 sm:pt-8 sm:pb-[calc(6.5rem+env(safe-area-inset-bottom))]';
+}
 if ($isAuthPage) {
     $mainClasses .= ' items-center justify-center';
 }
