@@ -21,7 +21,9 @@ class PromoItem extends Model
 
     public function getActiveList(): array
     {
-        $stmt = $this->db->prepare("SELECT * FROM {$this->table} WHERE is_active = 1 ORDER BY created_at DESC");
+        $stmt = $this->db->prepare(
+            "SELECT * FROM {$this->table} WHERE is_active = 1 AND (ends_at IS NULL OR ends_at > NOW()) AND (quantity IS NULL OR quantity > 0) ORDER BY created_at DESC"
+        );
         $stmt->execute();
         return $stmt->fetchAll();
     }

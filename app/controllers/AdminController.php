@@ -764,6 +764,8 @@ class AdminController extends Controller
         ];
 
         $auctionModel = new AuctionLot();
+        $settings = new Setting();
+        $lotteryDefaults = $settings->getLotteryDefaults();
 
         $loadErrors = [];
 
@@ -788,6 +790,12 @@ class AdminController extends Controller
             'finishedLots' => $finishedLots,
             'loadErrors' => $loadErrors,
             'message' => $_GET['status'] ?? null,
+            'lotterySettings' => [
+                'freeMonthlyLimit' => (int) $settings->get(
+                    Setting::LOTTERY_FREE_MONTHLY_LIMIT,
+                    $lotteryDefaults[Setting::LOTTERY_FREE_MONTHLY_LIMIT] ?? '0'
+                ),
+            ],
         ]);
     }
 
@@ -1073,6 +1081,17 @@ class AdminController extends Controller
         }
 
         header('Location: /?page=admin-promos&status=saved');
+    }
+
+    public function savePromoSettings(): void
+    {
+        $limitRaw = trim($_POST['free_lottery_monthly_limit'] ?? '');
+        $limit = $limitRaw !== '' ? max(0, (int) $limitRaw) : 0;
+
+        $settings = new Setting();
+        $settings->set(Setting::LOTTERY_FREE_MONTHLY_LIMIT, (string) $limit);
+
+        header('Location: /?page=admin-promos&status=saved#promo-settings');
     }
 
     public function catalogAttributes(): void
