@@ -5,8 +5,9 @@ class View
 {
     public static function render(string $view, array $data = [], string $layout = 'layouts/main'): void
     {
-        $viewPath = __DIR__ . '/../views/' . $view . '.php';
-        $layoutPath = __DIR__ . '/../views/' . $layout . '.php';
+        $viewsRoot = realpath(__DIR__ . '/../views') ?: (__DIR__ . '/../views');
+        $viewPath = $viewsRoot . '/' . $view . '.php';
+        $layoutPath = $viewsRoot . '/' . $layout . '.php';
 
         extract($data);
 
