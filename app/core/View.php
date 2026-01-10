@@ -5,9 +5,9 @@ class View
 {
     public static function render(string $view, array $data = [], string $layout = 'layouts/main'): void
     {
-        $viewName = $view;
-        $viewPath = __DIR__ . '/../views/' . $viewName . '.php';
-        $layoutPath = __DIR__ . '/../views/' . $layout . '.php';
+        $viewsRoot = realpath(__DIR__ . '/../views') ?: (__DIR__ . '/../views');
+        $viewPath = $viewsRoot . '/' . $view . '.php';
+        $layoutPath = $viewsRoot . '/' . $layout . '.php';
 
         if (!file_exists($viewPath)) {
             $escapedView = htmlspecialchars($viewName, ENT_QUOTES, 'UTF-8');
