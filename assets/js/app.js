@@ -1670,6 +1670,7 @@ function initAccountPage() {
     initNotificationToggles();
     initPinModal();
     initBirthdayReminders();
+    initAccountProfile();
     initAccountAddresses();
 }
 
@@ -1686,6 +1687,7 @@ function initAccountAddresses() {
     const status = modal.querySelector('[data-address-status]');
     const closeButton = modal.querySelector('[data-address-close]');
     const fields = Array.from(modal.querySelectorAll('[data-address-field]'));
+    const streetInput = modal.querySelector('[data-address-street]');
     const settlementField = modal.querySelector('[data-address-field="settlement"]');
     const streetField = modal.querySelector('[data-address-field="street"]');
     const houseField = modal.querySelector('[data-address-field="house"]');
@@ -1745,6 +1747,9 @@ function initAccountAddresses() {
     dadataConfig = mergeCredentialsFromStorage(dadataConfig);
 
     const deliveryPricingVersion = modal.dataset.deliveryPricingVersion || null;
+    const defaultSettlement = modal.dataset.defaultSettlement || '';
+    const defaultRecipientName = modal.dataset.userName || '';
+    const defaultRecipientPhone = modal.dataset.userPhone || '';
     let lastSuggestionRequestId = 0;
 
     let activeAddressId = null;
@@ -1757,18 +1762,45 @@ function initAccountAddresses() {
 
     const normalizeText = (value = '') => value.trim().toLowerCase();
 
-    const composeBaseAddress = () => {
-        const settlement = settlementField?.value?.trim() || '';
-        const street = streetField?.value?.trim() || '';
-        const house = houseField?.value?.trim() || '';
-
-        return [settlement, street, house ? `д. ${house}` : null].filter(Boolean).join(', ');
-    };
+    const composeBaseAddress = () => (streetInput?.value?.trim() || '');
 
     const composeAddressText = () => {
         const base = composeBaseAddress();
         const apartment = apartmentField?.value?.trim() || '';
         return [base, apartment ? `кв/офис ${apartment}` : null].filter(Boolean).join(', ');
+    };
+
+    const parseManualAddress = (rawValue) => {
+        const parts = rawValue
+            .split(',')
+            .map((part) => part.trim())
+            .filter(Boolean);
+
+        if (!parts.length) {
+            return { settlement: '', street: '', house: '' };
+        }
+
+        if (parts.length >= 3) {
+            return {
+                settlement: parts[0],
+                street: parts[1],
+                house: parts.slice(2).join(', '),
+            };
+        }
+
+        if (parts.length === 2) {
+            return {
+                settlement: '',
+                street: parts[0],
+                house: parts[1],
+            };
+        }
+
+        return {
+            settlement: '',
+            street: parts[0],
+            house: '',
+        };
     };
 
     const updateAddressPreview = () => {
@@ -1840,7 +1872,7 @@ function initAccountAddresses() {
     };
 
     const renderSuggestions = (suggestions) => {
-        if (!streetField) return;
+        if (!streetInput) return;
 
         addressSuggestionList.innerHTML = '';
         if (!suggestions.length) {
@@ -1863,14 +1895,9 @@ function initAccountAddresses() {
 
             row.addEventListener('click', () => {
                 const data = item.data || {};
-                if (settlementField) {
-                    settlementField.value = data.settlement_with_type || data.city_with_type || data.region_with_type || '';
-                }
-                if (streetField) {
-                    streetField.value = data.street_with_type || '';
-                }
-                if (houseField) {
-                    houseField.value = data.house || '';
+                const formatted = formatAddressFromDadata(data) || item.value || '';
+                if (streetInput) {
+                    streetInput.value = formatted;
                 }
                 updateAddressPreview();
                 addressSuggestionList.classList.add('hidden');
@@ -1964,6 +1991,16 @@ function initAccountAddresses() {
             lat: Number(row.geo_lat),
             qc: row.qc_geo,
             label: formatAddressFromDadata(row) || row.result || addressText,
+            settlement:
+                row.settlement_with_type ||
+                row.city_with_type ||
+                row.settlement ||
+                row.city ||
+                row.region_with_type ||
+                row.region ||
+                '',
+            street: row.street_with_type || row.street || '',
+            house: row.house || '',
         };
     };
 
@@ -1972,10 +2009,11 @@ function initAccountAddresses() {
         updateAddressPreview();
 
         if (!baseAddress) {
-            setZoneLabel('Введите город, улицу и дом для определения зоны.', 'muted');
+            setZoneLabel('Введите адрес доставки для определения зоны.', 'muted');
             ['lat', 'lon', 'zone_id', 'zone_version', 'zone_calculated_at', 'location_source', 'geo_quality', 'last_delivery_price_hint'].forEach(
                 (key) => setHiddenField(key, ''),
             );
+            ['settlement', 'street', 'house'].forEach((key) => setHiddenField(key, ''));
             return;
         }
 
@@ -1988,6 +2026,10 @@ function initAccountAddresses() {
                 ['lat', 'lon', 'zone_id', 'zone_version', 'zone_calculated_at', 'location_source', 'geo_quality', 'last_delivery_price_hint'].forEach(
                     (key) => setHiddenField(key, ''),
                 );
+                const parsedManual = parseManualAddress(baseAddress);
+                setHiddenField('settlement', parsedManual.settlement || defaultSettlement);
+                setHiddenField('street', parsedManual.street || baseAddress);
+                setHiddenField('house', (parsedManual.house || '').replace(/^д\\.?/i, '').trim());
                 return;
             }
 
@@ -1998,6 +2040,9 @@ function initAccountAddresses() {
             setHiddenField('geo_quality', geocoded.qc ?? '');
             setHiddenField('zone_calculated_at', new Date().toISOString());
             setHiddenField('zone_version', deliveryPricingVersion || '');
+            setHiddenField('settlement', geocoded.settlement || defaultSettlement);
+            setHiddenField('street', geocoded.street || '');
+            setHiddenField('house', geocoded.house || '');
 
             if (!zone) {
                 setZoneLabel('Адрес найден, но зона не определена.', 'warn');
@@ -2059,8 +2104,22 @@ function initAccountAddresses() {
             fillField('lat', dataset.addressLat);
             fillField('lon', dataset.addressLon);
             fillField('last_delivery_price_hint', dataset.addressLastDeliveryPriceHint);
+            if (streetInput) {
+                const baseParts = [
+                    dataset.addressSettlement,
+                    dataset.addressStreet,
+                    dataset.addressHouse ? `д. ${dataset.addressHouse}` : '',
+                ]
+                    .filter(Boolean)
+                    .join(', ');
+                streetInput.value = baseParts || dataset.addressText || '';
+            }
         } else {
             if (title) title.textContent = 'Новый адрес';
+            fillField('label', 'Адрес доставки');
+            fillField('recipient_name', defaultRecipientName);
+            fillField('recipient_phone', defaultRecipientPhone);
+            if (streetInput) streetInput.value = '';
         }
 
         updateAddressPreview();
@@ -2075,7 +2134,7 @@ function initAccountAddresses() {
         } else if (mode === 'edit' && composeBaseAddress()) {
             setZoneLabel('Зона доставки будет определена при сохранении.', 'warn');
         } else {
-            setZoneLabel('Введите город, улицу и дом для определения зоны.', 'muted');
+            setZoneLabel('Введите адрес доставки для определения зоны.', 'muted');
         }
 
         modal.classList.remove('hidden');
@@ -2091,6 +2150,7 @@ function initAccountAddresses() {
         addressSuggestionList.classList.add('hidden');
         if (zoneLabel) zoneLabel.value = '';
         if (addressPreview) addressPreview.textContent = 'Полный адрес будет сформирован автоматически.';
+        if (streetInput) streetInput.value = '';
     };
 
     const sendRequest = async (url, options) => {
@@ -2135,8 +2195,8 @@ function initAccountAddresses() {
         });
     });
 
-    if (streetField) {
-        const wrapper = streetField.parentElement;
+    if (streetInput) {
+        const wrapper = streetInput.parentElement;
         if (wrapper) {
             wrapper.classList.add('relative');
             addressSuggestionList.className =
@@ -2146,12 +2206,12 @@ function initAccountAddresses() {
     }
 
     document.addEventListener('click', (event) => {
-        if (!addressSuggestionList.contains(event.target) && streetField !== event.target) {
+        if (!addressSuggestionList.contains(event.target) && streetInput !== event.target) {
             addressSuggestionList.classList.add('hidden');
         }
     });
 
-    [settlementField, streetField, houseField].forEach((field) => {
+    [streetInput].forEach((field) => {
         if (!field) return;
         field.addEventListener('input', () => {
             updateAddressPreview();
@@ -2184,18 +2244,9 @@ function initAccountAddresses() {
                 return acc;
             }, {});
 
-            if (!payload.settlement || !payload.settlement.trim()) {
-                showError('Укажите город доставки.');
-                return;
-            }
-
-            if (!payload.street || !payload.street.trim()) {
-                showError('Укажите улицу доставки.');
-                return;
-            }
-
-            if (!payload.house || !payload.house.trim()) {
-                showError('Укажите номер дома.');
+            const baseAddress = composeBaseAddress();
+            if (!baseAddress) {
+                showError('Укажите адрес доставки.');
                 return;
             }
 
@@ -2204,15 +2255,15 @@ function initAccountAddresses() {
                 return;
             }
 
-            if (!payload.recipient_name || !payload.recipient_name.trim()) {
-                showError('Укажите имя получателя.');
-                return;
-            }
-
-            if (!payload.recipient_phone || !payload.recipient_phone.trim()) {
-                showError('Укажите телефон получателя.');
-                return;
-            }
+            const parsedManual = parseManualAddress(baseAddress);
+            payload.settlement = payload.settlement || parsedManual.settlement || defaultSettlement;
+            payload.street = payload.street || parsedManual.street || baseAddress.trim();
+            payload.house = payload.house || (parsedManual.house || '').replace(/^д\\.?/i, '').trim();
+            payload.apartment = apartmentField?.value || '';
+            payload.label = payload.label || baseAddress || 'Адрес доставки';
+            payload.recipient_name = payload.recipient_name || defaultRecipientName;
+            payload.recipient_phone = payload.recipient_phone || defaultRecipientPhone;
+            payload.delivery_comment = payload.delivery_comment || '';
 
             if (activeAddressId) {
                 sendRequest(`/api/account/addresses/${activeAddressId}`, {
@@ -2229,6 +2280,67 @@ function initAccountAddresses() {
             }
         });
     }
+}
+
+function initAccountProfile() {
+    const editButton = document.querySelector('[data-account-edit]');
+    const nameInput = document.querySelector('[data-account-name]');
+    const status = document.querySelector('[data-account-name-status]');
+    if (!editButton || !nameInput) return;
+
+    let initialValue = nameInput.value;
+    let saving = false;
+
+    const showStatus = (message, isError = false) => {
+        if (!status) return;
+        status.textContent = message;
+        status.classList.toggle('text-rose-600', isError);
+        status.classList.toggle('text-emerald-700', !isError);
+        status.classList.remove('hidden');
+        setTimeout(() => status.classList.add('hidden'), 2500);
+    };
+
+    const saveName = async () => {
+        const value = nameInput.value.trim();
+        if (!value || value === initialValue || saving) {
+            nameInput.value = initialValue;
+            return;
+        }
+
+        saving = true;
+        try {
+            await fetchJson('/api/account/profile', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: value }),
+            });
+            initialValue = value;
+            showStatus('Имя обновлено.');
+        } catch (error) {
+            nameInput.value = initialValue;
+            showStatus(error.message || 'Не удалось сохранить имя.', true);
+        } finally {
+            saving = false;
+        }
+    };
+
+    editButton.addEventListener('click', () => {
+        nameInput.removeAttribute('readonly');
+        nameInput.focus();
+        nameInput.select();
+    });
+
+    nameInput.addEventListener('blur', () => {
+        nameInput.setAttribute('readonly', 'readonly');
+        saveName();
+    });
+
+    nameInput.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            nameInput.blur();
+        }
+    });
 }
 
 if (pageId === 'orders') {

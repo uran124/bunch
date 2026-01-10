@@ -28,6 +28,11 @@ if (str_starts_with($resource, 'account/addresses')) {
     exit;
 }
 
+if (str_starts_with($resource, 'account/profile')) {
+    handleAccountProfile();
+    exit;
+}
+
 switch ($resource) {
     case 'delivery/zones':
         handleDeliveryZones();
@@ -203,6 +208,15 @@ function handleAccountAddresses(string $resource): void
         }
 
         if ($recipientName === '' || $recipientPhone === '') {
+            $userModel = new User();
+            $user = $userModel->findById($userId);
+            $recipientName = $recipientName ?: trim((string) ($user['name'] ?? ''));
+            $recipientPhone = $recipientPhone ?: trim((string) ($user['phone'] ?? ''));
+            $payload['recipient_name'] = $recipientName;
+            $payload['recipient_phone'] = $recipientPhone;
+        }
+
+        if ($recipientName === '' || $recipientPhone === '') {
             http_response_code(422);
             echo json_encode(['error' => 'Укажите имя и телефон получателя']);
             return;
@@ -237,6 +251,15 @@ function handleAccountAddresses(string $resource): void
             http_response_code(422);
             echo json_encode(['error' => 'Укажите город, улицу и номер дома']);
             return;
+        }
+
+        if ($recipientName === '' || $recipientPhone === '') {
+            $userModel = new User();
+            $user = $userModel->findById($userId);
+            $recipientName = $recipientName ?: trim((string) ($user['name'] ?? ''));
+            $recipientPhone = $recipientPhone ?: trim((string) ($user['phone'] ?? ''));
+            $payload['recipient_name'] = $recipientName;
+            $payload['recipient_phone'] = $recipientPhone;
         }
 
         if ($recipientName === '' || $recipientPhone === '') {
@@ -281,6 +304,42 @@ function handleAccountAddresses(string $resource): void
 
     http_response_code(405);
     echo json_encode(['error' => 'Method not allowed']);
+}
+
+function handleAccountProfile(): void
+{
+    if (!Auth::check()) {
+        http_response_code(401);
+        echo json_encode(['error' => 'Требуется авторизация']);
+        return;
+    }
+
+    if (!in_array($_SERVER['REQUEST_METHOD'], ['PUT', 'PATCH', 'POST'], true)) {
+        http_response_code(405);
+        echo json_encode(['error' => 'Method not allowed']);
+        return;
+    }
+
+    $payload = json_decode(file_get_contents('php://input'), true) ?: $_POST;
+    $name = trim((string) ($payload['name'] ?? ''));
+
+    if ($name === '') {
+        http_response_code(422);
+        echo json_encode(['error' => 'Имя не может быть пустым']);
+        return;
+    }
+
+    $userId = (int) Auth::userId();
+    $userModel = new User();
+    $updated = $userModel->updateName($userId, $name);
+
+    if (!$updated) {
+        http_response_code(404);
+        echo json_encode(['error' => 'Пользователь не найден']);
+        return;
+    }
+
+    echo json_encode(['ok' => true, 'name' => $name], JSON_UNESCAPED_UNICODE);
 }
 
 function buildAddressText(string $settlement, string $street, string $house, string $apartment = ''): string

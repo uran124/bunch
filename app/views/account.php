@@ -3,56 +3,55 @@
         <div class="space-y-1">
             <p class="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.08em] text-rose-600">
                 <span class="material-symbols-rounded text-base">account_circle</span>
-                Аккаунт
+                Ваш аккаунт
             </p>
-            <h1 class="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">Личный кабинет</h1>
-            <p class="text-xs text-slate-600 sm:text-sm">Личные данные, адреса, активные заказы и подписки.</p>
         </div>
-        <div class="flex flex-wrap items-center gap-2 text-xs font-semibold text-emerald-700">
-            <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 text-emerald-700 ring-1 ring-emerald-100">
-                <span class="material-symbols-rounded text-base">verified</span>
-                Аккаунт активен
-            </span>
-            <?php if (!empty($cartShortcut)): ?>
-                <a
-                    href="/?page=cart"
-                    class="inline-flex items-center gap-1 rounded-full bg-amber-50 px-3 py-1 text-amber-700 ring-1 ring-amber-100 hover:bg-amber-100"
-                >
-                    <span class="material-symbols-rounded text-base">shopping_bag</span>
-                    В корзине: <?php echo htmlspecialchars($cartShortcut['title'], ENT_QUOTES, 'UTF-8'); ?><?php echo $cartShortcut['qty'] > 1 ? ' ×' . (int) $cartShortcut['qty'] : ''; ?>
-                </a>
-            <?php endif; ?>
-        </div>
+        <?php if (!empty($cartShortcut)): ?>
+            <a
+                href="/?page=cart"
+                class="inline-flex items-center gap-1 rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700 ring-1 ring-amber-100 hover:bg-amber-100"
+            >
+                <span class="material-symbols-rounded text-base">shopping_bag</span>
+                В корзине: <?php echo htmlspecialchars($cartShortcut['title'], ENT_QUOTES, 'UTF-8'); ?><?php echo $cartShortcut['qty'] > 1 ? ' ×' . (int) $cartShortcut['qty'] : ''; ?>
+            </a>
+        <?php endif; ?>
     </header>
 
     <div class="grid gap-4 lg:grid-cols-3 sm:gap-5">
         <div class="lg:col-span-2 space-y-4 sm:space-y-5">
             <div class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
                 <div class="flex items-start justify-between gap-3">
-                    <div class="space-y-2">
+                    <div class="flex-1 space-y-3">
                         <p class="text-xs font-semibold uppercase tracking-[0.06em] text-slate-500">Профиль</p>
-                        <h2 class="text-xl font-semibold text-slate-900 sm:text-2xl"><?php echo htmlspecialchars($user['name'], ENT_QUOTES, 'UTF-8'); ?></h2>
-                        <div class="grid gap-2 text-xs text-slate-700 sm:text-sm">
-                            <div class="inline-flex items-center gap-2 rounded-lg bg-slate-50 px-3 py-2 font-semibold text-slate-800">
-                                <span class="material-symbols-rounded text-base text-rose-500">call</span>
-                                <span><?php echo htmlspecialchars($user['phone'], ENT_QUOTES, 'UTF-8'); ?></span>
+                        <div class="space-y-2">
+                            <input
+                                class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-base font-semibold text-slate-900 focus:border-rose-300 focus:bg-white focus:outline-none sm:max-w-sm"
+                                type="text"
+                                value="<?php echo htmlspecialchars($user['name'], ENT_QUOTES, 'UTF-8'); ?>"
+                                readonly
+                                data-account-name
+                            >
+                            <div class="flex flex-wrap gap-2 text-xs font-semibold text-slate-700 sm:text-sm">
+                                <span class="inline-flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-2">
+                                    <span class="material-symbols-rounded text-base text-rose-500">call</span>
+                                    <span><?php echo htmlspecialchars($user['phone'], ENT_QUOTES, 'UTF-8'); ?></span>
+                                </span>
+                                <span class="inline-flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-2">
+                                    <span class="material-symbols-rounded text-base text-rose-500">mail</span>
+                                    <?php if (!empty($user['email'])): ?>
+                                        <span><?php echo htmlspecialchars($user['email'], ENT_QUOTES, 'UTF-8'); ?></span>
+                                    <?php else: ?>
+                                        <span class="text-slate-500">+ e-mail</span>
+                                    <?php endif; ?>
+                                </span>
                             </div>
-                            <div class="inline-flex items-center gap-2 rounded-lg bg-slate-50 px-3 py-2 font-semibold text-slate-800">
-                                <span class="material-symbols-rounded text-base text-rose-500">mail</span>
-                                <?php if (!empty($user['email'])): ?>
-                                    <span><?php echo htmlspecialchars($user['email'], ENT_QUOTES, 'UTF-8'); ?></span>
-                                <?php else: ?>
-                                    <a href="#" class="inline-flex items-center gap-1 text-rose-600 hover:text-rose-700">
-                                        <span>+ e-mail</span>
-                                        <span class="material-symbols-rounded text-base">add</span>
-                                    </a>
-                                <?php endif; ?>
-                            </div>
+                            <p class="hidden text-xs font-semibold text-emerald-700" data-account-name-status>Имя обновлено.</p>
                         </div>
                     </div>
                     <button
                         class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-rose-200 hover:text-rose-700 sm:text-sm"
                         type="button"
+                        data-account-edit
                     >
                         <span class="material-symbols-rounded text-base">edit</span>
                         Изменить
@@ -63,7 +62,7 @@
             <div class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
                 <div class="flex items-center justify-between gap-3">
                     <div>
-                        <p class="text-xs font-semibold uppercase tracking-[0.06em] text-slate-500">Адреса доставки</p>
+                        <p class="text-xs font-semibold uppercase tracking-[0.06em] text-slate-500">Адрес доставки</p>
                         <h3 class="text-base font-semibold text-slate-900 sm:text-lg">Управление адресами</h3>
                     </div>
                     <button
@@ -122,12 +121,6 @@
                                 <p class="text-xs text-slate-600 sm:text-sm">
                                     <?php echo htmlspecialchars($recipientLine ?: 'Получатель не указан', ENT_QUOTES, 'UTF-8'); ?>
                                 </p>
-                                <?php if (!empty($address['is_primary'])): ?>
-                                    <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-600">
-                                        <span class="material-symbols-rounded text-xs">star</span>
-                                        Основной
-                                    </span>
-                                <?php endif; ?>
                             </div>
                             <div class="flex items-center gap-2">
                                 <?php if (!empty($address['is_primary'])): ?>
@@ -304,8 +297,7 @@
             <div class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
                 <div class="flex items-start justify-between gap-3">
                     <div class="space-y-1">
-                        <p class="text-xs font-semibold uppercase tracking-[0.06em] text-slate-500">Быстрые действия</p>
-                        <h3 class="text-base font-semibold text-slate-900 sm:text-lg">Текущее состояние</h3>
+                        <p class="text-xs font-semibold uppercase tracking-[0.06em] text-slate-500">Мои заказы</p>
                     </div>
                     <span class="inline-flex items-center gap-1 rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold text-white shadow-sm">
                         <span class="material-symbols-rounded text-base">rocket_launch</span>
@@ -404,28 +396,25 @@
             </div>
 
             <div class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
-                <div class="flex items-center justify-between">
-                    <div class="space-y-1">
-                        <p class="text-xs font-semibold uppercase tracking-[0.06em] text-slate-500">Безопасность</p>
-                        <h3 class="text-base font-semibold text-slate-900 sm:text-lg">Управление входом</h3>
-                        <p class="text-xs text-slate-600 sm:text-sm">Следите за активностью аккаунта и обновляйте PIN по необходимости.</p>
-                    </div>
-                    <button class="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-3 py-2 text-xs font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md sm:px-4 sm:text-sm" type="button" data-open-pin-modal>
-                        <span class="material-symbols-rounded text-base">lock_reset</span>
-                        Сменить PIN
-                    </button>
-                </div>
-                <div class="mt-4 grid gap-2 text-xs text-slate-700 sm:text-sm">
-                    <div class="flex items-center justify-between rounded-2xl bg-slate-50 px-3 py-2.5 sm:px-4 sm:py-3">
-                        <span class="inline-flex items-center gap-2 font-semibold text-slate-800">
-                            <span class="material-symbols-rounded text-base text-emerald-500">check</span>
-                            Последний вход: <?php echo htmlspecialchars($lastLogin, ENT_QUOTES, 'UTF-8'); ?>
-                        </span>
-                        <a class="text-rose-600 hover:text-rose-700" href="/?page=logout">Выйти</a>
-                    </div>
-                    <div class="flex items-center gap-2 text-[11px] text-slate-500 sm:text-xs">
-                        <span class="material-symbols-rounded text-base">info</span>
-                        <span>Изменение настроек вступает в силу мгновенно и используется при сегментации уведомлений.</span>
+                <div class="space-y-3">
+                    <p class="text-xs font-semibold uppercase tracking-[0.06em] text-slate-500">Безопасность</p>
+                    <div class="grid gap-2 text-xs text-slate-700 sm:text-sm">
+                        <div class="flex items-center justify-between rounded-2xl bg-slate-50 px-3 py-2.5 sm:px-4 sm:py-3">
+                            <span class="inline-flex items-center gap-2 font-semibold text-slate-800">
+                                <span class="material-symbols-rounded text-base text-emerald-500">check</span>
+                                Последний вход: <?php echo htmlspecialchars($lastLogin, ENT_QUOTES, 'UTF-8'); ?>
+                            </span>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <button class="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-3 py-2 text-xs font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md sm:px-4 sm:text-sm" type="button" data-open-pin-modal>
+                                <span class="material-symbols-rounded text-base">lock_reset</span>
+                                Сменить PIN
+                            </button>
+                            <a class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-rose-200 hover:text-rose-700 sm:px-4 sm:text-sm" href="/?page=logout">
+                                <span class="material-symbols-rounded text-base">logout</span>
+                                Выйти
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -439,13 +428,16 @@
         data-delivery-pricing-version="<?php echo htmlspecialchars($deliveryPricingVersion ?? '', ENT_QUOTES, 'UTF-8'); ?>"
         data-dadata-config="<?php echo htmlspecialchars(json_encode($dadataConfig ?? [], JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8'); ?>"
         data-test-addresses="<?php echo htmlspecialchars(json_encode($testAddresses ?? [], JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8'); ?>"
+        data-default-settlement="<?php echo htmlspecialchars($addresses[0]['raw']['settlement'] ?? '', ENT_QUOTES, 'UTF-8'); ?>"
+        data-user-name="<?php echo htmlspecialchars($user['name'], ENT_QUOTES, 'UTF-8'); ?>"
+        data-user-phone="<?php echo htmlspecialchars($user['phone'], ENT_QUOTES, 'UTF-8'); ?>"
     >
         <div class="w-full max-w-lg rounded-3xl border border-slate-200 bg-white p-6 shadow-xl">
             <div class="flex items-start justify-between gap-3">
                 <div>
-                    <p class="text-xs font-semibold uppercase tracking-[0.06em] text-slate-500">Адреса</p>
+                    <p class="text-xs font-semibold uppercase tracking-[0.06em] text-slate-500">Адрес доставки</p>
                     <h3 class="text-xl font-semibold text-slate-900" data-address-title>Новый адрес</h3>
-                    <p class="text-sm text-slate-600">Укажите адрес доставки и данные получателя.</p>
+                    <p class="text-sm text-slate-600">Укажите адрес доставки для определения зоны.</p>
                 </div>
                 <button type="button" class="rounded-full p-1 text-slate-500 hover:bg-slate-100" data-address-close>
                     <span class="material-symbols-rounded text-xl">close</span>
@@ -453,24 +445,14 @@
             </div>
             <form class="mt-5 space-y-4" data-address-form>
                 <div class="space-y-2">
-                    <label class="text-xs font-semibold uppercase tracking-[0.06em] text-slate-500" for="account-address-label">Название</label>
-                    <input id="account-address-label" type="text" class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900 focus:border-rose-300 focus:bg-white focus:outline-none" data-address-field="label" placeholder="Дом / Офис">
-                </div>
-                <div class="grid gap-3 sm:grid-cols-3">
-                    <div class="space-y-2 sm:col-span-3">
-                        <label class="text-xs font-semibold uppercase tracking-[0.06em] text-slate-500" for="account-address-settlement">Город</label>
-                        <input id="account-address-settlement" type="text" class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900 focus:border-rose-300 focus:bg-white focus:outline-none" data-address-field="settlement" placeholder="Красноярск">
-                    </div>
-                    <div class="space-y-2 sm:col-span-2">
-                        <label class="text-xs font-semibold uppercase tracking-[0.06em] text-slate-500" for="account-address-street">Улица</label>
-                        <input id="account-address-street" type="text" class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900 focus:border-rose-300 focus:bg-white focus:outline-none" data-address-field="street" placeholder="Карла Маркса">
-                    </div>
-                    <div class="space-y-2">
-                        <label class="text-xs font-semibold uppercase tracking-[0.06em] text-slate-500" for="account-address-house">Дом</label>
-                        <input id="account-address-house" type="text" class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900 focus:border-rose-300 focus:bg-white focus:outline-none" data-address-field="house" placeholder="12">
-                    </div>
+                    <label class="text-xs font-semibold uppercase tracking-[0.06em] text-slate-500" for="account-address-street">Улица, номер дома</label>
+                    <input id="account-address-street" type="text" class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900 focus:border-rose-300 focus:bg-white focus:outline-none" data-address-street placeholder="Красноярск, Карла Маркса, 12">
                 </div>
                 <p class="text-xs font-semibold text-slate-500" data-address-preview>Полный адрес будет сформирован автоматически.</p>
+                <input type="hidden" data-address-field="label">
+                <input type="hidden" data-address-field="settlement">
+                <input type="hidden" data-address-field="street">
+                <input type="hidden" data-address-field="house">
                 <input type="hidden" data-address-field="address_text">
                 <input type="hidden" data-address-field="lat">
                 <input type="hidden" data-address-field="lon">
@@ -480,16 +462,8 @@
                 <input type="hidden" data-address-field="zone_version">
                 <input type="hidden" data-address-field="zone_calculated_at">
                 <input type="hidden" data-address-field="last_delivery_price_hint">
-                <div class="grid gap-3 sm:grid-cols-2">
-                    <div class="space-y-2">
-                        <label class="text-xs font-semibold uppercase tracking-[0.06em] text-slate-500" for="account-address-recipient">Получатель</label>
-                        <input id="account-address-recipient" type="text" class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900 focus:border-rose-300 focus:bg-white focus:outline-none" data-address-field="recipient_name">
-                    </div>
-                    <div class="space-y-2">
-                        <label class="text-xs font-semibold uppercase tracking-[0.06em] text-slate-500" for="account-address-phone">Телефон получателя</label>
-                        <input id="account-address-phone" type="tel" class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900 focus:border-rose-300 focus:bg-white focus:outline-none" data-address-field="recipient_phone">
-                    </div>
-                </div>
+                <input type="hidden" data-address-field="recipient_name">
+                <input type="hidden" data-address-field="recipient_phone">
                 <div class="grid gap-3 sm:grid-cols-2">
                     <div class="space-y-2">
                         <label class="text-xs font-semibold uppercase tracking-[0.06em] text-slate-500" for="account-address-apartment">Квартира / офис</label>
@@ -500,20 +474,9 @@
                         <input id="account-address-zone" type="text" class="w-full rounded-2xl border border-slate-200 bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-700" data-address-zone-label readonly>
                     </div>
                 </div>
-                <div class="grid gap-3 sm:grid-cols-3">
-                    <div class="space-y-2">
-                        <label class="text-xs font-semibold uppercase tracking-[0.06em] text-slate-500" for="account-address-entrance">Подъезд</label>
-                        <input id="account-address-entrance" type="text" class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900 focus:border-rose-300 focus:bg-white focus:outline-none" data-address-field="entrance">
-                    </div>
-                    <div class="space-y-2">
-                        <label class="text-xs font-semibold uppercase tracking-[0.06em] text-slate-500" for="account-address-floor">Этаж</label>
-                        <input id="account-address-floor" type="text" class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900 focus:border-rose-300 focus:bg-white focus:outline-none" data-address-field="floor">
-                    </div>
-                    <div class="space-y-2">
-                        <label class="text-xs font-semibold uppercase tracking-[0.06em] text-slate-500" for="account-address-intercom">Домофон</label>
-                        <input id="account-address-intercom" type="text" class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900 focus:border-rose-300 focus:bg-white focus:outline-none" data-address-field="intercom">
-                    </div>
-                </div>
+                <input type="hidden" data-address-field="entrance">
+                <input type="hidden" data-address-field="floor">
+                <input type="hidden" data-address-field="intercom">
                 <div class="space-y-2">
                     <label class="text-xs font-semibold uppercase tracking-[0.06em] text-slate-500" for="account-address-comment">Комментарий</label>
                     <textarea id="account-address-comment" rows="2" class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900 focus:border-rose-300 focus:bg-white focus:outline-none" data-address-field="delivery_comment" placeholder="Например, домофон не работает"></textarea>
