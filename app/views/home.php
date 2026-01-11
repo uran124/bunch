@@ -1,6 +1,7 @@
 <?php
 /** @var array $products */
 /** @var array $pageMeta */
+/** @var bool $isWholesaleUser */
 ?>
 
 <div class="space-y-0 sm:space-y-8">
@@ -36,6 +37,8 @@
                     $flower = $product['supply_flower_name'] ?? $product['name'];
                     $variety = $product['supply_variety'] ?? '';
                     $titleParts = [];
+                    $isSmallWholesale = !empty($product['has_wholesale_card']) && empty($product['has_product_card']);
+                    $qtyLabel = $isWholesaleUser || $isSmallWholesale ? 'Количество пачек' : 'Количество стеблей';
 
                     if ($flower) {
                         $titleParts[] = mb_strtolower($flower, 'UTF-8');
@@ -84,7 +87,7 @@
                                 <div class="flex items-center justify-between text-[11px] font-semibold text-slate-700 md:text-sm">
                                     <span class="inline-flex items-center gap-2">
                                         <span class="material-symbols-rounded text-base">stacked_bar_chart</span>
-                                        Количество стеблей
+                                        <?php echo htmlspecialchars($qtyLabel, ENT_QUOTES, 'UTF-8'); ?>
                                     </span>
                                     <input
                                         type="number"

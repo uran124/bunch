@@ -641,6 +641,11 @@ class AdminController extends Controller
         $photoUrl = trim($_POST['photo_url'] ?? '');
         $price = (float) ($_POST['price'] ?? 0);
         $active = isset($_POST['is_active']) ? 1 : 0;
+        $category = trim($_POST['category'] ?? 'main');
+        $categoryOptions = ['main', 'wholesale', 'accessory'];
+        if (!in_array($category, $categoryOptions, true)) {
+            $category = 'main';
+        }
 
         $uploadedPhoto = $this->handlePhotoUpload('photo_file', 'product');
         if ($uploadedPhoto) {
@@ -683,6 +688,7 @@ class AdminController extends Controller
             'stem_height_cm' => $supply['stem_height_cm'] ?? null,
             'stem_weight_g' => $supply['stem_weight_g'] ?? null,
             'country' => $supply['country'] ?? null,
+            'category' => $category !== '' ? $category : 'main',
             'is_base' => 0,
             'is_active' => $active,
             'sort_order' => 0,

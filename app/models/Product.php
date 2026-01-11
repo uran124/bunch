@@ -13,6 +13,33 @@ class Product extends Model
         return $stmt->fetchAll();
     }
 
+    public function getMainCatalog(bool $onlySmallWholesale = false): array
+    {
+        $sql = "SELECT p.*, s.variety AS supply_variety, s.flower_name AS supply_flower_name, s.country AS supply_country, s.stem_height_cm AS supply_stem_height_cm, s.has_product_card, s.has_wholesale_card, s.allow_small_wholesale FROM {$this->table} p LEFT JOIN supplies s ON p.supply_id = s.id WHERE p.is_active = 1 AND p.category = 'main' AND p.product_type = 'regular' AND p.supply_id IS NOT NULL ORDER BY p.sort_order ASC";
+
+        $stmt = $this->db->query($sql);
+        $rows = $stmt->fetchAll();
+
+        return array_values(array_filter($rows, static function (array $row) use ($onlySmallWholesale): bool {
+            $hasWholesale = !empty($row['has_wholesale_card']);
+            $hasRetail = !empty($row['has_product_card']);
+
+            if ($onlySmallWholesale) {
+                return $hasWholesale;
+            }
+
+            return $hasRetail || $hasWholesale;
+        }));
+    }
+
+    public function getWholesaleCatalog(): array
+    {
+        $sql = "SELECT p.*, s.variety AS supply_variety, s.flower_name AS supply_flower_name, s.country AS supply_country, s.stem_height_cm AS supply_stem_height_cm FROM {$this->table} p LEFT JOIN supplies s ON p.supply_id = s.id WHERE p.is_active = 1 AND p.category = 'wholesale' AND p.product_type = 'regular' ORDER BY p.sort_order ASC";
+
+        $stmt = $this->db->query($sql);
+        return $stmt->fetchAll();
+    }
+
     public function getActiveByCategory(string $category): array
     {
         $stmt = $this->db->prepare(

@@ -8,7 +8,8 @@ class HomeController extends Controller
         $productModel = new Product();
         $attributeModel = new AttributeModel();
 
-        $products = $productModel->getAll();
+        $isWholesaleUser = $this->isWholesaleUser();
+        $products = $productModel->getMainCatalog($isWholesaleUser);
         $attributes = $attributeModel->getAllWithValues();
 
         $attributesById = [];
@@ -38,6 +39,7 @@ class HomeController extends Controller
 
         $this->render('home', [
             'products' => $products,
+            'isWholesaleUser' => $isWholesaleUser,
             'pageMeta' => [
                 'title' => 'Bunch flowers — витрина',
                 'description' => 'Выбирайте стебли и оформление на главной странице.',

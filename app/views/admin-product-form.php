@@ -71,6 +71,15 @@
                         </select>
                     </label>
                     <label class="flex flex-col gap-1 text-sm font-semibold text-slate-700">
+                        Раздел каталога
+                        <?php $categoryValue = $editingProduct['category'] ?? 'main'; ?>
+                        <select name="category" class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-sm focus:border-rose-300 focus:outline-none focus:ring-2 focus:ring-rose-200">
+                            <option value="main" <?php echo $categoryValue === 'main' ? 'selected' : ''; ?>>Главная витрина</option>
+                            <option value="wholesale" <?php echo $categoryValue === 'wholesale' ? 'selected' : ''; ?>>Опт</option>
+                            <option value="accessory" <?php echo $categoryValue === 'accessory' ? 'selected' : ''; ?>>Сопутствующие товары</option>
+                        </select>
+                    </label>
+                    <label class="flex flex-col gap-1 text-sm font-semibold text-slate-700">
                         Артикул
                         <input name="article" value="<?php echo htmlspecialchars($editingProduct['article'] ?? '', ENT_QUOTES, 'UTF-8'); ?>" class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-sm" placeholder="SKU/артикул">
                     </label>
