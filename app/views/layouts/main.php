@@ -207,6 +207,27 @@ $adminNavigation = [
             body[data-page^="admin"] .bg-emerald-50 {
                 background-color: rgba(16, 185, 129, 0.12) !important;
             }
+            body[data-page^="admin"] input,
+            body[data-page^="admin"] select,
+            body[data-page^="admin"] textarea {
+                background-color: #0f172a;
+                border-color: #1e293b;
+                color: #e2e8f0;
+            }
+            body[data-page^="admin"] input::placeholder,
+            body[data-page^="admin"] textarea::placeholder {
+                color: #94a3b8;
+            }
+            body[data-page^="admin"] select option {
+                background-color: #0f172a;
+                color: #e2e8f0;
+            }
+            body[data-page^="admin"] select:disabled,
+            body[data-page^="admin"] input:disabled,
+            body[data-page^="admin"] textarea:disabled {
+                color: #64748b;
+                background-color: #0b1120;
+            }
             body[data-page^="admin"] .border-slate-200,
             body[data-page^="admin"] .border-slate-100 {
                 border-color: #1e293b !important;
@@ -225,7 +246,7 @@ $adminNavigation = [
             }
             body[data-page^="admin"] .text-slate-500,
             body[data-page^="admin"] .text-slate-400 {
-                color: #64748b !important;
+                color: #94a3b8 !important;
             }
             body[data-page^="admin"] .ring-slate-800 {
                 --tw-ring-color: #1e293b !important;
