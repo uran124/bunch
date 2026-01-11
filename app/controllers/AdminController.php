@@ -1766,6 +1766,38 @@ class AdminController extends Controller
         header('Location: /?' . http_build_query($query));
     }
 
+    public function deleteOneTimeOrder(): void
+    {
+        $orderId = (int) ($_POST['order_id'] ?? 0);
+
+        if ($orderId <= 0) {
+            header('Location: /?page=admin-orders-one-time&status=error');
+            return;
+        }
+
+        $orderModel = new Order();
+        $order = $orderModel->findById($orderId);
+
+        if (!$order || $order['delivery_type'] === 'subscription') {
+            header('Location: /?page=admin-orders-one-time&status=error');
+            return;
+        }
+
+        $deleted = $orderModel->deleteAdminOrder($orderId);
+        $returnUrl = trim($_POST['return_url'] ?? '');
+        $query = ['page' => 'admin-orders-one-time', 'result' => $deleted ? 'deleted' : 'error'];
+
+        if ($returnUrl !== '') {
+            parse_str($returnUrl, $returnParams);
+            if (is_array($returnParams)) {
+                $returnParams['result'] = $deleted ? 'deleted' : 'error';
+                $query = $returnParams;
+            }
+        }
+
+        header('Location: /?' . http_build_query($query));
+    }
+
     public function ordersSubscriptions(): void
     {
         $pageMeta = [
