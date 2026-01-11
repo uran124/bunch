@@ -154,6 +154,7 @@ CREATE TABLE products (
 
   is_base     TINYINT(1) NOT NULL DEFAULT 0, -- базовый продукт (массовая красная роза)
   is_active   TINYINT(1) NOT NULL DEFAULT 1,
+  status      ENUM('active', 'deleted') NOT NULL DEFAULT 'active',
 
   sort_order  INT NOT NULL DEFAULT 0,
 
@@ -168,6 +169,12 @@ CREATE TABLE products (
 - все тексты — в рамках ограничений (см. README_DEV.md).
 - сопутствующие товары помечаем `category = 'accessory'` (например, шарики, открытки, подарочные коробки).
 - оптовые предзаказы — `category = 'wholesale'`.
+
+Для существующих баз:
+```sql
+ALTER TABLE products
+  ADD COLUMN status ENUM('active', 'deleted') NOT NULL DEFAULT 'active' AFTER is_active;
+```
 
 ---
 

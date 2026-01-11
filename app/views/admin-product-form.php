@@ -1,8 +1,10 @@
 <?php /** @var array $supplies */ ?>
 <?php /** @var array $attributes */ ?>
 <?php /** @var array|null $editingProduct */ ?>
+<?php /** @var array|null $productRelations */ ?>
 <?php $pageMeta = $pageMeta ?? []; ?>
 <?php $message = $message ?? null; ?>
+<?php $productRelations = $productRelations ?? null; ?>
 
 <section class="flex flex-col gap-6">
     <header class="flex flex-wrap items-start justify-between gap-4">
@@ -155,6 +157,68 @@
             </form>
         </div>
     </section>
+
+    <?php if ($editingProduct): ?>
+        <section class="grid gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-rose-50/60 ring-1 ring-transparent">
+            <div class="space-y-3">
+                <p class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Связи товара</p>
+                <h2 class="text-xl font-semibold text-slate-900">Заказы, подписки и корзины</h2>
+                <?php if (empty($productRelations['orders']) && empty($productRelations['subscriptions']) && empty($productRelations['carts'])): ?>
+                    <p class="text-sm text-slate-600">Связей не найдено — товар не участвует в заказах, подписках или корзинах.</p>
+                <?php else: ?>
+                    <div class="grid gap-3 text-sm text-slate-700 md:grid-cols-3">
+                        <div class="space-y-2 rounded-xl border border-slate-100 bg-slate-50 p-3">
+                            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Заказы</p>
+                            <?php if (!empty($productRelations['orders'])): ?>
+                                <div class="flex flex-wrap gap-2">
+                                    <?php foreach ($productRelations['orders'] as $order): ?>
+                                        <a href="/?page=admin-order-one-time-edit&id=<?php echo (int) $order['id']; ?>" class="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 hover:border-rose-200 hover:text-rose-700">
+                                            #<?php echo htmlspecialchars($order['number'], ENT_QUOTES, 'UTF-8'); ?>
+                                        </a>
+                                    <?php endforeach; ?>
+                                </div>
+                            <?php else: ?>
+                                <p class="text-xs text-slate-500">Нет активных заказов.</p>
+                            <?php endif; ?>
+                        </div>
+                        <div class="space-y-2 rounded-xl border border-slate-100 bg-slate-50 p-3">
+                            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Подписки</p>
+                            <?php if (!empty($productRelations['subscriptions'])): ?>
+                                <div class="flex flex-col gap-2">
+                                    <?php foreach ($productRelations['subscriptions'] as $subscription): ?>
+                                        <a href="/?page=admin-user&id=<?php echo (int) $subscription['user_id']; ?>" class="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 hover:border-rose-200 hover:text-rose-700">
+                                            <?php echo htmlspecialchars($subscription['name'] ?? 'Клиент', ENT_QUOTES, 'UTF-8'); ?>
+                                            <span class="text-[11px] font-normal text-slate-500">(<?php echo htmlspecialchars($subscription['status'] ?? '—', ENT_QUOTES, 'UTF-8'); ?>)</span>
+                                        </a>
+                                    <?php endforeach; ?>
+                                </div>
+                            <?php else: ?>
+                                <p class="text-xs text-slate-500">Нет активных подписок.</p>
+                            <?php endif; ?>
+                        </div>
+                        <div class="space-y-2 rounded-xl border border-slate-100 bg-slate-50 p-3">
+                            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Корзины</p>
+                            <?php if (!empty($productRelations['carts'])): ?>
+                                <div class="flex flex-col gap-2">
+                                    <?php foreach ($productRelations['carts'] as $cart): ?>
+                                        <?php if (!empty($cart['user_id'])): ?>
+                                            <a href="/?page=admin-user&id=<?php echo (int) $cart['user_id']; ?>" class="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 hover:border-rose-200 hover:text-rose-700">
+                                                <?php echo htmlspecialchars($cart['name'] ?? 'Клиент', ENT_QUOTES, 'UTF-8'); ?>
+                                            </a>
+                                        <?php else: ?>
+                                            <span class="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-600">Гостевая корзина #<?php echo (int) $cart['id']; ?></span>
+                                        <?php endif; ?>
+                                    <?php endforeach; ?>
+                                </div>
+                            <?php else: ?>
+                                <p class="text-xs text-slate-500">Нет активных корзин.</p>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                <?php endif; ?>
+            </div>
+        </section>
+    <?php endif; ?>
 </section>
 
 <script>

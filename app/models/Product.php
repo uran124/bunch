@@ -7,7 +7,7 @@ class Product extends Model
 
     public function getAll(): array
     {
-        $sql = "SELECT p.*, s.variety AS supply_variety, s.flower_name AS supply_flower_name, s.country AS supply_country, s.stem_height_cm AS supply_stem_height_cm FROM {$this->table} p LEFT JOIN supplies s ON p.supply_id = s.id WHERE p.is_active = 1 ORDER BY p.sort_order ASC";
+        $sql = "SELECT p.*, s.variety AS supply_variety, s.flower_name AS supply_flower_name, s.country AS supply_country, s.stem_height_cm AS supply_stem_height_cm FROM {$this->table} p LEFT JOIN supplies s ON p.supply_id = s.id WHERE p.is_active = 1 AND p.status = 'active' ORDER BY p.sort_order ASC";
 
         $stmt = $this->db->query($sql);
         return $stmt->fetchAll();
@@ -15,7 +15,7 @@ class Product extends Model
 
     public function getMainCatalog(bool $onlySmallWholesale = false): array
     {
-        $sql = "SELECT p.*, s.variety AS supply_variety, s.flower_name AS supply_flower_name, s.country AS supply_country, s.stem_height_cm AS supply_stem_height_cm, s.has_product_card, s.has_wholesale_card, s.allow_small_wholesale FROM {$this->table} p LEFT JOIN supplies s ON p.supply_id = s.id WHERE p.is_active = 1 AND p.category = 'main' AND p.product_type = 'regular' AND p.supply_id IS NOT NULL ORDER BY p.sort_order ASC";
+        $sql = "SELECT p.*, s.variety AS supply_variety, s.flower_name AS supply_flower_name, s.country AS supply_country, s.stem_height_cm AS supply_stem_height_cm, s.has_product_card, s.has_wholesale_card, s.allow_small_wholesale FROM {$this->table} p LEFT JOIN supplies s ON p.supply_id = s.id WHERE p.is_active = 1 AND p.status = 'active' AND p.category = 'main' AND p.product_type = 'regular' AND p.supply_id IS NOT NULL ORDER BY p.sort_order ASC";
 
         $stmt = $this->db->query($sql);
         $rows = $stmt->fetchAll();
@@ -34,7 +34,7 @@ class Product extends Model
 
     public function getWholesaleCatalog(): array
     {
-        $sql = "SELECT p.*, s.variety AS supply_variety, s.flower_name AS supply_flower_name, s.country AS supply_country, s.stem_height_cm AS supply_stem_height_cm FROM {$this->table} p LEFT JOIN supplies s ON p.supply_id = s.id WHERE p.is_active = 1 AND p.category = 'wholesale' AND p.product_type = 'regular' ORDER BY p.sort_order ASC";
+        $sql = "SELECT p.*, s.variety AS supply_variety, s.flower_name AS supply_flower_name, s.country AS supply_country, s.stem_height_cm AS supply_stem_height_cm FROM {$this->table} p LEFT JOIN supplies s ON p.supply_id = s.id WHERE p.is_active = 1 AND p.status = 'active' AND p.category = 'wholesale' AND p.product_type = 'regular' ORDER BY p.sort_order ASC";
 
         $stmt = $this->db->query($sql);
         return $stmt->fetchAll();
@@ -43,7 +43,7 @@ class Product extends Model
     public function getActiveByCategory(string $category): array
     {
         $stmt = $this->db->prepare(
-            "SELECT * FROM {$this->table} WHERE is_active = 1 AND category = :category ORDER BY sort_order ASC"
+            "SELECT * FROM {$this->table} WHERE is_active = 1 AND status = 'active' AND category = :category ORDER BY sort_order ASC"
         );
         $stmt->execute(['category' => $category]);
 
@@ -58,9 +58,13 @@ class Product extends Model
         return $row ?: null;
     }
 
-    public function getAdminList(): array
+    public function getAdminList(bool $includeDeleted = false): array
     {
-        $sql = "SELECT p.*, s.flower_name, s.variety, s.country AS supply_country, s.stem_height_cm AS supply_height, s.stem_weight_g AS supply_weight, s.photo_url AS supply_photo, s.id AS supply_id, s.is_standing AS supply_is_standing, s.actual_delivery_date AS supply_actual_delivery_date, s.planned_delivery_date AS supply_planned_delivery_date, s.first_delivery_date AS supply_first_delivery_date, s.periodicity AS supply_periodicity, s.skip_date AS supply_skip_date FROM {$this->table} p LEFT JOIN supplies s ON p.supply_id = s.id ORDER BY p.created_at DESC";
+        $sql = "SELECT p.*, s.flower_name, s.variety, s.country AS supply_country, s.stem_height_cm AS supply_height, s.stem_weight_g AS supply_weight, s.photo_url AS supply_photo, s.id AS supply_id, s.is_standing AS supply_is_standing, s.actual_delivery_date AS supply_actual_delivery_date, s.planned_delivery_date AS supply_planned_delivery_date, s.first_delivery_date AS supply_first_delivery_date, s.periodicity AS supply_periodicity, s.skip_date AS supply_skip_date FROM {$this->table} p LEFT JOIN supplies s ON p.supply_id = s.id";
+        if (!$includeDeleted) {
+            $sql .= " WHERE p.status = 'active'";
+        }
+        $sql .= " ORDER BY p.created_at DESC";
         $stmt = $this->db->query($sql);
         $products = $stmt->fetchAll();
 
@@ -102,7 +106,7 @@ class Product extends Model
     {
         $slug = $this->generateSlug($payload['name']);
 
-        $sql = "INSERT INTO {$this->table} (supply_id, name, slug, description, price, article, photo_url, stem_height_cm, stem_weight_g, country, category, is_base, is_active, sort_order) VALUES (:supply_id, :name, :slug, :description, :price, :article, :photo_url, :stem_height_cm, :stem_weight_g, :country, :category, :is_base, :is_active, :sort_order)";
+        $sql = "INSERT INTO {$this->table} (supply_id, name, slug, description, price, article, photo_url, stem_height_cm, stem_weight_g, country, category, is_base, is_active, status, sort_order) VALUES (:supply_id, :name, :slug, :description, :price, :article, :photo_url, :stem_height_cm, :stem_weight_g, :country, :category, :is_base, :is_active, :status, :sort_order)";
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute([
@@ -119,6 +123,7 @@ class Product extends Model
             'category' => $payload['category'] ?? 'main',
             'is_base' => $payload['is_base'],
             'is_active' => $payload['is_active'],
+            'status' => $payload['status'] ?? 'active',
             'sort_order' => $payload['sort_order'],
         ]);
 
@@ -129,7 +134,7 @@ class Product extends Model
     {
         $slug = $this->generateSlug($payload['name']);
 
-        $sql = "INSERT INTO {$this->table} (name, slug, description, price, article, photo_url, category, product_type, is_base, is_active, sort_order) VALUES (:name, :slug, :description, :price, :article, :photo_url, :category, :product_type, :is_base, :is_active, :sort_order)";
+        $sql = "INSERT INTO {$this->table} (name, slug, description, price, article, photo_url, category, product_type, is_base, is_active, status, sort_order) VALUES (:name, :slug, :description, :price, :article, :photo_url, :category, :product_type, :is_base, :is_active, :status, :sort_order)";
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute([
@@ -143,6 +148,7 @@ class Product extends Model
             'product_type' => $payload['product_type'] ?? 'regular',
             'is_base' => $payload['is_base'] ?? 0,
             'is_active' => $payload['is_active'] ?? 1,
+            'status' => $payload['status'] ?? 'active',
             'sort_order' => $payload['sort_order'] ?? 0,
         ]);
 
@@ -198,9 +204,9 @@ class Product extends Model
         ]);
     }
 
-    public function deleteProduct(int $id): void
+    public function markDeleted(int $id): void
     {
-        $stmt = $this->db->prepare("DELETE FROM {$this->table} WHERE id = :id");
+        $stmt = $this->db->prepare("UPDATE {$this->table} SET status = 'deleted', is_active = 0 WHERE id = :id");
         $stmt->execute(['id' => $id]);
     }
 

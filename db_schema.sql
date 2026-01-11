@@ -187,6 +187,7 @@ CREATE TABLE products (
 
   is_base     TINYINT(1) NOT NULL DEFAULT 0, -- базовый продукт (массовая роза)
   is_active   TINYINT(1) NOT NULL DEFAULT 1,
+  status      ENUM('active', 'deleted') NOT NULL DEFAULT 'active',
 
   sort_order  INT NOT NULL DEFAULT 0,
 
