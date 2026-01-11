@@ -182,7 +182,7 @@ CREATE TABLE products (
   stem_weight_g  INT UNSIGNED NULL,        -- вес стебля из поставки
   country       VARCHAR(80) NULL,          -- страна происхождения из поставки
 
-  category    ENUM('main', 'accessory') NOT NULL DEFAULT 'main', -- витрина или сопутствующие товары
+  category    ENUM('main', 'wholesale', 'accessory') NOT NULL DEFAULT 'main', -- витрина, опт или сопутствующие товары
   product_type ENUM('regular', 'lottery') NOT NULL DEFAULT 'regular',
 
   is_base     TINYINT(1) NOT NULL DEFAULT 0, -- базовый продукт (массовая роза)

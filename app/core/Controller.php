@@ -3,6 +3,28 @@
 
 abstract class Controller
 {
+    protected function getCurrentUserRole(): string
+    {
+        if (!class_exists('Auth') || !Auth::check()) {
+            return 'customer';
+        }
+
+        $userId = Auth::userId();
+        if (!$userId) {
+            return 'customer';
+        }
+
+        $userModel = new User();
+        $user = $userModel->findById($userId);
+
+        return $user['role'] ?? 'customer';
+    }
+
+    protected function isWholesaleUser(): bool
+    {
+        return $this->getCurrentUserRole() === 'wholesale';
+    }
+
     protected function getDadataSettings(): array
     {
         return [
@@ -19,6 +41,14 @@ abstract class Controller
 
     protected function render(string $view, array $data = [], string $layout = 'layouts/main')
     {
+        if (!array_key_exists('currentUserRole', $data)) {
+            $data['currentUserRole'] = $this->getCurrentUserRole();
+        }
+
+        if (!array_key_exists('isWholesaleUser', $data)) {
+            $data['isWholesaleUser'] = $data['currentUserRole'] === 'wholesale';
+        }
+
         View::render($view, $data, $layout);
     }
 }

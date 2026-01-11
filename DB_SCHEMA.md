@@ -35,7 +35,7 @@ CREATE TABLE users (
   email VARCHAR(100) NULL,
 
   is_active TINYINT(1) NOT NULL DEFAULT 1, -- флаг активности для CRM/рассылок
-  role ENUM('admin', 'manager', 'florist', 'courier', 'customer') NOT NULL DEFAULT 'customer',
+  role ENUM('admin', 'manager', 'florist', 'courier', 'customer', 'wholesale') NOT NULL DEFAULT 'customer',
 
   pin_hash VARCHAR(255) NOT NULL,          -- password_hash(pin)
   pin_updated_at DATETIME NULL,            -- когда PIN в последний раз меняли
@@ -149,7 +149,7 @@ CREATE TABLE products (
   description TEXT NULL,                  -- описание (без раскрытия страны/сорта)
   price       DECIMAL(10,2) NOT NULL,     -- текущая цена за единицу (например, 89.00)
 
-  category    ENUM('main', 'accessory') NOT NULL DEFAULT 'main', -- витрина или сопутствующие товары
+  category    ENUM('main', 'wholesale', 'accessory') NOT NULL DEFAULT 'main', -- витрина, опт или сопутствующие товары
   product_type ENUM('regular', 'lottery') NOT NULL DEFAULT 'regular',
 
   is_base     TINYINT(1) NOT NULL DEFAULT 0, -- базовый продукт (массовая красная роза)
@@ -167,6 +167,7 @@ CREATE TABLE products (
 - для базового продукта `is_base = 1`, `price = 89.00`;
 - все тексты — в рамках ограничений (см. README_DEV.md).
 - сопутствующие товары помечаем `category = 'accessory'` (например, шарики, открытки, подарочные коробки).
+- оптовые предзаказы — `category = 'wholesale'`.
 
 ---
 

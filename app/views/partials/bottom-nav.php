@@ -1,5 +1,6 @@
 <?php
 $currentPage = $_GET['page'] ?? trim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/') ?: 'home';
+$isWholesaleUser = $isWholesaleUser ?? false;
 
 $navItems = [
     [
@@ -8,12 +9,19 @@ $navItems = [
         'href' => '/?page=home',
         'icon' => 'home'
     ],
-    [
-        'id' => 'promo',
-        'label' => 'Акции',
-        'href' => '/?page=promo',
-        'icon' => 'local_offer'
-    ],
+    $isWholesaleUser
+        ? [
+            'id' => 'wholesale',
+            'label' => 'Опт',
+            'href' => '/?page=wholesale',
+            'icon' => 'inventory'
+        ]
+        : [
+            'id' => 'promo',
+            'label' => 'Акции',
+            'href' => '/?page=promo',
+            'icon' => 'local_offer'
+        ],
     [
         'id' => 'cart',
         'label' => 'Корзина',

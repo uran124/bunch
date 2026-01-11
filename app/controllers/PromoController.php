@@ -5,6 +5,11 @@ class PromoController extends Controller
 {
     public function index()
     {
+        if ($this->isWholesaleUser()) {
+            header('Location: /?page=home');
+            return;
+        }
+
         $pageMeta = [
             'title' => 'Акции и спецпредложения — Bunch flowers',
             'description' => 'Разовые акции и спецпредложения с ограниченным количеством.',
@@ -39,9 +44,17 @@ class PromoController extends Controller
             ];
         }, $promoItems);
 
+        $showAuctions = (bool) ($promoCategories['auction']['is_active'] ?? false);
+        $auctionLots = $showAuctions ? (new AuctionLot())->getPromoList() : [];
+
+        $showLotteries = (bool) ($promoCategories['lottery']['is_active'] ?? false);
+        $lotteries = $showLotteries ? (new Lottery())->getPromoList() : [];
+
         $this->render('promo', [
             'pageMeta' => $pageMeta,
             'oneTimeItems' => $oneTimeItems,
+            'auctionLots' => $auctionLots,
+            'lotteries' => $lotteries,
             'promoCategories' => $promoCategories,
         ]);
     }
