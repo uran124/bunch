@@ -3,6 +3,7 @@
 <?php $pageMeta = $pageMeta ?? []; ?>
 <?php $message = $message ?? null; ?>
 <?php $blockedRelations = $blockedRelations ?? []; ?>
+<?php $showDeleted = $showDeleted ?? false; ?>
 
 <section class="flex flex-col gap-6">
     <header class="flex flex-wrap items-start justify-between gap-4">
@@ -11,6 +12,17 @@
             <h1 class="text-3xl font-semibold text-slate-900"><?php echo htmlspecialchars($pageMeta['h1'] ?? 'Товары', ENT_QUOTES, 'UTF-8'); ?></h1>
         </div>
         <div class="flex flex-wrap items-center gap-3">
+            <form action="/" method="get" class="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm">
+                <input type="hidden" name="page" value="admin-products">
+                <label class="flex items-center gap-2">
+                    <span class="text-xs uppercase tracking-[0.24em] text-slate-400">Показывать удалённые товары</span>
+                    <span class="relative inline-flex h-6 w-11 cursor-pointer items-center">
+                        <input type="checkbox" name="show_deleted" value="1" class="peer sr-only" onchange="this.form.submit()" <?php echo $showDeleted ? 'checked' : ''; ?>>
+                        <span class="absolute inset-0 rounded-full bg-slate-200 transition peer-checked:bg-rose-500"></span>
+                        <span class="absolute left-1 top-1 h-4 w-4 rounded-full bg-white shadow-sm transition peer-checked:translate-x-5"></span>
+                    </span>
+                </label>
+            </form>
             <a href="/?page=admin-product-form" class="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-emerald-200 transition hover:-translate-y-0.5 hover:shadow-md">
                 <span class="material-symbols-rounded text-base">add</span>
                 Новый товар
@@ -37,7 +49,7 @@
                     <?php elseif ($message === 'delete-blocked'): ?>
                         Нельзя удалить товар с активными заказами, подписками или в корзинах.
                     <?php elseif ($message === 'deleted'): ?>
-                        Товар удалён.
+                        Товар помечен как удалённый.
                     <?php else: ?>
                         Товар сохранён.
                     <?php endif; ?>
@@ -107,6 +119,7 @@
                 if ($supplyTitle === '' && !empty($product['supply_id'])) {
                     $supplyTitle = 'Поставка #' . (int) $product['supply_id'];
                 }
+                $isDeleted = ($product['status'] ?? 'active') === 'deleted';
 
                 $nextDeliveryLabel = '—';
                 if (!empty($product['supply_next_delivery'])) {
@@ -127,12 +140,17 @@
                     ? number_format($minPrice, 2) . ' - ' . number_format($maxPrice, 2)
                     : number_format($maxPrice, 2);
             ?>
-            <article class="grid grid-cols-[120px_1.6fr_1.2fr_120px_140px_120px_60px] items-center gap-4 border-b border-slate-100 px-5 py-4 text-sm last:border-b-0">
+            <article class="grid grid-cols-[120px_1.6fr_1.2fr_120px_140px_120px_60px] items-center gap-4 border-b border-slate-100 px-5 py-4 text-sm last:border-b-0 <?php echo $isDeleted ? 'bg-slate-50/70' : ''; ?>">
                 <div class="font-semibold text-slate-900"><?php echo htmlspecialchars($articleLabel, ENT_QUOTES, 'UTF-8'); ?></div>
                 <div class="space-y-1">
                     <a href="/?page=admin-product-form&edit_id=<?php echo (int) $product['id']; ?>" class="text-base font-semibold text-slate-900 underline-offset-4 hover:text-rose-600 hover:underline">
                         <?php echo htmlspecialchars($product['name'], ENT_QUOTES, 'UTF-8'); ?>
                     </a>
+                    <?php if ($isDeleted): ?>
+                        <div class="inline-flex items-center gap-1 rounded-full bg-rose-100 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-rose-700">
+                            Удалён
+                        </div>
+                    <?php endif; ?>
                     <div class="text-xs text-slate-500">ID: #<?php echo (int) $product['id']; ?></div>
                 </div>
                 <div class="space-y-1">
@@ -150,16 +168,16 @@
                     <form action="/?page=admin-product-toggle" method="post">
                         <input type="hidden" name="product_id" value="<?php echo (int) $product['id']; ?>">
                         <label class="relative inline-flex h-8 w-14 cursor-pointer items-center" aria-label="Активность товара">
-                            <input type="checkbox" name="is_active" class="peer sr-only" onchange="this.form.submit()" <?php echo ($product['is_active'] ?? 0) ? 'checked' : ''; ?>>
-                            <span class="absolute inset-0 rounded-full bg-slate-200 transition peer-checked:bg-emerald-500"></span>
-                            <span class="absolute left-1 top-1 h-6 w-6 rounded-full bg-white shadow-sm transition peer-checked:translate-x-6 peer-checked:shadow-md"></span>
+                            <input type="checkbox" name="is_active" class="peer sr-only" onchange="this.form.submit()" <?php echo ($product['is_active'] ?? 0) ? 'checked' : ''; ?> <?php echo $isDeleted ? 'disabled' : ''; ?>>
+                            <span class="absolute inset-0 rounded-full bg-slate-200 transition peer-checked:bg-emerald-500 <?php echo $isDeleted ? 'opacity-50' : ''; ?>"></span>
+                            <span class="absolute left-1 top-1 h-6 w-6 rounded-full bg-white shadow-sm transition peer-checked:translate-x-6 peer-checked:shadow-md <?php echo $isDeleted ? 'opacity-50' : ''; ?>"></span>
                         </label>
                     </form>
                 </div>
                 <div class="flex justify-end">
-                    <form action="/?page=admin-product-delete" method="post" onsubmit="return confirm('Удалить товар?');">
+                    <form action="/?page=admin-product-delete" method="post" onsubmit="return confirm('Пометить товар как удалённый?');">
                         <input type="hidden" name="product_id" value="<?php echo (int) $product['id']; ?>">
-                        <button type="submit" class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-rose-100 bg-rose-50 text-rose-700 transition hover:-translate-y-0.5 hover:border-rose-200" aria-label="Удалить товар">
+                        <button type="submit" class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-rose-100 bg-rose-50 text-rose-700 transition hover:-translate-y-0.5 hover:border-rose-200 disabled:cursor-not-allowed disabled:opacity-60" aria-label="Удалить товар" <?php echo $isDeleted ? 'disabled' : ''; ?>>
                             <span class="material-symbols-rounded text-base">delete</span>
                         </button>
                     </form>

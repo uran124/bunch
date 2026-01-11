@@ -588,6 +588,7 @@ class AdminController extends Controller
 
         $blockedRelations = null;
         $blockedProductId = isset($_GET['product_id']) ? (int) $_GET['product_id'] : null;
+        $showDeleted = isset($_GET['show_deleted']) && $_GET['show_deleted'] === '1';
 
         if (($_GET['status'] ?? null) === 'delete-blocked' && $blockedProductId) {
             $blockedRelations = $productModel->getBlockingRelations($blockedProductId);
@@ -595,10 +596,11 @@ class AdminController extends Controller
 
         $this->render('admin-products', [
             'pageMeta' => $pageMeta,
-            'products' => $productModel->getAdminList(),
+            'products' => $productModel->getAdminList($showDeleted),
             'filters' => $filters,
             'message' => $_GET['status'] ?? null,
             'blockedRelations' => $blockedRelations,
+            'showDeleted' => $showDeleted,
         ]);
     }
 
@@ -606,6 +608,10 @@ class AdminController extends Controller
     {
         $productModel = new Product();
         $editingProduct = isset($_GET['edit_id']) ? $productModel->getWithRelations((int) $_GET['edit_id']) : null;
+        $productRelations = null;
+        if ($editingProduct) {
+            $productRelations = $productModel->getBlockingRelations((int) $editingProduct['id']);
+        }
 
         $pageMeta = [
             'title' => ($editingProduct ? 'Редактирование товара' : 'Новый товар') . ' — админ-панель Bunch',
@@ -628,6 +634,7 @@ class AdminController extends Controller
             'supplies' => $supplyModel->getAdminList(),
             'attributes' => $attributeModel->getAllWithValues(),
             'editingProduct' => $editingProduct,
+            'productRelations' => $productRelations,
             'selectedSupplyId' => $selectedSupplyId,
             'message' => $_GET['status'] ?? null,
         ]);
@@ -734,7 +741,7 @@ class AdminController extends Controller
         }
 
         try {
-            $productModel->deleteProduct($productId);
+            $productModel->markDeleted($productId);
         } catch (\PDOException $exception) {
             header('Location: /?page=admin-products&status=delete-blocked&product_id=' . $productId);
             return;
