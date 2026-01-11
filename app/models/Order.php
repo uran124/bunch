@@ -270,6 +270,14 @@ class Order extends Model
         ]);
     }
 
+    public function deleteAdminOrder(int $orderId): bool
+    {
+        $stmt = $this->db->prepare('DELETE FROM orders WHERE id = :id');
+        $stmt->execute(['id' => $orderId]);
+
+        return $stmt->rowCount() > 0;
+    }
+
     private function getItems(int $orderId): array
     {
         $stmt = $this->db->prepare(

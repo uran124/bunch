@@ -65,6 +65,8 @@ $returnQuery = [
 
     <?php if ($message === 'updated'): ?>
         <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 shadow-sm">Заказ обновлён.</div>
+    <?php elseif ($message === 'deleted'): ?>
+        <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 shadow-sm">Заказ удалён.</div>
     <?php elseif ($message === 'error'): ?>
         <div class="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800 shadow-sm">Не удалось применить изменения. Проверьте данные и попробуйте снова.</div>
     <?php endif; ?>
@@ -107,27 +109,36 @@ $returnQuery = [
                             <?php echo htmlspecialchars($order['sum'], ENT_QUOTES, 'UTF-8'); ?>
                         </span>
                     </div>
-                    <form method="post" action="/?page=admin-order-update" class="flex flex-wrap items-center gap-2">
-                        <input type="hidden" name="order_id" value="<?php echo (int) $order['id']; ?>">
-                        <input type="hidden" name="delivery_type" value="<?php echo htmlspecialchars($order['deliveryTypeValue'], ENT_QUOTES, 'UTF-8'); ?>">
-                        <input type="hidden" name="scheduled_date" value="<?php echo htmlspecialchars($order['scheduled_date_raw'] ?? '', ENT_QUOTES, 'UTF-8'); ?>">
-                        <input type="hidden" name="scheduled_time" value="<?php echo htmlspecialchars($order['scheduled_time_raw'] ?? '', ENT_QUOTES, 'UTF-8'); ?>">
-                        <input type="hidden" name="recipient_name" value="<?php echo htmlspecialchars($order['recipientNameRaw'] ?? '', ENT_QUOTES, 'UTF-8'); ?>">
-                        <input type="hidden" name="recipient_phone" value="<?php echo htmlspecialchars($order['recipientPhoneRaw'] ?? '', ENT_QUOTES, 'UTF-8'); ?>">
-                        <input type="hidden" name="address_text" value="<?php echo htmlspecialchars($order['addressTextRaw'] ?? '', ENT_QUOTES, 'UTF-8'); ?>">
-                        <input type="hidden" name="comment" value="<?php echo htmlspecialchars($order['commentRaw'] ?? '', ENT_QUOTES, 'UTF-8'); ?>">
-                        <input type="hidden" name="return_url" value="<?php echo htmlspecialchars(http_build_query($returnQuery), ENT_QUOTES, 'UTF-8'); ?>">
-                        <label class="flex items-center gap-2 text-sm font-semibold text-slate-700">
-                            <select name="status" class="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-rose-300 focus:outline-none focus:ring-2 focus:ring-rose-200" data-order-status>
-                                <?php foreach ($filters['status'] as $value => $label): ?>
-                                    <?php if ($value === 'all') { continue; } ?>
-                                    <option value="<?php echo htmlspecialchars($value, ENT_QUOTES, 'UTF-8'); ?>" <?php echo $order['status'] === $value ? 'selected' : ''; ?>>
-                                        <?php echo htmlspecialchars($label, ENT_QUOTES, 'UTF-8'); ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
-                        </label>
-                    </form>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <form method="post" action="/?page=admin-order-update" class="flex flex-wrap items-center gap-2">
+                            <input type="hidden" name="order_id" value="<?php echo (int) $order['id']; ?>">
+                            <input type="hidden" name="delivery_type" value="<?php echo htmlspecialchars($order['deliveryTypeValue'], ENT_QUOTES, 'UTF-8'); ?>">
+                            <input type="hidden" name="scheduled_date" value="<?php echo htmlspecialchars($order['scheduled_date_raw'] ?? '', ENT_QUOTES, 'UTF-8'); ?>">
+                            <input type="hidden" name="scheduled_time" value="<?php echo htmlspecialchars($order['scheduled_time_raw'] ?? '', ENT_QUOTES, 'UTF-8'); ?>">
+                            <input type="hidden" name="recipient_name" value="<?php echo htmlspecialchars($order['recipientNameRaw'] ?? '', ENT_QUOTES, 'UTF-8'); ?>">
+                            <input type="hidden" name="recipient_phone" value="<?php echo htmlspecialchars($order['recipientPhoneRaw'] ?? '', ENT_QUOTES, 'UTF-8'); ?>">
+                            <input type="hidden" name="address_text" value="<?php echo htmlspecialchars($order['addressTextRaw'] ?? '', ENT_QUOTES, 'UTF-8'); ?>">
+                            <input type="hidden" name="comment" value="<?php echo htmlspecialchars($order['commentRaw'] ?? '', ENT_QUOTES, 'UTF-8'); ?>">
+                            <input type="hidden" name="return_url" value="<?php echo htmlspecialchars(http_build_query($returnQuery), ENT_QUOTES, 'UTF-8'); ?>">
+                            <label class="flex items-center gap-2 text-sm font-semibold text-slate-700">
+                                <select name="status" class="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-rose-300 focus:outline-none focus:ring-2 focus:ring-rose-200" data-order-status>
+                                    <?php foreach ($filters['status'] as $value => $label): ?>
+                                        <?php if ($value === 'all') { continue; } ?>
+                                        <option value="<?php echo htmlspecialchars($value, ENT_QUOTES, 'UTF-8'); ?>" <?php echo $order['status'] === $value ? 'selected' : ''; ?>>
+                                            <?php echo htmlspecialchars($label, ENT_QUOTES, 'UTF-8'); ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </label>
+                        </form>
+                        <form method="post" action="/?page=admin-order-delete">
+                            <input type="hidden" name="order_id" value="<?php echo (int) $order['id']; ?>">
+                            <input type="hidden" name="return_url" value="<?php echo htmlspecialchars(http_build_query($returnQuery), ENT_QUOTES, 'UTF-8'); ?>">
+                            <button type="submit" class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-rose-200 bg-rose-50 text-rose-700 shadow-sm transition hover:-translate-y-0.5 hover:border-rose-300 hover:text-rose-800" data-order-delete aria-label="Удалить заказ">
+                                <span class="material-symbols-rounded text-base">delete</span>
+                            </button>
+                        </form>
+                    </div>
                 </div>
 
                 <div class="grid gap-4 rounded-xl p-0 md:grid-cols-[1fr_1.5fr]">
@@ -230,6 +241,18 @@ document.addEventListener('click', (event) => {
         }, 1200);
     }).catch(() => {
     });
+});
+
+document.addEventListener('click', (event) => {
+    const deleteButton = event.target.closest('[data-order-delete]');
+
+    if (!deleteButton) {
+        return;
+    }
+
+    if (!window.confirm('Удалить заказ?')) {
+        event.preventDefault();
+    }
 });
 
 const filterForm = document.querySelector('[data-order-filters]');

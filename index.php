@@ -173,6 +173,7 @@ $router->post('admin-promo-item-save', [AdminController::class, 'savePromoItem']
 $router->post('admin-promo-categories-save', [AdminController::class, 'savePromoCategories']);
 $router->post('admin-promo-settings-save', [AdminController::class, 'savePromoSettings']);
 $router->post('admin-order-update', [AdminController::class, 'updateOneTimeOrder']);
+$router->post('admin-order-delete', [AdminController::class, 'deleteOneTimeOrder']);
 $router->post('cart-add', [CartController::class, 'add']);
 $router->post('cart-update', [CartController::class, 'update']);
 $router->post('cart-remove', [CartController::class, 'remove']);
