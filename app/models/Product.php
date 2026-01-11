@@ -15,26 +15,20 @@ class Product extends Model
 
     public function getMainCatalog(bool $onlySmallWholesale = false): array
     {
-        $sql = "SELECT p.*, s.variety AS supply_variety, s.flower_name AS supply_flower_name, s.country AS supply_country, s.stem_height_cm AS supply_stem_height_cm, s.has_product_card, s.has_wholesale_card, s.allow_small_wholesale FROM {$this->table} p LEFT JOIN supplies s ON p.supply_id = s.id WHERE p.is_active = 1 AND p.status = 'active' AND p.category = 'main' AND p.product_type = 'regular' AND p.supply_id IS NOT NULL ORDER BY p.sort_order ASC";
+        $types = $onlySmallWholesale ? ['small_wholesale'] : ['regular', 'small_wholesale'];
+        $placeholders = implode(',', array_fill(0, count($types), '?'));
 
-        $stmt = $this->db->query($sql);
-        $rows = $stmt->fetchAll();
+        $sql = "SELECT p.*, s.variety AS supply_variety, s.flower_name AS supply_flower_name, s.country AS supply_country, s.stem_height_cm AS supply_stem_height_cm, s.allow_small_wholesale FROM {$this->table} p LEFT JOIN supplies s ON p.supply_id = s.id WHERE p.is_active = 1 AND p.status = 'active' AND p.category = 'main' AND p.product_type IN ({$placeholders}) AND p.supply_id IS NOT NULL AND (p.product_type != 'small_wholesale' OR s.allow_small_wholesale = 1) ORDER BY p.sort_order ASC";
 
-        return array_values(array_filter($rows, static function (array $row) use ($onlySmallWholesale): bool {
-            $hasWholesale = !empty($row['has_wholesale_card']);
-            $hasRetail = !empty($row['has_product_card']);
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($types);
 
-            if ($onlySmallWholesale) {
-                return $hasWholesale;
-            }
-
-            return $hasRetail || $hasWholesale;
-        }));
+        return $stmt->fetchAll();
     }
 
     public function getWholesaleCatalog(): array
     {
-        $sql = "SELECT p.*, s.variety AS supply_variety, s.flower_name AS supply_flower_name, s.country AS supply_country, s.stem_height_cm AS supply_stem_height_cm FROM {$this->table} p LEFT JOIN supplies s ON p.supply_id = s.id WHERE p.is_active = 1 AND p.status = 'active' AND p.category = 'wholesale' AND p.product_type = 'regular' ORDER BY p.sort_order ASC";
+        $sql = "SELECT p.*, s.variety AS supply_variety, s.flower_name AS supply_flower_name, s.country AS supply_country, s.stem_height_cm AS supply_stem_height_cm FROM {$this->table} p LEFT JOIN supplies s ON p.supply_id = s.id WHERE p.is_active = 1 AND p.status = 'active' AND p.category = 'wholesale' AND p.product_type = 'wholesale_box' AND p.supply_id IS NOT NULL AND s.allow_box_order = 1 ORDER BY p.sort_order ASC";
 
         $stmt = $this->db->query($sql);
         return $stmt->fetchAll();
@@ -106,7 +100,7 @@ class Product extends Model
     {
         $slug = $this->generateSlug($payload['name']);
 
-        $sql = "INSERT INTO {$this->table} (supply_id, name, slug, description, price, article, photo_url, stem_height_cm, stem_weight_g, country, category, is_base, is_active, status, sort_order) VALUES (:supply_id, :name, :slug, :description, :price, :article, :photo_url, :stem_height_cm, :stem_weight_g, :country, :category, :is_base, :is_active, :status, :sort_order)";
+        $sql = "INSERT INTO {$this->table} (supply_id, name, slug, description, price, article, photo_url, stem_height_cm, stem_weight_g, country, category, product_type, is_base, is_active, status, sort_order) VALUES (:supply_id, :name, :slug, :description, :price, :article, :photo_url, :stem_height_cm, :stem_weight_g, :country, :category, :product_type, :is_base, :is_active, :status, :sort_order)";
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute([
@@ -121,6 +115,7 @@ class Product extends Model
             'stem_weight_g' => $payload['stem_weight_g'],
             'country' => $payload['country'],
             'category' => $payload['category'] ?? 'main',
+            'product_type' => $payload['product_type'] ?? 'regular',
             'is_base' => $payload['is_base'],
             'is_active' => $payload['is_active'],
             'status' => $payload['status'] ?? 'active',
@@ -185,7 +180,7 @@ class Product extends Model
 
     public function updateProduct(int $id, array $payload): void
     {
-        $sql = "UPDATE {$this->table} SET supply_id = :supply_id, name = :name, description = :description, price = :price, article = :article, photo_url = :photo_url, stem_height_cm = :stem_height_cm, stem_weight_g = :stem_weight_g, country = :country, category = :category, is_active = :is_active WHERE id = :id";
+        $sql = "UPDATE {$this->table} SET supply_id = :supply_id, name = :name, description = :description, price = :price, article = :article, photo_url = :photo_url, stem_height_cm = :stem_height_cm, stem_weight_g = :stem_weight_g, country = :country, category = :category, product_type = :product_type, is_active = :is_active WHERE id = :id";
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute([
@@ -199,6 +194,7 @@ class Product extends Model
             'stem_weight_g' => $payload['stem_weight_g'],
             'country' => $payload['country'],
             'category' => $payload['category'] ?? 'main',
+            'product_type' => $payload['product_type'] ?? 'regular',
             'is_active' => $payload['is_active'],
             'id' => $id,
         ]);

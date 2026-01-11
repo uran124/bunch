@@ -183,7 +183,7 @@ CREATE TABLE products (
   country       VARCHAR(80) NULL,          -- страна происхождения из поставки
 
   category    ENUM('main', 'wholesale', 'accessory') NOT NULL DEFAULT 'main', -- витрина, опт или сопутствующие товары
-  product_type ENUM('regular', 'lottery') NOT NULL DEFAULT 'regular',
+  product_type ENUM('regular', 'small_wholesale', 'lottery', 'promo', 'auction', 'wholesale_box') NOT NULL DEFAULT 'regular',
 
   is_base     TINYINT(1) NOT NULL DEFAULT 0, -- базовый продукт (массовая роза)
   is_active   TINYINT(1) NOT NULL DEFAULT 1,
@@ -781,6 +781,8 @@ CREATE TABLE supplies (
   variety VARCHAR(120) NOT NULL,
   country VARCHAR(80) NULL,
 
+  boxes_total INT UNSIGNED NOT NULL DEFAULT 0,
+  packs_per_box INT UNSIGNED NOT NULL DEFAULT 0,
   packs_total INT UNSIGNED NOT NULL,
   packs_reserved INT UNSIGNED NOT NULL DEFAULT 0,              -- подписки, предзаказы и мелкий опт
   stems_per_pack INT UNSIGNED NOT NULL,
@@ -792,10 +794,12 @@ CREATE TABLE supplies (
   planned_delivery_date DATE NULL,
   actual_delivery_date DATE NULL,
   allow_small_wholesale TINYINT(1) NOT NULL DEFAULT 0,
+  allow_box_order TINYINT(1) NOT NULL DEFAULT 0,
   skip_date DATE NULL,
 
   has_product_card TINYINT(1) NOT NULL DEFAULT 0,
   has_wholesale_card TINYINT(1) NOT NULL DEFAULT 0,
+  has_box_card TINYINT(1) NOT NULL DEFAULT 0,
 
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -887,19 +891,19 @@ CREATE TABLE product_price_tiers (
 
 INSERT INTO supplies (
   is_standing, photo_url, flower_name, variety, country,
-  packs_total, packs_reserved, stems_per_pack, stem_height_cm, stem_weight_g,
+  boxes_total, packs_per_box, packs_total, packs_reserved, stems_per_pack, stem_height_cm, stem_weight_g,
   periodicity, first_delivery_date, planned_delivery_date, actual_delivery_date,
-  allow_small_wholesale, skip_date, has_product_card, has_wholesale_card
+  allow_small_wholesale, allow_box_order, skip_date, has_product_card, has_wholesale_card, has_box_card
 ) VALUES
   (1, 'https://cdn.bunch.test/rhodos.jpg', 'Роза', 'Rhodos', 'Эквадор',
-   60, 10, 25, 50, 45, 'weekly', '2024-12-05', '2024-12-05', NULL,
-   1, NULL, 1, 1),
+   12, 5, 60, 10, 25, 50, 45, 'weekly', '2024-12-05', '2024-12-05', NULL,
+   1, 1, NULL, 1, 1, 1),
   (1, 'https://cdn.bunch.test/eucalyptus.jpg', 'Эвкалипт', 'Cinerea', 'Россия',
-   80, 14, 15, 40, 28, 'biweekly', '2024-12-10', '2024-12-10', '2024-12-24',
-   1, '2024-12-31', 0, 1),
+   16, 5, 80, 14, 15, 40, 28, 'biweekly', '2024-12-10', '2024-12-10', '2024-12-24',
+   1, 0, '2024-12-31', 0, 1, 0),
   (0, 'https://cdn.bunch.test/chrysanthemum.jpg', 'Хризантема', 'Altaj', 'Колумбия',
-   32, 4, 10, 32, 18, 'single', '2024-12-09', '2024-12-09', NULL,
-   1, NULL, 0, 0);
+   8, 4, 32, 4, 10, 32, 18, 'single', '2024-12-09', '2024-12-09', NULL,
+   1, 0, NULL, 0, 0, 0);
 
 INSERT INTO attributes (name, description, type, applies_to, is_active) VALUES
   ('Высота стебля', 'Ростовка в сантиметрах', 'selector', 'stem', 1),
