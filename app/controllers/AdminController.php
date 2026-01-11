@@ -1565,8 +1565,9 @@ class AdminController extends Controller
             ['category' => 'wholesale', 'product_type' => 'wholesale_box'],
         ];
 
+        $db = Database::getInstance();
         foreach ($definitions as $definition) {
-            $stmt = $this->db->prepare('SELECT 1 FROM products WHERE supply_id = :supply_id AND product_type = :product_type LIMIT 1');
+            $stmt = $db->prepare('SELECT 1 FROM products WHERE supply_id = :supply_id AND product_type = :product_type LIMIT 1');
             $stmt->execute([
                 'supply_id' => $supplyId,
                 'product_type' => $definition['product_type'],
@@ -1586,7 +1587,8 @@ class AdminController extends Controller
             default => 'wholesale_box',
         };
 
-        $stmt = $this->db->prepare('SELECT id FROM products WHERE supply_id = :supply_id AND product_type = :product_type LIMIT 1');
+        $db = Database::getInstance();
+        $stmt = $db->prepare('SELECT id FROM products WHERE supply_id = :supply_id AND product_type = :product_type LIMIT 1');
         $stmt->execute([
             'supply_id' => $supplyId,
             'product_type' => $productType,
