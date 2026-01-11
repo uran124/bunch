@@ -195,61 +195,146 @@ $adminNavigation = [
     <?php if ($isAdminPage): ?>
         <style>
             body[data-page^="admin"] {
-                background-color: #0b1120;
-                color: #e2e8f0;
+                --admin-bg: #0b0f16;
+                --admin-surface: #111827;
+                --admin-surface-strong: #161f2e;
+                --admin-muted: #94a3b8;
+                --admin-text: #e5e7eb;
+                --admin-primary: #4f8cff;
+                --admin-secondary: #6b7280;
+                --admin-danger: #f87171;
+                --admin-primary-soft: rgba(79, 140, 255, 0.16);
+                --admin-secondary-soft: rgba(148, 163, 184, 0.14);
+                --admin-danger-soft: rgba(248, 113, 113, 0.16);
+                background-color: var(--admin-bg);
+                color: var(--admin-text);
             }
             body[data-page^="admin"] .bg-white {
-                background-color: #0f172a !important;
+                background-color: var(--admin-surface) !important;
             }
             body[data-page^="admin"] .bg-slate-50 {
-                background-color: #111827 !important;
+                background-color: var(--admin-surface-strong) !important;
+            }
+            body[data-page^="admin"] .bg-slate-900 {
+                background-color: var(--admin-surface-strong) !important;
             }
             body[data-page^="admin"] .bg-emerald-50 {
-                background-color: rgba(16, 185, 129, 0.12) !important;
+                background-color: var(--admin-primary-soft) !important;
+            }
+            body[data-page^="admin"] .bg-rose-50 {
+                background-color: var(--admin-danger-soft) !important;
+            }
+            body[data-page^="admin"] .bg-amber-50,
+            body[data-page^="admin"] .bg-violet-50 {
+                background-color: var(--admin-secondary-soft) !important;
+            }
+            body[data-page^="admin"] .bg-emerald-600,
+            body[data-page^="admin"] .bg-emerald-700 {
+                background-color: var(--admin-primary) !important;
+            }
+            body[data-page^="admin"] .bg-amber-500,
+            body[data-page^="admin"] .bg-violet-600 {
+                background-color: var(--admin-secondary) !important;
+            }
+            body[data-page^="admin"] .bg-rose-600,
+            body[data-page^="admin"] .bg-rose-700 {
+                background-color: var(--admin-danger) !important;
             }
             body[data-page^="admin"] input,
             body[data-page^="admin"] select,
             body[data-page^="admin"] textarea {
-                background-color: #0f172a;
-                border-color: #1e293b;
-                color: #e2e8f0;
+                background-color: var(--admin-surface);
+                border: none;
+                box-shadow: 0 0 0 1px rgba(148, 163, 184, 0.12);
+                color: var(--admin-text);
+            }
+            body[data-page^="admin"] input:focus,
+            body[data-page^="admin"] select:focus,
+            body[data-page^="admin"] textarea:focus {
+                outline: none;
+                box-shadow: 0 0 0 2px rgba(79, 140, 255, 0.35);
             }
             body[data-page^="admin"] input::placeholder,
             body[data-page^="admin"] textarea::placeholder {
-                color: #94a3b8;
+                color: var(--admin-muted);
             }
             body[data-page^="admin"] select option {
-                background-color: #0f172a;
-                color: #e2e8f0;
+                background-color: var(--admin-surface);
+                color: var(--admin-text);
             }
             body[data-page^="admin"] select:disabled,
             body[data-page^="admin"] input:disabled,
             body[data-page^="admin"] textarea:disabled {
-                color: #64748b;
-                background-color: #0b1120;
+                color: #6b7280;
+                background-color: var(--admin-bg);
+                box-shadow: none;
             }
-            body[data-page^="admin"] .border-slate-200,
-            body[data-page^="admin"] .border-slate-100 {
-                border-color: #1e293b !important;
+            body[data-page^="admin"] .border,
+            body[data-page^="admin"] [class*="border-"] {
+                border-color: transparent !important;
+                border-width: 0 !important;
+            }
+            body[data-page^="admin"] header,
+            body[data-page^="admin"] aside {
+                box-shadow: 0 12px 28px rgba(15, 23, 42, 0.35);
             }
             body[data-page^="admin"] .text-slate-900 {
                 color: #f8fafc !important;
             }
             body[data-page^="admin"] .text-slate-800 {
-                color: #e2e8f0 !important;
+                color: #e5e7eb !important;
             }
             body[data-page^="admin"] .text-slate-700 {
-                color: #cbd5f5 !important;
+                color: #d1d5db !important;
             }
-            body[data-page^="admin"] .text-slate-600 {
-                color: #94a3b8 !important;
-            }
+            body[data-page^="admin"] .text-slate-600,
             body[data-page^="admin"] .text-slate-500,
             body[data-page^="admin"] .text-slate-400 {
-                color: #94a3b8 !important;
+                color: var(--admin-muted) !important;
             }
-            body[data-page^="admin"] .ring-slate-800 {
-                --tw-ring-color: #1e293b !important;
+            body[data-page^="admin"] .text-emerald-700,
+            body[data-page^="admin"] .text-emerald-900 {
+                color: var(--admin-primary) !important;
+            }
+            body[data-page^="admin"] .text-rose-700,
+            body[data-page^="admin"] .text-rose-900 {
+                color: var(--admin-danger) !important;
+            }
+            body[data-page^="admin"] .text-emerald-900,
+            body[data-page^="admin"] .text-emerald-800 {
+                color: var(--admin-primary) !important;
+            }
+            body[data-page^="admin"] .ring-slate-800,
+            body[data-page^="admin"] [class*="ring-"] {
+                --tw-ring-color: transparent !important;
+            }
+            body[data-page^="admin"] .transition {
+                transition-property: color, background-color, box-shadow, filter;
+                transition-duration: 200ms;
+                transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+            }
+            body[data-page^="admin"] a,
+            body[data-page^="admin"] button,
+            body[data-page^="admin"] [role="button"],
+            body[data-page^="admin"] input[type="submit"],
+            body[data-page^="admin"] input[type="button"] {
+                cursor: pointer;
+            }
+            body[data-page^="admin"] button:disabled,
+            body[data-page^="admin"] input:disabled {
+                cursor: not-allowed;
+                filter: none;
+            }
+            body[data-page^="admin"] a:hover,
+            body[data-page^="admin"] button:not(:disabled):hover,
+            body[data-page^="admin"] [role="button"]:hover,
+            body[data-page^="admin"] input[type="submit"]:not(:disabled):hover,
+            body[data-page^="admin"] input[type="button"]:not(:disabled):hover {
+                filter: brightness(1.08);
+            }
+            body[data-page^="admin"] .hover\:-translate-y-0\.5:hover,
+            body[data-page^="admin"] .hover\:-translate-y-1:hover {
+                transform: none !important;
             }
         </style>
     <?php endif; ?>
