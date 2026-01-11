@@ -24,7 +24,7 @@
             <span class="material-symbols-rounded text-lg">error</span>
             <div>
                 <p class="font-semibold">Заполните обязательные поля.</p>
-                <p>Название, сорт, количество пачек, стеблей в пачке и дата первой поставки должны быть указаны.</p>
+                <p>Название, сорт, количество коробок, пачек в коробке, стеблей в пачке и дата первой поставки должны быть указаны.</p>
             </div>
         </div>
     <?php endif; ?>
@@ -60,8 +60,12 @@
                 <input name="country" type="text" class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-sm focus:border-rose-300 focus:outline-none focus:ring-2 focus:ring-rose-200" placeholder="Эквадор">
             </label>
             <label class="flex flex-col gap-2 text-sm font-semibold text-slate-700">
-                Сколько пачек
-                <input name="packs_total" type="number" min="1" required class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-sm focus:border-rose-300 focus:outline-none focus:ring-2 focus:ring-rose-200" placeholder="60">
+                Сколько коробок
+                <input name="boxes_total" type="number" min="1" required class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-sm focus:border-rose-300 focus:outline-none focus:ring-2 focus:ring-rose-200" placeholder="12">
+            </label>
+            <label class="flex flex-col gap-2 text-sm font-semibold text-slate-700">
+                Сколько пачек в коробке
+                <input name="packs_per_box" type="number" min="1" required class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-sm focus:border-rose-300 focus:outline-none focus:ring-2 focus:ring-rose-200" placeholder="5">
             </label>
             <label class="flex flex-col gap-2 text-sm font-semibold text-slate-700">
                 Сколько стеблей в пачке
@@ -98,6 +102,10 @@
             <label class="flex items-center gap-2 text-sm font-semibold text-slate-700">
                 <input name="allow_small_wholesale" type="checkbox" class="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500">
                 Возможность купить мелким оптом
+            </label>
+            <label class="flex items-center gap-2 text-sm font-semibold text-slate-700">
+                <input name="allow_box_order" type="checkbox" class="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
+                Возможность заказать коробку
             </label>
         </div>
         <div class="flex justify-end">

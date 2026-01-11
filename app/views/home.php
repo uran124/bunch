@@ -37,8 +37,8 @@
                     $flower = $product['supply_flower_name'] ?? $product['name'];
                     $variety = $product['supply_variety'] ?? '';
                     $titleParts = [];
-                    $isSmallWholesale = !empty($product['has_wholesale_card']) && empty($product['has_product_card']);
-                    $qtyLabel = $isWholesaleUser || $isSmallWholesale ? 'Количество пачек' : 'Количество стеблей';
+                    $isSmallWholesale = ($product['product_type'] ?? 'regular') === 'small_wholesale';
+                    $qtyLabel = $isSmallWholesale ? 'Количество пачек' : 'Количество стеблей';
 
                     if ($flower) {
                         $titleParts[] = mb_strtolower($flower, 'UTF-8');

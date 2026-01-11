@@ -61,7 +61,7 @@
         <div class="flex items-center justify-between gap-4 border-b border-slate-100 bg-slate-50 px-5 py-3">
             <div>
                 <p class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Список ближайших поставок</p>
-                <h2 class="text-lg font-semibold text-slate-900">План по датам и доступным пачкам</h2>
+                <h2 class="text-lg font-semibold text-slate-900">План по датам и доступным коробкам</h2>
             </div>
             <div class="flex items-center gap-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
                 <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-emerald-700 ring-1 ring-emerald-200">
@@ -72,12 +72,16 @@
                     <span class="material-symbols-rounded text-base">deployed_code</span>
                     Мелкий опт
                 </span>
+                <span class="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-slate-700 ring-1 ring-slate-200">
+                    <span class="material-symbols-rounded text-base">inventory_2</span>
+                    Коробки
+                </span>
             </div>
         </div>
-        <div class="grid grid-cols-[1.2fr_1fr_1fr_1fr_110px] items-center gap-4 border-b border-slate-100 px-5 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
+        <div class="grid grid-cols-[1.2fr_1fr_1fr_1fr_140px] items-center gap-4 border-b border-slate-100 px-5 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
             <span>Название</span>
             <span>Сорт / Страна</span>
-            <span>Пачки</span>
+            <span>Коробки</span>
             <span>Дата поставки</span>
             <span class="text-right">Карточки</span>
         </div>
@@ -87,15 +91,18 @@
             <?php foreach ($supplies as $supply): ?>
                 <?php
                 $title = trim(($supply['flower_name'] ?? '') . ' ' . ($supply['variety'] ?? ''));
-                $packText = (int) ($supply['packs_total'] ?? 0) . '/' . (int) ($supply['packs_available'] ?? 0) . ' (' . (int) ($supply['pack_size'] ?? 0) . ' шт.)';
+                $packsTotal = (int) ($supply['packs_total'] ?? 0);
+                $packsAvailable = (int) ($supply['packs_available'] ?? 0);
+                $boxesTotal = (int) ($supply['boxes_total'] ?? 0);
+                $packsPerBox = (int) ($supply['packs_per_box'] ?? 0);
+                $packText = $packsTotal . '/' . $packsAvailable . ' (' . (int) ($supply['pack_size'] ?? 0) . ' шт.)';
                 $dateLabel = $supply['next_delivery'] ?: '—';
                 $isStanding = !empty($supply['is_standing']);
                 $hasProduct = !empty($supply['has_product_card']);
                 $hasWholesale = !empty($supply['has_wholesale_card']);
-                $retailCreateHref = '/?page=admin-product-form&create_from_supply=' . (int) $supply['id'];
-                $wholesaleCreateHref = '/?page=admin-product-form&create_from_supply=' . (int) $supply['id'];
+                $hasBox = !empty($supply['has_box_card']);
                 ?>
-                <article id="supply-<?php echo (int) $supply['id']; ?>" class="grid grid-cols-[1.2fr_1fr_1fr_1fr_110px] items-center gap-4 border-b border-slate-100 px-5 py-4 last:border-b-0">
+                <article id="supply-<?php echo (int) $supply['id']; ?>" class="grid grid-cols-[1.2fr_1fr_1fr_1fr_140px] items-center gap-4 border-b border-slate-100 px-5 py-4 last:border-b-0">
                     <div class="space-y-1">
                         <a href="/?page=admin-supply-edit&id=<?php echo (int) $supply['id']; ?>" class="text-base font-semibold text-slate-900 underline-offset-4 hover:text-emerald-700 hover:underline">
                             <?php echo htmlspecialchars($title, ENT_QUOTES, 'UTF-8'); ?>
@@ -107,7 +114,9 @@
                         <div>Страна: <?php echo htmlspecialchars($supply['country'] ?? '—', ENT_QUOTES, 'UTF-8'); ?></div>
                     </div>
                     <div class="space-y-1 text-sm text-slate-700">
-                        <div>Всего/доступно: <?php echo htmlspecialchars($packText, ENT_QUOTES, 'UTF-8'); ?></div>
+                        <div>Коробок: <?php echo (int) $boxesTotal; ?></div>
+                        <div>Пачек в коробке: <?php echo (int) $packsPerBox; ?></div>
+                        <div>Пачки (всего/доступно): <?php echo htmlspecialchars($packText, ENT_QUOTES, 'UTF-8'); ?></div>
                         <div>Стебель: <?php echo (int) ($supply['stem_height_cm'] ?? 0); ?> см · <?php echo (int) ($supply['stem_weight_g'] ?? 0); ?> г</div>
                     </div>
                     <div class="space-y-1 text-sm text-slate-700">
@@ -120,36 +129,35 @@
                         <?php if (!empty($supply['allow_small_wholesale'])): ?>
                             <div class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-emerald-700 ring-1 ring-emerald-200">Мелкий опт</div>
                         <?php endif; ?>
+                        <?php if (!empty($supply['allow_box_order'])): ?>
+                            <div class="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-indigo-700 ring-1 ring-indigo-200">Коробки</div>
+                        <?php endif; ?>
                     </div>
                     <div class="flex justify-end gap-2 text-sm font-semibold">
-                        <?php if ($hasWholesale): ?>
-                            <form action="/?page=admin-supply-toggle-card" method="post">
-                                <input type="hidden" name="supply_id" value="<?php echo (int) $supply['id']; ?>">
-                                <input type="hidden" name="card_type" value="wholesale">
-                                <input type="hidden" name="activate" value="0">
-                                <button type="submit" class="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-2 text-slate-700 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:text-emerald-700" title="Деактивировать мелкооптовую карточку">
-                                    <span class="material-symbols-rounded text-base text-emerald-500">deployed_code</span>
-                                </button>
-                            </form>
-                        <?php else: ?>
-                            <a href="<?php echo htmlspecialchars($wholesaleCreateHref, ENT_QUOTES, 'UTF-8'); ?>" class="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-2 text-slate-700 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:text-emerald-700" title="Создать мелкооптовую карточку">
-                                <span class="material-symbols-rounded text-base text-slate-300">deployed_code</span>
-                            </a>
-                        <?php endif; ?>
-                        <?php if ($hasProduct): ?>
-                            <form action="/?page=admin-supply-toggle-card" method="post">
-                                <input type="hidden" name="supply_id" value="<?php echo (int) $supply['id']; ?>">
-                                <input type="hidden" name="card_type" value="retail">
-                                <input type="hidden" name="activate" value="0">
-                                <button type="submit" class="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-2 text-slate-700 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:text-emerald-700" title="Деактивировать розничную карточку">
-                                    <span class="material-symbols-rounded text-base text-emerald-500">local_florist</span>
-                                </button>
-                            </form>
-                        <?php else: ?>
-                            <a href="<?php echo htmlspecialchars($retailCreateHref, ENT_QUOTES, 'UTF-8'); ?>" class="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-2 text-slate-700 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:text-emerald-700" title="Создать розничную карточку">
-                                <span class="material-symbols-rounded text-base text-slate-300">local_florist</span>
-                            </a>
-                        <?php endif; ?>
+                        <form action="/?page=admin-supply-toggle-card" method="post">
+                            <input type="hidden" name="supply_id" value="<?php echo (int) $supply['id']; ?>">
+                            <input type="hidden" name="card_type" value="retail">
+                            <input type="hidden" name="activate" value="<?php echo $hasProduct ? '0' : '1'; ?>">
+                            <button type="submit" class="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-2 text-slate-700 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:text-emerald-700" title="<?php echo $hasProduct ? 'Деактивировать розничную карточку' : 'Активировать розничную карточку'; ?>">
+                                <span class="material-symbols-rounded text-base <?php echo $hasProduct ? 'text-emerald-500' : 'text-slate-300'; ?>">local_florist</span>
+                            </button>
+                        </form>
+                        <form action="/?page=admin-supply-toggle-card" method="post">
+                            <input type="hidden" name="supply_id" value="<?php echo (int) $supply['id']; ?>">
+                            <input type="hidden" name="card_type" value="wholesale">
+                            <input type="hidden" name="activate" value="<?php echo $hasWholesale ? '0' : '1'; ?>">
+                            <button type="submit" class="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-2 text-slate-700 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:text-emerald-700" title="<?php echo $hasWholesale ? 'Деактивировать мелкооптовую карточку' : 'Активировать мелкооптовую карточку'; ?>">
+                                <span class="material-symbols-rounded text-base <?php echo $hasWholesale ? 'text-emerald-500' : 'text-slate-300'; ?>">deployed_code</span>
+                            </button>
+                        </form>
+                        <form action="/?page=admin-supply-toggle-card" method="post">
+                            <input type="hidden" name="supply_id" value="<?php echo (int) $supply['id']; ?>">
+                            <input type="hidden" name="card_type" value="box">
+                            <input type="hidden" name="activate" value="<?php echo $hasBox ? '0' : '1'; ?>">
+                            <button type="submit" class="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-2 text-slate-700 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:text-emerald-700" title="<?php echo $hasBox ? 'Деактивировать коробочную карточку' : 'Активировать коробочную карточку'; ?>">
+                                <span class="material-symbols-rounded text-base <?php echo $hasBox ? 'text-emerald-500' : 'text-slate-300'; ?>">inventory_2</span>
+                            </button>
+                        </form>
                     </div>
                 </article>
             <?php endforeach; ?>

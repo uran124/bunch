@@ -649,9 +649,14 @@ class AdminController extends Controller
         $price = (float) ($_POST['price'] ?? 0);
         $active = isset($_POST['is_active']) ? 1 : 0;
         $category = trim($_POST['category'] ?? 'main');
+        $productType = trim($_POST['product_type'] ?? 'regular');
         $categoryOptions = ['main', 'wholesale', 'accessory'];
         if (!in_array($category, $categoryOptions, true)) {
             $category = 'main';
+        }
+        $productTypeOptions = ['regular', 'small_wholesale', 'lottery', 'promo', 'auction', 'wholesale_box'];
+        if (!in_array($productType, $productTypeOptions, true)) {
+            $productType = 'regular';
         }
 
         $uploadedPhoto = $this->handlePhotoUpload('photo_file', 'product');
@@ -696,6 +701,7 @@ class AdminController extends Controller
             'stem_weight_g' => $supply['stem_weight_g'] ?? null,
             'country' => $supply['country'] ?? null,
             'category' => $category !== '' ? $category : 'main',
+            'product_type' => $productType,
             'is_base' => 0,
             'is_active' => $active,
             'sort_order' => 0,
@@ -721,6 +727,7 @@ class AdminController extends Controller
 
         $productModel->setPriceTiers($productId, $tiers);
         $productModel->setAttributes($productId, $attributeIds);
+        $this->syncSupplyCardStatus($supplyId, $productType, $active);
 
         header('Location: /?page=admin-product-form&status=saved&edit_id=' . $productId);
     }
@@ -763,6 +770,10 @@ class AdminController extends Controller
 
         $productModel = new Product();
         $productModel->setActive($productId, $active);
+        $product = $productModel->getById($productId);
+        if ($product && !empty($product['supply_id'])) {
+            $this->syncSupplyCardStatus((int) $product['supply_id'], $product['product_type'] ?? 'regular', $active);
+        }
 
         header('Location: /?page=admin-products');
     }
@@ -1050,7 +1061,7 @@ class AdminController extends Controller
                 'article' => null,
                 'photo_url' => $photoUrl !== '' ? $photoUrl : null,
                 'category' => 'main',
-                'product_type' => 'regular',
+                'product_type' => 'promo',
                 'is_base' => 0,
                 'is_active' => $isActive,
                 'sort_order' => 0,
@@ -1321,13 +1332,18 @@ class AdminController extends Controller
         $firstDelivery = trim($_POST['first_delivery_date'] ?? '');
         $actualDelivery = trim($_POST['actual_delivery_date'] ?? '');
         $skipDate = trim($_POST['skip_date'] ?? '');
+        $boxesTotal = (int) ($_POST['boxes_total'] ?? 0);
+        $packsPerBox = (int) ($_POST['packs_per_box'] ?? 0);
+        $packsTotal = $boxesTotal > 0 && $packsPerBox > 0 ? $boxesTotal * $packsPerBox : 0;
 
         $payload = [
             'photo_url' => trim($_POST['photo_url'] ?? ''),
             'flower_name' => trim($_POST['flower_name'] ?? ''),
             'variety' => trim($_POST['variety'] ?? ''),
             'country' => trim($_POST['country'] ?? ''),
-            'packs_total' => (int) ($_POST['packs_total'] ?? 0),
+            'boxes_total' => $boxesTotal,
+            'packs_per_box' => $packsPerBox,
+            'packs_total' => $packsTotal,
             'stems_per_pack' => (int) ($_POST['stems_per_pack'] ?? 0),
             'stem_height_cm' => (int) ($_POST['stem_height_cm'] ?? 0),
             'stem_weight_g' => (int) ($_POST['stem_weight_g'] ?? 0),
@@ -1336,6 +1352,7 @@ class AdminController extends Controller
             'planned_delivery_date' => $firstDelivery !== '' ? $firstDelivery : null,
             'actual_delivery_date' => $actualDelivery !== '' ? $actualDelivery : null,
             'allow_small_wholesale' => isset($_POST['allow_small_wholesale']) ? 1 : 0,
+            'allow_box_order' => isset($_POST['allow_box_order']) ? 1 : 0,
             'skip_date' => $skipDate !== '' ? $skipDate : null,
             'packs_reserved' => 0,
         ];
@@ -1345,13 +1362,14 @@ class AdminController extends Controller
             $payload['photo_url'] = $uploadedPhoto;
         }
 
-        if ($payload['flower_name'] === '' || $payload['variety'] === '' || !$payload['packs_total'] || !$payload['stems_per_pack'] || empty($payload['first_delivery_date'])) {
+        if ($payload['flower_name'] === '' || $payload['variety'] === '' || !$payload['boxes_total'] || !$payload['packs_per_box'] || !$payload['stems_per_pack'] || empty($payload['first_delivery_date'])) {
             header('Location: /?page=admin-supply-standing&status=error');
             return;
         }
 
         $supplyModel = new Supply();
-        $supplyModel->createStanding($payload);
+        $supplyId = $supplyModel->createStanding($payload);
+        $this->createSupplyProducts($supplyId);
 
         header('Location: /?page=admin-supplies&status=created');
     }
@@ -1360,19 +1378,25 @@ class AdminController extends Controller
     {
         $plannedDelivery = trim($_POST['planned_delivery_date'] ?? '');
         $actualDelivery = trim($_POST['actual_delivery_date'] ?? '');
+        $boxesTotal = (int) ($_POST['boxes_total'] ?? 0);
+        $packsPerBox = (int) ($_POST['packs_per_box'] ?? 0);
+        $packsTotal = $boxesTotal > 0 && $packsPerBox > 0 ? $boxesTotal * $packsPerBox : 0;
 
         $payload = [
             'photo_url' => trim($_POST['photo_url'] ?? ''),
             'flower_name' => trim($_POST['flower_name'] ?? ''),
             'variety' => trim($_POST['variety'] ?? ''),
             'country' => trim($_POST['country'] ?? ''),
-            'packs_total' => (int) ($_POST['packs_total'] ?? 0),
+            'boxes_total' => $boxesTotal,
+            'packs_per_box' => $packsPerBox,
+            'packs_total' => $packsTotal,
             'stems_per_pack' => (int) ($_POST['stems_per_pack'] ?? 0),
             'stem_height_cm' => (int) ($_POST['stem_height_cm'] ?? 0),
             'stem_weight_g' => (int) ($_POST['stem_weight_g'] ?? 0),
             'planned_delivery_date' => $plannedDelivery !== '' ? $plannedDelivery : null,
             'actual_delivery_date' => $actualDelivery !== '' ? $actualDelivery : null,
             'allow_small_wholesale' => isset($_POST['allow_small_wholesale']) ? 1 : 0,
+            'allow_box_order' => isset($_POST['allow_box_order']) ? 1 : 0,
             'packs_reserved' => 0,
         ];
 
@@ -1381,13 +1405,14 @@ class AdminController extends Controller
             $payload['photo_url'] = $uploadedPhoto;
         }
 
-        if ($payload['flower_name'] === '' || $payload['variety'] === '' || !$payload['packs_total'] || !$payload['stems_per_pack'] || empty($payload['planned_delivery_date'])) {
+        if ($payload['flower_name'] === '' || $payload['variety'] === '' || !$payload['boxes_total'] || !$payload['packs_per_box'] || !$payload['stems_per_pack'] || empty($payload['planned_delivery_date'])) {
             header('Location: /?page=admin-supply-single&status=error');
             return;
         }
 
         $supplyModel = new Supply();
-        $supplyModel->createOneTime($payload);
+        $supplyId = $supplyModel->createOneTime($payload);
+        $this->createSupplyProducts($supplyId);
 
         header('Location: /?page=admin-supplies&status=created');
     }
@@ -1410,16 +1435,23 @@ class AdminController extends Controller
             $photoUrl = $uploadedPhoto;
         }
 
+        $boxesTotal = (int) ($_POST['boxes_total'] ?? 0);
+        $packsPerBox = (int) ($_POST['packs_per_box'] ?? 0);
+        $packsTotal = $boxesTotal > 0 && $packsPerBox > 0 ? $boxesTotal * $packsPerBox : 0;
+
         $common = [
             'photo_url' => $photoUrl,
             'flower_name' => trim($_POST['flower_name'] ?? ''),
             'variety' => trim($_POST['variety'] ?? ''),
             'country' => trim($_POST['country'] ?? ''),
-            'packs_total' => (int) ($_POST['packs_total'] ?? 0),
+            'boxes_total' => $boxesTotal,
+            'packs_per_box' => $packsPerBox,
+            'packs_total' => $packsTotal,
             'stems_per_pack' => (int) ($_POST['stems_per_pack'] ?? 0),
             'stem_height_cm' => (int) ($_POST['stem_height_cm'] ?? 0),
             'stem_weight_g' => (int) ($_POST['stem_weight_g'] ?? 0),
             'allow_small_wholesale' => isset($_POST['allow_small_wholesale']) ? 1 : 0,
+            'allow_box_order' => isset($_POST['allow_box_order']) ? 1 : 0,
         ];
 
         if ($existing['is_standing']) {
@@ -1436,7 +1468,7 @@ class AdminController extends Controller
                 'skip_date' => $skipDate !== '' ? $skipDate : null,
             ]);
 
-            if ($payload['flower_name'] === '' || $payload['variety'] === '' || !$payload['packs_total'] || !$payload['stems_per_pack'] || empty($payload['first_delivery_date'])) {
+            if ($payload['flower_name'] === '' || $payload['variety'] === '' || !$payload['boxes_total'] || !$payload['packs_per_box'] || !$payload['stems_per_pack'] || empty($payload['first_delivery_date'])) {
                 header('Location: /?page=admin-supply-edit&id=' . $supplyId . '&status=error');
                 return;
             }
@@ -1451,7 +1483,7 @@ class AdminController extends Controller
                 'actual_delivery_date' => $actualDelivery !== '' ? $actualDelivery : null,
             ]);
 
-            if ($payload['flower_name'] === '' || $payload['variety'] === '' || !$payload['packs_total'] || !$payload['stems_per_pack'] || empty($payload['planned_delivery_date'])) {
+            if ($payload['flower_name'] === '' || $payload['variety'] === '' || !$payload['boxes_total'] || !$payload['packs_per_box'] || !$payload['stems_per_pack'] || empty($payload['planned_delivery_date'])) {
                 header('Location: /?page=admin-supply-edit&id=' . $supplyId . '&status=error');
                 return;
             }
@@ -1468,7 +1500,7 @@ class AdminController extends Controller
         $cardType = $_POST['card_type'] ?? '';
         $activateRaw = $_POST['activate'] ?? null;
 
-        if ($supplyId <= 0 || !in_array($cardType, ['retail', 'wholesale'], true) || !in_array($activateRaw, ['0', '1'], true)) {
+        if ($supplyId <= 0 || !in_array($cardType, ['retail', 'wholesale', 'box'], true) || !in_array($activateRaw, ['0', '1'], true)) {
             header('Location: /?page=admin-supplies&status=error');
             return;
         }
@@ -1483,11 +1515,112 @@ class AdminController extends Controller
             return;
         }
 
-        $field = $cardType === 'retail' ? 'has_product_card' : 'has_wholesale_card';
+        $field = match ($cardType) {
+            'retail' => 'has_product_card',
+            'wholesale' => 'has_wholesale_card',
+            default => 'has_box_card',
+        };
         $supplyModel->setCardStatus($supplyId, $field, $activate ? 1 : 0);
+        $this->syncSupplyProductStatus($supplyId, $cardType, $activate);
 
         $status = $activate ? 'card-activated' : 'card-deactivated';
         header('Location: /?page=admin-supplies&status=' . $status . '#supply-' . $supplyId);
+    }
+
+    private function createSupplyProducts(int $supplyId): void
+    {
+        $supplyModel = new Supply();
+        $supply = $supplyModel->findById($supplyId);
+        if (!$supply) {
+            return;
+        }
+
+        $name = trim($supply['flower_name'] . ' ' . $supply['variety']);
+        $description = sprintf(
+            'Страна: %s. Высота стебля: %s см. Вес стебля: %s г.',
+            $supply['country'] ?? '—',
+            $supply['stem_height_cm'] ?? '—',
+            $supply['stem_weight_g'] ?? '—'
+        );
+
+        $productModel = new Product();
+        $basePayload = [
+            'supply_id' => $supplyId,
+            'name' => $name,
+            'description' => $description,
+            'price' => 0,
+            'article' => null,
+            'photo_url' => $supply['photo_url'] ?? null,
+            'stem_height_cm' => $supply['stem_height_cm'] ?? null,
+            'stem_weight_g' => $supply['stem_weight_g'] ?? null,
+            'country' => $supply['country'] ?? null,
+            'is_base' => 0,
+            'is_active' => 0,
+            'sort_order' => 0,
+        ];
+
+        $definitions = [
+            ['category' => 'main', 'product_type' => 'regular'],
+            ['category' => 'main', 'product_type' => 'small_wholesale'],
+            ['category' => 'wholesale', 'product_type' => 'wholesale_box'],
+        ];
+
+        foreach ($definitions as $definition) {
+            $stmt = $this->db->prepare('SELECT 1 FROM products WHERE supply_id = :supply_id AND product_type = :product_type LIMIT 1');
+            $stmt->execute([
+                'supply_id' => $supplyId,
+                'product_type' => $definition['product_type'],
+            ]);
+            if ($stmt->fetchColumn()) {
+                continue;
+            }
+            $productModel->createFromSupply($basePayload + $definition);
+        }
+    }
+
+    private function syncSupplyProductStatus(int $supplyId, string $cardType, bool $activate): void
+    {
+        $productType = match ($cardType) {
+            'retail' => 'regular',
+            'wholesale' => 'small_wholesale',
+            default => 'wholesale_box',
+        };
+
+        $stmt = $this->db->prepare('SELECT id FROM products WHERE supply_id = :supply_id AND product_type = :product_type LIMIT 1');
+        $stmt->execute([
+            'supply_id' => $supplyId,
+            'product_type' => $productType,
+        ]);
+        $productId = $stmt->fetchColumn();
+        if (!$productId) {
+            $this->createSupplyProducts($supplyId);
+            $stmt->execute([
+                'supply_id' => $supplyId,
+                'product_type' => $productType,
+            ]);
+            $productId = $stmt->fetchColumn();
+        }
+        if ($productId) {
+            $productModel = new Product();
+            $productModel->setActive((int) $productId, $activate ? 1 : 0);
+        }
+    }
+
+    private function syncSupplyCardStatus(int $supplyId, string $productType, int $active): void
+    {
+        $field = match ($productType) {
+            'regular' => 'has_product_card',
+            'small_wholesale' => 'has_wholesale_card',
+            'wholesale_box' => 'has_box_card',
+            default => null,
+        };
+
+        if (!$field) {
+            return;
+        }
+
+        $supplyModel = new Supply();
+        $supplyModel->setCardStatus($supplyId, $field, $active ? 1 : 0);
     }
 
     public function ordersOneTime(): void
