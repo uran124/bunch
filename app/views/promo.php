@@ -197,9 +197,12 @@ $botLink = $botUsername !== '' ? 'https://t.me/' . $botUsername . '?start=regist
             </button>
         </div>
         <div class="mt-4 space-y-3">
-            <div class="flex flex-wrap items-center justify-between gap-2 text-sm text-slate-600">
-                <span data-lottery-price></span>
-                <span data-lottery-availability></span>
+            <div class="space-y-1 text-sm text-slate-600">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <span data-lottery-price></span>
+                    <span data-lottery-availability></span>
+                </div>
+                <span class="hidden text-xs text-slate-500" data-lottery-limit></span>
             </div>
             <div class="rounded-2xl border border-slate-100 bg-slate-50/70 p-3">
                 <div class="grid grid-cols-4 gap-2 sm:grid-cols-6 md:grid-cols-8" data-lottery-tickets></div>
@@ -220,7 +223,7 @@ $botLink = $botUsername !== '' ? 'https://t.me/' . $botUsername . '?start=regist
                 <button type="button" class="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white shadow-md shadow-violet-200 transition hover:-translate-y-0.5 hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-60" data-lottery-select disabled>
                     Выбрать
                 </button>
-                <button type="button" class="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white shadow-md shadow-rose-200 transition hover:-translate-y-0.5 hover:bg-rose-700" data-lottery-pay>
+                <button type="button" class="hidden inline-flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white shadow-md shadow-rose-200 transition hover:-translate-y-0.5 hover:bg-rose-700" data-lottery-pay>
                     Оплатить
                 </button>
             </div>

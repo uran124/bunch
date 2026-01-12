@@ -2534,6 +2534,7 @@ function initLotteryModal() {
     const subtitle = modal.querySelector('[data-lottery-subtitle]');
     const price = modal.querySelector('[data-lottery-price]');
     const availability = modal.querySelector('[data-lottery-availability]');
+    const limitNote = modal.querySelector('[data-lottery-limit]');
     const ticketsContainer = modal.querySelector('[data-lottery-tickets]');
     const payButton = modal.querySelector('[data-lottery-pay]');
     const randomButton = modal.querySelector('[data-lottery-random]');
@@ -2545,6 +2546,7 @@ function initLotteryModal() {
     let payTicketId = null;
     let selectedTicketNumber = null;
     let ticketsCache = [];
+    let selectionLocked = false;
 
     const closeModal = () => {
         modal.classList.add('hidden');
@@ -2553,6 +2555,7 @@ function initLotteryModal() {
         payTicketId = null;
         selectedTicketNumber = null;
         ticketsCache = [];
+        selectionLocked = false;
         updateSelectedLabel();
     };
 
@@ -2566,13 +2569,19 @@ function initLotteryModal() {
             selectedLabel.textContent = selectedTicketNumber ? `Выбран номер: ${selectedTicketNumber}` : 'Выбран номер: —';
         }
         if (selectButton) {
-            selectButton.disabled = !selectedTicketNumber;
-            selectButton.classList.toggle('opacity-60', !selectedTicketNumber);
+            const disabled = selectionLocked || !selectedTicketNumber;
+            selectButton.disabled = disabled;
+            selectButton.classList.toggle('opacity-60', disabled);
+        }
+        if (randomButton) {
+            randomButton.disabled = selectionLocked;
+            randomButton.classList.toggle('opacity-60', selectionLocked);
         }
     };
 
     const renderTickets = (tickets) => {
         ticketsCache = tickets;
+        const hasMine = tickets.some((ticket) => ticket.is_mine);
         ticketsContainer.innerHTML = '';
         tickets.forEach((ticket) => {
             const item = document.createElement('button');
@@ -2592,11 +2601,16 @@ function initLotteryModal() {
                     'hover:bg-violet-100',
                     'hover:text-violet-700'
                 );
-                item.addEventListener('click', () => {
-                    selectedTicketNumber = ticket.ticket_number;
-                    renderTickets(ticketsCache);
-                    updateSelectedLabel();
-                });
+                if (selectionLocked && hasMine) {
+                    item.disabled = true;
+                    item.classList.add('opacity-60');
+                } else {
+                    item.addEventListener('click', () => {
+                        selectedTicketNumber = ticket.ticket_number;
+                        renderTickets(ticketsCache);
+                        updateSelectedLabel();
+                    });
+                }
             } else {
                 item.disabled = true;
                 item.classList.add('border-rose-500', 'bg-rose-600', 'text-white');
@@ -2629,6 +2643,10 @@ function initLotteryModal() {
     };
 
     const updatePayState = (tickets) => {
+        if (!payButton || payButton.classList.contains('hidden')) {
+            payTicketId = null;
+            return;
+        }
         const mine = tickets.find((ticket) => ticket.is_mine && ticket.status === 'reserved');
         if (mine) {
             payTicketId = mine.id;
@@ -2643,15 +2661,49 @@ function initLotteryModal() {
 
     const loadTickets = async (lotteryId) => {
         const data = await fetchJson(`/api/lottery/tickets?lottery_id=${lotteryId}`);
+        const isFree = Number(data.lottery.ticket_price) <= 0;
+        const myTicket = data.tickets.find((ticket) => ticket.is_mine);
+        selectionLocked = isFree && Boolean(myTicket);
         if (title) title.textContent = 'Выбери номер';
         if (subtitle) {
             subtitle.textContent = `${data.lottery.title}. Билетов всего ${data.lottery.tickets_total}. Резерв ${data.reserve_ttl} мин.`;
         }
-        if (price) price.textContent = `Билет ${formatCurrency(data.lottery.ticket_price)}`;
+        if (price) {
+            price.textContent = isFree ? 'Участие бесплатное' : `Билет ${formatCurrency(data.lottery.ticket_price)}`;
+        }
         if (availability) {
             availability.textContent = `Свободно ${data.lottery.tickets_free} из ${data.lottery.tickets_total}`;
         }
-        if (selectedTicketNumber) {
+        if (limitNote) {
+            const limit = Number(data.free_monthly_limit || 0);
+            if (isFree && limit > 0) {
+                const lastDigit = limit % 10;
+                const lastTwo = limit % 100;
+                let suffix = 'раз';
+                if (lastTwo < 10 || lastTwo >= 20) {
+                    if (lastDigit >= 2 && lastDigit <= 4) {
+                        suffix = 'раза';
+                    } else if (lastDigit === 1) {
+                        suffix = 'раз';
+                    }
+                }
+                limitNote.textContent = `В бесплатном розыгрыше можно участвовать не чаще, чем ${limit} ${suffix} в месяц.`;
+                limitNote.classList.remove('hidden');
+            } else {
+                limitNote.textContent = '';
+                limitNote.classList.add('hidden');
+            }
+        }
+        if (payButton) {
+            if (isFree) {
+                payButton.classList.add('hidden');
+            } else {
+                payButton.classList.remove('hidden');
+            }
+        }
+        if (selectionLocked && myTicket) {
+            selectedTicketNumber = myTicket.ticket_number;
+        } else if (selectedTicketNumber) {
             const stillFree = data.tickets.some(
                 (ticket) => ticket.ticket_number === selectedTicketNumber && ticket.status === 'free'
             );
