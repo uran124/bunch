@@ -1157,7 +1157,7 @@ class AdminController extends Controller
         $settings = new Setting();
         $settings->set(Setting::LOTTERY_FREE_MONTHLY_LIMIT, (string) $limit);
 
-        header('Location: /?page=admin-promos&status=saved#promo-settings');
+        header('Location: /?page=admin-lottery-create&status=saved#promo-settings');
     }
 
     public function catalogAttributes(): void
