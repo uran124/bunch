@@ -5,7 +5,7 @@
 <?php $lotterySettings = $lotterySettings ?? []; ?>
 
 <section class="flex flex-col gap-6">
-    <header class="flex flex-wrap items-start justify-between gap-4">
+    <header class="flex flex-col items-start gap-4">
         <div class="space-y-2">
             <p class="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">Каталог · Акции</p>
         </div>
@@ -13,6 +13,14 @@
             <a href="/?page=admin-auction-create" class="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-rose-200 transition hover:-translate-y-0.5">
                 <span class="material-symbols-rounded text-base">add_circle</span>
                 Лот аукциона
+            </a>
+            <a href="/?page=admin-promo-item-create" class="inline-flex items-center gap-2 rounded-xl bg-amber-500 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-amber-200 transition hover:-translate-y-0.5">
+                <span class="material-symbols-rounded text-base">hourglass_top</span>
+                Лимитированный товар
+            </a>
+            <a href="/?page=admin-lottery-create" class="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-violet-200 transition hover:-translate-y-0.5">
+                <span class="material-symbols-rounded text-base">celebration</span>
+                Товар для розыгрыша
             </a>
             <a href="/?page=admin-products" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
                 <span class="material-symbols-rounded text-base">shopping_bag</span>
