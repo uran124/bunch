@@ -39,6 +39,15 @@
                     $titleParts = [];
                     $isSmallWholesale = ($product['product_type'] ?? 'regular') === 'small_wholesale';
                     $qtyLabel = $isSmallWholesale ? 'Количество пачек' : 'Количество стеблей';
+                    $packsTotal = (int) ($product['supply_packs_total'] ?? 0);
+                    $packsReserved = (int) ($product['supply_packs_reserved'] ?? 0);
+                    $stemsPerPack = (int) ($product['supply_stems_per_pack'] ?? 0);
+                    $maxQty = $isSmallWholesale && $packsTotal > 0 ? $packsTotal : 101;
+                    $availableQty = $isSmallWholesale && $packsTotal > 0 ? max(0, $packsTotal - $packsReserved) : 0;
+                    $midQty = $maxQty > 1 ? (int) floor($maxQty / 2) : 1;
+                    $salesComment = $isSmallWholesale
+                        ? ($stemsPerPack > 0 ? "продажа пачками по {$stemsPerPack} штук" : 'продажа пачками')
+                        : 'продажа поштучно';
 
                     if ($flower) {
                         $titleParts[] = mb_strtolower($flower, 'UTF-8');
@@ -62,6 +71,8 @@
                         data-product-card
                         data-base-price="<?php echo $basePrice; ?>"
                         data-price-tiers='<?php echo $priceTiersJson; ?>'
+                        data-max-qty="<?php echo $maxQty; ?>"
+                        data-available-qty="<?php echo $availableQty; ?>"
                         class="snap-center shrink-0 w-[82%] max-w-xl rounded-3xl border border-slate-200 bg-white shadow-xl shadow-slate-200/70 transition md:w-[396px]"
                     >
                         <div class="relative">
@@ -81,6 +92,7 @@
                         <div class="space-y-0 px-2 pb-4 pt-2 md:space-y-6 md:px-5 md:pt-5">
                             <div class="space-y-1 md:space-y-2">
                                 <h2 class="text-base font-semibold leading-snug text-slate-900 md:text-2xl"><?php echo htmlspecialchars($displayName, ENT_QUOTES, 'UTF-8'); ?></h2>
+                                <p class="text-[11px] font-semibold text-slate-500 md:text-xs"><?php echo htmlspecialchars($salesComment, ENT_QUOTES, 'UTF-8'); ?></p>
                             </div>
 
                             <div class="space-y-2 rounded-2xl bg-slate-50 p-2 md:space-y-3 md:p-4">
@@ -92,7 +104,7 @@
                                     <input
                                         type="number"
                                         min="1"
-                                        max="101"
+                                        max="<?php echo $maxQty; ?>"
                                         step="1"
                                         value="1"
                                         inputmode="numeric"
@@ -103,7 +115,7 @@
                                 <input
                                     type="range"
                                     min="1"
-                                    max="101"
+                                    max="<?php echo $maxQty; ?>"
                                     step="1"
                                     value="1"
                                     data-qty
@@ -111,8 +123,8 @@
                                 >
                                 <div class="hidden justify-between text-[11px] font-semibold uppercase tracking-wide text-slate-400 md:flex">
                                     <span>1</span>
-                                    <span>50</span>
-                                    <span>101</span>
+                                    <span><?php echo $midQty; ?></span>
+                                    <span><?php echo $maxQty; ?></span>
                                 </div>
                             </div>
 
@@ -266,6 +278,14 @@
         return Math.min(Math.max(numeric, min), max);
     }
 
+    function getQuantityMax(card, fallbackMax) {
+        const availableLimit = Number(card.dataset.availableQty || 0);
+        if (Number.isFinite(availableLimit) && availableLimit > 0) {
+            return Math.min(fallbackMax, availableLimit);
+        }
+        return fallbackMax;
+    }
+
     function selectDefaultAttributes(card) {
         card.querySelectorAll('[data-attribute-group]').forEach((group) => {
             const firstOption = group.querySelector('[data-attr-option]');
@@ -300,7 +320,8 @@
         const actualPriceTargets = card.querySelectorAll('[data-actual-price]');
 
         const minQty = Number(qtyInput?.min || qtyValue?.min || 1);
-        const maxQty = Number(qtyInput?.max || qtyValue?.max || 101);
+        const fallbackMax = Number(qtyInput?.max || qtyValue?.max || 101);
+        const maxQty = getQuantityMax(card, fallbackMax);
         const quantity = clampQuantity(Number(qtyValue?.value || qtyInput?.value || minQty), minQty, maxQty);
         const unitPrice = getUnitPrice(basePrice, tiers, quantity);
 
@@ -381,7 +402,8 @@
         if (qtyInput) {
             qtyInput.addEventListener('input', () => {
                 const min = Number(qtyInput.min || qtyValueInput?.min || 1);
-                const max = Number(qtyInput.max || qtyValueInput?.max || 101);
+                const fallbackMax = Number(qtyInput.max || qtyValueInput?.max || 101);
+                const max = getQuantityMax(card, fallbackMax);
                 const quantity = clampQuantity(Number(qtyInput.value || min), min, max);
                 qtyInput.value = quantity.toString();
                 if (qtyValueInput) qtyValueInput.value = quantity.toString();
@@ -392,7 +414,8 @@
         if (qtyValueInput) {
             qtyValueInput.addEventListener('input', () => {
                 const min = Number(qtyValueInput.min || qtyInput?.min || 1);
-                const max = Number(qtyValueInput.max || qtyInput?.max || 101);
+                const fallbackMax = Number(qtyValueInput.max || qtyInput?.max || 101);
+                const max = getQuantityMax(card, fallbackMax);
                 const quantity = clampQuantity(Number(qtyValueInput.value || min), min, max);
                 qtyValueInput.value = quantity.toString();
                 if (qtyInput) qtyInput.value = quantity.toString();
@@ -404,7 +427,9 @@
         if (qtyIncrease && qtyInput) {
             qtyIncrease.addEventListener('click', () => {
                 const current = Number(qtyInput.value || 1);
-                const next = Math.min(current + 1, Number(qtyInput.max || 101));
+                const fallbackMax = Number(qtyInput.max || 101);
+                const max = getQuantityMax(card, fallbackMax);
+                const next = Math.min(current + 1, max);
                 qtyInput.value = next.toString();
                 if (qtyValueInput) qtyValueInput.value = next.toString();
                 updateCardTotals(card);
