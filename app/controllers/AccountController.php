@@ -50,16 +50,49 @@ class AccountController extends Controller
         $activeSubscription = $activeSubscriptions[0] ?? null;
 
         $notificationOptions = $this->getNotificationOptions();
-        $this->notificationSettingModel->syncTypes($notificationOptions);
-        $notificationSettings = $this->notificationSettingModel->getSettingsForUser($userId, $notificationOptions);
+        try {
+            $this->notificationSettingModel->syncTypes($notificationOptions);
+            $notificationSettings = $this->notificationSettingModel->getSettingsForUser($userId, $notificationOptions);
+        } catch (Throwable $e) {
+            $notificationSettings = array_reduce($notificationOptions, static function (array $carry, array $option): array {
+                if (!empty($option['code'])) {
+                    $carry[$option['code']] = (bool) ($option['default'] ?? true);
+                }
+
+                return $carry;
+            }, []);
+            $this->logger->logEvent('ACCOUNT_NOTIFICATION_SETTINGS_ERROR', [
+                'user_id' => $userId,
+                'error' => $e->getMessage(),
+            ]);
+        }
 
         $auctionModel = new AuctionLot();
         $lotteryTicketModel = new LotteryTicket();
 
-        $auctionParticipationActive = $this->mapAuctionParticipation($auctionModel->getUserActiveParticipation($userId));
-        $auctionParticipationHistory = $this->mapAuctionHistoryParticipation($auctionModel->getUserHistoryParticipation($userId));
-        $lotteryParticipationActive = $this->mapLotteryParticipation($lotteryTicketModel->getUserActiveParticipation($userId));
-        $lotteryParticipationHistory = $this->mapLotteryParticipation($lotteryTicketModel->getUserHistoryParticipation($userId));
+        try {
+            $auctionParticipationActive = $this->mapAuctionParticipation($auctionModel->getUserActiveParticipation($userId));
+            $auctionParticipationHistory = $this->mapAuctionHistoryParticipation($auctionModel->getUserHistoryParticipation($userId));
+        } catch (Throwable $e) {
+            $auctionParticipationActive = [];
+            $auctionParticipationHistory = [];
+            $this->logger->logEvent('ACCOUNT_AUCTION_PARTICIPATION_ERROR', [
+                'user_id' => $userId,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        try {
+            $lotteryParticipationActive = $this->mapLotteryParticipation($lotteryTicketModel->getUserActiveParticipation($userId));
+            $lotteryParticipationHistory = $this->mapLotteryParticipation($lotteryTicketModel->getUserHistoryParticipation($userId));
+        } catch (Throwable $e) {
+            $lotteryParticipationActive = [];
+            $lotteryParticipationHistory = [];
+            $this->logger->logEvent('ACCOUNT_LOTTERY_PARTICIPATION_ERROR', [
+                'user_id' => $userId,
+                'error' => $e->getMessage(),
+            ]);
+        }
 
         $pageMeta = [
             'title' => 'Личный кабинет — Bunch flowers',
