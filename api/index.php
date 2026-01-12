@@ -547,11 +547,16 @@ function handleLotteryTickets(): void
 
     $ticketModel = new LotteryTicket();
     $tickets = $ticketModel->listTickets($lotteryId, Auth::userId());
+    $settings = new Setting();
+    $defaults = $settings->getLotteryDefaults();
+    $limitRaw = $settings->get(Setting::LOTTERY_FREE_MONTHLY_LIMIT, $defaults[Setting::LOTTERY_FREE_MONTHLY_LIMIT] ?? '0');
+    $freeMonthlyLimit = (int) $limitRaw;
 
     echo json_encode([
         'lottery' => $lottery,
         'tickets' => $tickets,
         'reserve_ttl' => $lotteryModel->getReserveTtlMinutes(),
+        'free_monthly_limit' => $freeMonthlyLimit,
     ], JSON_UNESCAPED_UNICODE);
 }
 

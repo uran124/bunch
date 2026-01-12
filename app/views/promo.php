@@ -197,9 +197,12 @@ $botLink = $botUsername !== '' ? 'https://t.me/' . $botUsername . '?start=regist
             </button>
         </div>
         <div class="mt-4 space-y-3">
-            <div class="flex flex-wrap items-center justify-between gap-2 text-sm text-slate-600">
-                <span data-lottery-price></span>
-                <span data-lottery-availability></span>
+            <div class="space-y-1 text-sm text-slate-600">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <span data-lottery-price></span>
+                    <span data-lottery-availability></span>
+                </div>
+                <span class="hidden text-xs text-slate-500" data-lottery-limit></span>
             </div>
             <div class="rounded-2xl border border-slate-100 bg-slate-50/70 p-3">
                 <div class="grid grid-cols-4 gap-2 sm:grid-cols-6 md:grid-cols-8" data-lottery-tickets></div>
