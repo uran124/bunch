@@ -51,6 +51,14 @@ class AccountController extends Controller
         $this->notificationSettingModel->syncTypes($notificationOptions);
         $notificationSettings = $this->notificationSettingModel->getSettingsForUser($userId, $notificationOptions);
 
+        $auctionModel = new AuctionLot();
+        $lotteryTicketModel = new LotteryTicket();
+
+        $auctionParticipationActive = $this->mapAuctionParticipation($auctionModel->getUserActiveParticipation($userId));
+        $auctionParticipationHistory = $this->mapAuctionHistoryParticipation($auctionModel->getUserHistoryParticipation($userId));
+        $lotteryParticipationActive = $this->mapLotteryParticipation($lotteryTicketModel->getUserActiveParticipation($userId));
+        $lotteryParticipationHistory = $this->mapLotteryParticipation($lotteryTicketModel->getUserHistoryParticipation($userId));
+
         $pageMeta = [
             'title' => 'Личный кабинет — Bunch flowers',
             'description' => 'Управляйте профилем, адресами, заказами и подписками.',
@@ -85,7 +93,11 @@ class AccountController extends Controller
             'deliveryZones',
             'deliveryPricingVersion',
             'dadataConfig',
-            'testAddresses'
+            'testAddresses',
+            'auctionParticipationActive',
+            'auctionParticipationHistory',
+            'lotteryParticipationActive',
+            'lotteryParticipationHistory'
         ));
     }
 
@@ -235,6 +247,52 @@ class AccountController extends Controller
             $base['id'] = $subscription['id'];
             return $base;
         }, $subscriptions);
+    }
+
+    private function mapAuctionParticipation(array $rows): array
+    {
+        return array_map(function (array $row): array {
+            return [
+                'id' => (int) $row['id'],
+                'title' => $row['title'],
+                'ends_at' => $this->formatDateTime($row['ends_at'] ?? null),
+                'user_bid' => $row['user_amount'] !== null ? $this->formatPrice((float) $row['user_amount']) : '—',
+                'current_price' => $row['current_price'] !== null ? $this->formatPrice((float) $row['current_price']) : '—',
+            ];
+        }, $rows);
+    }
+
+    private function mapAuctionHistoryParticipation(array $rows): array
+    {
+        return array_map(function (array $row): array {
+            $isWinner = !empty($row['is_winner']);
+
+            return [
+                'id' => (int) $row['id'],
+                'title' => $row['title'],
+                'ends_at' => $this->formatDateTime($row['ends_at'] ?? null),
+                'user_bid' => $row['user_amount'] !== null ? $this->formatPrice((float) $row['user_amount']) : '—',
+                'result' => $isWinner ? 'Победа' : 'Участие',
+                'winning_amount' => $row['winning_amount'] !== null ? $this->formatPrice((float) $row['winning_amount']) : null,
+            ];
+        }, $rows);
+    }
+
+    private function mapLotteryParticipation(array $rows): array
+    {
+        return array_map(function (array $row): array {
+            $status = $row['ticket_status'] ?? '';
+            $statusLabel = $status === 'paid' ? 'Оплачен' : 'Зарезервирован';
+
+            return [
+                'id' => (int) $row['id'],
+                'title' => $row['title'],
+                'draw_at' => $this->formatDateTime($row['draw_at'] ?? null),
+                'ticket_number' => (int) $row['ticket_number'],
+                'ticket_price' => $this->formatPrice((float) ($row['ticket_price'] ?? 0)),
+                'status_label' => $statusLabel,
+            ];
+        }, $rows);
     }
 
     private function formatPrice(float $amount): string

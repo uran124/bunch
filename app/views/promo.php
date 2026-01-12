@@ -76,7 +76,16 @@ $botLink = $botUsername !== '' ? 'https://t.me/' . $botUsername . '?start=regist
                                 <button type="button" data-auction-step data-auction-id="<?php echo (int) $lot['id']; ?>" data-auction-step-value="<?php echo htmlspecialchars((string) ($lot['bid_step'] ?? 0), ENT_QUOTES, 'UTF-8'); ?>" data-requires-bot class="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-rose-200 hover:text-rose-700 disabled:cursor-not-allowed disabled:opacity-60" <?php echo !$isAuthenticated || $lot['status'] !== 'active' ? 'disabled' : ''; ?>>
                                     + <?php echo number_format((float) $lot['bid_step'], 0, '.', ' '); ?> ₽
                                 </button>
-                                <button type="button" data-auction-blitz data-auction-id="<?php echo (int) $lot['id']; ?>" data-requires-bot class="inline-flex items-center justify-center gap-2 rounded-2xl bg-rose-600 px-3 py-2 text-sm font-semibold text-white shadow-lg shadow-rose-200 transition hover:-translate-y-0.5 hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-60" <?php echo !$isAuthenticated || $lot['status'] !== 'active' ? 'disabled' : ''; ?>>
+                                <button
+                                    type="button"
+                                    data-auction-blitz
+                                    data-auction-id="<?php echo (int) $lot['id']; ?>"
+                                    data-auction-title="<?php echo htmlspecialchars($lot['title'], ENT_QUOTES, 'UTF-8'); ?>"
+                                    data-auction-blitz-price="<?php echo htmlspecialchars((string) ($lot['blitz_price'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
+                                    data-requires-bot
+                                    class="inline-flex items-center justify-center gap-2 rounded-2xl bg-rose-600 px-3 py-2 text-sm font-semibold text-white shadow-lg shadow-rose-200 transition hover:-translate-y-0.5 hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-60"
+                                    <?php echo !$isAuthenticated || $lot['status'] !== 'active' ? 'disabled' : ''; ?>
+                                >
                                     Блиц
                                 </button>
                             </div>
@@ -177,10 +186,10 @@ $botLink = $botUsername !== '' ? 'https://t.me/' . $botUsername . '?start=regist
 </section>
 
 <div class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/40 p-4 backdrop-blur" data-lottery-modal>
-    <div class="w-full max-w-2xl rounded-2xl bg-white p-4 shadow-2xl shadow-slate-500/20">
+    <div class="w-full max-w-3xl rounded-2xl bg-white p-4 shadow-2xl shadow-slate-500/20">
         <div class="flex items-start justify-between">
             <div class="space-y-1">
-                <h3 class="text-lg font-semibold text-slate-900" data-lottery-title>Розыгрыш</h3>
+                <h3 class="text-lg font-semibold text-slate-900" data-lottery-title>Выбери номер</h3>
                 <p class="text-sm text-slate-500" data-lottery-subtitle></p>
             </div>
             <button type="button" class="rounded-full border border-slate-200 bg-white p-2 text-slate-500 transition hover:border-rose-200 hover:text-rose-600" data-lottery-close>
@@ -192,7 +201,13 @@ $botLink = $botUsername !== '' ? 'https://t.me/' . $botUsername . '?start=regist
                 <span data-lottery-price></span>
                 <span data-lottery-availability></span>
             </div>
-            <div class="grid gap-2" data-lottery-tickets></div>
+            <div class="rounded-2xl border border-slate-100 bg-slate-50/70 p-3">
+                <div class="grid grid-cols-4 gap-2 sm:grid-cols-6 md:grid-cols-8" data-lottery-tickets></div>
+            </div>
+            <div class="flex items-center justify-between text-sm text-slate-600">
+                <span data-lottery-selected>Выбран номер: —</span>
+                <span class="text-xs text-slate-400">Нажмите на свободный номер, чтобы выбрать.</span>
+            </div>
         </div>
         <div class="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-4">
             <button type="button" class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-rose-200 hover:text-rose-700" data-lottery-random>
@@ -201,6 +216,9 @@ $botLink = $botUsername !== '' ? 'https://t.me/' . $botUsername . '?start=regist
             <div class="flex items-center gap-2">
                 <button type="button" class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-rose-200 hover:text-rose-700" data-lottery-close>
                     Закрыть
+                </button>
+                <button type="button" class="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white shadow-md shadow-violet-200 transition hover:-translate-y-0.5 hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-60" data-lottery-select disabled>
+                    Выбрать
                 </button>
                 <button type="button" class="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white shadow-md shadow-rose-200 transition hover:-translate-y-0.5 hover:bg-rose-700" data-lottery-pay>
                     Оплатить
@@ -227,7 +245,11 @@ $botLink = $botUsername !== '' ? 'https://t.me/' . $botUsername . '?start=regist
                 <span>Шаг: <strong class="text-slate-900" data-auction-step></strong></span>
             </div>
             <div class="text-sm text-slate-500">Окончание: <span data-auction-ends></span></div>
-            <div class="space-y-2" data-auction-bids></div>
+            <div class="space-y-2">
+                <button type="button" class="hidden w-full items-center justify-between rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700 transition hover:border-emerald-300 hover:text-emerald-800" data-auction-history-toggle></button>
+                <div class="space-y-2" data-auction-bids></div>
+                <div class="hidden space-y-2" data-auction-history></div>
+            </div>
         </div>
         <div class="mt-4 flex flex-col gap-2 border-t border-slate-100 pt-4">
             <div class="flex items-center gap-2">
@@ -241,6 +263,27 @@ $botLink = $botUsername !== '' ? 'https://t.me/' . $botUsername . '?start=regist
             </button>
             <button type="button" class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-rose-200 hover:text-rose-700" data-auction-close>
                 Закрыть
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/40 p-4 backdrop-blur" data-auction-blitz-confirm>
+    <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl shadow-slate-500/20">
+        <div class="space-y-3 text-center">
+            <p class="text-sm font-semibold uppercase tracking-[0.08em] text-rose-500">Подтверждение блиц-выкупа</p>
+            <p class="text-base text-slate-700">Вы действительно хотите выкупить лот</p>
+            <p class="text-xl font-semibold text-slate-900" data-auction-blitz-title></p>
+            <p class="text-base text-slate-700">за</p>
+            <p class="text-xl font-semibold text-slate-900" data-auction-blitz-price></p>
+            <p class="text-base text-slate-700">?</p>
+        </div>
+        <div class="mt-5 flex flex-wrap items-center justify-center gap-2">
+            <button type="button" class="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-rose-200 hover:text-rose-700" data-auction-blitz-cancel>
+                Отменить
+            </button>
+            <button type="button" class="rounded-xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white shadow-md shadow-rose-200 transition hover:-translate-y-0.5 hover:bg-rose-700" data-auction-blitz-confirm>
+                Подтвердить
             </button>
         </div>
     </div>

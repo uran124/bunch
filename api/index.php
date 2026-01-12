@@ -512,7 +512,8 @@ function handleAuctionLot(): void
     }
 
     $bidModel = new AuctionBid();
-    $bids = $bidModel->getRecentBids($lotId, 6);
+    $history = isset($_GET['history']) && $_GET['history'] === '1';
+    $bids = $history ? $bidModel->getLotBids($lotId) : $bidModel->getRecentBids($lotId, 6);
 
     echo json_encode([
         'lot' => $lot,

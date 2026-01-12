@@ -506,6 +506,67 @@ SQL;
         $stmt->execute(['id' => $lotId]);
     }
 
+    public function getUserActiveParticipation(int $userId): array
+    {
+        $stmt = $this->db->prepare(
+            "SELECT l.id, l.title, l.ends_at, l.status, MAX(b.amount) AS user_amount
+            FROM auction_bids b
+            JOIN auction_lots l ON l.id = b.lot_id
+            WHERE b.user_id = :user_id
+              AND b.status = 'active'
+              AND l.status = 'active'
+            GROUP BY l.id, l.title, l.ends_at, l.status
+            ORDER BY l.ends_at DESC, l.id DESC"
+        );
+        $stmt->execute(['user_id' => $userId]);
+        $rows = $stmt->fetchAll();
+
+        $bidModel = new AuctionBid();
+
+        return array_map(function (array $row) use ($bidModel): array {
+            $currentBid = $bidModel->getCurrentBid((int) $row['id']);
+            $currentPrice = $currentBid ? (float) $currentBid['amount'] : null;
+
+            return [
+                'id' => (int) $row['id'],
+                'title' => $row['title'],
+                'ends_at' => $row['ends_at'],
+                'status' => $row['status'],
+                'user_amount' => $row['user_amount'] !== null ? (float) $row['user_amount'] : null,
+                'current_price' => $currentPrice,
+            ];
+        }, $rows);
+    }
+
+    public function getUserHistoryParticipation(int $userId): array
+    {
+        $stmt = $this->db->prepare(
+            "SELECT l.id, l.title, l.ends_at, l.status, l.winner_user_id, wb.amount AS winning_amount, MAX(b.amount) AS user_amount
+            FROM auction_bids b
+            JOIN auction_lots l ON l.id = b.lot_id
+            LEFT JOIN auction_bids wb ON wb.id = l.winning_bid_id
+            WHERE b.user_id = :user_id
+              AND b.status = 'active'
+              AND l.status = 'finished'
+            GROUP BY l.id, l.title, l.ends_at, l.status, l.winner_user_id, wb.amount
+            ORDER BY l.ends_at DESC, l.id DESC"
+        );
+        $stmt->execute(['user_id' => $userId]);
+        $rows = $stmt->fetchAll();
+
+        return array_map(function (array $row) use ($userId): array {
+            return [
+                'id' => (int) $row['id'],
+                'title' => $row['title'],
+                'ends_at' => $row['ends_at'],
+                'status' => $row['status'],
+                'user_amount' => $row['user_amount'] !== null ? (float) $row['user_amount'] : null,
+                'winning_amount' => $row['winning_amount'] !== null ? (float) $row['winning_amount'] : null,
+                'is_winner' => (int) ($row['winner_user_id'] ?? 0) === $userId,
+            ];
+        }, $rows);
+    }
+
     private function extendIfNeeded(int $lotId, ?string $endsAt): void
     {
         if (!$endsAt) {

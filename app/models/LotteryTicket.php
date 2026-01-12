@@ -147,6 +147,38 @@ class LotteryTicket extends Model
         $this->logAction($ticketId, 'paid', $userId);
     }
 
+    public function getUserActiveParticipation(int $userId): array
+    {
+        $stmt = $this->db->prepare(
+            "SELECT l.id, l.title, l.draw_at, l.status, l.ticket_price, t.ticket_number, t.status AS ticket_status
+            FROM lottery_tickets t
+            JOIN lotteries l ON l.id = t.lottery_id
+            WHERE t.user_id = :user_id
+              AND t.status IN ('reserved', 'paid')
+              AND l.status = 'active'
+            ORDER BY l.draw_at DESC, l.id DESC"
+        );
+        $stmt->execute(['user_id' => $userId]);
+
+        return $stmt->fetchAll();
+    }
+
+    public function getUserHistoryParticipation(int $userId): array
+    {
+        $stmt = $this->db->prepare(
+            "SELECT l.id, l.title, l.draw_at, l.status, l.ticket_price, t.ticket_number, t.status AS ticket_status
+            FROM lottery_tickets t
+            JOIN lotteries l ON l.id = t.lottery_id
+            WHERE t.user_id = :user_id
+              AND t.status IN ('reserved', 'paid')
+              AND l.status = 'finished'
+            ORDER BY l.draw_at DESC, l.id DESC"
+        );
+        $stmt->execute(['user_id' => $userId]);
+
+        return $stmt->fetchAll();
+    }
+
     public function releaseExpired(int $lotteryId): void
     {
         $threshold = (new DateTime())

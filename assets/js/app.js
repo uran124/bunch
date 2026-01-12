@@ -2371,16 +2371,23 @@ function initLotteryModal() {
     const ticketsContainer = modal.querySelector('[data-lottery-tickets]');
     const payButton = modal.querySelector('[data-lottery-pay]');
     const randomButton = modal.querySelector('[data-lottery-random]');
+    const selectButton = modal.querySelector('[data-lottery-select]');
+    const selectedLabel = modal.querySelector('[data-lottery-selected]');
     const closeButtons = modal.querySelectorAll('[data-lottery-close]');
 
     let activeLotteryId = null;
     let payTicketId = null;
+    let selectedTicketNumber = null;
+    let ticketsCache = [];
 
     const closeModal = () => {
         modal.classList.add('hidden');
         modal.classList.remove('flex');
         activeLotteryId = null;
         payTicketId = null;
+        selectedTicketNumber = null;
+        ticketsCache = [];
+        updateSelectedLabel();
     };
 
     closeButtons.forEach((btn) => btn.addEventListener('click', closeModal));
@@ -2388,46 +2395,69 @@ function initLotteryModal() {
         if (event.target === modal) closeModal();
     });
 
+    const updateSelectedLabel = () => {
+        if (selectedLabel) {
+            selectedLabel.textContent = selectedTicketNumber ? `Выбран номер: ${selectedTicketNumber}` : 'Выбран номер: —';
+        }
+        if (selectButton) {
+            selectButton.disabled = !selectedTicketNumber;
+            selectButton.classList.toggle('opacity-60', !selectedTicketNumber);
+        }
+    };
+
     const renderTickets = (tickets) => {
+        ticketsCache = tickets;
         ticketsContainer.innerHTML = '';
         tickets.forEach((ticket) => {
-            const item = document.createElement(ticket.status === 'free' ? 'button' : 'div');
+            const item = document.createElement('button');
+            item.type = 'button';
             item.className =
-                'flex w-full items-center justify-between rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm';
-            if (ticket.status === 'free') {
-                item.type = 'button';
-            }
-
+                'flex flex-col items-center justify-center gap-1 rounded-xl border px-2 py-2 text-center text-sm font-semibold transition';
             const number = document.createElement('span');
-            number.textContent = `#${ticket.ticket_number}`;
-            const status = document.createElement('span');
+            number.textContent = ticket.ticket_number;
+            number.className = 'text-base font-semibold sm:text-lg';
+
             if (ticket.status === 'free') {
-                status.textContent = 'Свободен';
+                item.classList.add(
+                    'border-slate-200',
+                    'bg-slate-100',
+                    'text-slate-600',
+                    'hover:border-violet-200',
+                    'hover:bg-violet-100',
+                    'hover:text-violet-700'
+                );
+                item.addEventListener('click', () => {
+                    selectedTicketNumber = ticket.ticket_number;
+                    renderTickets(ticketsCache);
+                    updateSelectedLabel();
+                });
             } else {
-                status.textContent = ticket.phone_last4 ? `……${ticket.phone_last4}` : 'Занят';
+                item.disabled = true;
+                item.classList.add('border-rose-500', 'bg-rose-600', 'text-white');
             }
 
             if (ticket.is_mine) {
-                status.textContent = `${status.textContent} · ваш билет`;
-                item.classList.add('border-emerald-200', 'bg-emerald-50');
+                item.classList.add('ring-2', 'ring-emerald-200');
             }
 
             if (ticket.status === 'paid') {
                 item.classList.add('opacity-80');
             }
 
-            if (ticket.status === 'free') {
-                item.addEventListener('click', async () => {
-                    try {
-                        await reserveTicket(activeLotteryId, ticket.ticket_number);
-                    } catch (error) {
-                        alert(error.message);
-                    }
-                });
+            if (selectedTicketNumber === ticket.ticket_number) {
+                item.classList.remove('bg-slate-100', 'text-slate-600', 'border-slate-200');
+                item.classList.add('border-violet-500', 'bg-violet-600', 'text-white');
             }
 
             item.appendChild(number);
-            item.appendChild(status);
+
+            if (ticket.status !== 'free') {
+                const status = document.createElement('span');
+                status.className = 'text-[10px] font-semibold text-white/80';
+                status.textContent = ticket.phone_last4 ? `····${ticket.phone_last4}` : 'Занят';
+                item.appendChild(status);
+            }
+
             ticketsContainer.appendChild(item);
         });
     };
@@ -2447,13 +2477,24 @@ function initLotteryModal() {
 
     const loadTickets = async (lotteryId) => {
         const data = await fetchJson(`/api/lottery/tickets?lottery_id=${lotteryId}`);
-        if (title) title.textContent = data.lottery.title;
-        if (subtitle) subtitle.textContent = `Билетов всего ${data.lottery.tickets_total}. Резерв ${data.reserve_ttl} мин.`;
+        if (title) title.textContent = 'Выбери номер';
+        if (subtitle) {
+            subtitle.textContent = `${data.lottery.title}. Билетов всего ${data.lottery.tickets_total}. Резерв ${data.reserve_ttl} мин.`;
+        }
         if (price) price.textContent = `Билет ${formatCurrency(data.lottery.ticket_price)}`;
         if (availability) {
             availability.textContent = `Свободно ${data.lottery.tickets_free} из ${data.lottery.tickets_total}`;
         }
+        if (selectedTicketNumber) {
+            const stillFree = data.tickets.some(
+                (ticket) => ticket.ticket_number === selectedTicketNumber && ticket.status === 'free'
+            );
+            if (!stillFree) {
+                selectedTicketNumber = null;
+            }
+        }
         renderTickets(data.tickets);
+        updateSelectedLabel();
         updatePayState(data.tickets);
     };
 
@@ -2472,25 +2513,30 @@ function initLotteryModal() {
         await loadTickets(lotteryId);
     };
 
-    const reserveRandom = async () => {
-        if (!guardBot()) {
-            return;
-        }
-        await fetchJson('/api/lottery/reserve', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest',
-            },
-            body: JSON.stringify({ lottery_id: activeLotteryId, random: true }),
-        });
-        await loadTickets(activeLotteryId);
-    };
-
     randomButton?.addEventListener('click', async () => {
         if (!activeLotteryId) return;
         try {
-            await reserveRandom();
+            const freeTickets = ticketsCache.filter((ticket) => ticket.status === 'free');
+            if (!freeTickets.length) {
+                alert('Свободные номера закончились');
+                return;
+            }
+            const choice = freeTickets[Math.floor(Math.random() * freeTickets.length)];
+            selectedTicketNumber = choice.ticket_number;
+            renderTickets(ticketsCache);
+            updateSelectedLabel();
+        } catch (error) {
+            alert(error.message);
+        }
+    });
+
+    selectButton?.addEventListener('click', async () => {
+        if (!activeLotteryId || !selectedTicketNumber) return;
+        if (!guardBot()) return;
+        try {
+            await reserveTicket(activeLotteryId, selectedTicketNumber);
+            selectedTicketNumber = null;
+            updateSelectedLabel();
         } catch (error) {
             alert(error.message);
         }
@@ -2522,6 +2568,8 @@ function initLotteryModal() {
                 return;
             }
             activeLotteryId = lotteryId;
+            selectedTicketNumber = null;
+            updateSelectedLabel();
             try {
                 await loadTickets(lotteryId);
                 modal.classList.remove('hidden');
@@ -2531,6 +2579,52 @@ function initLotteryModal() {
             }
         });
     });
+}
+
+let auctionBlitzConfirm;
+
+function getAuctionBlitzConfirm() {
+    if (auctionBlitzConfirm) {
+        return auctionBlitzConfirm;
+    }
+
+    const modal = document.querySelector('[data-auction-blitz-confirm]');
+    if (!modal) {
+        auctionBlitzConfirm = async () => true;
+        return auctionBlitzConfirm;
+    }
+
+    const title = modal.querySelector('[data-auction-blitz-title]');
+    const price = modal.querySelector('[data-auction-blitz-price]');
+    const confirmButton = modal.querySelector('[data-auction-blitz-confirm]');
+    const cancelButtons = modal.querySelectorAll('[data-auction-blitz-cancel]');
+    let resolver = null;
+
+    const closeModal = (result) => {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        if (resolver) {
+            resolver(result);
+            resolver = null;
+        }
+    };
+
+    confirmButton?.addEventListener('click', () => closeModal(true));
+    cancelButtons.forEach((button) => button.addEventListener('click', () => closeModal(false)));
+    modal.addEventListener('click', (event) => {
+        if (event.target === modal) closeModal(false);
+    });
+
+    auctionBlitzConfirm = (lot) =>
+        new Promise((resolve) => {
+            resolver = resolve;
+            if (title) title.textContent = lot.title || 'Лот';
+            if (price) price.textContent = lot.blitz_price ? formatCurrency(lot.blitz_price) : '—';
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        });
+
+    return auctionBlitzConfirm;
 }
 
 function initAuctionModal() {
@@ -2544,18 +2638,29 @@ function initAuctionModal() {
     const stepEl = modal.querySelector('[data-auction-step]');
     const endsEl = modal.querySelector('[data-auction-ends]');
     const bidsEl = modal.querySelector('[data-auction-bids]');
+    const historyToggle = modal.querySelector('[data-auction-history-toggle]');
+    const historyList = modal.querySelector('[data-auction-history]');
     const amountInput = modal.querySelector('[data-auction-amount]');
     const bidButton = modal.querySelector('[data-auction-bid]');
     const blitzButton = modal.querySelector('[data-auction-blitz]');
     const closeButtons = modal.querySelectorAll('[data-auction-close]');
 
     let activeLotId = null;
+    let activeLot = null;
+    let historyVisible = false;
+    let historyLoaded = false;
+    let historyBids = [];
     const guardBot = getPromoBotGuard();
+    const confirmBlitz = getAuctionBlitzConfirm();
 
     const closeModal = () => {
         modal.classList.add('hidden');
         modal.classList.remove('flex');
         activeLotId = null;
+        activeLot = null;
+        historyVisible = false;
+        historyLoaded = false;
+        historyBids = [];
     };
 
     closeButtons.forEach((btn) => btn.addEventListener('click', closeModal));
@@ -2563,27 +2668,56 @@ function initAuctionModal() {
         if (event.target === modal) closeModal();
     });
 
-    const renderBids = (bids, lot) => {
-        bidsEl.innerHTML = '';
-        if (lot?.status === 'finished' && lot?.winner_last4 && lot?.winning_amount) {
-            bidsEl.innerHTML = `<div class=\"flex items-center justify-between rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700\">Победитель ……${lot.winner_last4} ${formatCurrency(lot.winning_amount)}</div>`;
-            return;
-        }
+    const renderBidRows = (container, bids) => {
+        container.innerHTML = '';
         if (!bids.length) {
-            bidsEl.textContent = 'Ставок ещё нет.';
+            container.textContent = 'Ставок ещё нет.';
             return;
         }
         bids.forEach((bid) => {
             const row = document.createElement('div');
             row.className = 'flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600';
             row.innerHTML = `<span>${formatCurrency(bid.amount)}</span><span>……${bid.phone_last4}</span><span>${bid.created_at}</span>`;
-            bidsEl.appendChild(row);
+            container.appendChild(row);
         });
     };
 
-    const loadLot = async (lotId) => {
-        const data = await fetchJson(`/api/auction/lot?id=${lotId}`);
+    const renderBids = (bids, lot) => {
+        bidsEl.classList.remove('hidden');
+        historyList?.classList.add('hidden');
+        if (historyToggle) {
+            historyToggle.classList.add('hidden');
+            historyToggle.innerHTML = '';
+        }
+
+        if (lot?.status === 'finished') {
+            bidsEl.classList.add('hidden');
+            if (historyToggle) {
+                const winnerText =
+                    lot?.winner_last4 && lot?.winning_amount
+                        ? `Победитель ……${lot.winner_last4} ${formatCurrency(lot.winning_amount)}`
+                        : 'Аукцион завершён';
+                historyToggle.classList.remove('hidden');
+                historyToggle.innerHTML = `<span>${winnerText}</span><span>${historyVisible ? 'Скрыть историю' : 'История ставок'}</span>`;
+            }
+            if (historyVisible && historyList) {
+                historyList.classList.remove('hidden');
+                renderBidRows(historyList, historyBids);
+            }
+            return;
+        }
+
+        renderBidRows(bidsEl, bids);
+    };
+
+    const loadLot = async (lotId, options = {}) => {
+        const query = options.history ? '&history=1' : '';
+        const data = await fetchJson(`/api/auction/lot?id=${lotId}${query}`);
         const lot = data.lot;
+        activeLot = lot;
+        if (options.history) {
+            historyBids = data.bids;
+        }
         if (title) title.textContent = lot.title;
         if (subtitle) subtitle.textContent = lot.status === 'finished' ? 'Аукцион завершён.' : 'Ставка обновляется при каждом действии.';
         if (currentEl) currentEl.textContent = formatCurrency(lot.current_price);
@@ -2606,6 +2740,22 @@ function initAuctionModal() {
         renderBids(data.bids, lot);
     };
 
+    historyToggle?.addEventListener('click', async () => {
+        if (!activeLotId) return;
+        try {
+            historyVisible = !historyVisible;
+            if (!historyLoaded) {
+                historyLoaded = true;
+                historyVisible = true;
+                await loadLot(activeLotId, { history: true });
+            } else {
+                renderBids(historyBids, activeLot);
+            }
+        } catch (error) {
+            alert(error.message);
+        }
+    });
+
     bidButton?.addEventListener('click', async () => {
         if (!activeLotId) return;
         if (!guardBot()) return;
@@ -2627,6 +2777,10 @@ function initAuctionModal() {
     blitzButton?.addEventListener('click', async () => {
         if (!activeLotId) return;
         if (!guardBot()) return;
+        if (activeLot && activeLot.blitz_price) {
+            const confirmed = await confirmBlitz(activeLot);
+            if (!confirmed) return;
+        }
         try {
             await fetchJson('/api/auction/blitz', {
                 method: 'POST',
@@ -2647,6 +2801,9 @@ function initAuctionModal() {
             const lotId = Number(trigger.dataset.auctionId);
             if (!lotId) return;
             activeLotId = lotId;
+            historyVisible = false;
+            historyLoaded = false;
+            historyBids = [];
             try {
                 await loadLot(lotId);
                 modal.classList.remove('hidden');
@@ -2663,6 +2820,7 @@ function initPromoActions() {
     if (!root) return;
 
     const guardBot = getPromoBotGuard();
+    const confirmBlitz = getAuctionBlitzConfirm();
 
     const updateCartIndicator = (count) => {
         const isActive = Number(count) > 0;
@@ -2745,6 +2903,12 @@ function initPromoActions() {
             if (!guardBot()) return;
             const lotId = Number(button.dataset.auctionId || 0);
             if (!lotId) return;
+            const lotTitle = button.dataset.auctionTitle || 'Лот';
+            const blitzPrice = Number(button.dataset.auctionBlitzPrice || 0);
+            if (blitzPrice > 0) {
+                const confirmed = await confirmBlitz({ title: lotTitle, blitz_price: blitzPrice });
+                if (!confirmed) return;
+            }
             try {
                 await fetchJson('/api/auction/blitz', {
                     method: 'POST',
