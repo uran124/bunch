@@ -5,7 +5,7 @@ class WholesaleController extends Controller
 {
     public function index(): void
     {
-        if (!$this->isWholesaleUser()) {
+        if (!$this->isWholesaleUser() && !$this->isAdminUser()) {
             header('Location: /?page=home');
             return;
         }
