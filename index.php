@@ -129,6 +129,8 @@ $router->get('admin-products', [AdminController::class, 'catalogProducts']);
 $router->get('admin-product-form', [AdminController::class, 'productForm']);
 $router->get('admin-promos', [AdminController::class, 'catalogPromos']);
 $router->get('admin-auction-create', [AdminController::class, 'auctionCreate']);
+$router->get('admin-promo-item-create', [AdminController::class, 'promoItemCreate']);
+$router->get('admin-lottery-create', [AdminController::class, 'lotteryCreate']);
 $router->get('admin-auction-edit', [AdminController::class, 'auctionEdit']);
 $router->get('admin-auction-view', [AdminController::class, 'auctionView']);
 $router->get('admin-attributes', [AdminController::class, 'catalogAttributes']);
