@@ -141,6 +141,15 @@ SQL;
         return $stmt->rowCount() > 0;
     }
 
+    public function updateBirthdayReminderDays(int $userId, int $days): void
+    {
+        $stmt = $this->db->prepare('UPDATE users SET birthday_reminder_days = :days, updated_at = NOW() WHERE id = :id');
+        $stmt->execute([
+            'id' => $userId,
+            'days' => $days,
+        ]);
+    }
+
     public function updateProfileAndPin(
         int $userId,
         string $name,

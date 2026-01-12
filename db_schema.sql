@@ -38,6 +38,7 @@ DROP TABLE IF EXISTS broadcast_message_groups;
 DROP TABLE IF EXISTS broadcast_messages;
 DROP TABLE IF EXISTS broadcast_group_users;
 DROP TABLE IF EXISTS broadcast_groups;
+DROP TABLE IF EXISTS birthday_reminders;
 DROP TABLE IF EXISTS users;
 
 -- =========================
@@ -68,6 +69,31 @@ CREATE TABLE users (
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
     ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_unicode_ci;
+
+-- ==============================
+-- 1.0. Таблица значимых дат
+-- ==============================
+
+CREATE TABLE birthday_reminders (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+
+  user_id INT UNSIGNED NOT NULL,
+  CONSTRAINT fk_birthday_reminders_user
+    FOREIGN KEY (user_id) REFERENCES users(id)
+    ON DELETE CASCADE,
+
+  recipient VARCHAR(100) NOT NULL,
+  occasion VARCHAR(100) NOT NULL,
+  reminder_date DATE NOT NULL,
+
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    ON UPDATE CURRENT_TIMESTAMP,
+
+  INDEX idx_birthday_reminders_user_date (user_id, reminder_date)
 ) ENGINE=InnoDB
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_unicode_ci;
