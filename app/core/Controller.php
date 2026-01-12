@@ -25,6 +25,11 @@ abstract class Controller
         return $this->getCurrentUserRole() === 'wholesale';
     }
 
+    protected function isAdminUser(): bool
+    {
+        return $this->getCurrentUserRole() === 'admin';
+    }
+
     protected function getDadataSettings(): array
     {
         return [

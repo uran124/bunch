@@ -5,7 +5,7 @@ class PromoController extends Controller
 {
     public function index()
     {
-        if ($this->isWholesaleUser()) {
+        if ($this->isWholesaleUser() && !$this->isAdminUser()) {
             header('Location: /?page=home');
             return;
         }
