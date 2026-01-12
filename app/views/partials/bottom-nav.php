@@ -1,6 +1,8 @@
 <?php
 $currentPage = $_GET['page'] ?? trim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/') ?: 'home';
 $isWholesaleUser = $isWholesaleUser ?? false;
+$currentUserRole = $currentUserRole ?? 'customer';
+$isAdminUser = $currentUserRole === 'admin';
 
 $navItems = [
     [
@@ -9,19 +11,34 @@ $navItems = [
         'href' => '/?page=home',
         'icon' => 'home'
     ],
-    $isWholesaleUser
+    $isAdminUser
+        ? [
+            'id' => 'promo',
+            'label' => 'Акции',
+            'href' => '/?page=promo',
+            'icon' => 'local_offer'
+        ]
+        : ($isWholesaleUser
+            ? [
+                'id' => 'wholesale',
+                'label' => 'Опт',
+                'href' => '/?page=wholesale',
+                'icon' => 'inventory'
+            ]
+            : [
+                'id' => 'promo',
+                'label' => 'Акции',
+                'href' => '/?page=promo',
+                'icon' => 'local_offer'
+            ]),
+    $isAdminUser
         ? [
             'id' => 'wholesale',
             'label' => 'Опт',
             'href' => '/?page=wholesale',
             'icon' => 'inventory'
         ]
-        : [
-            'id' => 'promo',
-            'label' => 'Акции',
-            'href' => '/?page=promo',
-            'icon' => 'local_offer'
-        ],
+        : null,
     [
         'id' => 'cart',
         'label' => 'Корзина',
@@ -41,6 +58,8 @@ $navItems = [
         'icon' => 'account_circle'
     ],
 ];
+$navItems = array_values(array_filter($navItems));
+$navColumnsClass = $isAdminUser ? 'grid-cols-6' : 'grid-cols-5';
 
 $cart = class_exists('Cart') ? new Cart() : null;
 $cartCount = $cart ? $cart->getItemCount() : 0;
@@ -56,7 +75,7 @@ if ($userId) {
 ?>
 
 <nav class="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 backdrop-blur">
-    <div class="mx-auto grid w-full max-w-6xl grid-cols-5 gap-2 px-3 pt-2 pb-[calc(0.65rem+env(safe-area-inset-bottom))] text-xs font-semibold text-slate-500">
+    <div class="mx-auto grid w-full max-w-6xl <?php echo $navColumnsClass; ?> gap-2 px-3 pt-2 pb-[calc(0.65rem+env(safe-area-inset-bottom))] text-xs font-semibold text-slate-500">
         <?php foreach ($navItems as $item): ?>
             <?php $isActive = $currentPage === $item['id']; ?>
             <?php
