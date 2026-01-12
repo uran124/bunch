@@ -840,6 +840,47 @@ class AdminController extends Controller
         ]);
     }
 
+    public function promoItemCreate(): void
+    {
+        $pageMeta = [
+            'title' => 'Лимитированный товар — админ-панель Bunch',
+            'description' => 'Создание товара по акции.',
+            'h1' => 'Лимитированный товар',
+            'headerTitle' => 'Bunch Admin',
+            'headerSubtitle' => 'Акции · Лимитированный товар',
+        ];
+
+        $this->render('admin-promo-item-create', [
+            'pageMeta' => $pageMeta,
+            'message' => $_GET['status'] ?? null,
+        ]);
+    }
+
+    public function lotteryCreate(): void
+    {
+        $pageMeta = [
+            'title' => 'Розыгрыш — админ-панель Bunch',
+            'description' => 'Создание товара для розыгрыша.',
+            'h1' => 'Розыгрыш',
+            'headerTitle' => 'Bunch Admin',
+            'headerSubtitle' => 'Акции · Розыгрыш',
+        ];
+
+        $settings = new Setting();
+        $lotteryDefaults = $settings->getLotteryDefaults();
+
+        $this->render('admin-lottery-create', [
+            'pageMeta' => $pageMeta,
+            'message' => $_GET['status'] ?? null,
+            'lotterySettings' => [
+                'freeMonthlyLimit' => (int) $settings->get(
+                    Setting::LOTTERY_FREE_MONTHLY_LIMIT,
+                    $lotteryDefaults[Setting::LOTTERY_FREE_MONTHLY_LIMIT] ?? '0'
+                ),
+            ],
+        ]);
+    }
+
     public function auctionEdit(): void
     {
         $lotId = (int) ($_GET['id'] ?? 0);
