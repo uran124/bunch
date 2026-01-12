@@ -281,7 +281,7 @@ class Order extends Model
     private function getItems(int $orderId): array
     {
         $stmt = $this->db->prepare(
-            'SELECT oi.*, p.photo_url FROM order_items oi LEFT JOIN products p ON p.id = oi.product_id WHERE oi.order_id = :order_id ORDER BY oi.id ASC'
+            'SELECT oi.*, p.photo_url, p.product_type, p.stems_per_pack FROM order_items oi LEFT JOIN products p ON p.id = oi.product_id WHERE oi.order_id = :order_id ORDER BY oi.id ASC'
         );
         $stmt->execute(['order_id' => $orderId]);
 
@@ -413,8 +413,13 @@ class Order extends Model
             $qty = (int) $item['qty'];
             $price = (float) $item['price'];
 
+            $title = $item['product_name'] ?? ($item['name'] ?? 'Товар');
+            if (($item['product_type'] ?? null) === 'small_wholesale' && !empty($item['stems_per_pack'])) {
+                $title .= ' (' . (int) $item['stems_per_pack'] . ' шт.)';
+            }
+
             return [
-                'title' => $item['product_name'] ?? ($item['name'] ?? 'Товар'),
+                'title' => $title,
                 'qty' => $qty,
                 'unit' => $this->formatPrice($price),
                 'total' => $this->formatPrice($price * $qty),
