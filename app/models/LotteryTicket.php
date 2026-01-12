@@ -102,26 +102,40 @@ class LotteryTicket extends Model
                 throw new RuntimeException('Свободные билеты закончились');
             }
 
-            $update = $this->db->prepare(
-                "UPDATE lottery_tickets SET status = 'reserved', user_id = :user_id, phone_last4 = :phone_last4, reserved_at = NOW() WHERE id = :id AND status = 'free'"
-            );
-            $update->execute([
-                'user_id' => $userId,
-                'phone_last4' => $phoneLast4,
-                'id' => $ticket['id'],
-            ]);
+            if ($ticketPrice <= 0) {
+                $update = $this->db->prepare(
+                    "UPDATE lottery_tickets SET status = 'paid', user_id = :user_id, phone_last4 = :phone_last4, paid_at = NOW(), reserved_at = NULL WHERE id = :id AND status = 'free'"
+                );
+                $update->execute([
+                    'user_id' => $userId,
+                    'phone_last4' => $phoneLast4,
+                    'id' => $ticket['id'],
+                ]);
+            } else {
+                $update = $this->db->prepare(
+                    "UPDATE lottery_tickets SET status = 'reserved', user_id = :user_id, phone_last4 = :phone_last4, reserved_at = NOW() WHERE id = :id AND status = 'free'"
+                );
+                $update->execute([
+                    'user_id' => $userId,
+                    'phone_last4' => $phoneLast4,
+                    'id' => $ticket['id'],
+                ]);
+            }
 
             if ($update->rowCount() === 0) {
                 throw new RuntimeException('Билет уже занят');
             }
 
             $this->logAction((int) $ticket['id'], 'reserved', $userId);
+            if ($ticketPrice <= 0) {
+                $this->logAction((int) $ticket['id'], 'paid', $userId);
+            }
 
             $this->db->commit();
             return [
                 'id' => (int) $ticket['id'],
                 'ticket_number' => (int) $ticket['ticket_number'],
-                'status' => 'reserved',
+                'status' => $ticketPrice <= 0 ? 'paid' : 'reserved',
             ];
         } catch (Throwable $e) {
             $this->db->rollBack();
