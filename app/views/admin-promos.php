@@ -1,8 +1,12 @@
 <?php /** @var array $activeLots */ ?>
 <?php /** @var array $finishedLots */ ?>
+<?php /** @var array $promoItems */ ?>
+<?php /** @var array $lotteries */ ?>
 <?php /** @var array $loadErrors */ ?>
 <?php $pageMeta = $pageMeta ?? []; ?>
 <?php $lotterySettings = $lotterySettings ?? []; ?>
+<?php $promoItems = $promoItems ?? []; ?>
+<?php $lotteries = $lotteries ?? []; ?>
 
 <section class="flex flex-col gap-6">
     <header class="flex flex-col items-start gap-4">
@@ -69,6 +73,78 @@
                 Сохранить настройки
             </button>
         </form>
+    </section>
+
+    <section class="space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+            <div>
+                <p class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Товары по акции</p>
+                <h2 class="text-xl font-semibold text-slate-900">Лимитированные предложения</h2>
+            </div>
+            <p class="text-sm text-slate-500">Кликните по названию, чтобы отредактировать товар.</p>
+        </div>
+        <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm shadow-amber-50/60 ring-1 ring-transparent">
+            <div class="grid grid-cols-[80px_1.4fr_1fr_1fr_1fr] items-center gap-4 border-b border-slate-100 bg-slate-50 px-5 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <span>ID</span>
+                <span>Товар</span>
+                <span>Активность</span>
+                <span>Окончание</span>
+                <span>Цена</span>
+            </div>
+            <?php if (empty($promoItems)): ?>
+                <div class="px-5 py-4 text-sm text-slate-500">Акционные товары ещё не добавлены.</div>
+            <?php endif; ?>
+            <?php foreach ($promoItems as $item): ?>
+                <article class="grid grid-cols-[80px_1.4fr_1fr_1fr_1fr] items-center gap-4 border-b border-slate-100 px-5 py-4 last:border-b-0">
+                    <div class="text-sm font-semibold text-slate-900">#<?php echo (int) $item['id']; ?></div>
+                    <div class="space-y-1">
+                        <a class="text-base font-semibold text-slate-900 transition hover:text-amber-600" href="/?page=admin-promo-item-edit&id=<?php echo (int) $item['id']; ?>">
+                            <?php echo htmlspecialchars($item['title'], ENT_QUOTES, 'UTF-8'); ?>
+                        </a>
+                        <div class="text-sm text-slate-500"><?php echo htmlspecialchars($item['label'] ?? 'Разовая акция', ENT_QUOTES, 'UTF-8'); ?></div>
+                    </div>
+                    <div class="text-sm font-semibold text-slate-700"><?php echo !empty($item['is_active']) ? 'Активен' : 'Скрыт'; ?></div>
+                    <div class="text-sm text-slate-700"><?php echo !empty($item['ends_at']) ? htmlspecialchars($item['ends_at'], ENT_QUOTES, 'UTF-8') : 'Без ограничения'; ?></div>
+                    <div class="text-sm font-semibold text-slate-900"><?php echo number_format((float) $item['price'], 2, '.', ' '); ?> ₽</div>
+                </article>
+            <?php endforeach; ?>
+        </div>
+    </section>
+
+    <section class="space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+            <div>
+                <p class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Розыгрыши</p>
+                <h2 class="text-xl font-semibold text-slate-900">Участия в розыгрышах</h2>
+            </div>
+            <p class="text-sm text-slate-500">Кликните по названию, чтобы отредактировать розыгрыш.</p>
+        </div>
+        <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm shadow-violet-50/60 ring-1 ring-transparent">
+            <div class="grid grid-cols-[80px_1.4fr_1fr_1fr_1fr] items-center gap-4 border-b border-slate-100 bg-slate-50 px-5 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <span>ID</span>
+                <span>Розыгрыш</span>
+                <span>Статус</span>
+                <span>Дата</span>
+                <span>Билеты</span>
+            </div>
+            <?php if (empty($lotteries)): ?>
+                <div class="px-5 py-4 text-sm text-slate-500">Розыгрыши ещё не добавлены.</div>
+            <?php endif; ?>
+            <?php foreach ($lotteries as $lottery): ?>
+                <article class="grid grid-cols-[80px_1.4fr_1fr_1fr_1fr] items-center gap-4 border-b border-slate-100 px-5 py-4 last:border-b-0">
+                    <div class="text-sm font-semibold text-slate-900">#<?php echo (int) $lottery['id']; ?></div>
+                    <div class="space-y-1">
+                        <a class="text-base font-semibold text-slate-900 transition hover:text-violet-600" href="/?page=admin-lottery-edit&id=<?php echo (int) $lottery['id']; ?>">
+                            <?php echo htmlspecialchars($lottery['title'], ENT_QUOTES, 'UTF-8'); ?>
+                        </a>
+                        <div class="text-sm text-slate-500"><?php echo htmlspecialchars($lottery['status'], ENT_QUOTES, 'UTF-8'); ?></div>
+                    </div>
+                    <div class="text-sm font-semibold text-slate-700"><?php echo htmlspecialchars($lottery['status'], ENT_QUOTES, 'UTF-8'); ?></div>
+                    <div class="text-sm text-slate-700"><?php echo htmlspecialchars($lottery['draw_at'], ENT_QUOTES, 'UTF-8'); ?></div>
+                    <div class="text-sm font-semibold text-slate-900"><?php echo (int) $lottery['tickets_paid']; ?>/<?php echo (int) $lottery['tickets_total']; ?></div>
+                </article>
+            <?php endforeach; ?>
+        </div>
     </section>
 
     <section class="space-y-4">

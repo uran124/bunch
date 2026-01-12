@@ -89,9 +89,6 @@
                                 'regular' => 'Обычный',
                                 'small_wholesale' => 'Мелкий опт (пачки)',
                                 'wholesale_box' => 'Опт (коробки)',
-                                'lottery' => 'Розыгрыш букета',
-                                'promo' => 'Букет по акции',
-                                'auction' => 'Товар аукцион',
                             ];
                         ?>
                         <select name="product_type" class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-sm focus:border-rose-300 focus:outline-none focus:ring-2 focus:ring-rose-200">

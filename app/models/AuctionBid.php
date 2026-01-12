@@ -57,4 +57,14 @@ class AuctionBid extends Model
             ];
         }, $rows);
     }
+
+    public function countLotBids(int $lotId): int
+    {
+        $stmt = $this->db->prepare(
+            "SELECT COUNT(*) FROM auction_bids WHERE lot_id = :lot_id AND status = 'active'"
+        );
+        $stmt->execute(['lot_id' => $lotId]);
+
+        return (int) $stmt->fetchColumn();
+    }
 }

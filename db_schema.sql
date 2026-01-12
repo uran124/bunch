@@ -237,6 +237,7 @@ CREATE TABLE promo_items (
   slug        VARCHAR(150) NOT NULL UNIQUE,
   description TEXT NULL,
 
+  base_price  DECIMAL(10,2) NOT NULL DEFAULT 0.00,
   price       DECIMAL(10,2) NOT NULL DEFAULT 0.00,
   quantity    INT UNSIGNED NULL,
   ends_at     DATETIME NULL,
@@ -354,6 +355,8 @@ CREATE TABLE lottery_ticket_logs (
 CREATE TABLE auction_lots (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
+  product_id INT UNSIGNED NULL,
+
   title VARCHAR(150) NOT NULL,
   description TEXT NULL,
   image VARCHAR(255) NULL,
@@ -367,6 +370,7 @@ CREATE TABLE auction_lots (
   status ENUM('draft', 'active', 'finished', 'cancelled') NOT NULL DEFAULT 'draft',
   winner_user_id INT UNSIGNED NULL,
   winning_bid_id INT UNSIGNED NULL,
+  winner_cart_added_at DATETIME NULL,
 
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -375,8 +379,12 @@ CREATE TABLE auction_lots (
   CONSTRAINT fk_auction_lot_winner
     FOREIGN KEY (winner_user_id) REFERENCES users(id)
     ON DELETE SET NULL,
+  CONSTRAINT fk_auction_lot_product
+    FOREIGN KEY (product_id) REFERENCES products(id)
+    ON DELETE SET NULL,
 
   INDEX idx_auction_status (status),
+  INDEX idx_auction_lots_product (product_id),
   INDEX idx_auction_time (starts_at, ends_at)
 ) ENGINE=InnoDB
   DEFAULT CHARSET=utf8mb4

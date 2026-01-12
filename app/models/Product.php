@@ -52,14 +52,27 @@ class Product extends Model
         return $row ?: null;
     }
 
-    public function getAdminList(bool $includeDeleted = false): array
+    public function getAdminList(bool $includeDeleted = false, array $excludedTypes = []): array
     {
         $sql = "SELECT p.*, s.flower_name, s.variety, s.country AS supply_country, s.stem_height_cm AS supply_height, s.stem_weight_g AS supply_weight, s.photo_url AS supply_photo, s.id AS supply_id, s.is_standing AS supply_is_standing, s.actual_delivery_date AS supply_actual_delivery_date, s.planned_delivery_date AS supply_planned_delivery_date, s.first_delivery_date AS supply_first_delivery_date, s.periodicity AS supply_periodicity, s.skip_date AS supply_skip_date FROM {$this->table} p LEFT JOIN supplies s ON p.supply_id = s.id";
+        $conditions = [];
         if (!$includeDeleted) {
-            $sql .= " WHERE p.status = 'active'";
+            $conditions[] = "p.status = 'active'";
+        }
+        if ($excludedTypes) {
+            $placeholders = implode(', ', array_fill(0, count($excludedTypes), '?'));
+            $conditions[] = "p.product_type NOT IN ($placeholders)";
+        }
+        if ($conditions) {
+            $sql .= ' WHERE ' . implode(' AND ', $conditions);
         }
         $sql .= " ORDER BY p.created_at DESC";
-        $stmt = $this->db->query($sql);
+        $stmt = $this->db->prepare($sql);
+        if ($excludedTypes) {
+            $stmt->execute($excludedTypes);
+        } else {
+            $stmt->execute();
+        }
         $products = $stmt->fetchAll();
 
         foreach ($products as &$product) {
@@ -193,6 +206,23 @@ class Product extends Model
             'stem_height_cm' => $payload['stem_height_cm'],
             'stem_weight_g' => $payload['stem_weight_g'],
             'country' => $payload['country'],
+            'category' => $payload['category'] ?? 'main',
+            'product_type' => $payload['product_type'] ?? 'regular',
+            'is_active' => $payload['is_active'],
+            'id' => $id,
+        ]);
+    }
+
+    public function updateCustom(int $id, array $payload): void
+    {
+        $sql = "UPDATE {$this->table} SET name = :name, description = :description, price = :price, photo_url = :photo_url, category = :category, product_type = :product_type, is_active = :is_active WHERE id = :id";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([
+            'name' => $payload['name'],
+            'description' => $payload['description'],
+            'price' => $payload['price'],
+            'photo_url' => $payload['photo_url'],
             'category' => $payload['category'] ?? 'main',
             'product_type' => $payload['product_type'] ?? 'regular',
             'is_active' => $payload['is_active'],

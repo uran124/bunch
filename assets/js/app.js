@@ -2362,6 +2362,8 @@ function initLotteryModal() {
     const triggers = document.querySelectorAll('[data-lottery-open]');
     if (!modal || !triggers.length) return;
 
+    const guardBot = getPromoBotGuard();
+
     const title = modal.querySelector('[data-lottery-title]');
     const subtitle = modal.querySelector('[data-lottery-subtitle]');
     const price = modal.querySelector('[data-lottery-price]');
@@ -2456,6 +2458,9 @@ function initLotteryModal() {
     };
 
     const reserveTicket = async (lotteryId, ticketNumber) => {
+        if (!guardBot()) {
+            return;
+        }
         await fetchJson('/api/lottery/reserve', {
             method: 'POST',
             headers: {
@@ -2468,6 +2473,9 @@ function initLotteryModal() {
     };
 
     const reserveRandom = async () => {
+        if (!guardBot()) {
+            return;
+        }
         await fetchJson('/api/lottery/reserve', {
             method: 'POST',
             headers: {
@@ -2490,6 +2498,7 @@ function initLotteryModal() {
 
     payButton?.addEventListener('click', async () => {
         if (!payTicketId) return;
+        if (!guardBot()) return;
         try {
             await fetchJson('/api/lottery/pay', {
                 method: 'POST',
@@ -2509,6 +2518,9 @@ function initLotteryModal() {
         trigger.addEventListener('click', async () => {
             const lotteryId = Number(trigger.dataset.lotteryId);
             if (!lotteryId) return;
+            if (trigger.dataset.requiresBot !== undefined && !guardBot()) {
+                return;
+            }
             activeLotteryId = lotteryId;
             try {
                 await loadTickets(lotteryId);
@@ -2538,6 +2550,7 @@ function initAuctionModal() {
     const closeButtons = modal.querySelectorAll('[data-auction-close]');
 
     let activeLotId = null;
+    const guardBot = getPromoBotGuard();
 
     const closeModal = () => {
         modal.classList.add('hidden');
@@ -2550,8 +2563,12 @@ function initAuctionModal() {
         if (event.target === modal) closeModal();
     });
 
-    const renderBids = (bids) => {
+    const renderBids = (bids, lot) => {
         bidsEl.innerHTML = '';
+        if (lot?.status === 'finished' && lot?.winner_last4 && lot?.winning_amount) {
+            bidsEl.innerHTML = `<div class=\"flex items-center justify-between rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700\">Победитель ……${lot.winner_last4} ${formatCurrency(lot.winning_amount)}</div>`;
+            return;
+        }
         if (!bids.length) {
             bidsEl.textContent = 'Ставок ещё нет.';
             return;
@@ -2586,11 +2603,12 @@ function initAuctionModal() {
             }
         }
 
-        renderBids(data.bids);
+        renderBids(data.bids, lot);
     };
 
     bidButton?.addEventListener('click', async () => {
         if (!activeLotId) return;
+        if (!guardBot()) return;
         try {
             await fetchJson('/api/auction/bid', {
                 method: 'POST',
@@ -2608,6 +2626,7 @@ function initAuctionModal() {
 
     blitzButton?.addEventListener('click', async () => {
         if (!activeLotId) return;
+        if (!guardBot()) return;
         try {
             await fetchJson('/api/auction/blitz', {
                 method: 'POST',
@@ -2637,6 +2656,184 @@ function initAuctionModal() {
             }
         });
     });
+}
+
+function initPromoActions() {
+    const root = document.querySelector('[data-promo-root]');
+    if (!root) return;
+
+    const guardBot = getPromoBotGuard();
+
+    const updateCartIndicator = (count) => {
+        const isActive = Number(count) > 0;
+        document.querySelectorAll('[data-cart-indicator]').forEach((indicator) => {
+            indicator.dataset.cartActive = isActive ? 'true' : 'false';
+        });
+    };
+
+    const addPromoItemToCart = async (productId) => {
+        const response = await fetch('/?page=cart-add', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+            body: JSON.stringify({ product_id: productId, qty: 1, attributes: [] }),
+        });
+
+        if (!response.ok) {
+            throw new Error('Не удалось добавить товар в корзину');
+        }
+
+        const data = await response.json();
+        if (!data.ok) {
+            throw new Error(data.error || 'Ошибка добавления в корзину');
+        }
+
+        updateCartIndicator(data.totals?.count || 0);
+    };
+
+    root.querySelectorAll('[data-product-card][data-product-id]').forEach((card) => {
+        const productId = Number(card.dataset.productId || 0);
+        if (productId <= 0) {
+            return;
+        }
+
+        card.querySelectorAll('[data-add-to-cart]').forEach((button) => {
+            button.addEventListener('click', async () => {
+                if (!guardBot()) {
+                    return;
+                }
+                button.disabled = true;
+                button.classList.add('opacity-70');
+                try {
+                    await addPromoItemToCart(productId);
+                } catch (error) {
+                    alert(error.message || 'Ошибка добавления в корзину');
+                } finally {
+                    button.disabled = false;
+                    button.classList.remove('opacity-70');
+                }
+            });
+        });
+    });
+
+    root.querySelectorAll('[data-auction-step]').forEach((button) => {
+        button.addEventListener('click', async () => {
+            if (button.disabled) return;
+            if (!guardBot()) return;
+            const lotId = Number(button.dataset.auctionId || 0);
+            if (!lotId) return;
+            try {
+                await fetchJson('/api/auction/bid', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                    body: JSON.stringify({ lot_id: lotId }),
+                });
+            } catch (error) {
+                alert(error.message);
+            }
+        });
+    });
+
+    root.querySelectorAll('[data-auction-blitz]').forEach((button) => {
+        button.addEventListener('click', async () => {
+            if (button.disabled) return;
+            if (!guardBot()) return;
+            const lotId = Number(button.dataset.auctionId || 0);
+            if (!lotId) return;
+            try {
+                await fetchJson('/api/auction/blitz', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                    body: JSON.stringify({ lot_id: lotId }),
+                });
+            } catch (error) {
+                alert(error.message);
+            }
+        });
+    });
+}
+
+let promoBotGuard;
+
+function getPromoBotGuard() {
+    if (promoBotGuard) {
+        return promoBotGuard;
+    }
+
+    const root = document.querySelector('[data-promo-root]');
+    const modal = document.querySelector('[data-bot-modal]');
+    if (!root || !modal) {
+        promoBotGuard = () => true;
+        return promoBotGuard;
+    }
+
+    const closeButtons = modal.querySelectorAll('[data-bot-cancel]');
+    const openModal = () => {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    };
+    const closeModal = () => {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    };
+
+    closeButtons.forEach((button) => button.addEventListener('click', closeModal));
+    modal.addEventListener('click', (event) => {
+        if (event.target === modal) closeModal();
+    });
+
+    promoBotGuard = () => {
+        const isAuthenticated = root.dataset.authenticated === 'true';
+        const botConnected = root.dataset.botConnected === 'true';
+        if (!isAuthenticated) {
+            return true;
+        }
+        if (botConnected) {
+            return true;
+        }
+        openModal();
+        return false;
+    };
+
+    return promoBotGuard;
+}
+
+function initCountdownTimers() {
+    const items = document.querySelectorAll('[data-countdown]');
+    if (!items.length) return;
+
+    const updateTimer = (element) => {
+        const target = element.dataset.countdownTarget;
+        if (!target) return;
+        const finishedText = element.dataset.countdownFinishedText || 'Завершено';
+        const end = new Date(target);
+        if (Number.isNaN(end.getTime())) {
+            return;
+        }
+        const now = new Date();
+        const diff = end.getTime() - now.getTime();
+        if (diff <= 0) {
+            element.textContent = finishedText;
+            return;
+        }
+        const totalSeconds = Math.floor(diff / 1000);
+        const days = Math.floor(totalSeconds / 86400);
+        const hours = Math.floor((totalSeconds % 86400) / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = totalSeconds % 60;
+        element.textContent = `${days}д ${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    };
+
+    items.forEach(updateTimer);
+    setInterval(() => items.forEach(updateTimer), 1000);
 }
 
 function initPromoFilters() {
@@ -2682,6 +2879,8 @@ if (pageId === 'promo') {
     initPromoFilters();
     initLotteryModal();
     initAuctionModal();
+    initPromoActions();
+    initCountdownTimers();
 }
 
 function initCookieConsent() {

@@ -3,29 +3,55 @@
 
 class AuctionLot extends Model
 {
-    private const EXTEND_MINUTES = 5;
+    private const EXTEND_MINUTES = 3;
     private const CANCEL_WINDOW_MINUTES = 60;
 
     public function createLot(array $payload): int
     {
-        $stmt = $this->db->prepare(
-            'INSERT INTO auction_lots (title, description, image, store_price, start_price, bid_step, blitz_price, starts_at, ends_at, original_ends_at, status) VALUES (:title, :description, :image, :store_price, :start_price, :bid_step, :blitz_price, :starts_at, :ends_at, :original_ends_at, :status)'
-        );
-        $stmt->execute([
-            'title' => $payload['title'],
-            'description' => $payload['description'],
-            'image' => $payload['image'],
-            'store_price' => $payload['store_price'],
-            'start_price' => $payload['start_price'],
-            'bid_step' => $payload['bid_step'],
-            'blitz_price' => $payload['blitz_price'],
-            'starts_at' => $payload['starts_at'],
-            'ends_at' => $payload['ends_at'],
-            'original_ends_at' => $payload['ends_at'],
-            'status' => $payload['status'] ?? 'draft',
-        ]);
+        $productModel = new Product();
 
-        return (int) $this->db->lastInsertId();
+        $this->db->beginTransaction();
+
+        try {
+            $productId = $productModel->createCustom([
+                'name' => $payload['title'],
+                'description' => $payload['description'],
+                'price' => $payload['start_price'],
+                'article' => null,
+                'photo_url' => $payload['image'],
+                'category' => 'main',
+                'product_type' => 'auction',
+                'is_base' => 0,
+                'is_active' => 1,
+                'sort_order' => 0,
+            ]);
+
+            $stmt = $this->db->prepare(
+                'INSERT INTO auction_lots (product_id, title, description, image, store_price, start_price, bid_step, blitz_price, starts_at, ends_at, original_ends_at, status) VALUES (:product_id, :title, :description, :image, :store_price, :start_price, :bid_step, :blitz_price, :starts_at, :ends_at, :original_ends_at, :status)'
+            );
+            $stmt->execute([
+                'product_id' => $productId,
+                'title' => $payload['title'],
+                'description' => $payload['description'],
+                'image' => $payload['image'],
+                'store_price' => $payload['store_price'],
+                'start_price' => $payload['start_price'],
+                'bid_step' => $payload['bid_step'],
+                'blitz_price' => $payload['blitz_price'],
+                'starts_at' => $payload['starts_at'],
+                'ends_at' => $payload['ends_at'],
+                'original_ends_at' => $payload['ends_at'],
+                'status' => $payload['status'] ?? 'draft',
+            ]);
+
+            $lotId = (int) $this->db->lastInsertId();
+            $this->db->commit();
+
+            return $lotId;
+        } catch (Throwable $e) {
+            $this->db->rollBack();
+            throw $e;
+        }
     }
 
     public function getAdminList(): array
@@ -43,6 +69,23 @@ SQL;
 
         return array_map(function (array $row) use ($bidModel): array {
             $this->finalizeIfEnded((int) $row['id']);
+            if ($row['status'] === 'active' && $row['ends_at']) {
+                $endsAt = new DateTime($row['ends_at']);
+                if (new DateTime() > $endsAt) {
+                    $row['status'] = 'finished';
+                }
+            }
+            if ($row['status'] === 'finished' && empty($row['winner_phone'])) {
+                $refresh = $this->db->prepare(
+                    'SELECT l.*, u.phone AS winner_phone, b.amount AS winning_amount
+                    FROM auction_lots l
+                    LEFT JOIN users u ON u.id = l.winner_user_id
+                    LEFT JOIN auction_bids b ON b.id = l.winning_bid_id
+                    WHERE l.id = :id'
+                );
+                $refresh->execute(['id' => (int) $row['id']]);
+                $row = $refresh->fetch() ?: $row;
+            }
             $currentBid = $bidModel->getCurrentBid((int) $row['id']);
             $currentPrice = $currentBid ? (float) $currentBid['amount'] : (float) $row['start_price'];
 
@@ -123,20 +166,61 @@ SQL;
             'original_ends_at' => $payload['original_ends_at'],
             'status' => $payload['status'],
         ]);
+
+        $stmt = $this->db->prepare('SELECT product_id FROM auction_lots WHERE id = :id');
+        $stmt->execute(['id' => $lotId]);
+        $productId = (int) $stmt->fetchColumn();
+        if ($productId > 0) {
+            $productModel = new Product();
+            $productModel->updateCustom($productId, [
+                'name' => $payload['title'],
+                'description' => $payload['description'],
+                'price' => $payload['start_price'],
+                'photo_url' => $payload['image'],
+                'category' => 'main',
+                'product_type' => 'auction',
+                'is_active' => 1,
+            ]);
+        }
     }
 
     public function getPromoList(): array
     {
-        $stmt = $this->db->query("SELECT * FROM auction_lots WHERE status != 'cancelled' ORDER BY starts_at DESC");
+        $stmt = $this->db->query(
+            "SELECT l.*, u.phone AS winner_phone, b.amount AS winning_amount
+            FROM auction_lots l
+            LEFT JOIN users u ON u.id = l.winner_user_id
+            LEFT JOIN auction_bids b ON b.id = l.winning_bid_id
+            WHERE l.status != 'cancelled'
+            ORDER BY l.starts_at DESC"
+        );
         $rows = $stmt->fetchAll();
         $bidModel = new AuctionBid();
 
         return array_map(function (array $row) use ($bidModel): array {
             $this->finalizeIfEnded((int) $row['id']);
+            if ($row['status'] === 'active' && $row['ends_at']) {
+                $endsAt = new DateTime($row['ends_at']);
+                if (new DateTime() > $endsAt) {
+                    $row['status'] = 'finished';
+                }
+            }
+            if ($row['status'] === 'finished' && empty($row['winner_phone'])) {
+                $refresh = $this->db->prepare(
+                    'SELECT l.*, u.phone AS winner_phone, b.amount AS winning_amount
+                    FROM auction_lots l
+                    LEFT JOIN users u ON u.id = l.winner_user_id
+                    LEFT JOIN auction_bids b ON b.id = l.winning_bid_id
+                    WHERE l.id = :id'
+                );
+                $refresh->execute(['id' => (int) $row['id']]);
+                $row = $refresh->fetch() ?: $row;
+            }
             $currentBid = $bidModel->getCurrentBid((int) $row['id']);
             $currentPrice = $currentBid ? (float) $currentBid['amount'] : (float) $row['start_price'];
             $statusLabel = $this->formatStatus($row);
             $timeLabel = $this->formatTimeLabel($row);
+            $bidCount = $bidModel->countLotBids((int) $row['id']);
 
             return [
                 'id' => (int) $row['id'],
@@ -151,6 +235,9 @@ SQL;
                 'status_label' => $statusLabel,
                 'time_label' => $timeLabel,
                 'status' => $row['status'],
+                'winner_last4' => $this->getLast4($row['winner_phone'] ?? ''),
+                'winning_amount' => $row['winning_amount'] !== null ? (float) $row['winning_amount'] : null,
+                'bid_count' => $bidCount,
                 'starts_at' => $row['starts_at'],
                 'ends_at' => $row['ends_at'],
             ];
@@ -159,7 +246,13 @@ SQL;
 
     public function getLotDetails(int $lotId): ?array
     {
-        $stmt = $this->db->prepare('SELECT * FROM auction_lots WHERE id = :id');
+        $stmt = $this->db->prepare(
+            'SELECT l.*, u.phone AS winner_phone, b.amount AS winning_amount
+            FROM auction_lots l
+            LEFT JOIN users u ON u.id = l.winner_user_id
+            LEFT JOIN auction_bids b ON b.id = l.winning_bid_id
+            WHERE l.id = :id'
+        );
         $stmt->execute(['id' => $lotId]);
         $row = $stmt->fetch();
 
@@ -168,7 +261,13 @@ SQL;
         }
 
         $this->finalizeIfEnded($lotId);
-        $stmt = $this->db->prepare('SELECT * FROM auction_lots WHERE id = :id');
+        $stmt = $this->db->prepare(
+            'SELECT l.*, u.phone AS winner_phone, b.amount AS winning_amount
+            FROM auction_lots l
+            LEFT JOIN users u ON u.id = l.winner_user_id
+            LEFT JOIN auction_bids b ON b.id = l.winning_bid_id
+            WHERE l.id = :id'
+        );
         $stmt->execute(['id' => $lotId]);
         $row = $stmt->fetch();
         if (!$row) {
@@ -193,6 +292,8 @@ SQL;
             'ends_at' => $row['ends_at'],
             'current_price' => $currentPrice,
             'min_bid' => $currentBid ? $currentPrice + (float) $row['bid_step'] : (float) $row['start_price'],
+            'winner_last4' => $this->getLast4($row['winner_phone'] ?? ''),
+            'winning_amount' => $row['winning_amount'] !== null ? (float) $row['winning_amount'] : null,
         ];
     }
 
@@ -218,6 +319,7 @@ SQL;
 
         $currentBidModel = new AuctionBid();
         $currentBid = $currentBidModel->getCurrentBid($lotId);
+        $previousBidUserId = $currentBid ? (int) $currentBid['user_id'] : null;
         $currentPrice = $currentBid ? (float) $currentBid['amount'] : (float) $lot['start_price'];
         $minBid = $currentBid ? $currentPrice + (float) $lot['bid_step'] : (float) $lot['start_price'];
         $finalAmount = $amount !== null ? (float) $amount : $minBid;
@@ -240,6 +342,10 @@ SQL;
 
         (new AuctionEvent())->log($lotId, 'bid_created', $bidId, $userId, null);
 
+        if ($previousBidUserId && $previousBidUserId !== $userId) {
+            $this->notifyOutbid($previousBidUserId);
+        }
+
         return [
             'bid_id' => $bidId,
             'amount' => $finalAmount,
@@ -261,6 +367,10 @@ SQL;
             throw new RuntimeException('Блиц-цена не задана');
         }
 
+        $currentBidModel = new AuctionBid();
+        $currentBid = $currentBidModel->getCurrentBid($lotId);
+        $previousBidUserId = $currentBid ? (int) $currentBid['user_id'] : null;
+
         $stmt = $this->db->prepare(
             'INSERT INTO auction_bids (lot_id, user_id, amount) VALUES (:lot_id, :user_id, :amount)'
         );
@@ -279,6 +389,11 @@ SQL;
             'bid_id' => $bidId,
             'id' => $lotId,
         ]);
+
+        $this->updateWinnerProductPrice($lotId, (float) $lot['blitz_price']);
+        if ($previousBidUserId && $previousBidUserId !== $userId) {
+            $this->notifyOutbid($previousBidUserId);
+        }
 
         (new AuctionEvent())->log($lotId, 'blitz', $bidId, $userId, null);
 
@@ -357,7 +472,38 @@ SQL;
             'id' => $lotId,
         ]);
 
+        if ($winningBidId && $currentBid) {
+            $this->updateWinnerProductPrice($lotId, (float) $currentBid['amount']);
+        }
+
         (new AuctionEvent())->log($lotId, 'finished', $winningBidId, $winnerUserId, null);
+    }
+
+    public function getPendingWinnerLots(int $userId): array
+    {
+        $stmt = $this->db->prepare(
+            "SELECT id, product_id
+            FROM auction_lots
+            WHERE status = 'finished'
+              AND winner_user_id = :user_id
+              AND winner_cart_added_at IS NULL
+              AND product_id IS NOT NULL"
+        );
+        $stmt->execute(['user_id' => $userId]);
+        $rows = $stmt->fetchAll();
+
+        return array_map(static function (array $row): array {
+            return [
+                'id' => (int) $row['id'],
+                'product_id' => (int) $row['product_id'],
+            ];
+        }, $rows);
+    }
+
+    public function markWinnerCartAdded(int $lotId): void
+    {
+        $stmt = $this->db->prepare('UPDATE auction_lots SET winner_cart_added_at = NOW() WHERE id = :id');
+        $stmt->execute(['id' => $lotId]);
     }
 
     private function extendIfNeeded(int $lotId, ?string $endsAt): void
@@ -419,6 +565,55 @@ SQL;
         }
 
         return 'Время уточняется';
+    }
+
+    private function updateWinnerProductPrice(int $lotId, float $price): void
+    {
+        $stmt = $this->db->prepare('SELECT product_id FROM auction_lots WHERE id = :id');
+        $stmt->execute(['id' => $lotId]);
+        $productId = (int) $stmt->fetchColumn();
+        if ($productId <= 0) {
+            return;
+        }
+
+        $productModel = new Product();
+        $product = $productModel->getById($productId);
+        if (!$product) {
+            return;
+        }
+
+        $productModel->updateCustom($productId, [
+            'name' => $product['name'],
+            'description' => $product['description'],
+            'price' => $price,
+            'photo_url' => $product['photo_url'],
+            'category' => $product['category'] ?? 'main',
+            'product_type' => $product['product_type'] ?? 'auction',
+            'is_active' => (int) ($product['is_active'] ?? 1),
+        ]);
+    }
+
+    private function notifyOutbid(int $userId): void
+    {
+        $userModel = new User();
+        $user = $userModel->findById($userId);
+        $chatId = (int) ($user['telegram_chat_id'] ?? 0);
+        if ($chatId <= 0) {
+            return;
+        }
+
+        $settings = new Setting();
+        $defaults = $settings->getTelegramDefaults();
+        $token = $settings->get(Setting::TG_BOT_TOKEN, $defaults[Setting::TG_BOT_TOKEN] ?? '');
+        if ($token === '') {
+            return;
+        }
+
+        $telegram = new Telegram($token);
+        $telegram->sendMessage(
+            $chatId,
+            'Вашу ставку перебили! Перейти на страницу с аукционом https://bunchflowers.ru/?page=promo'
+        );
     }
 
     private function getLast4(string $phone): string

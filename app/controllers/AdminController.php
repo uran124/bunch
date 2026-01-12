@@ -596,7 +596,7 @@ class AdminController extends Controller
 
         $this->render('admin-products', [
             'pageMeta' => $pageMeta,
-            'products' => $productModel->getAdminList($showDeleted),
+            'products' => $productModel->getAdminList($showDeleted, ['promo', 'auction', 'lottery']),
             'filters' => $filters,
             'message' => $_GET['status'] ?? null,
             'blockedRelations' => $blockedRelations,
@@ -654,7 +654,7 @@ class AdminController extends Controller
         if (!in_array($category, $categoryOptions, true)) {
             $category = 'main';
         }
-        $productTypeOptions = ['regular', 'small_wholesale', 'lottery', 'promo', 'auction', 'wholesale_box'];
+        $productTypeOptions = ['regular', 'small_wholesale', 'wholesale_box'];
         if (!in_array($productType, $productTypeOptions, true)) {
             $productType = 'regular';
         }
@@ -789,6 +789,8 @@ class AdminController extends Controller
         ];
 
         $auctionModel = new AuctionLot();
+        $promoItemModel = new PromoItem();
+        $lotteryModel = new Lottery();
         $settings = new Setting();
         $lotteryDefaults = $settings->getLotteryDefaults();
 
@@ -813,6 +815,8 @@ class AdminController extends Controller
             'pageMeta' => $pageMeta,
             'activeLots' => $activeLots,
             'finishedLots' => $finishedLots,
+            'promoItems' => $promoItemModel->getAdminList(),
+            'lotteries' => $lotteryModel->getAdminList(),
             'loadErrors' => $loadErrors,
             'message' => $_GET['status'] ?? null,
             'lotterySettings' => [
@@ -856,6 +860,36 @@ class AdminController extends Controller
         ]);
     }
 
+    public function promoItemEdit(): void
+    {
+        $promoId = (int) ($_GET['id'] ?? 0);
+        if ($promoId <= 0) {
+            header('Location: /?page=admin-promos&status=error');
+            return;
+        }
+
+        $promoItemModel = new PromoItem();
+        $promoItem = $promoItemModel->getById($promoId);
+        if (!$promoItem) {
+            header('Location: /?page=admin-promos&status=error');
+            return;
+        }
+
+        $pageMeta = [
+            'title' => 'Редактирование акции — админ-панель Bunch',
+            'description' => 'Редактирование лимитированного товара.',
+            'h1' => 'Редактирование акции',
+            'headerTitle' => 'Bunch Admin',
+            'headerSubtitle' => 'Акции · Редактирование',
+        ];
+
+        $this->render('admin-promo-item-edit', [
+            'pageMeta' => $pageMeta,
+            'promoItem' => $promoItem,
+            'message' => $_GET['status'] ?? null,
+        ]);
+    }
+
     public function lotteryCreate(): void
     {
         $pageMeta = [
@@ -871,6 +905,45 @@ class AdminController extends Controller
 
         $this->render('admin-lottery-create', [
             'pageMeta' => $pageMeta,
+            'message' => $_GET['status'] ?? null,
+            'lotterySettings' => [
+                'freeMonthlyLimit' => (int) $settings->get(
+                    Setting::LOTTERY_FREE_MONTHLY_LIMIT,
+                    $lotteryDefaults[Setting::LOTTERY_FREE_MONTHLY_LIMIT] ?? '0'
+                ),
+            ],
+        ]);
+    }
+
+    public function lotteryEdit(): void
+    {
+        $lotteryId = (int) ($_GET['id'] ?? 0);
+        if ($lotteryId <= 0) {
+            header('Location: /?page=admin-promos&status=error');
+            return;
+        }
+
+        $lotteryModel = new Lottery();
+        $lottery = $lotteryModel->getById($lotteryId);
+        if (!$lottery) {
+            header('Location: /?page=admin-promos&status=error');
+            return;
+        }
+
+        $settings = new Setting();
+        $lotteryDefaults = $settings->getLotteryDefaults();
+
+        $pageMeta = [
+            'title' => 'Редактирование розыгрыша — админ-панель Bunch',
+            'description' => 'Редактирование розыгрыша.',
+            'h1' => 'Редактирование розыгрыша',
+            'headerTitle' => 'Bunch Admin',
+            'headerSubtitle' => 'Акции · Редактирование',
+        ];
+
+        $this->render('admin-lottery-edit', [
+            'pageMeta' => $pageMeta,
+            'lottery' => $lottery,
             'message' => $_GET['status'] ?? null,
             'lotterySettings' => [
                 'freeMonthlyLimit' => (int) $settings->get(
@@ -982,6 +1055,43 @@ class AdminController extends Controller
         header('Location: /?page=admin-promos&status=saved');
     }
 
+    public function updateLottery(): void
+    {
+        $lotteryId = (int) ($_POST['id'] ?? 0);
+        $title = trim($_POST['title'] ?? '');
+        $prize = trim($_POST['prize_description'] ?? '');
+        $ticketPrice = (float) ($_POST['ticket_price'] ?? 0);
+        $ticketsTotal = (int) ($_POST['tickets_total'] ?? 0);
+        $drawAt = trim($_POST['draw_at'] ?? '');
+        $status = $_POST['status'] ?? 'active';
+        $photo = trim($_POST['photo_url'] ?? '');
+
+        if ($lotteryId <= 0 || $title === '' || $ticketsTotal <= 0) {
+            header('Location: /?page=admin-promos&status=error');
+            return;
+        }
+
+        $lotteryModel = new Lottery();
+
+        try {
+            $lotteryModel->updateLottery($lotteryId, [
+                'title' => $title,
+                'prize_description' => $prize !== '' ? $prize : null,
+                'ticket_price' => $ticketPrice,
+                'tickets_total' => $ticketsTotal,
+                'draw_at' => $drawAt !== '' ? $drawAt : null,
+                'status' => $status,
+                'photo_url' => $photo !== '' ? $photo : null,
+            ]);
+        } catch (Throwable $e) {
+            $this->logAdminError('Admin promos update lottery error', $e);
+            header('Location: /?page=admin-promos&status=error');
+            return;
+        }
+
+        header('Location: /?page=admin-lottery-edit&id=' . $lotteryId . '&status=saved');
+    }
+
     public function saveAuctionLot(): void
     {
         $title = trim($_POST['title'] ?? '');
@@ -1077,6 +1187,7 @@ class AdminController extends Controller
     {
         $title = trim($_POST['title'] ?? '');
         $description = trim($_POST['description'] ?? '');
+        $basePrice = (float) ($_POST['base_price'] ?? 0);
         $price = (float) ($_POST['price'] ?? 0);
         $quantityRaw = trim($_POST['quantity'] ?? '');
         $endsAt = trim($_POST['ends_at'] ?? '');
@@ -1084,12 +1195,12 @@ class AdminController extends Controller
         $photoUrl = trim($_POST['photo_url'] ?? '');
         $isActive = isset($_POST['is_active']) ? 1 : 0;
 
-        if ($title === '' || $price <= 0) {
+        if ($title === '' || $price <= 0 || $basePrice <= 0) {
             header('Location: /?page=admin-promos&status=error');
             return;
         }
 
-        $quantity = $quantityRaw !== '' ? max(1, (int) $quantityRaw) : 1;
+        $quantity = $quantityRaw !== '' ? max(1, (int) $quantityRaw) : null;
 
         $promoItemModel = new PromoItem();
         $productModel = new Product();
@@ -1112,6 +1223,7 @@ class AdminController extends Controller
                 'product_id' => $productId,
                 'title' => $title,
                 'description' => $description !== '' ? $description : null,
+                'base_price' => $basePrice,
                 'price' => $price,
                 'quantity' => $quantity,
                 'ends_at' => $endsAt !== '' ? $endsAt : null,
@@ -1126,6 +1238,67 @@ class AdminController extends Controller
         }
 
         header('Location: /?page=admin-promos&status=saved');
+    }
+
+    public function updatePromoItem(): void
+    {
+        $promoId = (int) ($_POST['id'] ?? 0);
+        $title = trim($_POST['title'] ?? '');
+        $description = trim($_POST['description'] ?? '');
+        $basePrice = (float) ($_POST['base_price'] ?? 0);
+        $price = (float) ($_POST['price'] ?? 0);
+        $quantityRaw = trim($_POST['quantity'] ?? '');
+        $endsAt = trim($_POST['ends_at'] ?? '');
+        $label = trim($_POST['label'] ?? '');
+        $photoUrl = trim($_POST['photo_url'] ?? '');
+        $isActive = isset($_POST['is_active']) ? 1 : 0;
+
+        if ($promoId <= 0 || $title === '' || $price <= 0 || $basePrice <= 0) {
+            header('Location: /?page=admin-promos&status=error');
+            return;
+        }
+
+        $quantity = $quantityRaw !== '' ? max(1, (int) $quantityRaw) : null;
+
+        $promoItemModel = new PromoItem();
+        $productModel = new Product();
+        $promoItem = $promoItemModel->getById($promoId);
+        if (!$promoItem) {
+            header('Location: /?page=admin-promos&status=error');
+            return;
+        }
+
+        try {
+            if (!empty($promoItem['product_id'])) {
+                $productModel->updateCustom((int) $promoItem['product_id'], [
+                    'name' => $title,
+                    'description' => $description !== '' ? $description : null,
+                    'price' => $price,
+                    'photo_url' => $photoUrl !== '' ? $photoUrl : null,
+                    'category' => 'main',
+                    'product_type' => 'promo',
+                    'is_active' => $isActive,
+                ]);
+            }
+
+            $promoItemModel->updateItem($promoId, [
+                'title' => $title,
+                'description' => $description !== '' ? $description : null,
+                'base_price' => $basePrice,
+                'price' => $price,
+                'quantity' => $quantity,
+                'ends_at' => $endsAt !== '' ? $endsAt : null,
+                'label' => $label !== '' ? $label : null,
+                'photo_url' => $photoUrl !== '' ? $photoUrl : null,
+                'is_active' => $isActive,
+            ]);
+        } catch (Throwable $e) {
+            $this->logAdminError('Admin promos update promo item error', $e);
+            header('Location: /?page=admin-promos&status=error');
+            return;
+        }
+
+        header('Location: /?page=admin-promo-item-edit&id=' . $promoId . '&status=saved');
     }
 
     public function savePromoCategories(): void

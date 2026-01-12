@@ -24,20 +24,27 @@ class PromoController extends Controller
         $showPromoItems = (bool) ($promoCategories['promo']['is_active'] ?? true);
         $promoItems = $showPromoItems ? $promoItemModel->getActiveList() : [];
         $oneTimeItems = array_map(function (array $item): array {
-            $quantity = $item['quantity'] !== null ? (int) $item['quantity'] : 1;
-            $stockText = $quantity > 1 ? 'Осталось ' . $quantity . ' шт' : 'Осталось 1 шт';
-            $periodText = 'Ограничено наличием';
+            $quantity = $item['quantity'] !== null ? (int) $item['quantity'] : null;
+            $remainingQty = $item['remaining_qty'] !== null ? (int) $item['remaining_qty'] : null;
+            $periodText = null;
+            $endsAtIso = null;
 
             if (!empty($item['ends_at'])) {
                 $endsAt = new DateTime($item['ends_at']);
-                $periodText = 'До ' . $endsAt->format('d.m H:i');
+                $periodText = $endsAt->format('d.m.Y H:i');
+                $endsAtIso = $endsAt->format(DateTimeInterface::ATOM);
             }
 
             return [
                 'product_id' => (int) ($item['product_id'] ?? 0),
                 'title' => $item['title'],
-                'price' => number_format((float) $item['price'], 0, '.', ' ') . ' ₽',
-                'stock' => $stockText,
+                'description' => $item['description'],
+                'base_price' => (float) ($item['base_price'] ?? 0),
+                'price' => (float) $item['price'],
+                'stock' => $remainingQty,
+                'quantity' => $quantity,
+                'ends_at' => $item['ends_at'],
+                'ends_at_iso' => $endsAtIso,
                 'period' => $periodText,
                 'label' => $item['label'] ?: 'Разовая акция',
                 'photo' => $item['photo_url'],
@@ -50,12 +57,29 @@ class PromoController extends Controller
         $showLotteries = (bool) ($promoCategories['lottery']['is_active'] ?? false);
         $lotteries = $showLotteries ? (new Lottery())->getPromoList() : [];
 
+        $isAuthenticated = Auth::check();
+        $botUsername = '';
+        $botConnected = false;
+        if ($isAuthenticated) {
+            $userModel = new User();
+            $user = $userModel->findById((int) Auth::userId());
+            $botConnected = !empty($user['telegram_chat_id']);
+        }
+
+        $settings = new Setting();
+        $defaults = $settings->getTelegramDefaults();
+        $botUsernameRaw = $settings->get(Setting::TG_BOT_USERNAME, $defaults[Setting::TG_BOT_USERNAME] ?? '');
+        $botUsername = ltrim((string) $botUsernameRaw, '@');
+
         $this->render('promo', [
             'pageMeta' => $pageMeta,
             'oneTimeItems' => $oneTimeItems,
             'auctionLots' => $auctionLots,
             'lotteries' => $lotteries,
             'promoCategories' => $promoCategories,
+            'isAuthenticated' => $isAuthenticated,
+            'botConnected' => $botConnected,
+            'botUsername' => $botUsername,
         ]);
     }
 }
