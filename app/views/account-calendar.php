@@ -24,10 +24,20 @@
                 <h2 class="text-base font-semibold text-slate-900 sm:text-lg">Напоминания о значимых днях</h2>
                 <p class="text-xs text-slate-600 sm:text-sm">Планируйте поздравления заранее и не пропускайте поводы.</p>
             </div>
-            <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
-                <span class="material-symbols-rounded text-base">celebration</span>
-                <?php echo count($birthdayReminders); ?>
-            </span>
+            <div class="flex flex-wrap items-center gap-2">
+                <button
+                    type="button"
+                    class="inline-flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700 shadow-sm transition hover:-translate-y-0.5 hover:bg-emerald-100 sm:text-sm"
+                    data-birthday-reminder-add
+                >
+                    <span class="material-symbols-rounded text-base">calendar_add_on</span>
+                    Добавить дату
+                </button>
+                <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700" data-birthday-reminder-count>
+                    <span class="material-symbols-rounded text-base">celebration</span>
+                    <span data-birthday-reminder-count-value><?php echo count($birthdayReminders); ?></span>
+                </span>
+            </div>
         </div>
 
         <div class="mt-4 space-y-4">
@@ -62,20 +72,21 @@
                         <p class="text-sm font-semibold text-slate-900">Напоминания о значимых днях</p>
                         <p class="text-[11px] text-slate-500 sm:text-xs">Открывайте карточку, чтобы изменить данные получателя.</p>
                     </div>
-                    <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-700">
+                    <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-700" data-birthday-reminder-count>
                         <span class="material-symbols-rounded text-sm">celebration</span>
-                        <?php echo count($birthdayReminders); ?>
+                        <span data-birthday-reminder-count-value><?php echo count($birthdayReminders); ?></span>
                     </span>
                 </div>
-                <div class="mt-3 grid gap-2">
+                <?php $hasReminders = !empty($birthdayReminders); ?>
+                <div class="mt-3 grid gap-2" data-birthday-reminder-list>
                     <div class="grid grid-cols-3 gap-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-400">
                         <span>Получатель</span>
                         <span>Повод</span>
                         <span>Дата</span>
                     </div>
-                    <?php if (!empty($birthdayReminders)): ?>
+                    <?php if ($hasReminders): ?>
                         <?php foreach ($birthdayReminders as $reminder): ?>
-                    <div class="grid grid-cols-3 gap-2 rounded-xl bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 sm:text-sm">
+                    <div class="grid grid-cols-3 gap-2 rounded-xl bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 sm:text-sm" data-birthday-reminder-row="<?php echo (int) $reminder['id']; ?>">
                         <?php
                                 $dataAttrs = sprintf(
                                     'data-birthday-reminder-edit data-birthday-reminder-id="%s" data-birthday-reminder-recipient="%s" data-birthday-reminder-occasion="%s" data-birthday-reminder-date="%s"',
@@ -96,9 +107,10 @@
                                 </a>
                             </div>
                         <?php endforeach; ?>
-                    <?php else: ?>
-                        <p class="text-sm text-slate-500">Пока нет добавленных получателей.</p>
                     <?php endif; ?>
+                    <p class="text-sm text-slate-500 <?php echo $hasReminders ? 'hidden' : ''; ?>" data-birthday-reminder-empty>
+                        Пока нет добавленных получателей.
+                    </p>
                 </div>
                 <p class="mt-2 hidden text-xs font-semibold text-emerald-700" data-birthday-reminder-status></p>
             </div>
@@ -110,7 +122,7 @@
             <div class="flex items-start justify-between gap-3">
                 <div>
                     <p class="text-xs font-semibold uppercase tracking-[0.06em] text-slate-500">Напоминания</p>
-                    <h3 class="text-xl font-semibold text-slate-900">Редактировать напоминание</h3>
+                    <h3 class="text-xl font-semibold text-slate-900" data-birthday-reminder-title>Редактировать напоминание</h3>
                     <p class="text-sm text-slate-600">Обновите данные получателя или повод.</p>
                 </div>
                 <button type="button" class="rounded-full p-1 text-slate-500 hover:bg-slate-100" data-birthday-reminder-close>
@@ -137,7 +149,7 @@
                     </button>
                     <button type="submit" class="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-emerald-500" data-birthday-reminder-save>
                         <span class="material-symbols-rounded text-base">save</span>
-                        Сохранить
+                        <span data-birthday-reminder-submit>Сохранить</span>
                     </button>
                 </div>
             </form>

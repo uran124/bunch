@@ -28,6 +28,11 @@ if (str_starts_with($resource, 'account/addresses')) {
     exit;
 }
 
+if (str_starts_with($resource, 'account/calendar')) {
+    handleAccountCalendar($resource);
+    exit;
+}
+
 if (str_starts_with($resource, 'account/profile')) {
     handleAccountProfile();
     exit;
@@ -299,6 +304,153 @@ function handleAccountAddresses(string $resource): void
             return;
         }
         echo json_encode(['ok' => true]);
+        return;
+    }
+
+    http_response_code(405);
+    echo json_encode(['error' => 'Method not allowed']);
+}
+
+function handleAccountCalendar(string $resource): void
+{
+    if (!Auth::check()) {
+        http_response_code(401);
+        echo json_encode(['error' => 'Требуется авторизация']);
+        return;
+    }
+
+    $userId = (int) Auth::userId();
+    $segments = array_values(array_filter(explode('/', $resource)));
+    $segment = $segments[2] ?? null;
+    $reminderId = null;
+    $action = $segments[3] ?? null;
+
+    if ($segment === 'settings') {
+        $action = 'settings';
+    } elseif ($segment !== null) {
+        $reminderId = (int) $segment;
+    }
+
+    $payload = json_decode(file_get_contents('php://input'), true) ?: $_POST;
+    $reminderModel = new BirthdayReminder();
+    $userModel = new User();
+
+    if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+        $reminders = $reminderModel->getByUserId($userId);
+        echo json_encode(['reminders' => $reminders], JSON_UNESCAPED_UNICODE);
+        return;
+    }
+
+    if ($action === 'settings' && in_array($_SERVER['REQUEST_METHOD'], ['POST', 'PUT'], true)) {
+        $leadDays = (int) ($payload['lead_days'] ?? 0);
+        if ($leadDays < 1 || $leadDays > 7) {
+            http_response_code(422);
+            echo json_encode(['error' => 'Допустимый диапазон напоминания — 1-7 дней.']);
+            return;
+        }
+
+        $userModel->updateBirthdayReminderDays($userId, $leadDays);
+        echo json_encode(['ok' => true, 'lead_days' => $leadDays], JSON_UNESCAPED_UNICODE);
+        return;
+    }
+
+    $recipient = trim((string) ($payload['recipient'] ?? ''));
+    $occasion = trim((string) ($payload['occasion'] ?? ''));
+    $dateRaw = trim((string) ($payload['date'] ?? ''));
+
+    $validatePayload = static function () use ($recipient, $occasion, $dateRaw): ?string {
+        if ($recipient === '') {
+            return 'Укажите имя получателя.';
+        }
+        if ($occasion === '') {
+            return 'Укажите повод.';
+        }
+        if ($dateRaw === '') {
+            return 'Укажите дату.';
+        }
+        $date = DateTime::createFromFormat('Y-m-d', $dateRaw);
+        if (!$date || $date->format('Y-m-d') !== $dateRaw) {
+            return 'Некорректная дата.';
+        }
+        return null;
+    };
+
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$reminderId) {
+        $error = $validatePayload();
+        if ($error !== null) {
+            http_response_code(422);
+            echo json_encode(['error' => $error]);
+            return;
+        }
+
+        $newId = $reminderModel->createForUser($userId, [
+            'recipient' => $recipient,
+            'occasion' => $occasion,
+            'reminder_date' => $dateRaw,
+        ]);
+        echo json_encode([
+            'ok' => true,
+            'reminder' => [
+                'id' => $newId,
+                'recipient' => $recipient,
+                'occasion' => $occasion,
+                'reminder_date' => $dateRaw,
+            ],
+        ], JSON_UNESCAPED_UNICODE);
+        return;
+    }
+
+    if ($reminderId && $_SERVER['REQUEST_METHOD'] === 'PUT') {
+        $error = $validatePayload();
+        if ($error !== null) {
+            http_response_code(422);
+            echo json_encode(['error' => $error]);
+            return;
+        }
+
+        $updated = $reminderModel->updateForUser($userId, $reminderId, [
+            'recipient' => $recipient,
+            'occasion' => $occasion,
+            'reminder_date' => $dateRaw,
+        ]);
+
+        if (!$updated) {
+            http_response_code(404);
+            echo json_encode(['error' => 'Напоминание не найдено']);
+            return;
+        }
+
+        echo json_encode([
+            'ok' => true,
+            'reminder' => [
+                'id' => $reminderId,
+                'recipient' => $recipient,
+                'occasion' => $occasion,
+                'reminder_date' => $dateRaw,
+            ],
+        ], JSON_UNESCAPED_UNICODE);
+        return;
+    }
+
+    if ($reminderId && $_SERVER['REQUEST_METHOD'] === 'DELETE') {
+        $deleted = $reminderModel->deleteForUser($userId, $reminderId);
+        if (!$deleted) {
+            http_response_code(404);
+            echo json_encode(['error' => 'Напоминание не найдено']);
+            return;
+        }
+        echo json_encode(['ok' => true], JSON_UNESCAPED_UNICODE);
+        return;
+    }
+
+    if ($reminderId && $action === 'delete' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        $deleted = $reminderModel->deleteForUser($userId, $reminderId);
+        if (!$deleted) {
+            http_response_code(404);
+            echo json_encode(['error' => 'Напоминание не найдено']);
+            return;
+        }
+        echo json_encode(['ok' => true], JSON_UNESCAPED_UNICODE);
         return;
     }
 

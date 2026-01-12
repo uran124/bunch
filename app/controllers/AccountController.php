@@ -8,6 +8,7 @@ class AccountController extends Controller
     private Order $orderModel;
     private Subscription $subscriptionModel;
     private NotificationSetting $notificationSettingModel;
+    private BirthdayReminder $birthdayReminderModel;
     private Logger $logger;
 
     public function __construct()
@@ -17,6 +18,7 @@ class AccountController extends Controller
         $this->orderModel = new Order();
         $this->subscriptionModel = new Subscription();
         $this->notificationSettingModel = new NotificationSetting();
+        $this->birthdayReminderModel = new BirthdayReminder();
         $this->logger = new Logger();
     }
 
@@ -144,7 +146,7 @@ class AccountController extends Controller
         $birthdayReminderDays = range(1, 7);
         $birthdayReminderLeadDays = (int) ($userRow['birthday_reminder_days'] ?? 3);
         $birthdayReminderLeadDays = max(1, min(7, $birthdayReminderLeadDays));
-        $birthdayReminders = $this->prepareBirthdayReminders($userRow['birthday_reminders'] ?? null);
+        $birthdayReminders = $this->mapBirthdayReminders($this->birthdayReminderModel->getByUserId($userId));
 
         $pageMeta = [
             'title' => 'Ваш календарь значимых дат — Bunch flowers',
@@ -361,42 +363,11 @@ class AccountController extends Controller
         return preg_replace('/\D+/', '', (string) $raw) ?? '';
     }
 
-    private function prepareBirthdayReminders(?string $raw): array
+    private function mapBirthdayReminders(array $items): array
     {
-        $items = [];
-        if ($raw) {
-            $decoded = json_decode($raw, true);
-            if (is_array($decoded)) {
-                $items = $decoded;
-            }
-        }
-
-        if (!$items) {
-            $items = [
-                [
-                    'id' => 1,
-                    'recipient' => 'Анна Смирнова',
-                    'occasion' => 'День рождения',
-                    'date' => '2024-04-12',
-                ],
-                [
-                    'id' => 2,
-                    'recipient' => 'Мария Иванова',
-                    'occasion' => 'Юбилей',
-                    'date' => '2024-05-03',
-                ],
-                [
-                    'id' => 3,
-                    'recipient' => 'Владимир К.',
-                    'occasion' => 'День рождения',
-                    'date' => '2024-06-19',
-                ],
-            ];
-        }
-
         $normalized = [];
         foreach ($items as $index => $item) {
-            $dateRaw = $item['date'] ?? null;
+            $dateRaw = $item['reminder_date'] ?? null;
             $normalized[] = [
                 'id' => $item['id'] ?? ($index + 1),
                 'recipient' => $item['recipient'] ?? 'Получатель',

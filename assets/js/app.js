@@ -1599,8 +1599,7 @@ function initPinModal() {
 
 function initBirthdayReminders() {
     const modal = document.querySelector('[data-birthday-reminder-modal]');
-    const triggers = Array.from(document.querySelectorAll('[data-birthday-reminder-edit]'));
-    if (!modal || !triggers.length) return;
+    if (!modal) return;
 
     const closeButtons = modal.querySelectorAll('[data-birthday-reminder-close]');
     const form = modal.querySelector('[data-birthday-reminder-form]');
@@ -1609,11 +1608,48 @@ function initBirthdayReminders() {
     const occasionInput = modal.querySelector('[data-birthday-reminder-field="occasion"]');
     const dateInput = modal.querySelector('[data-birthday-reminder-field="date"]');
     const status = document.querySelector('[data-birthday-reminder-status]');
+    const addButton = document.querySelector('[data-birthday-reminder-add]');
+    const title = modal.querySelector('[data-birthday-reminder-title]');
+    const submitLabel = modal.querySelector('[data-birthday-reminder-submit]');
+    const list = document.querySelector('[data-birthday-reminder-list]');
+    const emptyState = document.querySelector('[data-birthday-reminder-empty]');
+    const countBadges = document.querySelectorAll('[data-birthday-reminder-count]');
+    const leadDayInputs = Array.from(document.querySelectorAll('input[name="birthday-reminder-days"]'));
+
+    let activeReminderId = null;
+
+    const formatDate = (value) => {
+        if (!value) return '—';
+        const parts = value.split('-');
+        if (parts.length !== 3) return value;
+        return `${parts[2]}.${parts[1]}.${parts[0]}`;
+    };
+
+    const updateCounts = () => {
+        if (!list || !countBadges.length) return;
+        const rows = list.querySelectorAll('[data-birthday-reminder-row]');
+        countBadges.forEach((badge) => {
+            const value = badge.querySelector('[data-birthday-reminder-count-value]');
+            if (value) {
+                value.textContent = `${rows.length}`;
+            }
+        });
+    };
 
     const open = (data) => {
+        activeReminderId = data.id || null;
         if (recipientInput) recipientInput.value = data.recipient || '';
         if (occasionInput) occasionInput.value = data.occasion || '';
         if (dateInput) dateInput.value = data.date || '';
+        if (title) {
+            title.textContent = activeReminderId ? 'Редактировать напоминание' : 'Добавить напоминание';
+        }
+        if (submitLabel) {
+            submitLabel.textContent = activeReminderId ? 'Сохранить' : 'Добавить';
+        }
+        if (deleteButton) {
+            deleteButton.classList.toggle('hidden', !activeReminderId);
+        }
         modal.classList.remove('hidden');
         modal.classList.add('flex');
     };
@@ -1621,26 +1657,63 @@ function initBirthdayReminders() {
     const close = () => {
         modal.classList.add('hidden');
         modal.classList.remove('flex');
+        activeReminderId = null;
     };
 
-    const showStatus = (message) => {
+    const showStatus = (message, isError = false) => {
         if (!status) return;
         status.textContent = message;
+        status.classList.toggle('text-rose-600', isError);
+        status.classList.toggle('text-emerald-700', !isError);
         status.classList.remove('hidden');
         setTimeout(() => status.classList.add('hidden'), 2500);
     };
 
-    triggers.forEach((trigger) => {
-        trigger.addEventListener('click', (event) => {
-            event.preventDefault();
-            open({
-                id: trigger.dataset.birthdayReminderId,
-                recipient: trigger.dataset.birthdayReminderRecipient,
-                occasion: trigger.dataset.birthdayReminderOccasion,
-                date: trigger.dataset.birthdayReminderDate,
-            });
-        });
-    });
+    const ensureEmptyState = () => {
+        if (!emptyState || !list) return;
+        const rows = list.querySelectorAll('[data-birthday-reminder-row]');
+        emptyState.classList.toggle('hidden', rows.length > 0);
+    };
+
+    const buildDataAttrs = (element, reminder) => {
+        element.dataset.birthdayReminderEdit = '';
+        element.dataset.birthdayReminderId = reminder.id;
+        element.dataset.birthdayReminderRecipient = reminder.recipient;
+        element.dataset.birthdayReminderOccasion = reminder.occasion;
+        element.dataset.birthdayReminderDate = reminder.reminder_date;
+    };
+
+    const renderRow = (reminder) => {
+        if (!list) return;
+        const row = document.createElement('div');
+        row.className =
+            'grid grid-cols-3 gap-2 rounded-xl bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 sm:text-sm';
+        row.dataset.birthdayReminderRow = reminder.id;
+
+        const recipientLink = document.createElement('a');
+        recipientLink.href = '#';
+        recipientLink.className =
+            'underline decoration-emerald-100 decoration-2 underline-offset-4 hover:text-emerald-700';
+        recipientLink.textContent = reminder.recipient;
+        buildDataAttrs(recipientLink, reminder);
+
+        const occasionLink = document.createElement('a');
+        occasionLink.href = '#';
+        occasionLink.className =
+            'underline decoration-emerald-100 decoration-2 underline-offset-4 hover:text-emerald-700';
+        occasionLink.textContent = reminder.occasion;
+        buildDataAttrs(occasionLink, reminder);
+
+        const dateLink = document.createElement('a');
+        dateLink.href = '#';
+        dateLink.className =
+            'underline decoration-emerald-100 decoration-2 underline-offset-4 hover:text-emerald-700';
+        dateLink.textContent = formatDate(reminder.reminder_date);
+        buildDataAttrs(dateLink, reminder);
+
+        row.append(recipientLink, occasionLink, dateLink);
+        list.appendChild(row);
+    };
 
     closeButtons.forEach((button) => button.addEventListener('click', close));
 
@@ -1650,32 +1723,125 @@ function initBirthdayReminders() {
         }
     });
 
-    if (form) {
-        form.addEventListener('submit', (event) => {
+    if (list) {
+        list.addEventListener('click', (event) => {
+            const trigger = event.target.closest('[data-birthday-reminder-edit]');
+            if (!trigger) return;
             event.preventDefault();
-            close();
-            showStatus('Изменения сохранены.');
+            open({
+                id: Number(trigger.dataset.birthdayReminderId || 0),
+                recipient: trigger.dataset.birthdayReminderRecipient,
+                occasion: trigger.dataset.birthdayReminderOccasion,
+                date: trigger.dataset.birthdayReminderDate,
+            });
+        });
+    }
+
+    if (addButton) {
+        addButton.addEventListener('click', () => open({}));
+    }
+
+    if (form) {
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            if (!recipientInput || !occasionInput || !dateInput) return;
+
+            const payload = {
+                recipient: recipientInput.value.trim(),
+                occasion: occasionInput.value.trim(),
+                date: dateInput.value,
+            };
+
+            if (!payload.recipient || !payload.occasion || !payload.date) {
+                showStatus('Заполните все поля.', true);
+                return;
+            }
+
+            try {
+                const url = activeReminderId ? `/api/account/calendar/${activeReminderId}` : '/api/account/calendar';
+                const method = activeReminderId ? 'PUT' : 'POST';
+                const response = await fetchJson(url, {
+                    method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                });
+                const reminder = response.reminder;
+                if (reminder && list) {
+                    const existing = list.querySelector(`[data-birthday-reminder-row="${reminder.id}"]`);
+                    if (existing) {
+                        const links = existing.querySelectorAll('[data-birthday-reminder-edit]');
+                        const [recipientLink, occasionLink, dateLink] = links;
+                        if (recipientLink) recipientLink.textContent = reminder.recipient;
+                        if (occasionLink) occasionLink.textContent = reminder.occasion;
+                        if (dateLink) dateLink.textContent = formatDate(reminder.reminder_date);
+                        links.forEach((link) => buildDataAttrs(link, reminder));
+                    } else {
+                        renderRow(reminder);
+                    }
+                    ensureEmptyState();
+                    updateCounts();
+                }
+
+                close();
+                showStatus(activeReminderId ? 'Изменения сохранены.' : 'Напоминание добавлено.');
+            } catch (error) {
+                showStatus(error.message || 'Не удалось сохранить напоминание.', true);
+            }
         });
     }
 
     if (deleteButton) {
-        deleteButton.addEventListener('click', () => {
-            close();
-            showStatus('Напоминание удалено.');
+        deleteButton.addEventListener('click', async () => {
+            if (!activeReminderId) return;
+            if (!window.confirm('Удалить это напоминание?')) return;
+            try {
+                await fetchJson(`/api/account/calendar/${activeReminderId}`, { method: 'DELETE' });
+                const row = list?.querySelector(`[data-birthday-reminder-row="${activeReminderId}"]`);
+                row?.remove();
+                ensureEmptyState();
+                updateCounts();
+                close();
+                showStatus('Напоминание удалено.');
+            } catch (error) {
+                showStatus(error.message || 'Не удалось удалить напоминание.', true);
+            }
         });
     }
+
+    leadDayInputs.forEach((input) => {
+        input.addEventListener('change', async () => {
+            if (!input.checked) return;
+            const leadDays = Number(input.value || 0);
+            try {
+                await fetchJson('/api/account/calendar/settings', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ lead_days: leadDays }),
+                });
+                showStatus('Настройки напоминаний обновлены.');
+            } catch (error) {
+                showStatus(error.message || 'Не удалось обновить настройки.', true);
+            }
+        });
+    });
+
+    ensureEmptyState();
+    updateCounts();
 }
 
 function initAccountPage() {
     initNotificationToggles();
     initPinModal();
-    initBirthdayReminders();
     initAccountProfile();
     initAccountAddresses();
 }
 
 if (pageId === 'account') {
     initAccountPage();
+}
+
+if (pageId === 'account-calendar') {
+    initBirthdayReminders();
 }
 
 function initAccountAddresses() {
