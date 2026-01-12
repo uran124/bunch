@@ -2695,7 +2695,11 @@ function initLotteryModal() {
             }
         }
         if (payButton) {
-            payButton.classList.toggle('hidden', isFree);
+            if (isFree) {
+                payButton.classList.add('hidden');
+            } else {
+                payButton.classList.remove('hidden');
+            }
         }
         if (selectionLocked && myTicket) {
             selectedTicketNumber = myTicket.ticket_number;
