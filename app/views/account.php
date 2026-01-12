@@ -291,6 +291,115 @@
                     </div>
                 </div>
             <?php endif; ?>
+
+            <?php
+            $hasPromoActive = !empty($auctionParticipationActive) || !empty($lotteryParticipationActive);
+            $hasPromoHistory = !empty($auctionParticipationHistory) || !empty($lotteryParticipationHistory);
+            ?>
+            <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+                <div class="flex items-center justify-between gap-3">
+                    <div class="space-y-1">
+                        <p class="text-xs font-semibold uppercase tracking-[0.06em] text-slate-500">Участие в акциях</p>
+                        <h3 class="text-base font-semibold text-slate-900 sm:text-lg">Лотереи и аукционы</h3>
+                    </div>
+                    <span class="inline-flex items-center gap-1 rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold text-white shadow-sm">
+                        <span class="material-symbols-rounded text-base">celebration</span>
+                        Участия
+                    </span>
+                </div>
+
+                <div class="mt-4 space-y-4">
+                    <div class="space-y-3">
+                        <p class="text-xs font-semibold uppercase tracking-[0.06em] text-slate-500">Активные</p>
+                        <?php if (!$hasPromoActive): ?>
+                            <p class="text-sm text-slate-500">Пока нет активных участий в акциях.</p>
+                        <?php else: ?>
+                            <?php if (!empty($auctionParticipationActive)): ?>
+                                <div class="rounded-2xl border border-slate-100 bg-slate-50/70 p-3">
+                                    <p class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Аукционы</p>
+                                    <div class="mt-2 grid gap-2 sm:grid-cols-2">
+                                        <?php foreach ($auctionParticipationActive as $auction): ?>
+                                            <article class="rounded-2xl border border-slate-200 bg-white p-3 text-xs text-slate-700 shadow-sm">
+                                                <div class="flex items-center justify-between font-semibold text-slate-900">
+                                                    <span><?php echo htmlspecialchars($auction['title'], ENT_QUOTES, 'UTF-8'); ?></span>
+                                                    <span class="text-rose-600">#<?php echo (int) $auction['id']; ?></span>
+                                                </div>
+                                                <p class="mt-1">Ваша ставка: <span class="font-semibold text-slate-900"><?php echo htmlspecialchars($auction['user_bid'], ENT_QUOTES, 'UTF-8'); ?></span></p>
+                                                <p>Текущая цена: <?php echo htmlspecialchars($auction['current_price'], ENT_QUOTES, 'UTF-8'); ?></p>
+                                                <p class="text-slate-500">Окончание: <?php echo htmlspecialchars($auction['ends_at'], ENT_QUOTES, 'UTF-8'); ?></p>
+                                            </article>
+                                        <?php endforeach; ?>
+                                    </div>
+                                </div>
+                            <?php endif; ?>
+
+                            <?php if (!empty($lotteryParticipationActive)): ?>
+                                <div class="rounded-2xl border border-slate-100 bg-slate-50/70 p-3">
+                                    <p class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Розыгрыши</p>
+                                    <div class="mt-2 grid gap-2 sm:grid-cols-2">
+                                        <?php foreach ($lotteryParticipationActive as $lottery): ?>
+                                            <article class="rounded-2xl border border-slate-200 bg-white p-3 text-xs text-slate-700 shadow-sm">
+                                                <div class="flex items-center justify-between font-semibold text-slate-900">
+                                                    <span><?php echo htmlspecialchars($lottery['title'], ENT_QUOTES, 'UTF-8'); ?></span>
+                                                    <span class="text-violet-600">№<?php echo (int) $lottery['ticket_number']; ?></span>
+                                                </div>
+                                                <p class="mt-1">Билет: <?php echo htmlspecialchars($lottery['ticket_price'], ENT_QUOTES, 'UTF-8'); ?></p>
+                                                <p>Статус: <span class="font-semibold text-slate-900"><?php echo htmlspecialchars($lottery['status_label'], ENT_QUOTES, 'UTF-8'); ?></span></p>
+                                                <p class="text-slate-500">Розыгрыш: <?php echo htmlspecialchars($lottery['draw_at'], ENT_QUOTES, 'UTF-8'); ?></p>
+                                            </article>
+                                        <?php endforeach; ?>
+                                    </div>
+                                </div>
+                            <?php endif; ?>
+                        <?php endif; ?>
+                    </div>
+
+                    <div class="space-y-3 border-t border-slate-100 pt-4">
+                        <p class="text-xs font-semibold uppercase tracking-[0.06em] text-slate-500">История участия</p>
+                        <?php if (!$hasPromoHistory): ?>
+                            <p class="text-sm text-slate-500">История участий пока пуста.</p>
+                        <?php else: ?>
+                            <?php if (!empty($auctionParticipationHistory)): ?>
+                                <div class="rounded-2xl border border-slate-100 bg-slate-50/70 p-3">
+                                    <p class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Аукционы</p>
+                                    <div class="mt-2 grid gap-2 sm:grid-cols-2">
+                                        <?php foreach ($auctionParticipationHistory as $auction): ?>
+                                            <article class="rounded-2xl border border-slate-200 bg-white p-3 text-xs text-slate-700 shadow-sm">
+                                                <div class="flex items-center justify-between font-semibold text-slate-900">
+                                                    <span><?php echo htmlspecialchars($auction['title'], ENT_QUOTES, 'UTF-8'); ?></span>
+                                                    <span class="text-slate-500">#<?php echo (int) $auction['id']; ?></span>
+                                                </div>
+                                                <p class="mt-1">Ваша ставка: <?php echo htmlspecialchars($auction['user_bid'], ENT_QUOTES, 'UTF-8'); ?></p>
+                                                <p>Результат: <span class="font-semibold text-slate-900"><?php echo htmlspecialchars($auction['result'], ENT_QUOTES, 'UTF-8'); ?></span><?php if (!empty($auction['winning_amount'])): ?> · <?php echo htmlspecialchars($auction['winning_amount'], ENT_QUOTES, 'UTF-8'); ?><?php endif; ?></p>
+                                                <p class="text-slate-500">Завершён: <?php echo htmlspecialchars($auction['ends_at'], ENT_QUOTES, 'UTF-8'); ?></p>
+                                            </article>
+                                        <?php endforeach; ?>
+                                    </div>
+                                </div>
+                            <?php endif; ?>
+
+                            <?php if (!empty($lotteryParticipationHistory)): ?>
+                                <div class="rounded-2xl border border-slate-100 bg-slate-50/70 p-3">
+                                    <p class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Розыгрыши</p>
+                                    <div class="mt-2 grid gap-2 sm:grid-cols-2">
+                                        <?php foreach ($lotteryParticipationHistory as $lottery): ?>
+                                            <article class="rounded-2xl border border-slate-200 bg-white p-3 text-xs text-slate-700 shadow-sm">
+                                                <div class="flex items-center justify-between font-semibold text-slate-900">
+                                                    <span><?php echo htmlspecialchars($lottery['title'], ENT_QUOTES, 'UTF-8'); ?></span>
+                                                    <span class="text-slate-500">№<?php echo (int) $lottery['ticket_number']; ?></span>
+                                                </div>
+                                                <p class="mt-1">Билет: <?php echo htmlspecialchars($lottery['ticket_price'], ENT_QUOTES, 'UTF-8'); ?></p>
+                                                <p>Статус: <span class="font-semibold text-slate-900"><?php echo htmlspecialchars($lottery['status_label'], ENT_QUOTES, 'UTF-8'); ?></span></p>
+                                                <p class="text-slate-500">Дата: <?php echo htmlspecialchars($lottery['draw_at'], ENT_QUOTES, 'UTF-8'); ?></p>
+                                            </article>
+                                        <?php endforeach; ?>
+                                    </div>
+                                </div>
+                            <?php endif; ?>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="space-y-4 sm:space-y-5">
