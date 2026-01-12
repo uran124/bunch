@@ -18,7 +18,7 @@ class Product extends Model
         $types = $onlySmallWholesale ? ['small_wholesale'] : ['regular', 'small_wholesale'];
         $placeholders = implode(',', array_fill(0, count($types), '?'));
 
-        $sql = "SELECT p.*, s.variety AS supply_variety, s.flower_name AS supply_flower_name, s.country AS supply_country, s.stem_height_cm AS supply_stem_height_cm, s.allow_small_wholesale FROM {$this->table} p LEFT JOIN supplies s ON p.supply_id = s.id WHERE p.is_active = 1 AND p.status = 'active' AND p.category = 'main' AND p.product_type IN ({$placeholders}) AND p.supply_id IS NOT NULL AND (p.product_type != 'small_wholesale' OR s.allow_small_wholesale = 1) ORDER BY p.sort_order ASC";
+        $sql = "SELECT p.*, s.variety AS supply_variety, s.flower_name AS supply_flower_name, s.country AS supply_country, s.stem_height_cm AS supply_stem_height_cm, s.stems_per_pack AS supply_stems_per_pack, s.packs_total AS supply_packs_total, s.packs_reserved AS supply_packs_reserved, s.allow_small_wholesale FROM {$this->table} p LEFT JOIN supplies s ON p.supply_id = s.id WHERE p.is_active = 1 AND p.status = 'active' AND p.category = 'main' AND p.product_type IN ({$placeholders}) AND p.supply_id IS NOT NULL AND (p.product_type != 'small_wholesale' OR s.allow_small_wholesale = 1) ORDER BY p.sort_order ASC";
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute($types);
