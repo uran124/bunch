@@ -170,7 +170,7 @@ class LotteryTicket extends Model
 
         try {
             $reset = $this->db->prepare(
-                'UPDATE lottery_tickets SET status = \"free\", user_id = NULL, phone_last4 = NULL, reserved_at = NULL WHERE id = :id'
+                "UPDATE lottery_tickets SET status = 'free', user_id = NULL, phone_last4 = NULL, reserved_at = NULL WHERE id = :id"
             );
             foreach ($expired as $ticket) {
                 $reset->execute(['id' => $ticket['id']]);
