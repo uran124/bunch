@@ -51,26 +51,6 @@
         </div>
     <?php endif; ?>
 
-    <section id="promo-settings" class="space-y-4">
-        <div class="flex flex-wrap items-center justify-between gap-3">
-            <div>
-                <p class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Настройки розыгрышей</p>
-                <h2 class="text-xl font-semibold text-slate-900">Ограничения бесплатных розыгрышей</h2>
-            </div>
-        </div>
-        <form action="/?page=admin-promo-settings-save" method="post" class="flex flex-wrap items-end gap-4 rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
-            <label class="grid gap-2 text-sm text-slate-600">
-                Лимит бесплатных участий на пользователя в месяц
-                <input type="number" name="free_lottery_monthly_limit" min="0" step="1" class="w-48 rounded-xl border border-slate-200 px-3 py-2 text-base text-slate-900" value="<?php echo (int) ($lotterySettings['freeMonthlyLimit'] ?? 0); ?>">
-                <span class="text-xs text-slate-400">0 — без ограничений.</span>
-            </label>
-            <button type="submit" class="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5">
-                <span class="material-symbols-rounded text-base">settings</span>
-                Сохранить настройки
-            </button>
-        </form>
-    </section>
-
     <section class="space-y-4">
         <div class="flex flex-wrap items-center justify-between gap-3">
             <div>
