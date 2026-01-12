@@ -51,11 +51,8 @@ class PromoController extends Controller
             ];
         }, $promoItems);
 
-        $showAuctions = (bool) ($promoCategories['auction']['is_active'] ?? false);
-        $auctionLots = $showAuctions ? (new AuctionLot())->getPromoList() : [];
-
-        $showLotteries = (bool) ($promoCategories['lottery']['is_active'] ?? false);
-        $lotteries = $showLotteries ? (new Lottery())->getPromoList() : [];
+        $auctionLots = (new AuctionLot())->getPromoList();
+        $lotteries = (new Lottery())->getPromoList();
 
         $isAuthenticated = Auth::check();
         $botUsername = '';
