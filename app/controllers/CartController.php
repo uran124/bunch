@@ -6,6 +6,18 @@ class CartController extends Controller
     public function index(): void
     {
         $cart = new Cart();
+        if (Auth::check()) {
+            $auctionModel = new AuctionLot();
+            $pendingLots = $auctionModel->getPendingWinnerLots((int) Auth::userId());
+            foreach ($pendingLots as $lot) {
+                try {
+                    $cart->addItem((int) $lot['product_id'], 1, []);
+                    $auctionModel->markWinnerCartAdded((int) $lot['id']);
+                } catch (Throwable $e) {
+                    continue;
+                }
+            }
+        }
         $productModel = new Product();
         $deliveryZoneModel = new DeliveryZone();
 
