@@ -281,7 +281,7 @@ class Order extends Model
     private function getItems(int $orderId): array
     {
         $stmt = $this->db->prepare(
-            'SELECT oi.*, p.photo_url, p.product_type, p.stems_per_pack FROM order_items oi LEFT JOIN products p ON p.id = oi.product_id WHERE oi.order_id = :order_id ORDER BY oi.id ASC'
+            'SELECT oi.*, p.photo_url, p.product_type, s.stems_per_pack FROM order_items oi LEFT JOIN products p ON p.id = oi.product_id LEFT JOIN supplies s ON s.id = p.supply_id WHERE oi.order_id = :order_id ORDER BY oi.id ASC'
         );
         $stmt->execute(['order_id' => $orderId]);
 
