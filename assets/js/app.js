@@ -2528,6 +2528,7 @@ function initLotteryModal() {
     const triggers = document.querySelectorAll('[data-lottery-open]');
     if (!modal || !triggers.length) return;
 
+    const guardAuth = getPromoAuthGuard();
     const guardBot = getPromoBotGuard();
 
     const title = modal.querySelector('[data-lottery-title]');
@@ -2780,6 +2781,9 @@ function initLotteryModal() {
 
     triggers.forEach((trigger) => {
         trigger.addEventListener('click', async () => {
+            if (!guardAuth()) {
+                return;
+            }
             const lotteryId = Number(trigger.dataset.lotteryId);
             if (!lotteryId) return;
             if (trigger.dataset.requiresBot !== undefined && !guardBot()) {
@@ -2850,6 +2854,7 @@ function initAuctionModal() {
     const triggers = document.querySelectorAll('[data-auction-open]');
     if (!modal || !triggers.length) return;
 
+    const guardAuth = getPromoAuthGuard();
     const title = modal.querySelector('[data-auction-title]');
     const subtitle = modal.querySelector('[data-auction-subtitle]');
     const currentEl = modal.querySelector('[data-auction-current]');
@@ -3016,6 +3021,9 @@ function initAuctionModal() {
 
     triggers.forEach((trigger) => {
         trigger.addEventListener('click', async () => {
+            if (!guardAuth()) {
+                return;
+            }
             const lotId = Number(trigger.dataset.auctionId);
             if (!lotId) return;
             activeLotId = lotId;
@@ -3069,6 +3077,27 @@ function initPromoActions() {
         updateCartIndicator(data.totals?.count || 0);
     };
 
+    const updateAuctionCard = (lot) => {
+        if (!lot?.id) {
+            return;
+        }
+        const button = root.querySelector(`[data-auction-open][data-auction-id="${lot.id}"]`);
+        if (!button) {
+            return;
+        }
+        if (lot.status === 'finished' && lot.winner_last4 && lot.winning_amount !== null) {
+            button.textContent = `Победитель …${lot.winner_last4} ${formatCurrency(lot.winning_amount)}`;
+            return;
+        }
+        const bidCount = Number(lot.bid_count || 0);
+        button.textContent = `${formatCurrency(lot.current_price)} (${bidCount} ставок)`;
+    };
+
+    const refreshAuctionCard = async (lotId) => {
+        const data = await fetchJson(`/api/auction/lot?id=${lotId}`);
+        updateAuctionCard(data.lot);
+    };
+
     root.querySelectorAll('[data-product-card][data-product-id]').forEach((card) => {
         const productId = Number(card.dataset.productId || 0);
         if (productId <= 0) {
@@ -3109,6 +3138,7 @@ function initPromoActions() {
                     },
                     body: JSON.stringify({ lot_id: lotId }),
                 });
+                await refreshAuctionCard(lotId);
             } catch (error) {
                 alert(error.message);
             }
@@ -3136,11 +3166,51 @@ function initPromoActions() {
                     },
                     body: JSON.stringify({ lot_id: lotId }),
                 });
+                await refreshAuctionCard(lotId);
             } catch (error) {
                 alert(error.message);
             }
         });
     });
+}
+
+let promoAuthGuard;
+
+function getPromoAuthGuard() {
+    if (promoAuthGuard) {
+        return promoAuthGuard;
+    }
+
+    const root = document.querySelector('[data-promo-root]');
+    const modal = document.querySelector('[data-auth-modal]');
+    if (!root || !modal) {
+        promoAuthGuard = () => true;
+        return promoAuthGuard;
+    }
+
+    const openModal = () => {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    };
+    const closeModal = () => {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    };
+
+    modal.addEventListener('click', (event) => {
+        if (event.target === modal) closeModal();
+    });
+
+    promoAuthGuard = () => {
+        const isAuthenticated = root.dataset.authenticated === 'true';
+        if (isAuthenticated) {
+            return true;
+        }
+        openModal();
+        return false;
+    };
+
+    return promoAuthGuard;
 }
 
 let promoBotGuard;
@@ -3157,7 +3227,10 @@ function getPromoBotGuard() {
         return promoBotGuard;
     }
 
+    const guardAuth = getPromoAuthGuard();
     const closeButtons = modal.querySelectorAll('[data-bot-cancel]');
+    const enableButton = modal.querySelector('[data-bot-enable]');
+    const botLink = root.dataset.botLink || '';
     const openModal = () => {
         modal.classList.remove('hidden');
         modal.classList.add('flex');
@@ -3172,12 +3245,35 @@ function getPromoBotGuard() {
         if (event.target === modal) closeModal();
     });
 
-    promoBotGuard = () => {
-        const isAuthenticated = root.dataset.authenticated === 'true';
-        const botConnected = root.dataset.botConnected === 'true';
-        if (!isAuthenticated) {
-            return true;
+    enableButton?.addEventListener('click', async () => {
+        enableButton.disabled = true;
+        enableButton.classList.add('opacity-70');
+        try {
+            await fetchJson('/?page=account-notifications', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                body: JSON.stringify({ notifications: {} }),
+            });
+            if (botLink && botLink !== '#') {
+                window.open(botLink, '_blank', 'noopener');
+            }
+        } catch (error) {
+            alert(error.message || 'Не удалось включить уведомления');
+        } finally {
+            enableButton.disabled = false;
+            enableButton.classList.remove('opacity-70');
+            closeModal();
         }
+    });
+
+    promoBotGuard = () => {
+        if (!guardAuth()) {
+            return false;
+        }
+        const botConnected = root.dataset.botConnected === 'true';
         if (botConnected) {
             return true;
         }

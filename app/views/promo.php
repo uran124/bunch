@@ -97,7 +97,7 @@ foreach ($lotteries as $lottery) {
                                 <p class="text-sm text-slate-600">Блиц цена: <?php echo htmlspecialchars($blitzPrice, ENT_QUOTES, 'UTF-8'); ?></p>
                             <?php endif; ?>
                             <div class="mt-auto grid gap-2 sm:grid-cols-2">
-                                <button type="button" data-auction-step data-auction-id="<?php echo (int) $lot['id']; ?>" data-auction-step-value="<?php echo htmlspecialchars((string) ($lot['bid_step'] ?? 0), ENT_QUOTES, 'UTF-8'); ?>" data-requires-bot class="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-rose-200 hover:text-rose-700 disabled:cursor-not-allowed disabled:opacity-60" <?php echo !$isAuthenticated || $lot['status'] !== 'active' ? 'disabled' : ''; ?>>
+                                <button type="button" data-auction-step data-auction-id="<?php echo (int) $lot['id']; ?>" data-auction-step-value="<?php echo htmlspecialchars((string) ($lot['bid_step'] ?? 0), ENT_QUOTES, 'UTF-8'); ?>" data-requires-bot class="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-rose-200 hover:text-rose-700 disabled:cursor-not-allowed disabled:opacity-60" <?php echo $lot['status'] !== 'active' ? 'disabled' : ''; ?>>
                                     + <?php echo number_format((float) $lot['bid_step'], 0, '.', ' '); ?> ₽
                                 </button>
                                 <button
@@ -108,7 +108,7 @@ foreach ($lotteries as $lottery) {
                                     data-auction-blitz-price="<?php echo htmlspecialchars((string) ($lot['blitz_price'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
                                     data-requires-bot
                                     class="inline-flex items-center justify-center gap-2 rounded-2xl bg-rose-600 px-3 py-2 text-sm font-semibold text-white shadow-lg shadow-rose-200 transition hover:-translate-y-0.5 hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-60"
-                                    <?php echo !$isAuthenticated || $lot['status'] !== 'active' ? 'disabled' : ''; ?>
+                                    <?php echo $lot['status'] !== 'active' ? 'disabled' : ''; ?>
                                 >
                                     Блиц
                                 </button>
@@ -148,7 +148,7 @@ foreach ($lotteries as $lottery) {
                                 <span class="text-sm text-slate-400 line-through"><?php echo number_format((float) $item['base_price'], 0, '.', ' '); ?> ₽</span>
                                 <span class="text-base font-semibold text-rose-700"><?php echo number_format((float) $item['price'], 0, '.', ' '); ?> ₽</span>
                             </div>
-                            <button type="button" data-add-to-cart data-requires-bot class="mt-auto inline-flex items-center justify-center gap-2 rounded-2xl bg-rose-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-rose-200 transition hover:-translate-y-0.5 hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-60" <?php echo !$isAuthenticated ? 'disabled' : ''; ?>>
+                            <button type="button" data-add-to-cart data-requires-bot class="mt-auto inline-flex items-center justify-center gap-2 rounded-2xl bg-rose-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-rose-200 transition hover:-translate-y-0.5 hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-60">
                                 <span class="material-symbols-rounded text-base">shopping_cart</span>
                                 <span class="hidden sm:inline">В корзину</span>
                             </button>
@@ -185,7 +185,7 @@ foreach ($lotteries as $lottery) {
                                 Список участников
                             </button>
                             <p class="text-sm text-slate-600">Билет: <?php echo htmlspecialchars($ticketLabel, ENT_QUOTES, 'UTF-8'); ?></p>
-                            <button type="button" class="mt-auto inline-flex items-center justify-center gap-2 rounded-2xl bg-rose-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-rose-200 transition hover:-translate-y-0.5 hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-60" data-lottery-open data-lottery-id="<?php echo (int) $lottery['id']; ?>" data-requires-bot <?php echo !$isAuthenticated ? 'disabled' : ''; ?>>
+                            <button type="button" class="mt-auto inline-flex items-center justify-center gap-2 rounded-2xl bg-rose-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-rose-200 transition hover:-translate-y-0.5 hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-60" data-lottery-open data-lottery-id="<?php echo (int) $lottery['id']; ?>" data-requires-bot>
                                 <span class="material-symbols-rounded text-base"></span>
                                 <span class="hidden sm:inline">Участвовать</span>
                             </button>
@@ -304,19 +304,36 @@ foreach ($lotteries as $lottery) {
     </div>
 </div>
 
+<div class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/40 p-4 backdrop-blur" data-auth-modal>
+    <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl shadow-slate-500/20">
+        <div class="space-y-2">
+            <h3 class="text-lg font-semibold text-slate-900">Нужна авторизация</h3>
+            <p class="text-sm text-slate-600">Для участия в акциях нужна авторизация.</p>
+        </div>
+        <div class="mt-4 flex items-center justify-end gap-2">
+            <a href="/?page=login" class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-rose-200 hover:text-rose-700">
+                Вход
+            </a>
+            <a href="/?page=register" class="inline-flex items-center justify-center rounded-xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white shadow-md shadow-rose-200 transition hover:-translate-y-0.5 hover:bg-rose-700">
+                Регистрация
+            </a>
+        </div>
+    </div>
+</div>
+
 <div class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/40 p-4 backdrop-blur" data-bot-modal>
     <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl shadow-slate-500/20">
         <div class="space-y-2">
             <h3 class="text-lg font-semibold text-slate-900">Подключите уведомления от бота</h3>
-            <p class="text-sm text-slate-600">Для участия в акции нужно подключить уведомления от нашего бота.</p>
+            <p class="text-sm text-slate-600">Для участия в акциях необходимо подключить уведомления от нашего бота.</p>
         </div>
         <div class="mt-4 flex items-center justify-end gap-2">
             <button type="button" class="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-rose-200 hover:text-rose-700" data-bot-cancel>
                 Отменить
             </button>
-            <a href="<?php echo htmlspecialchars($botLink, ENT_QUOTES, 'UTF-8'); ?>" target="_blank" rel="noreferrer" class="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white shadow-md shadow-rose-200 transition hover:-translate-y-0.5 hover:bg-rose-700" data-bot-connect>
-                Подключить
-            </a>
+            <button type="button" class="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white shadow-md shadow-rose-200 transition hover:-translate-y-0.5 hover:bg-rose-700" data-bot-enable>
+                Включить
+            </button>
         </div>
     </div>
 </div>
