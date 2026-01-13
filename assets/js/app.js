@@ -2667,7 +2667,8 @@ function initLotteryModal() {
         selectionLocked = isFree && Boolean(myTicket);
         if (title) title.textContent = 'Выбери номер';
         if (subtitle) {
-            subtitle.textContent = `${data.lottery.title}. Билетов всего ${data.lottery.tickets_total}. Резерв ${data.reserve_ttl} мин.`;
+            const reserveText = isFree ? '' : ` Резерв ${data.reserve_ttl} мин.`;
+            subtitle.textContent = `${data.lottery.title}. Билетов всего ${data.lottery.tickets_total}.${reserveText}`;
         }
         if (price) {
             price.textContent = isFree ? 'Участие бесплатное' : `Билет ${formatCurrency(data.lottery.ticket_price)}`;
@@ -2696,11 +2697,10 @@ function initLotteryModal() {
             }
         }
         if (payButton) {
-            if (isFree) {
-                payButton.classList.add('hidden');
-            } else {
-                payButton.classList.remove('hidden');
-            }
+            payButton.classList.toggle('hidden', isFree);
+            payButton.disabled = isFree;
+            payButton.classList.toggle('opacity-70', isFree);
+            payButton.style.display = isFree ? 'none' : '';
         }
         if (selectionLocked && myTicket) {
             selectedTicketNumber = myTicket.ticket_number;
