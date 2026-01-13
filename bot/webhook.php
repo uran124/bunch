@@ -77,7 +77,7 @@ if ($botToken === '') {
 $telegram = new Telegram($botToken);
 $userModel = new User();
 
-if ($text === '/start') {
+if (preg_match('/^\/start(?:\s+|$)/u', $text) === 1) {
     handleRegistrationCode($telegram, $userModel, $verificationModel, $chatId, $username, null, $appLogger, $analytics, $contact, $fromName);
     exit;
 }
