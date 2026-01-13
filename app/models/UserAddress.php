@@ -59,7 +59,7 @@ class UserAddress extends Model
             'postal_code' => $this->emptyToNull($data['postal_code'] ?? null),
             'region' => $this->emptyToNull($data['region'] ?? null),
             'city_district' => $this->emptyToNull($data['city_district'] ?? null),
-            'last_delivery_price_hint' => isset($data['last_delivery_price_hint']) ? (float) $data['last_delivery_price_hint'] : null,
+            'last_delivery_price_hint' => isset($data['last_delivery_price_hint']) ? (int) floor((float) $data['last_delivery_price_hint']) : null,
         ]);
 
         return (int) $this->db->lastInsertId();
@@ -112,7 +112,7 @@ class UserAddress extends Model
             'zone_id' => isset($data['zone_id']) ? (int) $data['zone_id'] : null,
             'zone_calculated_at' => $this->emptyToNull($data['zone_calculated_at'] ?? null),
             'zone_version' => $this->emptyToNull($data['zone_version'] ?? null),
-            'last_delivery_price_hint' => isset($data['last_delivery_price_hint']) ? (float) $data['last_delivery_price_hint'] : null,
+            'last_delivery_price_hint' => isset($data['last_delivery_price_hint']) ? (int) floor((float) $data['last_delivery_price_hint']) : null,
             'recipient_name' => $this->emptyToNull($data['recipient_name'] ?? null),
             'recipient_phone' => $this->emptyToNull($data['recipient_phone'] ?? null),
             'entrance' => $this->emptyToNull($data['entrance'] ?? null),

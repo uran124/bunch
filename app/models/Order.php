@@ -304,16 +304,16 @@ class Order extends Model
         $scheduledTime = $this->normalizeTime($payload['time'] ?? null);
         $addressId = isset($payload['address_id']) ? (int) $payload['address_id'] : null;
         $addressText = trim((string) ($payload['address_text'] ?? ''));
-        $deliveryPrice = isset($payload['delivery_price']) ? (float) $payload['delivery_price'] : null;
+        $deliveryPrice = isset($payload['delivery_price']) ? (int) floor((float) $payload['delivery_price']) : null;
         $zoneId = isset($payload['zone_id']) ? (int) $payload['zone_id'] : null;
         $deliveryPricingVersion = $this->emptyToNull($payload['delivery_pricing_version'] ?? null);
         $recipientName = trim((string) ($payload['recipient_name'] ?? ''));
         $recipientPhone = trim((string) ($payload['recipient_phone'] ?? ''));
         $comment = trim((string) ($payload['comment'] ?? ''));
 
-        $totalAmount = 0.0;
+        $totalAmount = 0;
         foreach ($cartItems as $item) {
-            $totalAmount += (float) ($item['line_total'] ?? 0);
+            $totalAmount += (int) floor((float) ($item['line_total'] ?? 0));
         }
 
         if ($deliveryType === 'delivery' && $deliveryPrice !== null) {
@@ -359,7 +359,7 @@ class Order extends Model
                     'product_id' => (int) $item['product_id'],
                     'product_name' => $item['name'] ?? 'Товар',
                     'qty' => (int) $item['qty'],
-                    'price' => (float) ($item['price_per_stem'] ?? 0),
+                    'price' => (int) floor((float) ($item['price_per_stem'] ?? 0)),
                 ]);
 
                 $orderItemId = (int) $this->db->lastInsertId();
@@ -370,7 +370,7 @@ class Order extends Model
                         'attribute_id' => (int) ($attr['attribute_id'] ?? 0),
                         'attribute_value_id' => (int) ($attr['value_id'] ?? 0),
                         'applies_to' => $attr['applies_to'] ?? 'stem',
-                        'price_delta' => (float) ($attr['price_delta'] ?? 0),
+                        'price_delta' => (int) floor((float) ($attr['price_delta'] ?? 0)),
                     ]);
                 }
             }
@@ -513,7 +513,8 @@ class Order extends Model
 
     private function formatPrice(float $amount): string
     {
-        return number_format($amount, 0, ',', ' ') . ' ₽';
+        $rounded = (int) floor($amount);
+        return number_format($rounded, 0, ',', ' ') . ' ₽';
     }
 
     private function formatDeliveryWindow(?string $date, ?string $time): string

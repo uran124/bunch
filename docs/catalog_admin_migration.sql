@@ -41,7 +41,7 @@ ALTER TABLE products
 ALTER TABLE promos
   ADD COLUMN product_id INT UNSIGNED NULL AFTER promo_type,
   ADD COLUMN supply_id INT UNSIGNED NULL AFTER product_id,
-  ADD COLUMN promo_price DECIMAL(10,2) NULL AFTER description,
+  ADD COLUMN promo_price INT NULL AFTER description,
   ADD COLUMN photo VARCHAR(255) NULL AFTER promo_price,
   ADD CONSTRAINT fk_promos_product FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE SET NULL,
   ADD CONSTRAINT fk_promos_supply FOREIGN KEY (supply_id) REFERENCES supplies(id) ON DELETE SET NULL;
@@ -61,7 +61,7 @@ CREATE TABLE IF NOT EXISTS attribute_values (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   attribute_id INT UNSIGNED NOT NULL,
   name VARCHAR(150) NOT NULL,
-  price_delta DECIMAL(10,2) NOT NULL DEFAULT 0,
+  price_delta INT NOT NULL DEFAULT 0,
   photo VARCHAR(255) NULL,
   is_active TINYINT(1) NOT NULL DEFAULT 1,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,

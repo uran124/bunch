@@ -11,6 +11,10 @@ class AuctionBid extends Model
         $stmt->execute(['lot_id' => $lotId]);
         $row = $stmt->fetch();
 
+        if ($row) {
+            $row['amount'] = (int) floor((float) $row['amount']);
+        }
+
         return $row ?: null;
     }
 
@@ -30,7 +34,7 @@ class AuctionBid extends Model
 
             return [
                 'id' => (int) $row['id'],
-                'amount' => (float) $row['amount'],
+                'amount' => (int) floor((float) $row['amount']),
                 'created_at' => $row['created_at'],
                 'phone_last4' => $last4,
             ];
@@ -51,7 +55,7 @@ class AuctionBid extends Model
 
             return [
                 'id' => (int) $row['id'],
-                'amount' => (float) $row['amount'],
+                'amount' => (int) floor((float) $row['amount']),
                 'created_at' => $row['created_at'],
                 'phone_last4' => $last4,
             ];

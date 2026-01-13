@@ -310,7 +310,7 @@ class AdminController extends Controller
                 'id' => (int) $order['id'],
                 'number' => '#' . (int) $order['id'],
                 'date' => $createdAt->format('d.m.Y'),
-                'sum' => number_format((float) $order['total_amount'], 0, '.', ' ') . ' ₽',
+                'sum' => number_format((int) floor((float) $order['total_amount']), 0, '.', ' ') . ' ₽',
                 'status' => $statusLabels[$order['status']] ?? 'В обработке',
                 'schedule' => $scheduledLabel,
             ];
@@ -332,7 +332,7 @@ class AdminController extends Controller
             return [
                 'number' => '#' . (int) $order['id'],
                 'date' => $createdAt->format('d.m.Y'),
-                'sum' => number_format((float) $order['total_amount'], 0, '.', ' ') . ' ₽',
+                'sum' => number_format((int) floor((float) $order['total_amount']), 0, '.', ' ') . ' ₽',
                 'status' => $statusLabels[$order['status']] ?? 'В обработке',
             ];
         }, $completedOrdersRaw);
@@ -377,7 +377,7 @@ class AdminController extends Controller
                 'status' => 'Активна',
                 'nextDelivery' => $nextDate,
                 'tier' => $planLabel,
-                'price' => number_format((float) $subscription['product_price'], 0, '.', ' ') . ' ₽',
+                'price' => number_format((int) floor((float) $subscription['product_price']), 0, '.', ' ') . ' ₽',
             ];
         }, $activeSubscriptionsRaw);
 
@@ -646,7 +646,7 @@ class AdminController extends Controller
         $supplyId = (int) ($_POST['supply_id'] ?? 0);
         $article = trim($_POST['article'] ?? '');
         $photoUrl = trim($_POST['photo_url'] ?? '');
-        $price = (float) ($_POST['price'] ?? 0);
+        $price = (int) floor((float) ($_POST['price'] ?? 0));
         $active = isset($_POST['is_active']) ? 1 : 0;
         $category = trim($_POST['category'] ?? 'main');
         $productType = trim($_POST['product_type'] ?? 'regular');
@@ -718,7 +718,7 @@ class AdminController extends Controller
         $tiers = [];
         foreach ($tierQty as $index => $qty) {
             $minQty = (int) $qty;
-            $priceValue = isset($tierPrice[$index]) ? (float) $tierPrice[$index] : 0;
+            $priceValue = isset($tierPrice[$index]) ? (int) floor((float) $tierPrice[$index]) : 0;
 
             if ($minQty > 0 && $priceValue > 0) {
                 $tiers[] = ['min_qty' => $minQty, 'price' => $priceValue];
@@ -1023,7 +1023,7 @@ class AdminController extends Controller
     {
         $title = trim($_POST['title'] ?? '');
         $prize = trim($_POST['prize_description'] ?? '');
-        $ticketPrice = (float) ($_POST['ticket_price'] ?? 0);
+        $ticketPrice = (int) floor((float) ($_POST['ticket_price'] ?? 0));
         $ticketsTotal = (int) ($_POST['tickets_total'] ?? 0);
         $drawAt = trim($_POST['draw_at'] ?? '');
         $status = $_POST['status'] ?? 'active';
@@ -1060,7 +1060,7 @@ class AdminController extends Controller
         $lotteryId = (int) ($_POST['id'] ?? 0);
         $title = trim($_POST['title'] ?? '');
         $prize = trim($_POST['prize_description'] ?? '');
-        $ticketPrice = (float) ($_POST['ticket_price'] ?? 0);
+        $ticketPrice = (int) floor((float) ($_POST['ticket_price'] ?? 0));
         $ticketsTotal = (int) ($_POST['tickets_total'] ?? 0);
         $drawAt = trim($_POST['draw_at'] ?? '');
         $status = $_POST['status'] ?? 'active';
@@ -1097,9 +1097,9 @@ class AdminController extends Controller
         $title = trim($_POST['title'] ?? '');
         $description = trim($_POST['description'] ?? '');
         $image = trim($_POST['image'] ?? '');
-        $storePrice = (float) ($_POST['store_price'] ?? 0);
-        $startPrice = (float) ($_POST['start_price'] ?? 1);
-        $bidStep = (float) ($_POST['bid_step'] ?? 1);
+        $storePrice = (int) floor((float) ($_POST['store_price'] ?? 0));
+        $startPrice = (int) floor((float) ($_POST['start_price'] ?? 1));
+        $bidStep = (int) floor((float) ($_POST['bid_step'] ?? 1));
         $blitzPrice = trim($_POST['blitz_price'] ?? '');
         $startsAt = trim($_POST['starts_at'] ?? '');
         $endsAt = trim($_POST['ends_at'] ?? '');
@@ -1120,7 +1120,7 @@ class AdminController extends Controller
                 'store_price' => $storePrice,
                 'start_price' => $startPrice,
                 'bid_step' => $bidStep,
-                'blitz_price' => $blitzPrice !== '' ? (float) $blitzPrice : null,
+                'blitz_price' => $blitzPrice !== '' ? (int) floor((float) $blitzPrice) : null,
                 'starts_at' => $startsAt !== '' ? $startsAt : null,
                 'ends_at' => $endsAt !== '' ? $endsAt : null,
                 'status' => $status,
@@ -1140,9 +1140,9 @@ class AdminController extends Controller
         $title = trim($_POST['title'] ?? '');
         $description = trim($_POST['description'] ?? '');
         $image = trim($_POST['image'] ?? '');
-        $storePrice = (float) ($_POST['store_price'] ?? 0);
-        $startPrice = (float) ($_POST['start_price'] ?? 1);
-        $bidStep = (float) ($_POST['bid_step'] ?? 1);
+        $storePrice = (int) floor((float) ($_POST['store_price'] ?? 0));
+        $startPrice = (int) floor((float) ($_POST['start_price'] ?? 1));
+        $bidStep = (int) floor((float) ($_POST['bid_step'] ?? 1));
         $blitzPrice = trim($_POST['blitz_price'] ?? '');
         $startsAt = trim($_POST['starts_at'] ?? '');
         $endsAt = trim($_POST['ends_at'] ?? '');
@@ -1168,7 +1168,7 @@ class AdminController extends Controller
                 'store_price' => $storePrice,
                 'start_price' => $startPrice,
                 'bid_step' => $bidStep,
-                'blitz_price' => $blitzPrice !== '' ? (float) $blitzPrice : null,
+                'blitz_price' => $blitzPrice !== '' ? (int) floor((float) $blitzPrice) : null,
                 'starts_at' => $startsAt !== '' ? $startsAt : null,
                 'ends_at' => $endsAt !== '' ? $endsAt : null,
                 'original_ends_at' => $existing['original_ends_at'],
@@ -1187,8 +1187,8 @@ class AdminController extends Controller
     {
         $title = trim($_POST['title'] ?? '');
         $description = trim($_POST['description'] ?? '');
-        $basePrice = (float) ($_POST['base_price'] ?? 0);
-        $price = (float) ($_POST['price'] ?? 0);
+        $basePrice = (int) floor((float) ($_POST['base_price'] ?? 0));
+        $price = (int) floor((float) ($_POST['price'] ?? 0));
         $quantityRaw = trim($_POST['quantity'] ?? '');
         $endsAt = trim($_POST['ends_at'] ?? '');
         $label = trim($_POST['label'] ?? '');
@@ -1245,8 +1245,8 @@ class AdminController extends Controller
         $promoId = (int) ($_POST['id'] ?? 0);
         $title = trim($_POST['title'] ?? '');
         $description = trim($_POST['description'] ?? '');
-        $basePrice = (float) ($_POST['base_price'] ?? 0);
-        $price = (float) ($_POST['price'] ?? 0);
+        $basePrice = (int) floor((float) ($_POST['base_price'] ?? 0));
+        $price = (int) floor((float) ($_POST['price'] ?? 0));
         $quantityRaw = trim($_POST['quantity'] ?? '');
         $endsAt = trim($_POST['ends_at'] ?? '');
         $label = trim($_POST['label'] ?? '');
@@ -1400,7 +1400,7 @@ class AdminController extends Controller
         $id = (int) ($_POST['id'] ?? 0);
         $attributeId = (int) ($_POST['attribute_id'] ?? 0);
         $value = trim($_POST['value'] ?? '');
-        $priceDelta = (float) ($_POST['price_delta'] ?? 0);
+        $priceDelta = (int) floor((float) ($_POST['price_delta'] ?? 0));
         $photoUrl = trim($_POST['photo_url'] ?? '');
         $isActive = isset($_POST['is_active']) ? 1 : 0;
         $sortOrder = (int) ($_POST['sort_order'] ?? 0);

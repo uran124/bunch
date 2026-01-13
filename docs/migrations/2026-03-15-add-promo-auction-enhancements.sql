@@ -1,5 +1,5 @@
 ALTER TABLE promo_items
-    ADD COLUMN base_price DECIMAL(10,2) NOT NULL DEFAULT 0 AFTER description;
+    ADD COLUMN base_price INT NOT NULL DEFAULT 0 AFTER description;
 
 UPDATE promo_items
 SET base_price = price

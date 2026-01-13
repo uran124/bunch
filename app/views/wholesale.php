@@ -23,7 +23,7 @@
                 <?php
                 $cardId = 'wholesale-card-' . $product['id'];
                 $priceTiersJson = htmlspecialchars(json_encode($product['price_tiers'] ?? [], JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8');
-                $basePrice = number_format((float) $product['price'], 2, '.', '');
+                $basePrice = (int) floor((float) $product['price']);
                 $height = $product['stem_height_cm'] ?? $product['supply_stem_height_cm'] ?? null;
                 $flower = $product['supply_flower_name'] ?? $product['name'];
                 $variety = $product['supply_variety'] ?? '';

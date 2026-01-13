@@ -43,21 +43,21 @@
             <div class="grid gap-3 sm:grid-cols-2">
                 <label class="flex flex-col gap-2 text-sm font-semibold text-slate-700">
                     Цена в магазине, ₽
-                    <input name="store_price" type="number" step="0.01" min="0" class="rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-sm focus:border-rose-300 focus:outline-none focus:ring-2 focus:ring-rose-200">
+                    <input name="store_price" type="number" step="1" min="0" class="rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-sm focus:border-rose-300 focus:outline-none focus:ring-2 focus:ring-rose-200">
                 </label>
                 <label class="flex flex-col gap-2 text-sm font-semibold text-slate-700">
                     Стартовая цена, ₽
-                    <input name="start_price" type="number" step="0.01" min="1" value="1" class="rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-sm focus:border-rose-300 focus:outline-none focus:ring-2 focus:ring-rose-200">
+                    <input name="start_price" type="number" step="1" min="1" value="1" class="rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-sm focus:border-rose-300 focus:outline-none focus:ring-2 focus:ring-rose-200">
                 </label>
             </div>
             <div class="grid gap-3 sm:grid-cols-2">
                 <label class="flex flex-col gap-2 text-sm font-semibold text-slate-700">
                     Шаг ставки, ₽
-                    <input name="bid_step" type="number" step="0.01" min="1" value="10" class="rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-sm focus:border-rose-300 focus:outline-none focus:ring-2 focus:ring-rose-200">
+                    <input name="bid_step" type="number" step="1" min="1" value="10" class="rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-sm focus:border-rose-300 focus:outline-none focus:ring-2 focus:ring-rose-200">
                 </label>
                 <label class="flex flex-col gap-2 text-sm font-semibold text-slate-700">
                     Блиц-цена, ₽
-                    <input name="blitz_price" type="number" step="0.01" min="0" class="rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-sm focus:border-rose-300 focus:outline-none focus:ring-2 focus:ring-rose-200">
+                    <input name="blitz_price" type="number" step="1" min="0" class="rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-sm focus:border-rose-300 focus:outline-none focus:ring-2 focus:ring-rose-200">
                 </label>
             </div>
             <div class="grid gap-3 sm:grid-cols-2">
