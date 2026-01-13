@@ -12,6 +12,28 @@ $isAuthenticated = $isAuthenticated ?? false;
 $botConnected = $botConnected ?? false;
 $botUsername = $botUsername ?? '';
 $botLink = $botUsername !== '' ? 'https://t.me/' . $botUsername . '?start=register' : '#';
+$promoEntries = [];
+
+foreach ($auctionLots as $lot) {
+    $promoEntries[] = [
+        'type' => 'auction',
+        'data' => $lot,
+    ];
+}
+
+foreach ($oneTimeItems as $item) {
+    $promoEntries[] = [
+        'type' => 'promo',
+        'data' => $item,
+    ];
+}
+
+foreach ($lotteries as $lottery) {
+    $promoEntries[] = [
+        'type' => 'lottery',
+        'data' => $lottery,
+    ];
+}
 ?>
 
 <section class="space-y-6" data-promo-root data-bot-connected="<?php echo $botConnected ? 'true' : 'false'; ?>" data-bot-link="<?php echo htmlspecialchars($botLink, ENT_QUOTES, 'UTF-8'); ?>" data-authenticated="<?php echo $isAuthenticated ? 'true' : 'false'; ?>">
@@ -32,14 +54,12 @@ $botLink = $botUsername !== '' ? 'https://t.me/' . $botUsername . '?start=regist
         </div>
     <?php endif; ?>
 
-    <?php if ($hasAuctions): ?>
-        <div class="space-y-3">
-            <div class="flex items-center justify-between">
-                <h2 class="text-base font-semibold text-slate-900 sm:text-lg">Аукцион</h2>
-            </div>
-            <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                <?php foreach ($auctionLots as $lot): ?>
+    <?php if ($hasAnyPromos): ?>
+        <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" data-promo-items>
+            <?php foreach ($promoEntries as $entry): ?>
+                <?php if ($entry['type'] === 'auction'): ?>
                     <?php
+                    $lot = $entry['data'];
                     $currentPrice = number_format((float) $lot['current_price'], 0, '.', ' ') . ' ₽';
                     $blitzPrice = $lot['blitz_price'] !== null ? number_format((float) $lot['blitz_price'], 0, '.', ' ') . ' ₽' : null;
                     $bidCount = (int) ($lot['bid_count'] ?? 0);
@@ -50,10 +70,14 @@ $botLink = $botUsername !== '' ? 'https://t.me/' . $botUsername . '?start=regist
                     ?>
                     <article class="flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm" data-promo-item data-promo-type="auction">
                         <?php if (!empty($lot['photo'])): ?>
-                            <img src="<?php echo htmlspecialchars($lot['photo'], ENT_QUOTES, 'UTF-8'); ?>" alt="<?php echo htmlspecialchars($lot['title'], ENT_QUOTES, 'UTF-8'); ?>" class="aspect-square w-full object-cover">
+                            <div class="relative">
+                                <img src="<?php echo htmlspecialchars($lot['photo'], ENT_QUOTES, 'UTF-8'); ?>" alt="<?php echo htmlspecialchars($lot['title'], ENT_QUOTES, 'UTF-8'); ?>" class="aspect-square w-full object-cover">
+                                <span class="absolute right-3 top-3 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-700 shadow">Аукцион</span>
+                            </div>
                         <?php else: ?>
-                            <div class="flex aspect-square w-full items-center justify-center bg-slate-100 text-slate-400">
+                            <div class="relative flex aspect-square w-full items-center justify-center bg-slate-100 text-slate-400">
                                 <span class="material-symbols-rounded text-3xl">image</span>
+                                <span class="absolute right-3 top-3 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-700 shadow">Аукцион</span>
                             </div>
                         <?php endif; ?>
                         <div class="flex flex-1 flex-col gap-2 p-4">
@@ -91,28 +115,22 @@ $botLink = $botUsername !== '' ? 'https://t.me/' . $botUsername . '?start=regist
                             </div>
                         </div>
                     </article>
-                <?php endforeach; ?>
-            </div>
-        </div>
-    <?php endif; ?>
-
-    <?php if ($hasPromos): ?>
-        <div class="space-y-3">
-            <div class="flex items-center justify-between">
-                <h2 class="text-base font-semibold text-slate-900 sm:text-lg">Товары по акции</h2>
-            </div>
-            <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" data-promo-items>
-                <?php foreach ($oneTimeItems as $item): ?>
+                <?php elseif ($entry['type'] === 'promo'): ?>
                     <?php
+                    $item = $entry['data'];
                     $productId = (int) ($item['product_id'] ?? 0);
                     $endsAtIso = $item['ends_at_iso'] ?? null;
                     ?>
                     <article class="flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm" data-promo-item data-promo-type="promo" data-product-card data-product-id="<?php echo $productId; ?>">
                         <?php if (!empty($item['photo'])): ?>
-                            <img src="<?php echo htmlspecialchars($item['photo'], ENT_QUOTES, 'UTF-8'); ?>" alt="<?php echo htmlspecialchars($item['title'], ENT_QUOTES, 'UTF-8'); ?>" class="aspect-square w-full object-cover">
+                            <div class="relative">
+                                <img src="<?php echo htmlspecialchars($item['photo'], ENT_QUOTES, 'UTF-8'); ?>" alt="<?php echo htmlspecialchars($item['title'], ENT_QUOTES, 'UTF-8'); ?>" class="aspect-square w-full object-cover">
+                                <span class="absolute right-3 top-3 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-700 shadow">Спецпредложение</span>
+                            </div>
                         <?php else: ?>
-                            <div class="flex aspect-square w-full items-center justify-center bg-slate-100 text-slate-400">
+                            <div class="relative flex aspect-square w-full items-center justify-center bg-slate-100 text-slate-400">
                                 <span class="material-symbols-rounded text-3xl">image</span>
+                                <span class="absolute right-3 top-3 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-700 shadow">Спецпредложение</span>
                             </div>
                         <?php endif; ?>
                         <div class="flex flex-1 flex-col gap-2 p-4">
@@ -136,29 +154,23 @@ $botLink = $botUsername !== '' ? 'https://t.me/' . $botUsername . '?start=regist
                             </button>
                         </div>
                     </article>
-                <?php endforeach; ?>
-            </div>
-        </div>
-    <?php endif; ?>
-
-    <?php if ($hasLotteries): ?>
-        <div class="space-y-3">
-            <div class="flex items-center justify-between">
-                <h2 class="text-base font-semibold text-slate-900 sm:text-lg">Розыгрыши</h2>
-            </div>
-            <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                <?php foreach ($lotteries as $lottery): ?>
+                <?php elseif ($entry['type'] === 'lottery'): ?>
                     <?php
+                    $lottery = $entry['data'];
                     $ticketPrice = (float) $lottery['ticket_price'];
                     $ticketLabel = $ticketPrice > 0 ? number_format($ticketPrice, 0, '.', ' ') . ' ₽' : 'Бесплатно';
                     $endsAtIso = $lottery['draw_at_iso'] ?? null;
                     ?>
                     <article class="flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm" data-promo-item data-promo-type="lottery">
                         <?php if (!empty($lottery['photo'])): ?>
-                            <img src="<?php echo htmlspecialchars($lottery['photo'], ENT_QUOTES, 'UTF-8'); ?>" alt="<?php echo htmlspecialchars($lottery['title'], ENT_QUOTES, 'UTF-8'); ?>" class="aspect-square w-full object-cover">
+                            <div class="relative">
+                                <img src="<?php echo htmlspecialchars($lottery['photo'], ENT_QUOTES, 'UTF-8'); ?>" alt="<?php echo htmlspecialchars($lottery['title'], ENT_QUOTES, 'UTF-8'); ?>" class="aspect-square w-full object-cover">
+                                <span class="absolute right-3 top-3 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-700 shadow">Розыгрыш</span>
+                            </div>
                         <?php else: ?>
-                            <div class="flex aspect-square w-full items-center justify-center bg-slate-100 text-slate-400">
+                            <div class="relative flex aspect-square w-full items-center justify-center bg-slate-100 text-slate-400">
                                 <span class="material-symbols-rounded text-3xl">image</span>
+                                <span class="absolute right-3 top-3 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-700 shadow">Розыгрыш</span>
                             </div>
                         <?php endif; ?>
                         <div class="flex flex-1 flex-col gap-2 p-4">
@@ -179,8 +191,8 @@ $botLink = $botUsername !== '' ? 'https://t.me/' . $botUsername . '?start=regist
                             </button>
                         </div>
                     </article>
-                <?php endforeach; ?>
-            </div>
+                <?php endif; ?>
+            <?php endforeach; ?>
         </div>
     <?php endif; ?>
 </section>
