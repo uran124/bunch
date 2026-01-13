@@ -98,7 +98,7 @@ class AttributeModel extends Model
             );
             $stmt->execute([
                 'value' => $data['value'],
-                'price_delta' => $data['price_delta'],
+                'price_delta' => (int) floor((float) $data['price_delta']),
                 'photo_url' => $data['photo_url'],
                 'is_active' => $data['is_active'],
                 'sort_order' => $data['sort_order'],
@@ -114,7 +114,7 @@ class AttributeModel extends Model
         $stmt->execute([
             'attribute_id' => $data['attribute_id'],
             'value' => $data['value'],
-            'price_delta' => $data['price_delta'],
+            'price_delta' => (int) floor((float) $data['price_delta']),
             'photo_url' => $data['photo_url'],
             'is_active' => $data['is_active'],
             'sort_order' => $data['sort_order'],

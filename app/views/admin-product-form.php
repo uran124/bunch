@@ -114,7 +114,7 @@
                     </label>
                     <label class="flex flex-col gap-1 text-sm font-semibold text-slate-700">
                         Базовая цена, ₽
-                        <input name="price" type="number" step="0.01" required value="<?php echo htmlspecialchars($editingProduct['price'] ?? '', ENT_QUOTES, 'UTF-8'); ?>" class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-sm">
+                        <input name="price" type="number" step="1" required value="<?php echo htmlspecialchars($editingProduct['price'] ?? '', ENT_QUOTES, 'UTF-8'); ?>" class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-sm">
                     </label>
                 </div>
 
@@ -139,7 +139,7 @@
                                 </label>
                                 <label class="flex flex-col gap-1 text-sm font-semibold text-slate-700">
                                     Цена, ₽
-                                    <input name="tier_price[]" type="number" step="0.01" value="<?php echo htmlspecialchars($tier['price'], ENT_QUOTES, 'UTF-8'); ?>" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 shadow-sm">
+                                    <input name="tier_price[]" type="number" step="1" value="<?php echo htmlspecialchars($tier['price'], ENT_QUOTES, 'UTF-8'); ?>" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 shadow-sm">
                                 </label>
                                 <button type="button" class="remove-tier inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:-translate-y-0.5 hover:border-rose-200 hover:text-rose-700">
                                     <span class="material-symbols-rounded text-base">delete</span>
@@ -258,7 +258,7 @@
                 </label>
                 <label class="flex flex-col gap-1 text-sm font-semibold text-slate-700">
                     Цена, ₽
-                    <input name="tier_price[]" type="number" step="0.01" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 shadow-sm">
+                    <input name="tier_price[]" type="number" step="1" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 shadow-sm">
                 </label>
                 <button type="button" class="remove-tier inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:-translate-y-0.5 hover:border-rose-200 hover:text-rose-700">
                     <span class="material-symbols-rounded text-base">delete</span>

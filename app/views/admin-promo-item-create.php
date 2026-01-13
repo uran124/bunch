@@ -39,11 +39,11 @@
             <div class="grid gap-3 sm:grid-cols-2">
                 <label class="flex flex-col gap-2 text-sm font-semibold text-slate-700">
                     Базовая цена, ₽
-                    <input type="number" name="base_price" min="1" step="0.01" class="rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-sm focus:border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-200" required>
+                    <input type="number" name="base_price" min="1" step="1" class="rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-sm focus:border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-200" required>
                 </label>
                 <label class="flex flex-col gap-2 text-sm font-semibold text-slate-700">
                     Цена по акции, ₽
-                    <input type="number" name="price" min="1" step="0.01" class="rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-sm focus:border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-200" required>
+                    <input type="number" name="price" min="1" step="1" class="rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-sm focus:border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-200" required>
                 </label>
                 <label class="flex flex-col gap-2 text-sm font-semibold text-slate-700">
                     Количество

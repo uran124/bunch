@@ -85,7 +85,7 @@
                     </div>
                     <div class="text-sm font-semibold text-slate-700"><?php echo !empty($item['is_active']) ? 'Активен' : 'Скрыт'; ?></div>
                     <div class="text-sm text-slate-700"><?php echo !empty($item['ends_at']) ? htmlspecialchars($item['ends_at'], ENT_QUOTES, 'UTF-8') : 'Без ограничения'; ?></div>
-                    <div class="text-sm font-semibold text-slate-900"><?php echo number_format((float) $item['price'], 2, '.', ' '); ?> ₽</div>
+                    <div class="text-sm font-semibold text-slate-900"><?php echo number_format((int) floor((float) $item['price']), 0, '.', ' '); ?> ₽</div>
                 </article>
             <?php endforeach; ?>
         </div>
@@ -148,21 +148,21 @@
                 <div class="px-5 py-4 text-sm text-slate-500">Активные лоты ещё не добавлены.</div>
             <?php endif; ?>
             <?php foreach ($activeLots as $auction): ?>
-                <?php $currentPrice = (float) ($auction['current_price'] ?? 0); ?>
+                <?php $currentPrice = (int) floor((float) ($auction['current_price'] ?? 0)); ?>
                 <article class="grid grid-cols-[70px_1.4fr_1fr_1fr_1fr_1fr] items-center gap-4 border-b border-slate-100 px-5 py-4 last:border-b-0">
                     <div class="text-sm font-semibold text-slate-900">#<?php echo (int) $auction['id']; ?></div>
                     <div class="space-y-1">
                         <a class="text-base font-semibold text-slate-900 transition hover:text-rose-600" href="/?page=admin-auction-edit&id=<?php echo (int) $auction['id']; ?>">
                             <?php echo htmlspecialchars($auction['title'], ENT_QUOTES, 'UTF-8'); ?>
                         </a>
-                        <div class="text-sm text-slate-500">Блиц: <?php echo !empty($auction['blitz_price']) ? number_format((float) $auction['blitz_price'], 2, '.', ' ') . ' ₽' : '—'; ?></div>
+                        <div class="text-sm text-slate-500">Блиц: <?php echo !empty($auction['blitz_price']) ? number_format((int) floor((float) $auction['blitz_price']), 0, '.', ' ') . ' ₽' : '—'; ?></div>
                     </div>
                     <div class="text-sm font-semibold text-rose-700"><?php echo htmlspecialchars($auction['status'] ?? '', ENT_QUOTES, 'UTF-8'); ?></div>
                     <div class="text-sm text-slate-700">
                         <?php echo !empty($auction['starts_at']) ? htmlspecialchars($auction['starts_at'], ENT_QUOTES, 'UTF-8') : '—'; ?><br>
                         <?php echo !empty($auction['ends_at']) ? htmlspecialchars($auction['ends_at'], ENT_QUOTES, 'UTF-8') : '—'; ?>
                     </div>
-                    <div class="text-sm font-semibold text-slate-900"><?php echo number_format($currentPrice, 2, '.', ' '); ?> ₽</div>
+                    <div class="text-sm font-semibold text-slate-900"><?php echo number_format($currentPrice, 0, '.', ' '); ?> ₽</div>
                     <div class="text-sm text-slate-600">
                         <?php echo ($auction['winner_last4'] ?? '----') !== '----' ? 'Победитель: …' . htmlspecialchars($auction['winner_last4'], ENT_QUOTES, 'UTF-8') : 'Победитель не выбран'; ?>
                     </div>
@@ -192,21 +192,21 @@
                 <div class="px-5 py-4 text-sm text-slate-500">Завершённых лотов пока нет.</div>
             <?php endif; ?>
             <?php foreach ($finishedLots as $auction): ?>
-                <?php $currentPrice = (float) ($auction['current_price'] ?? 0); ?>
+                <?php $currentPrice = (int) floor((float) ($auction['current_price'] ?? 0)); ?>
                 <article class="grid grid-cols-[70px_1.4fr_1fr_1fr_1fr_1fr] items-center gap-4 border-b border-slate-100 px-5 py-4 last:border-b-0">
                     <div class="text-sm font-semibold text-slate-900">#<?php echo (int) $auction['id']; ?></div>
                     <div class="space-y-1">
                         <a class="text-base font-semibold text-slate-900 transition hover:text-rose-600" href="/?page=admin-auction-view&id=<?php echo (int) $auction['id']; ?>">
                             <?php echo htmlspecialchars($auction['title'], ENT_QUOTES, 'UTF-8'); ?>
                         </a>
-                        <div class="text-sm text-slate-500">Блиц: <?php echo !empty($auction['blitz_price']) ? number_format((float) $auction['blitz_price'], 2, '.', ' ') . ' ₽' : '—'; ?></div>
+                        <div class="text-sm text-slate-500">Блиц: <?php echo !empty($auction['blitz_price']) ? number_format((int) floor((float) $auction['blitz_price']), 0, '.', ' ') . ' ₽' : '—'; ?></div>
                     </div>
                     <div class="text-sm font-semibold text-rose-700"><?php echo htmlspecialchars($auction['status'] ?? '', ENT_QUOTES, 'UTF-8'); ?></div>
                     <div class="text-sm text-slate-700">
                         <?php echo !empty($auction['starts_at']) ? htmlspecialchars($auction['starts_at'], ENT_QUOTES, 'UTF-8') : '—'; ?><br>
                         <?php echo !empty($auction['ends_at']) ? htmlspecialchars($auction['ends_at'], ENT_QUOTES, 'UTF-8') : '—'; ?>
                     </div>
-                    <div class="text-sm font-semibold text-slate-900"><?php echo number_format($currentPrice, 2, '.', ' '); ?> ₽</div>
+                    <div class="text-sm font-semibold text-slate-900"><?php echo number_format($currentPrice, 0, '.', ' '); ?> ₽</div>
                     <div class="text-sm text-slate-600">
                         <?php echo ($auction['winner_last4'] ?? '----') !== '----' ? '…' . htmlspecialchars($auction['winner_last4'], ENT_QUOTES, 'UTF-8') : 'Победитель не выбран'; ?>
                     </div>

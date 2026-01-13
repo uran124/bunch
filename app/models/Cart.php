@@ -57,11 +57,11 @@ class Cart
     public function getTotals(): array
     {
         $items = $this->getItems();
-        $total = 0.0;
+        $total = 0;
         $count = 0;
 
         foreach ($items as $item) {
-            $total += (float) ($item['line_total'] ?? 0);
+            $total += (int) floor((float) ($item['line_total'] ?? 0));
             $count += (int) ($item['qty'] ?? 0);
         }
 
@@ -94,20 +94,20 @@ class Cart
 
         $attributeDetails = $this->getAttributeDetails($attributeValueIds);
 
-        $pricePerStem = (float) $product['price'];
+        $pricePerStem = (int) floor((float) $product['price']);
         $priceTiers = $productModel->getPriceTiers($productId);
         foreach ($priceTiers as $tier) {
             if ($qty >= (int) $tier['min_qty']) {
-                $pricePerStem = (float) $tier['price'];
+                $pricePerStem = (int) floor((float) $tier['price']);
             }
         }
 
-        $bouquetDelta = 0.0;
+        $bouquetDelta = 0;
         foreach ($attributeDetails as $attr) {
             if (($attr['applies_to'] ?? 'stem') === 'bouquet') {
-                $bouquetDelta += (float) $attr['price_delta'];
+                $bouquetDelta += (int) floor((float) $attr['price_delta']);
             } else {
-                $pricePerStem += (float) $attr['price_delta'];
+                $pricePerStem += (int) floor((float) $attr['price_delta']);
             }
         }
 
@@ -199,7 +199,7 @@ class Cart
                 'value' => $row['value'],
                 'scope' => $row['applies_to'] === 'bouquet' ? 'к букету' : 'к стеблю',
                 'applies_to' => $row['applies_to'],
-                'price_delta' => (float) $row['price_delta'],
+                'price_delta' => (int) floor((float) $row['price_delta']),
             ];
         }
 

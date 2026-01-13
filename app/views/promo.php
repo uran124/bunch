@@ -60,8 +60,8 @@ foreach ($lotteries as $lottery) {
                 <?php if ($entry['type'] === 'auction'): ?>
                     <?php
                     $lot = $entry['data'];
-                    $currentPrice = number_format((float) $lot['current_price'], 0, '.', ' ') . ' ₽';
-                    $blitzPrice = $lot['blitz_price'] !== null ? number_format((float) $lot['blitz_price'], 0, '.', ' ') . ' ₽' : null;
+                    $currentPrice = number_format((int) floor((float) $lot['current_price']), 0, '.', ' ') . ' ₽';
+                    $blitzPrice = $lot['blitz_price'] !== null ? number_format((int) floor((float) $lot['blitz_price']), 0, '.', ' ') . ' ₽' : null;
                     $bidCount = (int) ($lot['bid_count'] ?? 0);
                     $endsAtIso = null;
                     if (!empty($lot['ends_at'])) {
@@ -88,7 +88,7 @@ foreach ($lotteries as $lottery) {
                             </p>
                             <button type="button" class="text-left text-base font-semibold text-rose-700 transition hover:text-rose-800" data-auction-open data-auction-id="<?php echo (int) $lot['id']; ?>">
                                 <?php if ($lot['status'] === 'finished' && !empty($lot['winner_last4']) && $lot['winning_amount'] !== null): ?>
-                                    Победитель …<?php echo htmlspecialchars($lot['winner_last4'], ENT_QUOTES, 'UTF-8'); ?> <?php echo number_format((float) $lot['winning_amount'], 0, '.', ' '); ?> ₽
+                                    Победитель …<?php echo htmlspecialchars($lot['winner_last4'], ENT_QUOTES, 'UTF-8'); ?> <?php echo number_format((int) floor((float) $lot['winning_amount']), 0, '.', ' '); ?> ₽
                                 <?php else: ?>
                                     <?php echo htmlspecialchars($currentPrice, ENT_QUOTES, 'UTF-8'); ?> (<?php echo $bidCount; ?> ставок)
                                 <?php endif; ?>
@@ -98,14 +98,14 @@ foreach ($lotteries as $lottery) {
                             <?php endif; ?>
                             <div class="mt-auto grid gap-2 sm:grid-cols-2">
                                 <button type="button" data-auction-step data-auction-id="<?php echo (int) $lot['id']; ?>" data-auction-step-value="<?php echo htmlspecialchars((string) ($lot['bid_step'] ?? 0), ENT_QUOTES, 'UTF-8'); ?>" data-requires-bot class="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-rose-200 hover:text-rose-700 disabled:cursor-not-allowed disabled:opacity-60" <?php echo !$isAuthenticated || $lot['status'] !== 'active' ? 'disabled' : ''; ?>>
-                                    + <?php echo number_format((float) $lot['bid_step'], 0, '.', ' '); ?> ₽
+                                    + <?php echo number_format((int) floor((float) $lot['bid_step']), 0, '.', ' '); ?> ₽
                                 </button>
                                 <button
                                     type="button"
                                     data-auction-blitz
                                     data-auction-id="<?php echo (int) $lot['id']; ?>"
                                     data-auction-title="<?php echo htmlspecialchars($lot['title'], ENT_QUOTES, 'UTF-8'); ?>"
-                                    data-auction-blitz-price="<?php echo htmlspecialchars((string) ($lot['blitz_price'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
+                                    data-auction-blitz-price="<?php echo htmlspecialchars((string) ($lot['blitz_price'] !== null ? (int) floor((float) $lot['blitz_price']) : ''), ENT_QUOTES, 'UTF-8'); ?>"
                                     data-requires-bot
                                     class="inline-flex items-center justify-center gap-2 rounded-2xl bg-rose-600 px-3 py-2 text-sm font-semibold text-white shadow-lg shadow-rose-200 transition hover:-translate-y-0.5 hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-60"
                                     <?php echo !$isAuthenticated || $lot['status'] !== 'active' ? 'disabled' : ''; ?>
@@ -145,8 +145,8 @@ foreach ($lotteries as $lottery) {
                                 <p class="text-sm text-slate-600">Осталось <?php echo (int) ($item['stock'] ?? 0); ?> шт</p>
                             <?php endif; ?>
                             <div class="flex flex-wrap items-baseline gap-2">
-                                <span class="text-sm text-slate-400 line-through"><?php echo number_format((float) $item['base_price'], 0, '.', ' '); ?> ₽</span>
-                                <span class="text-base font-semibold text-rose-700"><?php echo number_format((float) $item['price'], 0, '.', ' '); ?> ₽</span>
+                                <span class="text-sm text-slate-400 line-through"><?php echo number_format((int) floor((float) $item['base_price']), 0, '.', ' '); ?> ₽</span>
+                                <span class="text-base font-semibold text-rose-700"><?php echo number_format((int) floor((float) $item['price']), 0, '.', ' '); ?> ₽</span>
                             </div>
                             <button type="button" data-add-to-cart data-requires-bot class="mt-auto inline-flex items-center justify-center gap-2 rounded-2xl bg-rose-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-rose-200 transition hover:-translate-y-0.5 hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-60" <?php echo !$isAuthenticated ? 'disabled' : ''; ?>>
                                 <span class="material-symbols-rounded text-base">shopping_cart</span>
@@ -157,7 +157,7 @@ foreach ($lotteries as $lottery) {
                 <?php elseif ($entry['type'] === 'lottery'): ?>
                     <?php
                     $lottery = $entry['data'];
-                    $ticketPrice = (float) $lottery['ticket_price'];
+                    $ticketPrice = (int) floor((float) $lottery['ticket_price']);
                     $ticketLabel = $ticketPrice > 0 ? number_format($ticketPrice, 0, '.', ' ') . ' ₽' : 'Бесплатно';
                     $endsAtIso = $lottery['draw_at_iso'] ?? null;
                     ?>

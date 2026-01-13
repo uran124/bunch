@@ -694,7 +694,7 @@ function handleAuctionBid(): void
 
     $payload = json_decode(file_get_contents('php://input'), true);
     $lotId = (int) ($payload['lot_id'] ?? 0);
-    $amount = isset($payload['amount']) ? (float) $payload['amount'] : null;
+    $amount = isset($payload['amount']) ? (int) floor((float) $payload['amount']) : null;
 
     if ($lotId <= 0) {
         http_response_code(400);

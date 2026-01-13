@@ -243,7 +243,8 @@ class OrdersController extends Controller
 
     private function formatPrice(float $amount): string
     {
-        return number_format($amount, 0, ',', ' ') . ' ₽';
+        $rounded = (int) floor($amount);
+        return number_format($rounded, 0, ',', ' ') . ' ₽';
     }
 
     private function formatDateTime(?string $dateTime): string

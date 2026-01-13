@@ -185,7 +185,7 @@
                                     </label>
                                     <label class="flex flex-col gap-1 font-semibold text-slate-700">
                                         Дельта, ₽
-                                        <input name="price_delta" type="number" step="0.01" value="<?php echo htmlspecialchars($value['price_delta'], ENT_QUOTES, 'UTF-8'); ?>" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 shadow-sm">
+                                        <input name="price_delta" type="number" step="1" value="<?php echo htmlspecialchars($value['price_delta'], ENT_QUOTES, 'UTF-8'); ?>" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 shadow-sm">
                                     </label>
                                     <label class="flex flex-col gap-1 font-semibold text-slate-700">
                                         Фото (URL)
@@ -235,7 +235,7 @@
                                 </label>
                                 <label class="flex flex-col gap-1 font-semibold text-slate-700">
                                     Дельта, ₽
-                                    <input name="price_delta" type="number" step="0.01" value="0" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 shadow-sm">
+                                    <input name="price_delta" type="number" step="1" value="0" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 shadow-sm">
                                 </label>
                                 <label class="flex flex-col gap-1 font-semibold text-slate-700">
                                     Фото (URL)

@@ -39,7 +39,7 @@ $winnerLabel = ($lot['winner_last4'] ?? '----') !== '----' ? '…' . htmlspecial
             </div>
             <div class="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
                 <span class="font-semibold text-slate-700">Итоговая цена</span>
-                <span><?php echo number_format((float) $finalPrice, 2, '.', ' '); ?> ₽</span>
+                <span><?php echo number_format((int) floor((float) $finalPrice), 0, '.', ' '); ?> ₽</span>
             </div>
             <div class="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
                 <span class="font-semibold text-slate-700">Период</span>
@@ -47,7 +47,7 @@ $winnerLabel = ($lot['winner_last4'] ?? '----') !== '----' ? '…' . htmlspecial
             </div>
             <div class="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
                 <span class="font-semibold text-slate-700">Блиц-цена</span>
-                <span><?php echo $lot['blitz_price'] !== null ? number_format((float) $lot['blitz_price'], 2, '.', ' ') . ' ₽' : '—'; ?></span>
+                <span><?php echo $lot['blitz_price'] !== null ? number_format((int) floor((float) $lot['blitz_price']), 0, '.', ' ') . ' ₽' : '—'; ?></span>
             </div>
         </div>
     </div>
@@ -69,7 +69,7 @@ $winnerLabel = ($lot['winner_last4'] ?? '----') !== '----' ? '…' . htmlspecial
         <?php endif; ?>
         <?php foreach ($bids as $bid): ?>
             <article class="grid grid-cols-[120px_1fr_1fr] items-center gap-4 border-b border-slate-100 px-5 py-4 last:border-b-0">
-                <div class="text-sm font-semibold text-slate-900"><?php echo number_format((float) $bid['amount'], 2, '.', ' '); ?> ₽</div>
+                <div class="text-sm font-semibold text-slate-900"><?php echo number_format((int) floor((float) $bid['amount']), 0, '.', ' '); ?> ₽</div>
                 <div class="text-sm text-slate-700">…<?php echo htmlspecialchars($bid['phone_last4'], ENT_QUOTES, 'UTF-8'); ?></div>
                 <div class="text-sm text-slate-500"><?php echo htmlspecialchars($bid['created_at'] ?? '', ENT_QUOTES, 'UTF-8'); ?></div>
             </article>

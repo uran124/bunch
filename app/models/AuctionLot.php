@@ -87,7 +87,7 @@ SQL;
                 $row = $refresh->fetch() ?: $row;
             }
             $currentBid = $bidModel->getCurrentBid((int) $row['id']);
-            $currentPrice = $currentBid ? (float) $currentBid['amount'] : (float) $row['start_price'];
+            $currentPrice = $currentBid ? (int) floor((float) $currentBid['amount']) : (int) floor((float) $row['start_price']);
 
             return [
                 'id' => (int) $row['id'],
@@ -96,7 +96,7 @@ SQL;
                 'starts_at' => $row['starts_at'],
                 'ends_at' => $row['ends_at'],
                 'current_price' => $currentPrice,
-                'blitz_price' => $row['blitz_price'],
+                'blitz_price' => $row['blitz_price'] !== null ? (int) floor((float) $row['blitz_price']) : null,
                 'winner_last4' => $this->getLast4($row['winner_phone'] ?? ''),
             ];
         }, $rows);
@@ -126,24 +126,24 @@ SQL;
 
         $bidModel = new AuctionBid();
         $currentBid = $bidModel->getCurrentBid($lotId);
-        $currentPrice = $currentBid ? (float) $currentBid['amount'] : (float) $row['start_price'];
+        $currentPrice = $currentBid ? (int) floor((float) $currentBid['amount']) : (int) floor((float) $row['start_price']);
 
         return [
             'id' => (int) $row['id'],
             'title' => $row['title'],
             'description' => $row['description'],
             'image' => $row['image'],
-            'store_price' => (float) $row['store_price'],
-            'start_price' => (float) $row['start_price'],
-            'bid_step' => (float) $row['bid_step'],
-            'blitz_price' => $row['blitz_price'] !== null ? (float) $row['blitz_price'] : null,
+            'store_price' => (int) floor((float) $row['store_price']),
+            'start_price' => (int) floor((float) $row['start_price']),
+            'bid_step' => (int) floor((float) $row['bid_step']),
+            'blitz_price' => $row['blitz_price'] !== null ? (int) floor((float) $row['blitz_price']) : null,
             'status' => $row['status'],
             'starts_at' => $row['starts_at'],
             'ends_at' => $row['ends_at'],
             'original_ends_at' => $row['original_ends_at'],
             'current_price' => $currentPrice,
             'winner_last4' => $this->getLast4($row['winner_phone'] ?? ''),
-            'winning_amount' => $row['winning_amount'] !== null ? (float) $row['winning_amount'] : null,
+            'winning_amount' => $row['winning_amount'] !== null ? (int) floor((float) $row['winning_amount']) : null,
         ];
     }
 
@@ -217,7 +217,7 @@ SQL;
                 $row = $refresh->fetch() ?: $row;
             }
             $currentBid = $bidModel->getCurrentBid((int) $row['id']);
-            $currentPrice = $currentBid ? (float) $currentBid['amount'] : (float) $row['start_price'];
+            $currentPrice = $currentBid ? (int) floor((float) $currentBid['amount']) : (int) floor((float) $row['start_price']);
             $statusLabel = $this->formatStatus($row);
             $timeLabel = $this->formatTimeLabel($row);
             $bidCount = $bidModel->countLotBids((int) $row['id']);
@@ -227,16 +227,16 @@ SQL;
                 'title' => $row['title'],
                 'description' => $row['description'],
                 'photo' => $row['image'],
-                'store_price' => (float) $row['store_price'],
-                'start_price' => (float) $row['start_price'],
-                'bid_step' => (float) $row['bid_step'],
-                'blitz_price' => $row['blitz_price'] !== null ? (float) $row['blitz_price'] : null,
+                'store_price' => (int) floor((float) $row['store_price']),
+                'start_price' => (int) floor((float) $row['start_price']),
+                'bid_step' => (int) floor((float) $row['bid_step']),
+                'blitz_price' => $row['blitz_price'] !== null ? (int) floor((float) $row['blitz_price']) : null,
                 'current_price' => $currentPrice,
                 'status_label' => $statusLabel,
                 'time_label' => $timeLabel,
                 'status' => $row['status'],
                 'winner_last4' => $this->getLast4($row['winner_phone'] ?? ''),
-                'winning_amount' => $row['winning_amount'] !== null ? (float) $row['winning_amount'] : null,
+                'winning_amount' => $row['winning_amount'] !== null ? (int) floor((float) $row['winning_amount']) : null,
                 'bid_count' => $bidCount,
                 'starts_at' => $row['starts_at'],
                 'ends_at' => $row['ends_at'],
@@ -276,24 +276,24 @@ SQL;
 
         $bidModel = new AuctionBid();
         $currentBid = $bidModel->getCurrentBid($lotId);
-        $currentPrice = $currentBid ? (float) $currentBid['amount'] : (float) $row['start_price'];
+        $currentPrice = $currentBid ? (int) floor((float) $currentBid['amount']) : (int) floor((float) $row['start_price']);
 
         return [
             'id' => (int) $row['id'],
             'title' => $row['title'],
             'description' => $row['description'],
             'image' => $row['image'],
-            'store_price' => (float) $row['store_price'],
-            'start_price' => (float) $row['start_price'],
-            'bid_step' => (float) $row['bid_step'],
-            'blitz_price' => $row['blitz_price'] !== null ? (float) $row['blitz_price'] : null,
+            'store_price' => (int) floor((float) $row['store_price']),
+            'start_price' => (int) floor((float) $row['start_price']),
+            'bid_step' => (int) floor((float) $row['bid_step']),
+            'blitz_price' => $row['blitz_price'] !== null ? (int) floor((float) $row['blitz_price']) : null,
             'status' => $row['status'],
             'starts_at' => $row['starts_at'],
             'ends_at' => $row['ends_at'],
             'current_price' => $currentPrice,
-            'min_bid' => $currentBid ? $currentPrice + (float) $row['bid_step'] : (float) $row['start_price'],
+            'min_bid' => $currentBid ? $currentPrice + (int) floor((float) $row['bid_step']) : (int) floor((float) $row['start_price']),
             'winner_last4' => $this->getLast4($row['winner_phone'] ?? ''),
-            'winning_amount' => $row['winning_amount'] !== null ? (float) $row['winning_amount'] : null,
+            'winning_amount' => $row['winning_amount'] !== null ? (int) floor((float) $row['winning_amount']) : null,
         ];
     }
 
@@ -320,12 +320,12 @@ SQL;
         $currentBidModel = new AuctionBid();
         $currentBid = $currentBidModel->getCurrentBid($lotId);
         $previousBidUserId = $currentBid ? (int) $currentBid['user_id'] : null;
-        $currentPrice = $currentBid ? (float) $currentBid['amount'] : (float) $lot['start_price'];
-        $minBid = $currentBid ? $currentPrice + (float) $lot['bid_step'] : (float) $lot['start_price'];
-        $finalAmount = $amount !== null ? (float) $amount : $minBid;
+        $currentPrice = $currentBid ? (int) floor((float) $currentBid['amount']) : (int) floor((float) $lot['start_price']);
+        $minBid = $currentBid ? $currentPrice + (int) floor((float) $lot['bid_step']) : (int) floor((float) $lot['start_price']);
+        $finalAmount = $amount !== null ? (int) floor((float) $amount) : $minBid;
 
         if ($finalAmount < $minBid) {
-            throw new RuntimeException(sprintf('Минимальная ставка: %.2f ₽ (шаг: %.2f ₽)', $minBid, $lot['bid_step']));
+            throw new RuntimeException(sprintf('Минимальная ставка: %d ₽ (шаг: %d ₽)', $minBid, (int) floor((float) $lot['bid_step'])));
         }
 
         $stmt = $this->db->prepare(
@@ -377,7 +377,7 @@ SQL;
         $stmt->execute([
             'lot_id' => $lotId,
             'user_id' => $userId,
-            'amount' => $lot['blitz_price'],
+            'amount' => (int) floor((float) $lot['blitz_price']),
         ]);
         $bidId = (int) $this->db->lastInsertId();
 
@@ -390,7 +390,7 @@ SQL;
             'id' => $lotId,
         ]);
 
-        $this->updateWinnerProductPrice($lotId, (float) $lot['blitz_price']);
+        $this->updateWinnerProductPrice($lotId, (int) floor((float) $lot['blitz_price']));
         if ($previousBidUserId && $previousBidUserId !== $userId) {
             $this->notifyOutbid($previousBidUserId);
         }
@@ -399,7 +399,7 @@ SQL;
 
         return [
             'bid_id' => $bidId,
-            'amount' => (float) $lot['blitz_price'],
+            'amount' => (int) floor((float) $lot['blitz_price']),
         ];
     }
 
@@ -473,7 +473,7 @@ SQL;
         ]);
 
         if ($winningBidId && $currentBid) {
-            $this->updateWinnerProductPrice($lotId, (float) $currentBid['amount']);
+            $this->updateWinnerProductPrice($lotId, (int) floor((float) $currentBid['amount']));
         }
 
         (new AuctionEvent())->log($lotId, 'finished', $winningBidId, $winnerUserId, null);
@@ -525,14 +525,14 @@ SQL;
 
         return array_map(function (array $row) use ($bidModel): array {
             $currentBid = $bidModel->getCurrentBid((int) $row['id']);
-            $currentPrice = $currentBid ? (float) $currentBid['amount'] : null;
+            $currentPrice = $currentBid ? (int) floor((float) $currentBid['amount']) : null;
 
             return [
                 'id' => (int) $row['id'],
                 'title' => $row['title'],
                 'ends_at' => $row['ends_at'],
                 'status' => $row['status'],
-                'user_amount' => $row['user_amount'] !== null ? (float) $row['user_amount'] : null,
+                'user_amount' => $row['user_amount'] !== null ? (int) floor((float) $row['user_amount']) : null,
                 'current_price' => $currentPrice,
             ];
         }, $rows);
@@ -560,8 +560,8 @@ SQL;
                 'title' => $row['title'],
                 'ends_at' => $row['ends_at'],
                 'status' => $row['status'],
-                'user_amount' => $row['user_amount'] !== null ? (float) $row['user_amount'] : null,
-                'winning_amount' => $row['winning_amount'] !== null ? (float) $row['winning_amount'] : null,
+                'user_amount' => $row['user_amount'] !== null ? (int) floor((float) $row['user_amount']) : null,
+                'winning_amount' => $row['winning_amount'] !== null ? (int) floor((float) $row['winning_amount']) : null,
                 'is_winner' => (int) ($row['winner_user_id'] ?? 0) === $userId,
             ];
         }, $rows);
@@ -628,7 +628,7 @@ SQL;
         return 'Время уточняется';
     }
 
-    private function updateWinnerProductPrice(int $lotId, float $price): void
+    private function updateWinnerProductPrice(int $lotId, int $price): void
     {
         $stmt = $this->db->prepare('SELECT product_id FROM auction_lots WHERE id = :id');
         $stmt->execute(['id' => $lotId]);
