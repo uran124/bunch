@@ -60,7 +60,7 @@
             <div class="grid gap-3 sm:grid-cols-2">
                 <label class="flex flex-col gap-2 text-sm font-semibold text-slate-700">
                     Стоимость билета, ₽
-                    <input type="number" name="ticket_price" min="0" step="0.01" value="0" class="rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-sm focus:border-violet-300 focus:outline-none focus:ring-2 focus:ring-violet-200">
+                    <input type="number" name="ticket_price" min="0" step="1" value="0" class="rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-sm focus:border-violet-300 focus:outline-none focus:ring-2 focus:ring-violet-200">
                     <span class="text-xs font-normal text-slate-400">0 — участие бесплатно.</span>
                 </label>
                 <label class="flex flex-col gap-2 text-sm font-semibold text-slate-700">

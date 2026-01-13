@@ -409,7 +409,13 @@ class Product extends Model
             $stmt = $this->db->prepare('SELECT min_qty, price FROM product_price_tiers WHERE product_id = :product_id ORDER BY min_qty ASC');
             $stmt->execute(['product_id' => $productId]);
 
-            return $stmt->fetchAll();
+            $tiers = $stmt->fetchAll();
+            return array_map(static function (array $tier): array {
+                return [
+                    'min_qty' => (int) $tier['min_qty'],
+                    'price' => (int) floor((float) $tier['price']),
+                ];
+            }, $tiers);
         } catch (\PDOException $exception) {
             error_log('Failed to load product price tiers: ' . $exception->getMessage());
             return [];

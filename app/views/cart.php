@@ -79,7 +79,7 @@
                                 return [
                                     'id' => (int) $value['id'],
                                     'value' => $value['value'],
-                                    'price_delta' => (float) ($value['price_delta'] ?? 0),
+                                    'price_delta' => (int) floor((float) ($value['price_delta'] ?? 0)),
                                 ];
                             }, $attribute['values'] ?? []),
                         ];
@@ -129,7 +129,7 @@
                             </div>
 
                             <div class="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-slate-50 px-3 py-2" data-quantity-control>
-                                <p class="text-base font-bold text-rose-600 sm:text-lg" data-line-total><?php echo number_format((float) ($item['line_total'] ?? 0), 0, '.', ' '); ?> ₽</p>
+                                <p class="text-base font-bold text-rose-600 sm:text-lg" data-line-total><?php echo number_format((int) floor((float) ($item['line_total'] ?? 0)), 0, '.', ' '); ?> ₽</p>
                                 <div class="flex items-center gap-2">
                                     <button type="button" class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 transition hover:border-rose-200 hover:text-rose-600 sm:h-9 sm:w-9" data-qty-decrease>
                                         <span class="material-symbols-rounded text-base">remove</span>
@@ -182,7 +182,7 @@
                                     </div>
                                     <div class="flex-1">
                                         <p class="text-xs font-semibold text-slate-900 sm:text-sm"><?php echo htmlspecialchars($product['name'], ENT_QUOTES, 'UTF-8'); ?></p>
-                                        <p class="text-[11px] text-slate-500 sm:text-xs"><?php echo number_format((float) $product['price'], 0, '.', ' '); ?> ₽</p>
+                                        <p class="text-[11px] text-slate-500 sm:text-xs"><?php echo number_format((int) floor((float) $product['price']), 0, '.', ' '); ?> ₽</p>
                                     </div>
                      <button
                                         type="button"
@@ -375,7 +375,7 @@
                             data-cart-total
                             data-amount="<?php echo (float) ($totals['total'] ?? 0); ?>"
                         >
-                            <?php echo number_format((float) ($totals['total'] ?? 0), 0, '.', ' '); ?> ₽
+                            <?php echo number_format((int) floor((float) ($totals['total'] ?? 0)), 0, '.', ' '); ?> ₽
                         </span>
                     </div>
 
@@ -386,7 +386,7 @@
                                 data-cart-bouquet-total
                                 data-amount="<?php echo (float) ($totals['total'] ?? 0); ?>"
                             >
-                                <?php echo number_format((float) ($totals['total'] ?? 0), 0, '.', ' '); ?> ₽
+                                <?php echo number_format((int) floor((float) ($totals['total'] ?? 0)), 0, '.', ' '); ?> ₽
                             </span>
                         </div>
                         <div class="flex items-center justify-between" data-delivery-row>
@@ -396,7 +396,7 @@
                         <div class="flex items-center justify-between text-sm font-bold text-rose-600 sm:text-base">
                             <span>Итого</span>
                             <span data-order-grand-total data-cart-total>
-                                <?php echo number_format((float) ($totals['total'] ?? 0), 0, '.', ' '); ?> ₽
+                                <?php echo number_format((int) floor((float) ($totals['total'] ?? 0)), 0, '.', ' '); ?> ₽
                             </span>
                         </div>
                     </div>

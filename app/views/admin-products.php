@@ -134,11 +134,11 @@
                 foreach ($product['price_tiers'] as $tier) {
                     $prices[] = (float) $tier['price'];
                 }
-                $minPrice = min($prices);
-                $maxPrice = max($prices);
+                $minPrice = (int) floor(min($prices));
+                $maxPrice = (int) floor(max($prices));
                 $priceLabel = $minPrice < $maxPrice
-                    ? number_format($minPrice, 2) . ' - ' . number_format($maxPrice, 2)
-                    : number_format($maxPrice, 2);
+                    ? number_format($minPrice, 0, '.', ' ') . ' - ' . number_format($maxPrice, 0, '.', ' ')
+                    : number_format($maxPrice, 0, '.', ' ');
             ?>
             <article class="grid grid-cols-[120px_1.6fr_1.2fr_120px_140px_120px_60px] items-center gap-4 border-b border-slate-100 px-5 py-4 text-sm last:border-b-0 <?php echo $isDeleted ? 'bg-slate-50/70' : ''; ?>">
                 <div class="font-semibold text-slate-900"><?php echo htmlspecialchars($articleLabel, ENT_QUOTES, 'UTF-8'); ?></div>

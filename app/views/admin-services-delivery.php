@@ -451,7 +451,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return {
             id: zone.id ?? null,
             name: zone.name || 'Зона доставки',
-            price: Number(zone.price ?? 0) || 0,
+            price: Math.floor(Number(zone.price ?? 0)) || 0,
             priority: Number(zone.priority ?? 0) || 0,
             color: zone.color || '#f43f5e',
             active: zone.active !== false && zone.active !== 0,
@@ -532,7 +532,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="mt-2 grid gap-2 sm:grid-cols-3 text-sm">
                     <label class="space-y-1">
                         <span class="text-[11px] uppercase tracking-[0.08em] text-slate-500">Цена</span>
-                        <input type="number" value="${zone.price}" data-field="price" class="w-full rounded-lg border border-slate-200 px-3 py-2 font-semibold text-slate-900 focus:border-rose-300 focus:outline-none">
+                        <input type="number" step="1" value="${zone.price}" data-field="price" class="w-full rounded-lg border border-slate-200 px-3 py-2 font-semibold text-slate-900 focus:border-rose-300 focus:outline-none">
                     </label>
                     <label class="space-y-1">
                         <span class="text-[11px] uppercase tracking-[0.08em] text-slate-500">Приоритет</span>
@@ -563,7 +563,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (field === 'active') {
                         zone.active = event.target.checked;
                     } else if (field === 'price') {
-                        zone.price = Number(event.target.value) || 0;
+                        zone.price = Math.floor(Number(event.target.value)) || 0;
+                        event.target.value = zone.price;
                     } else if (field === 'priority') {
                         zone.priority = Number(event.target.value) || 0;
                     } else {

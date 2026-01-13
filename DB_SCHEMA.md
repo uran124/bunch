@@ -122,7 +122,7 @@ CREATE TABLE user_addresses (
   region VARCHAR(150) NULL,
   city_district VARCHAR(150) NULL,
 
-  last_delivery_price_hint DECIMAL(10,2) NULL,
+  last_delivery_price_hint INT NULL,
 
   INDEX idx_user_default (user_id, is_default),
   INDEX idx_user_archived (user_id, is_archived)
@@ -147,7 +147,7 @@ CREATE TABLE products (
   name        VARCHAR(150) NOT NULL,      -- название для клиента
   slug        VARCHAR(150) NOT NULL UNIQUE,
   description TEXT NULL,                  -- описание (без раскрытия страны/сорта)
-  price       DECIMAL(10,2) NOT NULL,     -- текущая цена за единицу (например, 89.00)
+  price       INT NOT NULL,     -- текущая цена за единицу (например, 89)
 
   category    ENUM('main', 'wholesale', 'accessory') NOT NULL DEFAULT 'main', -- витрина, опт или сопутствующие товары
   product_type ENUM('regular', 'small_wholesale', 'lottery', 'promo', 'auction', 'wholesale_box') NOT NULL DEFAULT 'regular',
@@ -165,7 +165,7 @@ CREATE TABLE products (
 ```
 
 При наполнении:
-- для базового продукта `is_base = 1`, `price = 89.00`;
+- для базового продукта `is_base = 1`, `price = 89`;
 - все тексты — в рамках ограничений (см. README_DEV.md).
 - сопутствующие товары помечаем `category = 'accessory'` (например, шарики, открытки, подарочные коробки).
 - оптовые предзаказы — `category = 'wholesale'`.
@@ -232,7 +232,7 @@ CREATE TABLE promo_items (
   slug        VARCHAR(150) NOT NULL UNIQUE,
   description TEXT NULL,
 
-  price       DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+  price       INT NOT NULL DEFAULT 0,
   quantity    INT UNSIGNED NULL,
   ends_at     DATETIME NULL,
 
@@ -280,7 +280,7 @@ CREATE TABLE lotteries (
   product_id INT UNSIGNED NOT NULL,
 
   prize_description TEXT NULL,
-  ticket_price DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+  ticket_price INT NOT NULL DEFAULT 0,
   tickets_total INT UNSIGNED NOT NULL,
   draw_at DATETIME NULL,
   status ENUM('active', 'sold_out', 'finished') NOT NULL DEFAULT 'active',
@@ -352,10 +352,10 @@ CREATE TABLE auction_lots (
   title VARCHAR(150) NOT NULL,
   description TEXT NULL,
   image VARCHAR(255) NULL,
-  store_price DECIMAL(10,2) NOT NULL DEFAULT 0.00,
-  start_price DECIMAL(10,2) NOT NULL DEFAULT 1.00,
-  bid_step DECIMAL(10,2) NOT NULL DEFAULT 1.00,
-  blitz_price DECIMAL(10,2) NULL,
+  store_price INT NOT NULL DEFAULT 0,
+  start_price INT NOT NULL DEFAULT 1,
+  bid_step INT NOT NULL DEFAULT 1,
+  blitz_price INT NULL,
   starts_at DATETIME NULL,
   ends_at DATETIME NULL,
   original_ends_at DATETIME NULL,
@@ -380,7 +380,7 @@ CREATE TABLE auction_bids (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   lot_id INT UNSIGNED NOT NULL,
   user_id INT UNSIGNED NOT NULL,
-  amount DECIMAL(10,2) NOT NULL,
+  amount INT NOT NULL,
   status ENUM('active', 'cancelled') NOT NULL DEFAULT 'active',
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   cancelled_at DATETIME NULL,
@@ -522,7 +522,7 @@ CREATE TABLE cart_items (
   cart_id    INT UNSIGNED NOT NULL,
   product_id INT UNSIGNED NOT NULL,
   qty        INT UNSIGNED NOT NULL DEFAULT 1,
-  price      DECIMAL(10,2) NOT NULL,            -- цена на момент добавления в корзину
+  price      INT NOT NULL,            -- цена на момент добавления в корзину
 
   CONSTRAINT fk_cart_items_cart
     FOREIGN KEY (cart_id) REFERENCES carts(id)
@@ -549,7 +549,7 @@ CREATE TABLE cart_item_attributes (
   attribute_id INT UNSIGNED NOT NULL,
   attribute_value_id INT UNSIGNED NOT NULL,
   applies_to ENUM('stem', 'bouquet') NOT NULL DEFAULT 'stem',
-  price_delta DECIMAL(10,2) NOT NULL DEFAULT 0,
+  price_delta INT NOT NULL DEFAULT 0,
 
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -577,12 +577,12 @@ CREATE TABLE orders (
     FOREIGN KEY (address_id) REFERENCES user_addresses(id)
     ON DELETE SET NULL,
 
-  total_amount DECIMAL(10,2) NOT NULL,         -- итоговая сумма заказа
+  total_amount INT NOT NULL,         -- итоговая сумма заказа
   status ENUM('new', 'confirmed', 'assembled', 'delivering', 'delivered', 'cancelled')
     NOT NULL DEFAULT 'new',
 
   delivery_type ENUM('pickup', 'delivery', 'subscription') NOT NULL DEFAULT 'pickup',
-  delivery_price DECIMAL(10,2) NULL,
+  delivery_price INT NULL,
   zone_id INT UNSIGNED NULL,
   delivery_pricing_version VARCHAR(100) NULL,
   scheduled_date DATE NULL,
@@ -609,7 +609,7 @@ CREATE TABLE order_items (
 
   product_name VARCHAR(150) NOT NULL,          -- слепок названия на момент заказа
   qty          INT UNSIGNED NOT NULL,
-  price        DECIMAL(10,2) NOT NULL,         -- слепок цены за единицу на момент заказа
+  price        INT NOT NULL,         -- слепок цены за единицу на момент заказа
 
   CONSTRAINT fk_order_items_order
     FOREIGN KEY (order_id) REFERENCES orders(id)
@@ -636,7 +636,7 @@ CREATE TABLE order_item_attributes (
   attribute_id INT UNSIGNED NOT NULL,
   attribute_value_id INT UNSIGNED NOT NULL,
   applies_to ENUM('stem', 'bouquet') NOT NULL DEFAULT 'stem',
-  price_delta DECIMAL(10,2) NOT NULL DEFAULT 0,
+  price_delta INT NOT NULL DEFAULT 0,
 
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -817,7 +817,7 @@ CREATE TABLE delivery_pricing_meta (
 CREATE TABLE delivery_zones (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(150) NOT NULL,
-  price DECIMAL(10,2) NOT NULL DEFAULT 0,
+  price INT NOT NULL DEFAULT 0,
   priority INT NOT NULL DEFAULT 0,
   color VARCHAR(20) NOT NULL DEFAULT '#f43f5e',
   is_active TINYINT(1) NOT NULL DEFAULT 1,

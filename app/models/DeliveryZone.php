@@ -155,7 +155,7 @@ class DeliveryZone extends Model
         return [
             'id' => $id,
             'name' => $name !== '' ? $name : 'Зона доставки',
-            'price' => round((float) ($zone['price'] ?? 0), 2),
+            'price' => (int) floor((float) ($zone['price'] ?? 0)),
             'priority' => (int) ($zone['priority'] ?? 0),
             'color' => $zone['color'] ?? '#f43f5e',
             'is_active' => !empty($zone['active']) ? 1 : 0,
@@ -194,7 +194,7 @@ class DeliveryZone extends Model
         return [
             'id' => (int) $row['id'],
             'name' => $row['name'],
-            'price' => (float) $row['price'],
+            'price' => (int) floor((float) $row['price']),
             'priority' => (int) $row['priority'],
             'color' => $row['color'],
             'active' => (bool) $row['is_active'],

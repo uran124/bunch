@@ -32,7 +32,7 @@
                     <?php
                     $cardId = 'product-card-' . $product['id'];
                     $priceTiersJson = htmlspecialchars(json_encode($product['price_tiers'], JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8');
-                    $basePrice = number_format((float) $product['price'], 2, '.', '');
+                    $basePrice = (int) floor((float) $product['price']);
                     $height = $product['stem_height_cm'] ?? $product['supply_stem_height_cm'] ?? null;
                     $flower = $product['supply_flower_name'] ?? $product['name'];
                     $variety = $product['supply_variety'] ?? '';
@@ -150,7 +150,7 @@
                                             <div class="no-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1">
                                                 <?php foreach ($attribute['values'] as $value): ?>
                                                     <?php
-                                                    $priceDelta = number_format((float) $value['price_delta'], 2, '.', '');
+                                                    $priceDelta = (int) floor((float) $value['price_delta']);
                                                     ?>
                                                     <button
                                                         type="button"
@@ -162,7 +162,7 @@
                                                     aria-label="<?php echo htmlspecialchars($attribute['name'] . ': ' . $value['value'], ENT_QUOTES, 'UTF-8'); ?>"
                                                 >
                                                         <span class="text-xs font-semibold text-slate-800 md:text-sm"><?php echo htmlspecialchars($value['value'], ENT_QUOTES, 'UTF-8'); ?></span>
-                                                        <?php if ($priceDelta != '0.00'): ?>
+                                                        <?php if ($priceDelta !== 0): ?>
                                                             <span class="text-xs font-semibold text-rose-600">+<?php echo $priceDelta; ?> ₽</span>
                                                         <?php endif; ?>
                                                     </button>
@@ -262,11 +262,11 @@
     }
 
     function getUnitPrice(basePrice, tiers, quantity) {
-        let unitPrice = basePrice;
+        let unitPrice = Math.floor(basePrice);
 
         tiers.forEach((tier) => {
             if (quantity >= Number(tier.min_qty)) {
-                unitPrice = Number(tier.price);
+                unitPrice = Math.floor(Number(tier.price));
             }
         });
 
@@ -312,7 +312,7 @@
     }
 
     function updateCardTotals(card) {
-        const basePrice = Number(card.dataset.basePrice || 0);
+        const basePrice = Math.floor(Number(card.dataset.basePrice || 0));
         const tiers = JSON.parse(card.dataset.priceTiers || '[]');
         const qtyInput = card.querySelector('[data-qty]');
         const qtyValue = card.querySelector('[data-qty-value]');
@@ -328,7 +328,7 @@
         const deltas = Array.from(card.querySelectorAll('[data-attribute-group]')).reduce(
             (acc, group) => {
                 const scope = group.dataset.appliesTo === 'bouquet' ? 'bouquet' : 'stem';
-                const delta = Number(group.dataset.selectedDelta || 0);
+                const delta = Math.floor(Number(group.dataset.selectedDelta || 0));
                 if (scope === 'bouquet') {
                     acc.bouquet += delta;
                 } else {
@@ -339,8 +339,8 @@
             { stem: 0, bouquet: 0 }
         );
 
-        const baseTotal = basePrice * quantity;
-        const actualTotal = (unitPrice + deltas.stem) * quantity + deltas.bouquet;
+        const baseTotal = Math.floor(basePrice * quantity);
+        const actualTotal = Math.floor((unitPrice + deltas.stem) * quantity + deltas.bouquet);
 
         if (qtyInput) qtyInput.value = quantity.toString();
         if (qtyValue) qtyValue.value = quantity.toString();
