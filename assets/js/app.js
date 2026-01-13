@@ -2661,7 +2661,8 @@ function initLotteryModal() {
 
     const loadTickets = async (lotteryId) => {
         const data = await fetchJson(`/api/lottery/tickets?lottery_id=${lotteryId}`);
-        const isFree = Number(data.lottery.ticket_price) <= 0;
+        const ticketPrice = Number(data.lottery?.ticket_price ?? 0);
+        const isFree = !Number.isFinite(ticketPrice) || ticketPrice <= 0;
         const myTicket = data.tickets.find((ticket) => ticket.is_mine);
         selectionLocked = isFree && Boolean(myTicket);
         if (title) title.textContent = 'Выбери номер';
