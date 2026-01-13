@@ -2700,6 +2700,7 @@ function initLotteryModal() {
             payButton.classList.toggle('hidden', isFree);
             payButton.disabled = isFree;
             payButton.classList.toggle('opacity-70', isFree);
+            payButton.style.display = isFree ? 'none' : '';
         }
         if (selectionLocked && myTicket) {
             selectedTicketNumber = myTicket.ticket_number;
