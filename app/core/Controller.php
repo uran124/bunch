@@ -54,6 +54,12 @@ abstract class Controller
             $data['isWholesaleUser'] = $data['currentUserRole'] === 'wholesale';
         }
 
+        if (!array_key_exists('staticMenuPages', $data) || !array_key_exists('staticFooterPages', $data)) {
+            $staticPageModel = class_exists('StaticPage') ? new StaticPage() : null;
+            $data['staticMenuPages'] = $data['staticMenuPages'] ?? ($staticPageModel ? $staticPageModel->getActiveByPlacement('menu') : []);
+            $data['staticFooterPages'] = $data['staticFooterPages'] ?? ($staticPageModel ? $staticPageModel->getActiveByPlacement('footer') : []);
+        }
+
         View::render($view, $data, $layout);
     }
 }

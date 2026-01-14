@@ -457,6 +457,23 @@ $adminNavigation = [
         <?php echo $content; ?>
     </main>
 
+    <?php
+    $defaultInfoLinks = [
+        ['title' => 'О нас', 'href' => '/?page=about'],
+        ['title' => 'Наши розы', 'href' => '/?page=roses'],
+        ['title' => 'Оплата и доставка', 'href' => '/?page=delivery'],
+        ['title' => 'Как получить скидку?', 'href' => '/?page=discount'],
+    ];
+    $staticMenuPages = $staticMenuPages ?? [];
+    $staticFooterPages = $staticFooterPages ?? [];
+    $menuLinks = $staticMenuPages
+        ? array_map(static fn ($page) => ['title' => $page['title'], 'href' => '/?page=static&slug=' . urlencode($page['slug'])], $staticMenuPages)
+        : $defaultInfoLinks;
+    $footerLinks = $staticFooterPages
+        ? array_map(static fn ($page) => ['title' => $page['title'], 'href' => '/?page=static&slug=' . urlencode($page['slug'])], $staticFooterPages)
+        : $defaultInfoLinks;
+    ?>
+
     <?php if (!$isAdminPage): ?>
         <footer class="hidden border-t border-slate-200 bg-white/90 backdrop-blur sm:block">
             <div class="mx-auto w-full max-w-6xl px-4 py-6 text-xs text-slate-500">
@@ -477,10 +494,11 @@ $adminNavigation = [
                     <div class="space-y-2">
                         <p class="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Информация</p>
                         <div class="flex flex-col gap-2 text-sm font-semibold text-slate-600">
-                            <a class="transition hover:text-rose-600" href="/?page=about">О нас</a>
-                            <a class="transition hover:text-rose-600" href="/?page=roses">Наши розы</a>
-                            <a class="transition hover:text-rose-600" href="/?page=delivery">Оплата и доставка</a>
-                            <a class="transition hover:text-rose-600" href="/?page=discount">Как получить скидку?</a>
+                            <?php foreach ($footerLinks as $link): ?>
+                                <a class="transition hover:text-rose-600" href="<?php echo htmlspecialchars($link['href'], ENT_QUOTES, 'UTF-8'); ?>">
+                                    <?php echo htmlspecialchars($link['title'], ENT_QUOTES, 'UTF-8'); ?>
+                                </a>
+                            <?php endforeach; ?>
                         </div>
                     </div>
                     <div class="space-y-2">
@@ -559,10 +577,11 @@ $adminNavigation = [
                         </div>
                     </div>
                     <div class="flex flex-col gap-2 text-sm font-semibold text-slate-700">
-                        <a class="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 transition hover:border-rose-200 hover:text-rose-600" href="/?page=about">О нас</a>
-                        <a class="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 transition hover:border-rose-200 hover:text-rose-600" href="/?page=roses">Наши розы</a>
-                        <a class="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 transition hover:border-rose-200 hover:text-rose-600" href="/?page=delivery">Оплата и доставка</a>
-                        <a class="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 transition hover:border-rose-200 hover:text-rose-600" href="/?page=discount">Как получить скидку?</a>
+                        <?php foreach ($menuLinks as $link): ?>
+                            <a class="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 transition hover:border-rose-200 hover:text-rose-600" href="<?php echo htmlspecialchars($link['href'], ENT_QUOTES, 'UTF-8'); ?>">
+                                <?php echo htmlspecialchars($link['title'], ENT_QUOTES, 'UTF-8'); ?>
+                            </a>
+                        <?php endforeach; ?>
                     </div>
                     <div class="flex flex-col gap-2 text-sm font-semibold text-slate-700">
                         <a class="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 transition hover:border-rose-200 hover:text-rose-600" href="/?page=policy">Политика обработки персональных данных</a>

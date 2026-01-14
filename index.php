@@ -124,6 +124,7 @@ $router->get('about', [InfoController::class, 'about']);
 $router->get('roses', [InfoController::class, 'roses']);
 $router->get('delivery', [InfoController::class, 'delivery']);
 $router->get('discount', [InfoController::class, 'discount']);
+$router->get('static', [StaticPageController::class, 'show']);
 $router->get('admin', [AdminController::class, 'index']);
 $router->get('admin-users', [AdminController::class, 'users']);
 $router->get('admin-user', [AdminController::class, 'user']);
@@ -184,6 +185,9 @@ $router->post('admin-promo-categories-save', [AdminController::class, 'savePromo
 $router->post('admin-promo-settings-save', [AdminController::class, 'savePromoSettings']);
 $router->post('admin-order-update', [AdminController::class, 'updateOneTimeOrder']);
 $router->post('admin-order-delete', [AdminController::class, 'deleteOneTimeOrder']);
+$router->post('admin-static-page-save', [AdminController::class, 'saveStaticPage']);
+$router->post('admin-static-page-toggle', [AdminController::class, 'toggleStaticPage']);
+$router->post('admin-static-page-delete', [AdminController::class, 'deleteStaticPage']);
 $router->post('cart-add', [CartController::class, 'add']);
 $router->post('cart-update', [CartController::class, 'update']);
 $router->post('cart-remove', [CartController::class, 'remove']);
@@ -206,6 +210,7 @@ $publicPages = [
     'roses',
     'delivery',
     'discount',
+    'static',
     'api-dadata-clean-address',
     'cart-add',
     'cart-update',
