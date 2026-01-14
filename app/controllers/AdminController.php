@@ -645,7 +645,13 @@ class AdminController extends Controller
         $productId = (int) ($_POST['product_id'] ?? 0);
         $supplyId = (int) ($_POST['supply_id'] ?? 0);
         $article = trim($_POST['article'] ?? '');
+        $altName = trim($_POST['alt_name'] ?? '');
         $photoUrl = trim($_POST['photo_url'] ?? '');
+        $photoSecondaryUrl = trim($_POST['photo_url_secondary'] ?? '');
+        $photoTertiaryUrl = trim($_POST['photo_url_tertiary'] ?? '');
+        $deletePhoto = ($_POST['photo_delete'] ?? '') === '1';
+        $deletePhotoSecondary = ($_POST['photo_delete_secondary'] ?? '') === '1';
+        $deletePhotoTertiary = ($_POST['photo_delete_tertiary'] ?? '') === '1';
         $price = (int) floor((float) ($_POST['price'] ?? 0));
         $active = isset($_POST['is_active']) ? 1 : 0;
         $category = trim($_POST['category'] ?? 'main');
@@ -660,8 +666,22 @@ class AdminController extends Controller
         }
 
         $uploadedPhoto = $this->handlePhotoUpload('photo_file', 'product');
+        $uploadedSecondaryPhoto = $this->handlePhotoUpload('photo_file_secondary', 'product');
+        $uploadedTertiaryPhoto = $this->handlePhotoUpload('photo_file_tertiary', 'product');
         if ($uploadedPhoto) {
             $photoUrl = $uploadedPhoto;
+        } elseif ($deletePhoto) {
+            $photoUrl = '';
+        }
+        if ($uploadedSecondaryPhoto) {
+            $photoSecondaryUrl = $uploadedSecondaryPhoto;
+        } elseif ($deletePhotoSecondary) {
+            $photoSecondaryUrl = '';
+        }
+        if ($uploadedTertiaryPhoto) {
+            $photoTertiaryUrl = $uploadedTertiaryPhoto;
+        } elseif ($deletePhotoTertiary) {
+            $photoTertiaryUrl = '';
         }
 
         $tierQty = $_POST['tier_min_qty'] ?? [];
@@ -693,10 +713,13 @@ class AdminController extends Controller
         $payload = [
             'supply_id' => $supplyId,
             'name' => $name,
+            'alt_name' => $altName !== '' ? $altName : null,
             'description' => $description,
             'price' => $price,
             'article' => $article !== '' ? $article : null,
             'photo_url' => $photoUrl !== '' ? $photoUrl : null,
+            'photo_url_secondary' => $photoSecondaryUrl !== '' ? $photoSecondaryUrl : null,
+            'photo_url_tertiary' => $photoTertiaryUrl !== '' ? $photoTertiaryUrl : null,
             'stem_height_cm' => $supply['stem_height_cm'] ?? null,
             'stem_weight_g' => $supply['stem_weight_g'] ?? null,
             'country' => $supply['country'] ?? null,
@@ -1208,10 +1231,13 @@ class AdminController extends Controller
         try {
             $productId = $productModel->createCustom([
                 'name' => $title,
+                'alt_name' => null,
                 'description' => $description !== '' ? $description : null,
                 'price' => $price,
                 'article' => null,
                 'photo_url' => $photoUrl !== '' ? $photoUrl : null,
+                'photo_url_secondary' => null,
+                'photo_url_tertiary' => null,
                 'category' => 'main',
                 'product_type' => 'promo',
                 'is_base' => 0,
@@ -1272,9 +1298,12 @@ class AdminController extends Controller
             if (!empty($promoItem['product_id'])) {
                 $productModel->updateCustom((int) $promoItem['product_id'], [
                     'name' => $title,
+                    'alt_name' => null,
                     'description' => $description !== '' ? $description : null,
                     'price' => $price,
                     'photo_url' => $photoUrl !== '' ? $photoUrl : null,
+                    'photo_url_secondary' => null,
+                    'photo_url_tertiary' => null,
                     'category' => 'main',
                     'product_type' => 'promo',
                     'is_active' => $isActive,

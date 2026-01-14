@@ -104,18 +104,85 @@
                         <input name="article" value="<?php echo htmlspecialchars($editingProduct['article'] ?? '', ENT_QUOTES, 'UTF-8'); ?>" class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-sm" placeholder="SKU/артикул">
                     </label>
                     <label class="flex flex-col gap-1 text-sm font-semibold text-slate-700">
-                        Основное фото (URL)
-                        <input name="photo_url" value="<?php echo htmlspecialchars($editingProduct['photo_url'] ?? '', ENT_QUOTES, 'UTF-8'); ?>" class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-sm" placeholder="https://...">
-                    </label>
-                    <label class="flex flex-col gap-1 text-sm font-semibold text-slate-700">
-                        Загрузить фото
-                        <input name="photo_file" type="file" accept="image/*" class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-sm">
-                        <span class="text-xs font-normal text-slate-500">Изображение обрежется до квадрата и сохранится в WebP.</span>
+                        Альтернативное название для карточки
+                        <input name="alt_name" value="<?php echo htmlspecialchars($editingProduct['alt_name'] ?? '', ENT_QUOTES, 'UTF-8'); ?>" class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-sm" placeholder="Например: Роза Red Naomie 60 см">
                     </label>
                     <label class="flex flex-col gap-1 text-sm font-semibold text-slate-700">
                         Базовая цена, ₽
                         <input name="price" type="number" step="1" required value="<?php echo htmlspecialchars($editingProduct['price'] ?? '', ENT_QUOTES, 'UTF-8'); ?>" class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-sm">
                     </label>
+                </div>
+
+                <?php
+                $photoSlots = [
+                    [
+                        'key' => 'main',
+                        'label' => 'Основное фото',
+                        'urlField' => 'photo_url',
+                        'fileField' => 'photo_file',
+                        'deleteField' => 'photo_delete',
+                        'value' => $editingProduct['photo_url'] ?? '',
+                    ],
+                    [
+                        'key' => 'secondary',
+                        'label' => 'Дополнительное фото',
+                        'urlField' => 'photo_url_secondary',
+                        'fileField' => 'photo_file_secondary',
+                        'deleteField' => 'photo_delete_secondary',
+                        'value' => $editingProduct['photo_url_secondary'] ?? '',
+                    ],
+                    [
+                        'key' => 'tertiary',
+                        'label' => 'Дополнительное фото',
+                        'urlField' => 'photo_url_tertiary',
+                        'fileField' => 'photo_file_tertiary',
+                        'deleteField' => 'photo_delete_tertiary',
+                        'value' => $editingProduct['photo_url_tertiary'] ?? '',
+                    ],
+                ];
+                ?>
+
+                <div class="space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-3">
+                    <p class="text-sm font-semibold text-slate-800">Фотографии товара</p>
+                    <div class="grid gap-3 md:grid-cols-3">
+                        <?php foreach ($photoSlots as $slot): ?>
+                            <?php $hasPhoto = !empty($slot['value']); ?>
+                            <div class="relative space-y-2" data-photo-slot>
+                                <input type="hidden" name="<?php echo $slot['urlField']; ?>" value="<?php echo htmlspecialchars($slot['value'], ENT_QUOTES, 'UTF-8'); ?>" data-photo-url>
+                                <input type="hidden" name="<?php echo $slot['deleteField']; ?>" value="0" data-photo-delete>
+                                <input
+                                    id="photo-<?php echo $slot['key']; ?>"
+                                    name="<?php echo $slot['fileField']; ?>"
+                                    type="file"
+                                    accept="image/*"
+                                    class="hidden"
+                                    data-photo-input
+                                >
+                                <label
+                                    for="photo-<?php echo $slot['key']; ?>"
+                                    class="relative flex aspect-square w-full cursor-pointer items-center justify-center overflow-hidden rounded-2xl border border-dashed border-slate-300 bg-white text-slate-400 shadow-sm transition hover:border-rose-200 hover:text-rose-400"
+                                >
+                                    <span class="material-symbols-rounded text-3xl <?php echo $hasPhoto ? 'hidden' : ''; ?>" data-photo-placeholder>add</span>
+                                    <img
+                                        src="<?php echo htmlspecialchars($slot['value'], ENT_QUOTES, 'UTF-8'); ?>"
+                                        alt="<?php echo htmlspecialchars($slot['label'], ENT_QUOTES, 'UTF-8'); ?>"
+                                        class="absolute inset-0 h-full w-full object-cover <?php echo $hasPhoto ? '' : 'hidden'; ?>"
+                                        data-photo-preview
+                                    >
+                                </label>
+                                <button
+                                    type="button"
+                                    class="absolute right-2 top-2 inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-slate-600 shadow-sm transition hover:bg-white hover:text-rose-600 <?php echo $hasPhoto ? '' : 'hidden'; ?>"
+                                    aria-label="Удалить фото"
+                                    data-photo-remove
+                                >
+                                    <span class="material-symbols-rounded text-base">delete</span>
+                                </button>
+                                <p class="text-center text-xs font-semibold text-slate-500"><?php echo htmlspecialchars($slot['label'], ENT_QUOTES, 'UTF-8'); ?></p>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                    <p class="text-xs font-normal text-slate-500">Изображения обрежутся до квадрата и сохранятся в WebP.</p>
                 </div>
 
                 <div class="space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-3">
@@ -243,6 +310,59 @@
     (function() {
         const addTierBtn = document.getElementById('add-tier');
         const tierContainer = document.getElementById('tier-fields');
+
+        const photoSlots = document.querySelectorAll('[data-photo-slot]');
+        if (photoSlots.length > 0) {
+            photoSlots.forEach((slot) => {
+                const input = slot.querySelector('[data-photo-input]');
+                const preview = slot.querySelector('[data-photo-preview]');
+                const placeholder = slot.querySelector('[data-photo-placeholder]');
+                const removeBtn = slot.querySelector('[data-photo-remove]');
+                const urlField = slot.querySelector('[data-photo-url]');
+                const deleteField = slot.querySelector('[data-photo-delete]');
+
+                const updateState = (url) => {
+                    if (url) {
+                        preview.src = url;
+                        preview.classList.remove('hidden');
+                        placeholder.classList.add('hidden');
+                        removeBtn.classList.remove('hidden');
+                    } else {
+                        preview.removeAttribute('src');
+                        preview.classList.add('hidden');
+                        placeholder.classList.remove('hidden');
+                        removeBtn.classList.add('hidden');
+                    }
+                };
+
+                if (urlField?.value) {
+                    updateState(urlField.value);
+                }
+
+                input?.addEventListener('change', () => {
+                    if (input.files && input.files[0]) {
+                        const objectUrl = URL.createObjectURL(input.files[0]);
+                        updateState(objectUrl);
+                        if (deleteField) {
+                            deleteField.value = '0';
+                        }
+                    }
+                });
+
+                removeBtn?.addEventListener('click', () => {
+                    if (input) {
+                        input.value = '';
+                    }
+                    if (urlField) {
+                        urlField.value = '';
+                    }
+                    if (deleteField) {
+                        deleteField.value = '1';
+                    }
+                    updateState('');
+                });
+            });
+        }
 
         if (!addTierBtn || !tierContainer) {
             return;

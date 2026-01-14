@@ -15,10 +15,13 @@ class AuctionLot extends Model
         try {
             $productId = $productModel->createCustom([
                 'name' => $payload['title'],
+                'alt_name' => null,
                 'description' => $payload['description'],
                 'price' => $payload['start_price'],
                 'article' => null,
                 'photo_url' => $payload['image'],
+                'photo_url_secondary' => null,
+                'photo_url_tertiary' => null,
                 'category' => 'main',
                 'product_type' => 'auction',
                 'is_base' => 0,
@@ -174,9 +177,12 @@ SQL;
             $productModel = new Product();
             $productModel->updateCustom($productId, [
                 'name' => $payload['title'],
+                'alt_name' => null,
                 'description' => $payload['description'],
                 'price' => $payload['start_price'],
                 'photo_url' => $payload['image'],
+                'photo_url_secondary' => null,
+                'photo_url_tertiary' => null,
                 'category' => 'main',
                 'product_type' => 'auction',
                 'is_active' => 1,
@@ -645,9 +651,12 @@ SQL;
 
         $productModel->updateCustom($productId, [
             'name' => $product['name'],
+            'alt_name' => $product['alt_name'] ?? null,
             'description' => $product['description'],
             'price' => $price,
             'photo_url' => $product['photo_url'],
+            'photo_url_secondary' => $product['photo_url_secondary'] ?? null,
+            'photo_url_tertiary' => $product['photo_url_tertiary'] ?? null,
             'category' => $product['category'] ?? 'main',
             'product_type' => $product['product_type'] ?? 'auction',
             'is_active' => (int) ($product['is_active'] ?? 1),

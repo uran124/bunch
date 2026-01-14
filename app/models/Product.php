@@ -113,17 +113,20 @@ class Product extends Model
     {
         $slug = $this->generateSlug($payload['name']);
 
-        $sql = "INSERT INTO {$this->table} (supply_id, name, slug, description, price, article, photo_url, stem_height_cm, stem_weight_g, country, category, product_type, is_base, is_active, status, sort_order) VALUES (:supply_id, :name, :slug, :description, :price, :article, :photo_url, :stem_height_cm, :stem_weight_g, :country, :category, :product_type, :is_base, :is_active, :status, :sort_order)";
+        $sql = "INSERT INTO {$this->table} (supply_id, name, alt_name, slug, description, price, article, photo_url, photo_url_secondary, photo_url_tertiary, stem_height_cm, stem_weight_g, country, category, product_type, is_base, is_active, status, sort_order) VALUES (:supply_id, :name, :alt_name, :slug, :description, :price, :article, :photo_url, :photo_url_secondary, :photo_url_tertiary, :stem_height_cm, :stem_weight_g, :country, :category, :product_type, :is_base, :is_active, :status, :sort_order)";
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute([
             'supply_id' => $payload['supply_id'],
             'name' => $payload['name'],
+            'alt_name' => $payload['alt_name'],
             'slug' => $slug,
             'description' => $payload['description'],
             'price' => $payload['price'],
             'article' => $payload['article'],
             'photo_url' => $payload['photo_url'],
+            'photo_url_secondary' => $payload['photo_url_secondary'],
+            'photo_url_tertiary' => $payload['photo_url_tertiary'],
             'stem_height_cm' => $payload['stem_height_cm'],
             'stem_weight_g' => $payload['stem_weight_g'],
             'country' => $payload['country'],
@@ -142,16 +145,19 @@ class Product extends Model
     {
         $slug = $this->generateSlug($payload['name']);
 
-        $sql = "INSERT INTO {$this->table} (name, slug, description, price, article, photo_url, category, product_type, is_base, is_active, status, sort_order) VALUES (:name, :slug, :description, :price, :article, :photo_url, :category, :product_type, :is_base, :is_active, :status, :sort_order)";
+        $sql = "INSERT INTO {$this->table} (name, alt_name, slug, description, price, article, photo_url, photo_url_secondary, photo_url_tertiary, category, product_type, is_base, is_active, status, sort_order) VALUES (:name, :alt_name, :slug, :description, :price, :article, :photo_url, :photo_url_secondary, :photo_url_tertiary, :category, :product_type, :is_base, :is_active, :status, :sort_order)";
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute([
             'name' => $payload['name'],
+            'alt_name' => $payload['alt_name'],
             'slug' => $slug,
             'description' => $payload['description'],
             'price' => $payload['price'],
             'article' => $payload['article'],
             'photo_url' => $payload['photo_url'],
+            'photo_url_secondary' => $payload['photo_url_secondary'],
+            'photo_url_tertiary' => $payload['photo_url_tertiary'],
             'category' => $payload['category'] ?? 'main',
             'product_type' => $payload['product_type'] ?? 'regular',
             'is_base' => $payload['is_base'] ?? 0,
@@ -193,16 +199,19 @@ class Product extends Model
 
     public function updateProduct(int $id, array $payload): void
     {
-        $sql = "UPDATE {$this->table} SET supply_id = :supply_id, name = :name, description = :description, price = :price, article = :article, photo_url = :photo_url, stem_height_cm = :stem_height_cm, stem_weight_g = :stem_weight_g, country = :country, category = :category, product_type = :product_type, is_active = :is_active WHERE id = :id";
+        $sql = "UPDATE {$this->table} SET supply_id = :supply_id, name = :name, alt_name = :alt_name, description = :description, price = :price, article = :article, photo_url = :photo_url, photo_url_secondary = :photo_url_secondary, photo_url_tertiary = :photo_url_tertiary, stem_height_cm = :stem_height_cm, stem_weight_g = :stem_weight_g, country = :country, category = :category, product_type = :product_type, is_active = :is_active WHERE id = :id";
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute([
             'supply_id' => $payload['supply_id'],
             'name' => $payload['name'],
+            'alt_name' => $payload['alt_name'],
             'description' => $payload['description'],
             'price' => $payload['price'],
             'article' => $payload['article'],
             'photo_url' => $payload['photo_url'],
+            'photo_url_secondary' => $payload['photo_url_secondary'],
+            'photo_url_tertiary' => $payload['photo_url_tertiary'],
             'stem_height_cm' => $payload['stem_height_cm'],
             'stem_weight_g' => $payload['stem_weight_g'],
             'country' => $payload['country'],
@@ -215,14 +224,17 @@ class Product extends Model
 
     public function updateCustom(int $id, array $payload): void
     {
-        $sql = "UPDATE {$this->table} SET name = :name, description = :description, price = :price, photo_url = :photo_url, category = :category, product_type = :product_type, is_active = :is_active WHERE id = :id";
+        $sql = "UPDATE {$this->table} SET name = :name, alt_name = :alt_name, description = :description, price = :price, photo_url = :photo_url, photo_url_secondary = :photo_url_secondary, photo_url_tertiary = :photo_url_tertiary, category = :category, product_type = :product_type, is_active = :is_active WHERE id = :id";
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute([
             'name' => $payload['name'],
+            'alt_name' => $payload['alt_name'],
             'description' => $payload['description'],
             'price' => $payload['price'],
             'photo_url' => $payload['photo_url'],
+            'photo_url_secondary' => $payload['photo_url_secondary'],
+            'photo_url_tertiary' => $payload['photo_url_tertiary'],
             'category' => $payload['category'] ?? 'main',
             'product_type' => $payload['product_type'] ?? 'regular',
             'is_active' => $payload['is_active'],

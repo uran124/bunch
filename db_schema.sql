@@ -198,11 +198,14 @@ CREATE TABLE products (
   supply_id INT UNSIGNED NULL,             -- привязка к поставке
 
   name        VARCHAR(150) NOT NULL,       -- название для клиента (из поставки)
+  alt_name    VARCHAR(150) NULL,           -- альтернативное название для карточки
   slug        VARCHAR(150) NOT NULL UNIQUE,
   description TEXT NULL,                   -- описание (без раскрытия страны/сорта)
   price       INT NOT NULL,      -- базовая цена за единицу
   article     VARCHAR(64) NULL,            -- артикул для склада/витрины
   photo_url   VARCHAR(255) NULL,           -- основное фото товара
+  photo_url_secondary VARCHAR(255) NULL,   -- дополнительное фото товара
+  photo_url_tertiary  VARCHAR(255) NULL,   -- дополнительное фото товара
 
   stem_height_cm INT UNSIGNED NULL,        -- ростовка из поставки
   stem_weight_g  INT UNSIGNED NULL,        -- вес стебля из поставки
