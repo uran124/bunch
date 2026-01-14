@@ -15,7 +15,7 @@ $pageMeta = array_merge($pageMeta ?? [], [
         <section class="space-y-2">
             <h2 class="text-lg font-semibold text-slate-900">1. Общие положения</h2>
             <p>1.1. Настоящее соглашение регулирует использование сайта Bunch flowers и порядок оформления заказов.</p>
-            <p>1.2. Пользуясь сайтом, Вы подтверждаете согласие с условиями настоящего соглашения и <a class="text-rose-600 underline underline-offset-2" href="/?page=policy">Политикой обработки персональных данных</a>.</p>
+            <p>1.2. Пользуясь сайтом, Вы подтверждаете согласие с условиями настоящего соглашения и <a class="text-rose-600 underline underline-offset-2" href="/?page=static&slug=policy">Политикой обработки персональных данных</a>.</p>
         </section>
 
         <section class="space-y-2">

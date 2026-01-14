@@ -465,9 +465,9 @@ $adminNavigation = [
         ['title' => 'Как получить скидку?', 'href' => '/?page=discount'],
     ];
     $defaultLegalLinks = [
-        ['title' => 'Политика обработки персональных данных', 'href' => '/?page=policy'],
-        ['title' => 'Согласие на обработку персональных данных', 'href' => '/?page=consent'],
-        ['title' => 'Пользовательское соглашение', 'href' => '/?page=offer'],
+        ['title' => 'Политика обработки персональных данных', 'href' => '/?page=static&slug=policy'],
+        ['title' => 'Согласие на обработку персональных данных', 'href' => '/?page=static&slug=consent'],
+        ['title' => 'Пользовательское соглашение', 'href' => '/?page=static&slug=offer'],
     ];
     $staticMenuPages = $staticMenuPages ?? [];
     $staticFooterPages = $staticFooterPages ?? [];
@@ -599,9 +599,9 @@ $adminNavigation = [
                         <?php endforeach; ?>
                     </div>
                     <div class="flex flex-col gap-2 text-sm font-semibold text-slate-700">
-                        <a class="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 transition hover:border-rose-200 hover:text-rose-600" href="/?page=policy">Политика обработки персональных данных</a>
-                        <a class="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 transition hover:border-rose-200 hover:text-rose-600" href="/?page=consent">Согласие на обработку персональных данных</a>
-                        <a class="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 transition hover:border-rose-200 hover:text-rose-600" href="/?page=offer">Пользовательское соглашение</a>
+                        <a class="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 transition hover:border-rose-200 hover:text-rose-600" href="/?page=static&slug=policy">Политика обработки персональных данных</a>
+                        <a class="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 transition hover:border-rose-200 hover:text-rose-600" href="/?page=static&slug=consent">Согласие на обработку персональных данных</a>
+                        <a class="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 transition hover:border-rose-200 hover:text-rose-600" href="/?page=static&slug=offer">Пользовательское соглашение</a>
                     </div>
                 </div>
             </div>
@@ -618,7 +618,7 @@ $adminNavigation = [
                 <p class="text-sm text-slate-600">
                     Мы используем cookie, чтобы сайт работал корректно, а также для аналитики и маркетинга (Яндекс.Метрика, Google Analytics, пиксель VK).
                     Вы можете принять все cookie или настроить выбор. Подробнее — в
-                    <a class="text-rose-600 underline underline-offset-2" href="/?page=policy">Политике обработки персональных данных</a>.
+                    <a class="text-rose-600 underline underline-offset-2" href="/?page=static&slug=policy">Политике обработки персональных данных</a>.
                 </p>
             </div>
             <div class="flex flex-wrap gap-2">
