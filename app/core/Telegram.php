@@ -12,7 +12,7 @@ class Telegram
 
     public function sendMessage(int $chatId, string $text, array $options = []): void
     {
-        $text = $this->wrapInCodeTag($text);
+        $text = $this->formatText($text);
         $payload = array_merge([
             'chat_id' => $chatId,
             'text' => $text,
@@ -22,15 +22,13 @@ class Telegram
         $this->request('sendMessage', $payload);
     }
 
-    private function wrapInCodeTag(string $text): string
+    private function formatText(string $text): string
     {
-        if (preg_match('/<code>.*<\/code>/s', $text)) {
+        if (preg_match('/<[^>]+>/', $text)) {
             return $text;
         }
 
-        $escaped = htmlspecialchars($text, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-
-        return '<code>' . $escaped . '</code>';
+        return htmlspecialchars($text, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
     }
 
     private function request(string $method, array $params): void
