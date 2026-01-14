@@ -464,14 +464,27 @@ $adminNavigation = [
         ['title' => 'Оплата и доставка', 'href' => '/?page=delivery'],
         ['title' => 'Как получить скидку?', 'href' => '/?page=discount'],
     ];
+    $defaultLegalLinks = [
+        ['title' => 'Политика обработки персональных данных', 'href' => '/?page=policy'],
+        ['title' => 'Согласие на обработку персональных данных', 'href' => '/?page=consent'],
+        ['title' => 'Пользовательское соглашение', 'href' => '/?page=offer'],
+    ];
     $staticMenuPages = $staticMenuPages ?? [];
     $staticFooterPages = $staticFooterPages ?? [];
     $menuLinks = $staticMenuPages
         ? array_map(static fn ($page) => ['title' => $page['title'], 'href' => '/?page=static&slug=' . urlencode($page['slug'])], $staticMenuPages)
         : $defaultInfoLinks;
-    $footerLinks = $staticFooterPages
-        ? array_map(static fn ($page) => ['title' => $page['title'], 'href' => '/?page=static&slug=' . urlencode($page['slug'])], $staticFooterPages)
-        : $defaultInfoLinks;
+    $footerColumns = [1 => [], 2 => []];
+    foreach ($staticFooterPages as $page) {
+        $column = (int) ($page['footer_column'] ?? 1);
+        $column = in_array($column, [1, 2], true) ? $column : 1;
+        $footerColumns[$column][] = [
+            'title' => $page['title'],
+            'href' => '/?page=static&slug=' . urlencode($page['slug']),
+        ];
+    }
+    $footerLinksFirst = $footerColumns[1] ?: $defaultInfoLinks;
+    $footerLinksSecond = $footerColumns[2] ?: $defaultLegalLinks;
     ?>
 
     <?php if (!$isAdminPage): ?>
@@ -494,7 +507,7 @@ $adminNavigation = [
                     <div class="space-y-2">
                         <p class="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Информация</p>
                         <div class="flex flex-col gap-2 text-sm font-semibold text-slate-600">
-                            <?php foreach ($footerLinks as $link): ?>
+                            <?php foreach ($footerLinksFirst as $link): ?>
                                 <a class="transition hover:text-rose-600" href="<?php echo htmlspecialchars($link['href'], ENT_QUOTES, 'UTF-8'); ?>">
                                     <?php echo htmlspecialchars($link['title'], ENT_QUOTES, 'UTF-8'); ?>
                                 </a>
@@ -504,9 +517,11 @@ $adminNavigation = [
                     <div class="space-y-2">
                         <p class="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Правовая информация</p>
                         <div class="flex flex-col gap-2 text-sm font-semibold text-slate-600">
-                            <a class="transition hover:text-rose-600" href="/?page=policy">Политика обработки персональных данных</a>
-                            <a class="transition hover:text-rose-600" href="/?page=consent">Согласие на обработку персональных данных</a>
-                            <a class="transition hover:text-rose-600" href="/?page=offer">Пользовательское соглашение</a>
+                            <?php foreach ($footerLinksSecond as $link): ?>
+                                <a class="transition hover:text-rose-600" href="<?php echo htmlspecialchars($link['href'], ENT_QUOTES, 'UTF-8'); ?>">
+                                    <?php echo htmlspecialchars($link['title'], ENT_QUOTES, 'UTF-8'); ?>
+                                </a>
+                            <?php endforeach; ?>
                         </div>
                     </div>
                 </div>

@@ -2215,6 +2215,8 @@ class AdminController extends Controller
         $showInMenu = isset($_POST['show_in_menu']) ? 1 : 0;
         $isActive = isset($_POST['is_active']) ? 1 : 0;
         $sortOrder = (int) ($_POST['sort_order'] ?? 0);
+        $footerColumn = (int) ($_POST['footer_column'] ?? 1);
+        $footerColumn = in_array($footerColumn, [1, 2], true) ? $footerColumn : 1;
 
         if ($title === '' || $slug === '') {
             header('Location: /?page=admin-content-static&status=error');
@@ -2229,6 +2231,7 @@ class AdminController extends Controller
             'show_in_menu' => $showInMenu,
             'is_active' => $isActive,
             'sort_order' => $sortOrder,
+            'footer_column' => $footerColumn,
         ];
 
         try {
