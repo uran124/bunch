@@ -48,6 +48,19 @@
                     $salesComment = $isSmallWholesale
                         ? ($stemsPerPack > 0 ? "продажа пачками по {$stemsPerPack} штук" : 'продажа пачками')
                         : 'продажа поштучно';
+                    $country = $product['country'] ?? $product['supply_country'] ?? null;
+                    $budSize = $product['bud_size_cm'] ?? $product['supply_bud_size_cm'] ?? null;
+                    $description = trim((string) ($product['description'] ?? ''));
+                    $primaryPhoto = $product['photo_url'] ?? '';
+                    $secondaryPhoto = $product['photo_url_secondary'] ?? '';
+                    $tertiaryPhoto = $product['photo_url_tertiary'] ?? '';
+                    $fallbackPhoto = $primaryPhoto !== '' ? $primaryPhoto : '/assets/images/products/bouquet.svg';
+                    $modalPhotos = [
+                        $primaryPhoto !== '' ? $primaryPhoto : $fallbackPhoto,
+                        $secondaryPhoto !== '' ? $secondaryPhoto : $fallbackPhoto,
+                        $tertiaryPhoto !== '' ? $tertiaryPhoto : $fallbackPhoto,
+                    ];
+                    $modalPhotosJson = htmlspecialchars(json_encode($modalPhotos, JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8');
 
                     if ($flower) {
                         $titleParts[] = mb_strtolower($flower, 'UTF-8');
@@ -71,6 +84,12 @@
                         data-product-id="<?php echo (int) $product['id']; ?>"
                         data-product-name="<?php echo htmlspecialchars($product['name'], ENT_QUOTES, 'UTF-8'); ?>"
                         data-product-photo="<?php echo htmlspecialchars($product['photo_url'] ?? '', ENT_QUOTES, 'UTF-8'); ?>"
+                        data-product-title="<?php echo htmlspecialchars($displayName, ENT_QUOTES, 'UTF-8'); ?>"
+                        data-product-country="<?php echo htmlspecialchars((string) ($country ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
+                        data-product-stem-height="<?php echo htmlspecialchars((string) ($height ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
+                        data-product-bud-size="<?php echo htmlspecialchars((string) ($budSize ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
+                        data-product-description="<?php echo htmlspecialchars($description, ENT_QUOTES, 'UTF-8'); ?>"
+                        data-product-photos='<?php echo $modalPhotosJson; ?>'
                         data-product-card
                         data-base-price="<?php echo $basePrice; ?>"
                         data-price-tiers='<?php echo $priceTiersJson; ?>'
@@ -80,21 +99,27 @@
                     >
                         <div class="relative">
                             <?php if (!empty($product['photo_url'])): ?>
-                                <img
-                                    src="<?php echo htmlspecialchars($product['photo_url'], ENT_QUOTES, 'UTF-8'); ?>"
-                                    alt="<?php echo htmlspecialchars($product['name'], ENT_QUOTES, 'UTF-8'); ?>"
-                                    class="aspect-square w-full rounded-t-3xl object-cover"
-                                >
+                                <button type="button" class="block w-full" data-product-modal-trigger>
+                                    <img
+                                        src="<?php echo htmlspecialchars($product['photo_url'], ENT_QUOTES, 'UTF-8'); ?>"
+                                        alt="<?php echo htmlspecialchars($product['name'], ENT_QUOTES, 'UTF-8'); ?>"
+                                        class="aspect-square w-full rounded-t-3xl object-cover"
+                                    >
+                                </button>
                             <?php else: ?>
-                                <div class="flex aspect-square w-full items-center justify-center rounded-t-3xl bg-slate-100 text-slate-400">
-                                    <span class="material-symbols-rounded text-4xl">image</span>
-                                </div>
+                                <button type="button" class="flex w-full items-center justify-center" data-product-modal-trigger>
+                                    <div class="flex aspect-square w-full items-center justify-center rounded-t-3xl bg-slate-100 text-slate-400">
+                                        <span class="material-symbols-rounded text-4xl">image</span>
+                                    </div>
+                                </button>
                             <?php endif; ?>
                         </div>
 
                         <div class="space-y-0 px-2 pb-4 pt-2 md:space-y-6 md:px-5 md:pt-5">
                             <div class="space-y-1 md:space-y-2">
-                                <h2 class="text-base font-semibold leading-snug text-slate-900 md:text-2xl"><?php echo htmlspecialchars($displayName, ENT_QUOTES, 'UTF-8'); ?></h2>
+                                <button type="button" class="text-left" data-product-modal-trigger>
+                                    <h2 class="text-base font-semibold leading-snug text-slate-900 md:text-2xl"><?php echo htmlspecialchars($displayName, ENT_QUOTES, 'UTF-8'); ?></h2>
+                                </button>
                                 <p class="text-[11px] font-semibold text-slate-500 md:text-xs"><?php echo htmlspecialchars($salesComment, ENT_QUOTES, 'UTF-8'); ?></p>
                             </div>
 
@@ -198,6 +223,40 @@
             </div>
         </div>
     <?php endif; ?>
+</div>
+
+<div class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/40 p-4 backdrop-blur" data-product-modal>
+    <div class="w-full max-w-3xl space-y-4 rounded-3xl bg-white p-4 shadow-2xl shadow-slate-500/30 sm:p-6" data-product-modal-card>
+        <div class="flex items-center justify-between">
+            <p class="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Карточка товара</p>
+            <button type="button" class="rounded-full border border-slate-200 bg-white p-2 text-slate-500 transition hover:border-rose-200 hover:text-rose-600" data-product-modal-close>
+                <span class="material-symbols-rounded text-base">close</span>
+            </button>
+        </div>
+        <div class="space-y-4">
+            <div class="grid grid-cols-3 gap-2">
+                <?php for ($i = 0; $i < 3; $i++): ?>
+                    <button type="button" class="overflow-hidden rounded-2xl border border-slate-100 bg-slate-50" data-product-modal-photo data-photo-index="<?php echo $i; ?>">
+                        <img class="aspect-square w-full object-cover" src="/assets/images/products/bouquet.svg" alt="">
+                    </button>
+                <?php endfor; ?>
+            </div>
+            <div class="text-lg font-semibold text-slate-900 sm:text-2xl" data-product-modal-title></div>
+            <div class="space-y-1 rounded-2xl bg-slate-50 p-3 text-sm text-slate-700 sm:p-4">
+                <p>Страна: <span class="font-semibold text-slate-900" data-product-modal-country>—</span></p>
+                <p>Ростовка: <span class="font-semibold text-slate-900" data-product-modal-stem>—</span> см</p>
+                <p>Размер бутона: <span class="font-semibold text-slate-900" data-product-modal-bud>—</span> см</p>
+            </div>
+            <div class="space-y-2 rounded-2xl border border-slate-100 bg-white p-3 sm:p-4">
+                <p class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">Описание товара</p>
+                <p class="text-sm text-slate-600" data-product-modal-description></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="fixed inset-0 z-[60] hidden items-center justify-center bg-black/90 p-4" data-product-viewer>
+    <img class="max-h-[90vh] max-w-[90vw] rounded-2xl object-contain shadow-2xl" src="" alt="" data-product-viewer-image>
 </div>
 
 <style>
@@ -396,6 +455,86 @@
         updateCartIndicator(data.totals?.count || 0);
     }
 
+    const modal = document.querySelector('[data-product-modal]');
+    const modalTitle = modal?.querySelector('[data-product-modal-title]');
+    const modalCountry = modal?.querySelector('[data-product-modal-country]');
+    const modalStem = modal?.querySelector('[data-product-modal-stem]');
+    const modalBud = modal?.querySelector('[data-product-modal-bud]');
+    const modalDescription = modal?.querySelector('[data-product-modal-description]');
+    const modalPhotos = modal ? Array.from(modal.querySelectorAll('[data-product-modal-photo]')) : [];
+    const modalCloseButtons = modal ? Array.from(modal.querySelectorAll('[data-product-modal-close]')) : [];
+
+    const viewer = document.querySelector('[data-product-viewer]');
+    const viewerImage = viewer?.querySelector('[data-product-viewer-image]');
+    let viewerPhotos = [];
+    let viewerIndex = 0;
+
+    function closeModal() {
+        if (!modal) return;
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        document.body.style.overflow = '';
+    }
+
+    function openModal(card) {
+        if (!modal || !card) return;
+        const title = card.dataset.productTitle || card.dataset.productName || '';
+        const country = card.dataset.productCountry || '—';
+        const stem = card.dataset.productStemHeight || '—';
+        const bud = card.dataset.productBudSize || '—';
+        const description = card.dataset.productDescription || 'Описание появится позже.';
+        const photos = JSON.parse(card.dataset.productPhotos || '[]');
+
+        viewerPhotos = Array.isArray(photos) && photos.length ? photos : [];
+        modalTitle.textContent = title;
+        modalCountry.textContent = country !== '' ? country : '—';
+        modalStem.textContent = stem !== '' ? stem : '—';
+        modalBud.textContent = bud !== '' ? bud : '—';
+        modalDescription.textContent = description !== '' ? description : 'Описание появится позже.';
+
+        modalPhotos.forEach((button, index) => {
+            const img = button.querySelector('img');
+            const src = viewerPhotos[index] || viewerPhotos[0] || '/assets/images/products/bouquet.svg';
+            if (img) {
+                img.src = src;
+                img.alt = title;
+            }
+        });
+
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeViewer() {
+        if (!viewer) return;
+        viewer.classList.add('hidden');
+        viewer.classList.remove('flex');
+    }
+
+    function renderViewer() {
+        if (!viewerImage) return;
+        const src = viewerPhotos[viewerIndex];
+        if (src) {
+            viewerImage.src = src;
+        }
+    }
+
+    function openViewer(index) {
+        if (!viewer || !viewerImage || viewerPhotos.length === 0) return;
+        viewerIndex = index;
+        renderViewer();
+        viewer.classList.remove('hidden');
+        viewer.classList.add('flex');
+    }
+
+    function shiftViewer(step) {
+        if (viewerPhotos.length === 0) return;
+        const nextIndex = (viewerIndex + step + viewerPhotos.length) % viewerPhotos.length;
+        viewerIndex = nextIndex;
+        renderViewer();
+    }
+
     document.querySelectorAll('[data-product-card]').forEach((card) => {
         selectDefaultAttributes(card);
         updateCardTotals(card);
@@ -461,5 +600,46 @@
                 }
             });
         });
+
+        card.querySelectorAll('[data-product-modal-trigger]').forEach((trigger) => {
+            trigger.addEventListener('click', () => openModal(card));
+        });
+    });
+
+    modalCloseButtons.forEach((button) => {
+        button.addEventListener('click', closeModal);
+    });
+
+    modal?.addEventListener('click', (event) => {
+        if (event.target === modal) {
+            closeModal();
+        }
+    });
+
+    modalPhotos.forEach((button) => {
+        button.addEventListener('click', () => {
+            const index = Number(button.dataset.photoIndex || 0);
+            openViewer(index);
+        });
+    });
+
+    viewer?.addEventListener('click', (event) => {
+        if (event.target === viewer || event.target === viewerImage) {
+            closeViewer();
+        }
+    });
+
+    let touchStartX = 0;
+    let touchEndX = 0;
+    viewer?.addEventListener('touchstart', (event) => {
+        touchStartX = event.changedTouches[0]?.screenX || 0;
+    });
+
+    viewer?.addEventListener('touchend', (event) => {
+        touchEndX = event.changedTouches[0]?.screenX || 0;
+        const delta = touchEndX - touchStartX;
+        if (Math.abs(delta) > 50) {
+            shiftViewer(delta < 0 ? 1 : -1);
+        }
     });
 </script>
