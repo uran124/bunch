@@ -53,12 +53,13 @@ class StaticPage extends Model
     public function create(array $payload): int
     {
         $stmt = $this->db->prepare(
-            "INSERT INTO {$this->table} (title, slug, content, show_in_footer, show_in_menu, is_active, sort_order, footer_column) VALUES (:title, :slug, :content, :show_in_footer, :show_in_menu, :is_active, :sort_order, :footer_column)"
+            "INSERT INTO {$this->table} (title, slug, content, content_format, show_in_footer, show_in_menu, is_active, sort_order, footer_column) VALUES (:title, :slug, :content, :content_format, :show_in_footer, :show_in_menu, :is_active, :sort_order, :footer_column)"
         );
         $stmt->execute([
             'title' => $payload['title'],
             'slug' => $payload['slug'],
             'content' => $payload['content'],
+            'content_format' => $payload['content_format'] ?? 'visual',
             'show_in_footer' => $payload['show_in_footer'],
             'show_in_menu' => $payload['show_in_menu'],
             'is_active' => $payload['is_active'],
@@ -72,12 +73,13 @@ class StaticPage extends Model
     public function update(int $id, array $payload): void
     {
         $stmt = $this->db->prepare(
-            "UPDATE {$this->table} SET title = :title, slug = :slug, content = :content, show_in_footer = :show_in_footer, show_in_menu = :show_in_menu, is_active = :is_active, sort_order = :sort_order, footer_column = :footer_column WHERE id = :id"
+            "UPDATE {$this->table} SET title = :title, slug = :slug, content = :content, content_format = :content_format, show_in_footer = :show_in_footer, show_in_menu = :show_in_menu, is_active = :is_active, sort_order = :sort_order, footer_column = :footer_column WHERE id = :id"
         );
         $stmt->execute([
             'title' => $payload['title'],
             'slug' => $payload['slug'],
             'content' => $payload['content'],
+            'content_format' => $payload['content_format'] ?? 'visual',
             'show_in_footer' => $payload['show_in_footer'],
             'show_in_menu' => $payload['show_in_menu'],
             'is_active' => $payload['is_active'],

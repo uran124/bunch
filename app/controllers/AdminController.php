@@ -2211,6 +2211,8 @@ class AdminController extends Controller
         $title = trim((string) ($_POST['title'] ?? ''));
         $slug = $this->normalizeStaticPageSlug((string) ($_POST['slug'] ?? ''));
         $content = trim((string) ($_POST['content'] ?? ''));
+        $contentFormat = $_POST['editor_mode'] ?? 'visual';
+        $contentFormat = $contentFormat === 'html' ? 'html' : 'visual';
         $showInFooter = isset($_POST['show_in_footer']) ? 1 : 0;
         $showInMenu = isset($_POST['show_in_menu']) ? 1 : 0;
         $isActive = isset($_POST['is_active']) ? 1 : 0;
@@ -2218,7 +2220,7 @@ class AdminController extends Controller
         $footerColumn = (int) ($_POST['footer_column'] ?? 1);
         $footerColumn = in_array($footerColumn, [1, 2], true) ? $footerColumn : 1;
 
-        if ($title === '' || $slug === '') {
+        if ($title === '' || $slug === '' || $content === '') {
             header('Location: /?page=admin-content-static&status=error');
             exit;
         }
@@ -2227,6 +2229,7 @@ class AdminController extends Controller
             'title' => $title,
             'slug' => $slug,
             'content' => $content,
+            'content_format' => $contentFormat,
             'show_in_footer' => $showInFooter,
             'show_in_menu' => $showInMenu,
             'is_active' => $isActive,

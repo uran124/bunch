@@ -12,7 +12,7 @@
             <h1 class="text-3xl font-semibold text-slate-900"><?php echo htmlspecialchars($page['title'], ENT_QUOTES, 'UTF-8'); ?></h1>
         </header>
         <div class="rounded-3xl border border-slate-200 bg-white p-6 text-base text-slate-700 shadow-sm">
-            <?php echo nl2br(htmlspecialchars((string) $page['content'], ENT_QUOTES, 'UTF-8')); ?>
+            <?php echo (string) ($page['content'] ?? ''); ?>
         </div>
     <?php endif; ?>
 </section>

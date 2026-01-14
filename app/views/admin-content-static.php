@@ -5,6 +5,7 @@
 <?php $editPage = $editPage ?? []; ?>
 <?php
 $status = $_GET['status'] ?? null;
+$editorMode = $editPage['content_format'] ?? 'visual';
 $statusMessages = [
     'saved' => 'Страница сохранена.',
     'deleted' => 'Страница удалена.',
@@ -83,11 +84,11 @@ $statusMessages = [
                 <span>Контент</span>
                 <div class="flex flex-wrap gap-2">
                     <label class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 shadow-sm">
-                        <input class="h-4 w-4" type="radio" name="editor_mode" value="visual" checked>
+                        <input class="h-4 w-4" type="radio" name="editor_mode" value="visual" <?php echo $editorMode !== 'html' ? 'checked' : ''; ?>>
                         Визуальный редактор
                     </label>
                     <label class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 shadow-sm">
-                        <input class="h-4 w-4" type="radio" name="editor_mode" value="html">
+                        <input class="h-4 w-4" type="radio" name="editor_mode" value="html" <?php echo $editorMode === 'html' ? 'checked' : ''; ?>>
                         &lt;HTML&gt;
                     </label>
                 </div>
@@ -99,10 +100,15 @@ $statusMessages = [
                     <button class="rounded-lg border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-600 shadow-sm transition hover:border-rose-200 hover:text-rose-600" type="button" data-tag="li">LI</button>
                     <button class="rounded-lg border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-600 shadow-sm transition hover:border-rose-200 hover:text-rose-600" type="button" data-tag="a">URL</button>
                 </div>
+                <input type="hidden" name="content" value="<?php echo htmlspecialchars($editPage['content'] ?? '', ENT_QUOTES, 'UTF-8'); ?>" data-editor-content>
+                <div
+                    class="min-h-[160px] w-full rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700 shadow-sm focus-within:border-rose-300 focus-within:outline-none focus-within:ring-2 focus-within:ring-rose-200 <?php echo $editorMode === 'html' ? 'hidden' : ''; ?>"
+                    contenteditable="true"
+                    data-editor-visual
+                ><?php echo $editPage['content'] ?? ''; ?></div>
                 <textarea
-                    class="min-h-[160px] w-full rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700 shadow-sm focus:border-rose-300 focus:outline-none focus:ring-2 focus:ring-rose-200"
-                    name="content"
-                    data-editor-textarea
+                    class="min-h-[160px] w-full rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700 shadow-sm focus:border-rose-300 focus:outline-none focus:ring-2 focus:ring-rose-200 <?php echo $editorMode === 'html' ? '' : 'hidden'; ?>"
+                    data-editor-html
                 ><?php echo htmlspecialchars($editPage['content'] ?? '', ENT_QUOTES, 'UTF-8'); ?></textarea>
             </div>
             <div class="grid gap-3 lg:grid-cols-5">
@@ -213,39 +219,49 @@ $statusMessages = [
 <script>
     const editorModeInputs = document.querySelectorAll('input[name="editor_mode"]');
     const editorToolbar = document.querySelector('[data-editor-toolbar]');
-    const editorTextarea = document.querySelector('[data-editor-textarea]');
+    const editorContentInput = document.querySelector('[data-editor-content]');
+    const editorVisual = document.querySelector('[data-editor-visual]');
+    const editorHtml = document.querySelector('[data-editor-html]');
+    const editorForm = document.querySelector('form[action="/?page=admin-static-page-save"]');
 
     const updateEditorMode = () => {
         const selectedMode = document.querySelector('input[name="editor_mode"]:checked')?.value;
-        if (!editorToolbar) {
+        if (!editorToolbar || !editorVisual || !editorHtml) {
             return;
         }
+        if (selectedMode === 'html') {
+            editorHtml.value = editorVisual.innerHTML;
+        } else {
+            editorVisual.innerHTML = editorHtml.value;
+        }
         editorToolbar.classList.toggle('hidden', selectedMode !== 'visual');
+        editorVisual.classList.toggle('hidden', selectedMode === 'html');
+        editorHtml.classList.toggle('hidden', selectedMode !== 'html');
     };
 
     const wrapSelection = (openTag, closeTag) => {
-        if (!editorTextarea) {
+        if (!editorHtml) {
             return;
         }
-        const start = editorTextarea.selectionStart;
-        const end = editorTextarea.selectionEnd;
-        const value = editorTextarea.value;
+        const start = editorHtml.selectionStart;
+        const end = editorHtml.selectionEnd;
+        const value = editorHtml.value;
         const before = value.slice(0, start);
         const selected = value.slice(start, end);
         const after = value.slice(end);
-        editorTextarea.value = `${before}${openTag}${selected}${closeTag}${after}`;
+        editorHtml.value = `${before}${openTag}${selected}${closeTag}${after}`;
         const cursorPosition = start + openTag.length + selected.length + closeTag.length;
-        editorTextarea.setSelectionRange(cursorPosition, cursorPosition);
-        editorTextarea.focus();
+        editorHtml.setSelectionRange(cursorPosition, cursorPosition);
+        editorHtml.focus();
     };
 
     const wrapList = () => {
-        if (!editorTextarea) {
+        if (!editorHtml) {
             return;
         }
-        const start = editorTextarea.selectionStart;
-        const end = editorTextarea.selectionEnd;
-        const value = editorTextarea.value;
+        const start = editorHtml.selectionStart;
+        const end = editorHtml.selectionEnd;
+        const value = editorHtml.value;
         const selected = value.slice(start, end);
         const lines = selected.split(/\r?\n/).filter(line => line.trim().length > 0);
         if (!lines.length) {
@@ -253,29 +269,29 @@ $statusMessages = [
         }
         const listItems = lines.map(line => `  <li>${line.trim()}</li>`).join('\n');
         const replacement = `<ul>\n${listItems}\n</ul>`;
-        editorTextarea.value = `${value.slice(0, start)}${replacement}${value.slice(end)}`;
+        editorHtml.value = `${value.slice(0, start)}${replacement}${value.slice(end)}`;
         const cursorPosition = start + replacement.length;
-        editorTextarea.setSelectionRange(cursorPosition, cursorPosition);
-        editorTextarea.focus();
+        editorHtml.setSelectionRange(cursorPosition, cursorPosition);
+        editorHtml.focus();
     };
 
     const wrapLink = () => {
-        if (!editorTextarea) {
+        if (!editorHtml) {
             return;
         }
-        const start = editorTextarea.selectionStart;
-        const end = editorTextarea.selectionEnd;
-        const value = editorTextarea.value;
+        const start = editorHtml.selectionStart;
+        const end = editorHtml.selectionEnd;
+        const value = editorHtml.value;
         const selected = value.slice(start, end);
         if (!selected.trim()) {
             return;
         }
         const href = selected.trim();
         const replacement = `<a href="${href}">${selected}</a>`;
-        editorTextarea.value = `${value.slice(0, start)}${replacement}${value.slice(end)}`;
+        editorHtml.value = `${value.slice(0, start)}${replacement}${value.slice(end)}`;
         const cursorPosition = start + replacement.length;
-        editorTextarea.setSelectionRange(cursorPosition, cursorPosition);
-        editorTextarea.focus();
+        editorHtml.setSelectionRange(cursorPosition, cursorPosition);
+        editorHtml.focus();
     };
 
     editorModeInputs.forEach(input => {
@@ -289,6 +305,34 @@ $statusMessages = [
                 return;
             }
             const tag = button.getAttribute('data-tag');
+            const selectedMode = document.querySelector('input[name="editor_mode"]:checked')?.value;
+            if (selectedMode === 'visual' && editorVisual) {
+                editorVisual.focus();
+                if (tag === 'b') {
+                    document.execCommand('bold');
+                    return;
+                }
+                if (tag === 'i') {
+                    document.execCommand('italic');
+                    return;
+                }
+                if (tag === 'h2' || tag === 'h3') {
+                    document.execCommand('formatBlock', false, tag);
+                    return;
+                }
+                if (tag === 'li') {
+                    document.execCommand('insertUnorderedList');
+                    return;
+                }
+                if (tag === 'a') {
+                    const href = window.prompt('Введите URL', 'https://');
+                    if (!href) {
+                        return;
+                    }
+                    document.execCommand('createLink', false, href);
+                    return;
+                }
+            }
             if (tag === 'li') {
                 wrapList();
                 return;
@@ -298,6 +342,24 @@ $statusMessages = [
                 return;
             }
             wrapSelection(`<${tag}>`, `</${tag}>`);
+        });
+    }
+
+    const syncContent = () => {
+        if (!editorContentInput) {
+            return;
+        }
+        const selectedMode = document.querySelector('input[name="editor_mode"]:checked')?.value;
+        if (selectedMode === 'html') {
+            editorContentInput.value = editorHtml ? editorHtml.value.trim() : '';
+            return;
+        }
+        editorContentInput.value = editorVisual ? editorVisual.innerHTML.trim() : '';
+    };
+
+    if (editorForm) {
+        editorForm.addEventListener('submit', () => {
+            syncContent();
         });
     }
 
