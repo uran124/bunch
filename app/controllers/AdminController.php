@@ -1549,6 +1549,8 @@ class AdminController extends Controller
         $boxesTotal = (int) ($_POST['boxes_total'] ?? 0);
         $packsPerBox = (int) ($_POST['packs_per_box'] ?? 0);
         $packsTotal = $boxesTotal > 0 && $packsPerBox > 0 ? $boxesTotal * $packsPerBox : 0;
+        $budSize = (int) ($_POST['bud_size_cm'] ?? 0);
+        $description = trim($_POST['description'] ?? '');
 
         $payload = [
             'photo_url' => trim($_POST['photo_url'] ?? ''),
@@ -1561,6 +1563,8 @@ class AdminController extends Controller
             'stems_per_pack' => (int) ($_POST['stems_per_pack'] ?? 0),
             'stem_height_cm' => (int) ($_POST['stem_height_cm'] ?? 0),
             'stem_weight_g' => (int) ($_POST['stem_weight_g'] ?? 0),
+            'bud_size_cm' => $budSize > 0 ? $budSize : null,
+            'description' => $description !== '' ? $description : null,
             'periodicity' => $_POST['periodicity'] === 'biweekly' ? 'biweekly' : 'weekly',
             'first_delivery_date' => $firstDelivery !== '' ? $firstDelivery : null,
             'planned_delivery_date' => $firstDelivery !== '' ? $firstDelivery : null,
@@ -1595,6 +1599,8 @@ class AdminController extends Controller
         $boxesTotal = (int) ($_POST['boxes_total'] ?? 0);
         $packsPerBox = (int) ($_POST['packs_per_box'] ?? 0);
         $packsTotal = $boxesTotal > 0 && $packsPerBox > 0 ? $boxesTotal * $packsPerBox : 0;
+        $budSize = (int) ($_POST['bud_size_cm'] ?? 0);
+        $description = trim($_POST['description'] ?? '');
 
         $payload = [
             'photo_url' => trim($_POST['photo_url'] ?? ''),
@@ -1607,6 +1613,8 @@ class AdminController extends Controller
             'stems_per_pack' => (int) ($_POST['stems_per_pack'] ?? 0),
             'stem_height_cm' => (int) ($_POST['stem_height_cm'] ?? 0),
             'stem_weight_g' => (int) ($_POST['stem_weight_g'] ?? 0),
+            'bud_size_cm' => $budSize > 0 ? $budSize : null,
+            'description' => $description !== '' ? $description : null,
             'planned_delivery_date' => $plannedDelivery !== '' ? $plannedDelivery : null,
             'actual_delivery_date' => $actualDelivery !== '' ? $actualDelivery : null,
             'allow_small_wholesale' => isset($_POST['allow_small_wholesale']) ? 1 : 0,
@@ -1652,6 +1660,8 @@ class AdminController extends Controller
         $boxesTotal = (int) ($_POST['boxes_total'] ?? 0);
         $packsPerBox = (int) ($_POST['packs_per_box'] ?? 0);
         $packsTotal = $boxesTotal > 0 && $packsPerBox > 0 ? $boxesTotal * $packsPerBox : 0;
+        $budSize = (int) ($_POST['bud_size_cm'] ?? 0);
+        $description = trim($_POST['description'] ?? '');
 
         $common = [
             'photo_url' => $photoUrl,
@@ -1664,6 +1674,8 @@ class AdminController extends Controller
             'stems_per_pack' => (int) ($_POST['stems_per_pack'] ?? 0),
             'stem_height_cm' => (int) ($_POST['stem_height_cm'] ?? 0),
             'stem_weight_g' => (int) ($_POST['stem_weight_g'] ?? 0),
+            'bud_size_cm' => $budSize > 0 ? $budSize : null,
+            'description' => $description !== '' ? $description : null,
             'allow_small_wholesale' => isset($_POST['allow_small_wholesale']) ? 1 : 0,
             'allow_box_order' => isset($_POST['allow_box_order']) ? 1 : 0,
         ];
@@ -1750,12 +1762,17 @@ class AdminController extends Controller
         }
 
         $name = trim($supply['flower_name'] . ' ' . $supply['variety']);
-        $description = sprintf(
-            'Страна: %s. Высота стебля: %s см. Вес стебля: %s г.',
+        $descriptionBase = sprintf(
+            'Страна: %s. Высота стебля: %s см. Вес стебля: %s г. Размер бутона: %s см.',
             $supply['country'] ?? '—',
             $supply['stem_height_cm'] ?? '—',
-            $supply['stem_weight_g'] ?? '—'
+            $supply['stem_weight_g'] ?? '—',
+            $supply['bud_size_cm'] ?? '—'
         );
+        $descriptionText = trim((string) ($supply['description'] ?? ''));
+        $description = $descriptionText !== ''
+            ? $descriptionText . ' ' . $descriptionBase
+            : $descriptionBase;
 
         $productModel = new Product();
         $basePayload = [
