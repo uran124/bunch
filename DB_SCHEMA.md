@@ -143,6 +143,7 @@ CREATE TABLE static_pages (
   title VARCHAR(150) NOT NULL,
   slug VARCHAR(150) NOT NULL UNIQUE,
   content MEDIUMTEXT NULL,
+  content_format VARCHAR(10) NOT NULL DEFAULT 'visual',
 
   show_in_footer TINYINT(1) NOT NULL DEFAULT 1,
   show_in_menu TINYINT(1) NOT NULL DEFAULT 1,
