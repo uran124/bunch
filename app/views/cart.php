@@ -408,9 +408,9 @@
                 </button>
                 <p class="text-[11px] text-slate-500 sm:text-xs">
                     Нажимая «Оформить заказ», вы соглашаетесь с
-                    <a class="font-semibold text-rose-600 underline underline-offset-2" href="/?page=offer">Пользовательским соглашением</a>
+                    <a class="font-semibold text-rose-600 underline underline-offset-2" href="/?page=static&slug=offer">Пользовательским соглашением</a>
                     и
-                    <a class="font-semibold text-rose-600 underline underline-offset-2" href="/?page=policy">Политикой обработки персональных данных</a>.
+                    <a class="font-semibold text-rose-600 underline underline-offset-2" href="/?page=static&slug=policy">Политикой обработки персональных данных</a>.
                 </p>
             </aside>
         </div>
