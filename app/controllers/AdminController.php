@@ -2183,11 +2183,99 @@ class AdminController extends Controller
             'headerSubtitle' => 'Контент · Статичные страницы',
         ];
 
+        $staticPageModel = new StaticPage();
+        $staticPages = $staticPageModel->getAdminList();
+        $editPage = null;
+        $editId = (int) ($_GET['edit_id'] ?? 0);
+
+        if ($editId > 0) {
+            $editPage = $staticPageModel->getById($editId);
+            if (!$editPage) {
+                header('Location: /?page=admin-content-static&status=notfound');
+                exit;
+            }
+        }
+
         $this->render('admin-content-static', [
             'pageMeta' => $pageMeta,
-            'pages' => $this->getStaticContentPages(),
-            'faqs' => $this->getStaticFaqBlocks(),
+            'staticPages' => $staticPages,
+            'editPage' => $editPage,
         ]);
+    }
+
+    public function saveStaticPage(): void
+    {
+        $staticPageModel = new StaticPage();
+
+        $id = (int) ($_POST['id'] ?? 0);
+        $title = trim((string) ($_POST['title'] ?? ''));
+        $slug = $this->normalizeStaticPageSlug((string) ($_POST['slug'] ?? ''));
+        $content = trim((string) ($_POST['content'] ?? ''));
+        $showInFooter = isset($_POST['show_in_footer']) ? 1 : 0;
+        $showInMenu = isset($_POST['show_in_menu']) ? 1 : 0;
+        $isActive = isset($_POST['is_active']) ? 1 : 0;
+        $sortOrder = (int) ($_POST['sort_order'] ?? 0);
+
+        if ($title === '' || $slug === '') {
+            header('Location: /?page=admin-content-static&status=error');
+            exit;
+        }
+
+        $payload = [
+            'title' => $title,
+            'slug' => $slug,
+            'content' => $content,
+            'show_in_footer' => $showInFooter,
+            'show_in_menu' => $showInMenu,
+            'is_active' => $isActive,
+            'sort_order' => $sortOrder,
+        ];
+
+        try {
+            if ($id > 0) {
+                $staticPageModel->update($id, $payload);
+            } else {
+                $staticPageModel->create($payload);
+            }
+        } catch (Throwable $e) {
+            $this->logAdminError('Static page save error', $e);
+            header('Location: /?page=admin-content-static&status=error');
+            exit;
+        }
+
+        header('Location: /?page=admin-content-static&status=saved');
+        exit;
+    }
+
+    public function toggleStaticPage(): void
+    {
+        $staticPageModel = new StaticPage();
+        $id = (int) ($_POST['id'] ?? 0);
+        $active = (int) ($_POST['active'] ?? 0);
+
+        if ($id <= 0) {
+            header('Location: /?page=admin-content-static&status=error');
+            exit;
+        }
+
+        $staticPageModel->setActive($id, $active);
+        header('Location: /?page=admin-content-static&status=updated');
+        exit;
+    }
+
+    public function deleteStaticPage(): void
+    {
+        $staticPageModel = new StaticPage();
+        $id = (int) ($_POST['id'] ?? 0);
+
+        if ($id <= 0) {
+            header('Location: /?page=admin-content-static&status=error');
+            exit;
+        }
+
+        $staticPageModel->delete($id);
+        header('Location: /?page=admin-content-static&status=deleted');
+        exit;
     }
 
     public function contentProducts(): void
@@ -2644,74 +2732,13 @@ class AdminController extends Controller
         }, $templateOrders);
     }
 
-    private function getStaticContentPages(): array
+    private function normalizeStaticPageSlug(string $slug): string
     {
-        return [
-            [
-                'id' => 1,
-                'title' => 'Главная страница',
-                'slug' => '/',
-                'blocks' => 9,
-                'seo' => 'Тайтл и описание заполнены',
-                'updatedAt' => '2024-05-31 18:20',
-                'status' => 'Опубликовано',
-            ],
-            [
-                'id' => 2,
-                'title' => 'О нас',
-                'slug' => '/about',
-                'blocks' => 5,
-                'seo' => 'Обновить описание',
-                'updatedAt' => '2024-05-30 10:15',
-                'status' => 'Опубликовано',
-            ],
-            [
-                'id' => 3,
-                'title' => 'Наши розы',
-                'slug' => '/roses',
-                'blocks' => 4,
-                'seo' => 'Добавить ключевые слова',
-                'updatedAt' => '2024-05-29 14:05',
-                'status' => 'Опубликовано',
-            ],
-            [
-                'id' => 4,
-                'title' => 'Оплата и доставка',
-                'slug' => '/delivery',
-                'blocks' => 6,
-                'seo' => 'Мета-теги готовы',
-                'updatedAt' => '2024-05-29 11:40',
-                'status' => 'Черновик',
-            ],
-            [
-                'id' => 5,
-                'title' => 'Как получить скидку?',
-                'slug' => '/discount',
-                'blocks' => 4,
-                'seo' => 'Добавить УТП',
-                'updatedAt' => '2024-05-27 16:30',
-                'status' => 'Опубликовано',
-            ],
-            [
-                'id' => 6,
-                'title' => 'FAQ',
-                'slug' => '/faq',
-                'blocks' => 12,
-                'seo' => 'Добавить H1',
-                'updatedAt' => '2024-05-25 09:10',
-                'status' => 'Опубликовано',
-            ],
-        ];
-    }
-
-    private function getStaticFaqBlocks(): array
-    {
-        return [
-            ['question' => 'Как оформить доставку в день заказа?', 'status' => 'Опубликован', 'updatedAt' => '2024-05-30'],
-            ['question' => 'Какие способы оплаты доступны?', 'status' => 'Опубликован', 'updatedAt' => '2024-05-28'],
-            ['question' => 'Как работает подписка на цветы?', 'status' => 'Черновик', 'updatedAt' => '2024-05-26'],
-            ['question' => 'Возвраты и отмены', 'status' => 'Опубликован', 'updatedAt' => '2024-05-20'],
-        ];
+        $slug = trim($slug);
+        $slug = trim($slug, '/');
+        $slug = strtolower($slug);
+        $slug = preg_replace('/[^a-z0-9-]+/u', '-', $slug) ?? '';
+        return trim($slug, '-');
     }
 
     private function getProductContentPages(): array
