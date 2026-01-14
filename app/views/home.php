@@ -61,7 +61,10 @@
                         $titleParts[] = $height . 'см';
                     }
 
-                    $displayName = $titleParts ? implode(' ', $titleParts) : $product['name'];
+                    $alternateName = trim($product['alt_name'] ?? '');
+                    $displayName = $alternateName !== ''
+                        ? $alternateName
+                        : ($titleParts ? implode(' ', $titleParts) : $product['name']);
                     ?>
                     <article
                         id="<?php echo $cardId; ?>"

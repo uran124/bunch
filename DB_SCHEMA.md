@@ -145,9 +145,13 @@ CREATE TABLE products (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
   name        VARCHAR(150) NOT NULL,      -- название для клиента
+  alt_name    VARCHAR(150) NULL,          -- альтернативное название для карточки
   slug        VARCHAR(150) NOT NULL UNIQUE,
   description TEXT NULL,                  -- описание (без раскрытия страны/сорта)
   price       INT NOT NULL,     -- текущая цена за единицу (например, 89)
+  photo_url   VARCHAR(255) NULL,          -- основное фото товара
+  photo_url_secondary VARCHAR(255) NULL,  -- дополнительное фото товара
+  photo_url_tertiary  VARCHAR(255) NULL,  -- дополнительное фото товара
 
   category    ENUM('main', 'wholesale', 'accessory') NOT NULL DEFAULT 'main', -- витрина, опт или сопутствующие товары
   product_type ENUM('regular', 'small_wholesale', 'lottery', 'promo', 'auction', 'wholesale_box') NOT NULL DEFAULT 'regular',
@@ -175,6 +179,8 @@ CREATE TABLE products (
 ALTER TABLE products
   ADD COLUMN status ENUM('active', 'deleted') NOT NULL DEFAULT 'active' AFTER is_active;
 ```
+
+Миграция для добавления `alt_name`, `photo_url_secondary`, `photo_url_tertiary` находится в `docs/migrations/2026-04-03-add-product-alt-name-and-extra-photos.sql`.
 
 Типы товара (`product_type`):
 - `regular` — обычный товар на витрине;

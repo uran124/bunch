@@ -14,10 +14,13 @@ class Lottery extends Model
         try {
             $productId = $productModel->createCustom([
                 'name' => $payload['title'],
+                'alt_name' => null,
                 'description' => $payload['prize_description'],
                 'price' => $payload['ticket_price'],
                 'article' => null,
                 'photo_url' => $payload['photo_url'],
+                'photo_url_secondary' => null,
+                'photo_url_tertiary' => null,
                 'category' => 'main',
                 'product_type' => 'lottery',
                 'is_base' => 0,
@@ -176,9 +179,12 @@ SQL;
         $productModel = new Product();
         $productModel->updateCustom($productId, [
             'name' => $payload['title'],
+            'alt_name' => null,
             'description' => $payload['prize_description'],
             'price' => $payload['ticket_price'],
             'photo_url' => $payload['photo_url'],
+            'photo_url_secondary' => null,
+            'photo_url_tertiary' => null,
             'category' => 'main',
             'product_type' => 'lottery',
             'is_active' => 1,
