@@ -79,13 +79,32 @@ $statusMessages = [
                     <span class="text-xs font-normal text-slate-400">Используйте латиницу, цифры и дефисы. Страница будет доступна по /?page=static&slug=...</span>
                 </label>
             </div>
-            <label class="space-y-2 text-sm font-semibold text-slate-700">
+            <div class="space-y-3 text-sm font-semibold text-slate-700">
                 <span>Контент</span>
+                <div class="flex flex-wrap gap-2">
+                    <label class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 shadow-sm">
+                        <input class="h-4 w-4" type="radio" name="editor_mode" value="visual" checked>
+                        Визуальный редактор
+                    </label>
+                    <label class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 shadow-sm">
+                        <input class="h-4 w-4" type="radio" name="editor_mode" value="html">
+                        &lt;HTML&gt;
+                    </label>
+                </div>
+                <div class="flex flex-wrap gap-2" data-editor-toolbar>
+                    <button class="rounded-lg border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-600 shadow-sm transition hover:border-rose-200 hover:text-rose-600" type="button" data-tag="b">B</button>
+                    <button class="rounded-lg border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-600 shadow-sm transition hover:border-rose-200 hover:text-rose-600" type="button" data-tag="i">I</button>
+                    <button class="rounded-lg border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-600 shadow-sm transition hover:border-rose-200 hover:text-rose-600" type="button" data-tag="h2">H2</button>
+                    <button class="rounded-lg border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-600 shadow-sm transition hover:border-rose-200 hover:text-rose-600" type="button" data-tag="h3">H3</button>
+                    <button class="rounded-lg border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-600 shadow-sm transition hover:border-rose-200 hover:text-rose-600" type="button" data-tag="li">LI</button>
+                    <button class="rounded-lg border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-600 shadow-sm transition hover:border-rose-200 hover:text-rose-600" type="button" data-tag="a">URL</button>
+                </div>
                 <textarea
                     class="min-h-[160px] w-full rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700 shadow-sm focus:border-rose-300 focus:outline-none focus:ring-2 focus:ring-rose-200"
                     name="content"
+                    data-editor-textarea
                 ><?php echo htmlspecialchars($editPage['content'] ?? '', ENT_QUOTES, 'UTF-8'); ?></textarea>
-            </label>
+            </div>
             <div class="grid gap-3 lg:grid-cols-5">
                 <label class="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm">
                     <input type="checkbox" name="show_in_footer" value="1" <?php echo !$isEditing || (int) ($editPage['show_in_footer'] ?? 0) === 1 ? 'checked' : ''; ?>>
@@ -190,3 +209,97 @@ $statusMessages = [
         <?php endforeach; ?>
     </div>
 </section>
+
+<script>
+    const editorModeInputs = document.querySelectorAll('input[name="editor_mode"]');
+    const editorToolbar = document.querySelector('[data-editor-toolbar]');
+    const editorTextarea = document.querySelector('[data-editor-textarea]');
+
+    const updateEditorMode = () => {
+        const selectedMode = document.querySelector('input[name="editor_mode"]:checked')?.value;
+        if (!editorToolbar) {
+            return;
+        }
+        editorToolbar.classList.toggle('hidden', selectedMode !== 'visual');
+    };
+
+    const wrapSelection = (openTag, closeTag) => {
+        if (!editorTextarea) {
+            return;
+        }
+        const start = editorTextarea.selectionStart;
+        const end = editorTextarea.selectionEnd;
+        const value = editorTextarea.value;
+        const before = value.slice(0, start);
+        const selected = value.slice(start, end);
+        const after = value.slice(end);
+        editorTextarea.value = `${before}${openTag}${selected}${closeTag}${after}`;
+        const cursorPosition = start + openTag.length + selected.length + closeTag.length;
+        editorTextarea.setSelectionRange(cursorPosition, cursorPosition);
+        editorTextarea.focus();
+    };
+
+    const wrapList = () => {
+        if (!editorTextarea) {
+            return;
+        }
+        const start = editorTextarea.selectionStart;
+        const end = editorTextarea.selectionEnd;
+        const value = editorTextarea.value;
+        const selected = value.slice(start, end);
+        const lines = selected.split(/\r?\n/).filter(line => line.trim().length > 0);
+        if (!lines.length) {
+            return;
+        }
+        const listItems = lines.map(line => `  <li>${line.trim()}</li>`).join('\n');
+        const replacement = `<ul>\n${listItems}\n</ul>`;
+        editorTextarea.value = `${value.slice(0, start)}${replacement}${value.slice(end)}`;
+        const cursorPosition = start + replacement.length;
+        editorTextarea.setSelectionRange(cursorPosition, cursorPosition);
+        editorTextarea.focus();
+    };
+
+    const wrapLink = () => {
+        if (!editorTextarea) {
+            return;
+        }
+        const start = editorTextarea.selectionStart;
+        const end = editorTextarea.selectionEnd;
+        const value = editorTextarea.value;
+        const selected = value.slice(start, end);
+        if (!selected.trim()) {
+            return;
+        }
+        const href = selected.trim();
+        const replacement = `<a href="${href}">${selected}</a>`;
+        editorTextarea.value = `${value.slice(0, start)}${replacement}${value.slice(end)}`;
+        const cursorPosition = start + replacement.length;
+        editorTextarea.setSelectionRange(cursorPosition, cursorPosition);
+        editorTextarea.focus();
+    };
+
+    editorModeInputs.forEach(input => {
+        input.addEventListener('change', updateEditorMode);
+    });
+
+    if (editorToolbar) {
+        editorToolbar.addEventListener('click', event => {
+            const button = event.target.closest('button[data-tag]');
+            if (!button) {
+                return;
+            }
+            const tag = button.getAttribute('data-tag');
+            if (tag === 'li') {
+                wrapList();
+                return;
+            }
+            if (tag === 'a') {
+                wrapLink();
+                return;
+            }
+            wrapSelection(`<${tag}>`, `</${tag}>`);
+        });
+    }
+
+    updateEditorMode();
+</script>
