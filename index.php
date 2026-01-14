@@ -120,6 +120,10 @@ $router->get('recover', [AuthController::class, 'recover']);
 $router->get('policy', [LegalController::class, 'policy']);
 $router->get('consent', [LegalController::class, 'consent']);
 $router->get('offer', [LegalController::class, 'offer']);
+$router->get('about', [InfoController::class, 'about']);
+$router->get('roses', [InfoController::class, 'roses']);
+$router->get('delivery', [InfoController::class, 'delivery']);
+$router->get('discount', [InfoController::class, 'discount']);
 $router->get('admin', [AdminController::class, 'index']);
 $router->get('admin-users', [AdminController::class, 'users']);
 $router->get('admin-user', [AdminController::class, 'user']);
@@ -198,6 +202,10 @@ $publicPages = [
     'policy',
     'consent',
     'offer',
+    'about',
+    'roses',
+    'delivery',
+    'discount',
     'api-dadata-clean-address',
     'cart-add',
     'cart-update',

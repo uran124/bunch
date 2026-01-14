@@ -459,12 +459,38 @@ $adminNavigation = [
 
     <?php if (!$isAdminPage): ?>
         <footer class="hidden border-t border-slate-200 bg-white/90 backdrop-blur sm:block">
-            <div class="mx-auto flex w-full max-w-6xl flex-col gap-2 px-4 py-4 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between">
-                <span>© <?php echo date('Y'); ?> Bunch flowers</span>
-                <div class="flex flex-wrap items-center gap-3">
-                    <a class="font-semibold text-slate-600 underline underline-offset-2 transition hover:text-rose-600" href="/?page=policy">Политика обработки персональных данных</a>
-                    <a class="font-semibold text-slate-600 underline underline-offset-2 transition hover:text-rose-600" href="/?page=consent">Согласие на обработку персональных данных</a>
-                    <a class="font-semibold text-slate-600 underline underline-offset-2 transition hover:text-rose-600" href="/?page=offer">Пользовательское соглашение</a>
+            <div class="mx-auto w-full max-w-6xl px-4 py-6 text-xs text-slate-500">
+                <div class="grid gap-6 sm:grid-cols-3">
+                    <div class="space-y-3">
+                        <a class="text-sm font-semibold text-slate-700 transition hover:text-rose-600" href="/?page=home">2026 bunch flowers - купить розы в Красноярске</a>
+                        <div class="flex flex-wrap gap-3 text-sm font-semibold">
+                            <a class="text-slate-600 underline underline-offset-2 transition hover:text-rose-600" href="https://t.me/bunch_flowers" target="_blank" rel="noopener">Telegram</a>
+                            <a class="text-slate-600 underline underline-offset-2 transition hover:text-rose-600" href="https://vk.com/bunchflowers" target="_blank" rel="noopener">VK</a>
+                        </div>
+                        <div class="text-sm text-slate-600">
+                            <span class="font-semibold text-slate-500">Адрес:</span>
+                            <noindex>
+                                <a class="ml-1 underline underline-offset-2 transition hover:text-rose-600" href="https://yandex.ru/maps/?text=Красноярск%2C%209%20мая%2073" target="_blank" rel="nofollow noopener">9 мая 73</a>
+                            </noindex>
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        <p class="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Информация</p>
+                        <div class="flex flex-col gap-2 text-sm font-semibold text-slate-600">
+                            <a class="transition hover:text-rose-600" href="/?page=about">О нас</a>
+                            <a class="transition hover:text-rose-600" href="/?page=roses">Наши розы</a>
+                            <a class="transition hover:text-rose-600" href="/?page=delivery">Оплата и доставка</a>
+                            <a class="transition hover:text-rose-600" href="/?page=discount">Как получить скидку?</a>
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        <p class="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Правовая информация</p>
+                        <div class="flex flex-col gap-2 text-sm font-semibold text-slate-600">
+                            <a class="transition hover:text-rose-600" href="/?page=policy">Политика обработки персональных данных</a>
+                            <a class="transition hover:text-rose-600" href="/?page=consent">Согласие на обработку персональных данных</a>
+                            <a class="transition hover:text-rose-600" href="/?page=offer">Пользовательское соглашение</a>
+                        </div>
+                    </div>
                 </div>
             </div>
         </footer>
@@ -517,8 +543,27 @@ $adminNavigation = [
                         Поддержка
                     </button>
                 </div>
-                <div class="space-y-2">
+                <div class="space-y-3">
                     <p class="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Информация</p>
+                    <div class="rounded-2xl border border-slate-100 bg-slate-50 p-3 text-sm text-slate-700">
+                        <a class="font-semibold text-slate-800 transition hover:text-rose-600" href="/?page=home">2026 bunch flowers - купить розы в Красноярске</a>
+                        <div class="mt-2 flex flex-wrap gap-3 text-sm font-semibold">
+                            <a class="text-slate-600 underline underline-offset-2 transition hover:text-rose-600" href="https://t.me/bunch_flowers" target="_blank" rel="noopener">Telegram</a>
+                            <a class="text-slate-600 underline underline-offset-2 transition hover:text-rose-600" href="https://vk.com/bunchflowers" target="_blank" rel="noopener">VK</a>
+                        </div>
+                        <div class="mt-2 text-sm text-slate-600">
+                            <span class="font-semibold text-slate-500">Адрес:</span>
+                            <noindex>
+                                <a class="ml-1 underline underline-offset-2 transition hover:text-rose-600" href="https://yandex.ru/maps/?text=Красноярск%2C%209%20мая%2073" target="_blank" rel="nofollow noopener">9 мая 73</a>
+                            </noindex>
+                        </div>
+                    </div>
+                    <div class="flex flex-col gap-2 text-sm font-semibold text-slate-700">
+                        <a class="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 transition hover:border-rose-200 hover:text-rose-600" href="/?page=about">О нас</a>
+                        <a class="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 transition hover:border-rose-200 hover:text-rose-600" href="/?page=roses">Наши розы</a>
+                        <a class="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 transition hover:border-rose-200 hover:text-rose-600" href="/?page=delivery">Оплата и доставка</a>
+                        <a class="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 transition hover:border-rose-200 hover:text-rose-600" href="/?page=discount">Как получить скидку?</a>
+                    </div>
                     <div class="flex flex-col gap-2 text-sm font-semibold text-slate-700">
                         <a class="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 transition hover:border-rose-200 hover:text-rose-600" href="/?page=policy">Политика обработки персональных данных</a>
                         <a class="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 transition hover:border-rose-200 hover:text-rose-600" href="/?page=consent">Согласие на обработку персональных данных</a>
