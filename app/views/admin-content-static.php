@@ -86,7 +86,7 @@ $statusMessages = [
                     name="content"
                 ><?php echo htmlspecialchars($editPage['content'] ?? '', ENT_QUOTES, 'UTF-8'); ?></textarea>
             </label>
-            <div class="grid gap-3 lg:grid-cols-4">
+            <div class="grid gap-3 lg:grid-cols-5">
                 <label class="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm">
                     <input type="checkbox" name="show_in_footer" value="1" <?php echo !$isEditing || (int) ($editPage['show_in_footer'] ?? 0) === 1 ? 'checked' : ''; ?>>
                     Показать в футере
@@ -94,6 +94,18 @@ $statusMessages = [
                 <label class="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm">
                     <input type="checkbox" name="show_in_menu" value="1" <?php echo !$isEditing || (int) ($editPage['show_in_menu'] ?? 0) === 1 ? 'checked' : ''; ?>>
                     Показать в меню
+                </label>
+                <label class="space-y-2 text-sm font-semibold text-slate-700">
+                    <span>Номер столбика</span>
+                    <select
+                        class="w-full rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700 shadow-sm focus:border-rose-300 focus:outline-none focus:ring-2 focus:ring-rose-200"
+                        name="footer_column"
+                    >
+                        <?php $footerColumnValue = (int) ($editPage['footer_column'] ?? 1); ?>
+                        <option value="1" <?php echo $footerColumnValue === 1 ? 'selected' : ''; ?>>1</option>
+                        <option value="2" <?php echo $footerColumnValue === 2 ? 'selected' : ''; ?>>2</option>
+                    </select>
+                    <span class="text-xs font-normal text-slate-400">Используется для колонок футера.</span>
                 </label>
                 <label class="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm">
                     <input type="checkbox" name="is_active" value="1" <?php echo !$isEditing || (int) ($editPage['is_active'] ?? 0) === 1 ? 'checked' : ''; ?>>
@@ -121,16 +133,17 @@ $statusMessages = [
     </article>
 
     <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm shadow-rose-50/60 ring-1 ring-transparent">
-        <div class="grid grid-cols-[70px_1.2fr_1fr_1fr_1fr_160px] items-center gap-4 border-b border-slate-100 bg-slate-50 px-5 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
+        <div class="grid grid-cols-[70px_1.2fr_1fr_0.6fr_1fr_1fr_160px] items-center gap-4 border-b border-slate-100 bg-slate-50 px-5 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
             <span>ID</span>
             <span>Страница</span>
             <span>Расположение</span>
+            <span>Колонка</span>
             <span>Статус</span>
             <span>Обновлено</span>
             <span class="text-right">Действие</span>
         </div>
         <?php foreach ($staticPages as $page): ?>
-            <article class="grid grid-cols-[70px_1.2fr_1fr_1fr_1fr_160px] items-center gap-4 border-b border-slate-100 px-5 py-4 last:border-b-0">
+            <article class="grid grid-cols-[70px_1.2fr_1fr_0.6fr_1fr_1fr_160px] items-center gap-4 border-b border-slate-100 px-5 py-4 last:border-b-0">
                 <div class="text-sm font-semibold text-slate-900">#<?php echo (int) $page['id']; ?></div>
                 <div class="space-y-1">
                     <div class="text-base font-semibold text-slate-900"><?php echo htmlspecialchars($page['title'], ENT_QUOTES, 'UTF-8'); ?></div>
@@ -139,6 +152,9 @@ $statusMessages = [
                 <div class="space-y-1 text-sm text-slate-700">
                     <div><?php echo (int) $page['show_in_footer'] === 1 ? 'Футер' : '—'; ?></div>
                     <div><?php echo (int) $page['show_in_menu'] === 1 ? 'Меню' : '—'; ?></div>
+                </div>
+                <div class="text-sm text-slate-700">
+                    <?php echo (int) $page['show_in_footer'] === 1 ? (int) ($page['footer_column'] ?? 1) : '—'; ?>
                 </div>
                 <div class="text-sm text-slate-700">
                     <span class="inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-semibold <?php echo (int) $page['is_active'] === 1 ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200' : 'bg-amber-50 text-amber-700 ring-1 ring-amber-200'; ?>">

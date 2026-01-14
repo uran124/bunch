@@ -146,6 +146,7 @@ CREATE TABLE static_pages (
 
   show_in_footer TINYINT(1) NOT NULL DEFAULT 1,
   show_in_menu TINYINT(1) NOT NULL DEFAULT 1,
+  footer_column TINYINT(1) NOT NULL DEFAULT 1,
   is_active TINYINT(1) NOT NULL DEFAULT 1,
   sort_order INT NOT NULL DEFAULT 0,
 
