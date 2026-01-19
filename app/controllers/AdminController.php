@@ -2168,9 +2168,69 @@ class AdminController extends Controller
             'headerSubtitle' => 'Сервисы · Платёжные шлюзы',
         ];
 
+        $settings = new Setting();
+        $robokassaDefaults = $settings->getRobokassaDefaults();
+        $paymentDefaults = $settings->getPaymentDefaults();
+
         $this->render('admin-services-payment', [
             'pageMeta' => $pageMeta,
+            'paymentSettings' => [
+                'gateway' => $settings->get(
+                    Setting::ONLINE_PAYMENT_GATEWAY,
+                    $paymentDefaults[Setting::ONLINE_PAYMENT_GATEWAY] ?? 'robokassa'
+                ),
+                'robokassa' => [
+                    'merchant_login' => $settings->get(
+                        Setting::ROBOKASSA_MERCHANT_LOGIN,
+                        $robokassaDefaults[Setting::ROBOKASSA_MERCHANT_LOGIN] ?? ''
+                    ),
+                    'password1' => $settings->get(
+                        Setting::ROBOKASSA_PASSWORD1,
+                        $robokassaDefaults[Setting::ROBOKASSA_PASSWORD1] ?? ''
+                    ),
+                    'password2' => $settings->get(
+                        Setting::ROBOKASSA_PASSWORD2,
+                        $robokassaDefaults[Setting::ROBOKASSA_PASSWORD2] ?? ''
+                    ),
+                    'result_url' => $settings->get(
+                        Setting::ROBOKASSA_RESULT_URL,
+                        $robokassaDefaults[Setting::ROBOKASSA_RESULT_URL] ?? ''
+                    ),
+                    'success_url' => $settings->get(
+                        Setting::ROBOKASSA_SUCCESS_URL,
+                        $robokassaDefaults[Setting::ROBOKASSA_SUCCESS_URL] ?? ''
+                    ),
+                    'fail_url' => $settings->get(
+                        Setting::ROBOKASSA_FAIL_URL,
+                        $robokassaDefaults[Setting::ROBOKASSA_FAIL_URL] ?? ''
+                    ),
+                    'is_test' => filter_var(
+                        $settings->get(
+                            Setting::ROBOKASSA_TEST_MODE,
+                            $robokassaDefaults[Setting::ROBOKASSA_TEST_MODE] ?? '0'
+                        ),
+                        FILTER_VALIDATE_BOOLEAN
+                    ),
+                ],
+            ],
         ]);
+    }
+
+    public function saveServicePayment(): void
+    {
+        $settings = new Setting();
+
+        $settings->set(Setting::ONLINE_PAYMENT_GATEWAY, trim((string) ($_POST['gateway'] ?? 'robokassa')));
+        $settings->set(Setting::ROBOKASSA_MERCHANT_LOGIN, trim((string) ($_POST['robokassa_merchant_login'] ?? '')));
+        $settings->set(Setting::ROBOKASSA_PASSWORD1, trim((string) ($_POST['robokassa_password1'] ?? '')));
+        $settings->set(Setting::ROBOKASSA_PASSWORD2, trim((string) ($_POST['robokassa_password2'] ?? '')));
+        $settings->set(Setting::ROBOKASSA_RESULT_URL, trim((string) ($_POST['robokassa_result_url'] ?? '')));
+        $settings->set(Setting::ROBOKASSA_SUCCESS_URL, trim((string) ($_POST['robokassa_success_url'] ?? '')));
+        $settings->set(Setting::ROBOKASSA_FAIL_URL, trim((string) ($_POST['robokassa_fail_url'] ?? '')));
+        $settings->set(Setting::ROBOKASSA_TEST_MODE, isset($_POST['robokassa_test_mode']) ? '1' : '0');
+
+        header('Location: /?page=admin-services-payment&status=saved');
+        exit;
     }
 
     public function contentStatic(): void

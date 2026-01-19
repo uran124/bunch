@@ -174,6 +174,7 @@ $router->post('admin-attribute-value-delete', [AdminController::class, 'deleteAt
 $router->post('admin-product-save', [AdminController::class, 'saveProduct']);
 $router->post('admin-product-delete', [AdminController::class, 'deleteProduct']);
 $router->post('admin-product-toggle', [AdminController::class, 'toggleProductActive']);
+$router->post('admin-services-payment', [AdminController::class, 'saveServicePayment']);
 $router->post('admin-services-telegram', [AdminController::class, 'saveServiceTelegram']);
 $router->post('admin-lottery-save', [AdminController::class, 'saveLottery']);
 $router->post('admin-lottery-update', [AdminController::class, 'updateLottery']);
