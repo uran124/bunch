@@ -7,6 +7,7 @@ class Setting extends Model
     public const TG_BOT_USERNAME = 'telegram_bot_username';
     public const TG_WEBHOOK_SECRET = 'telegram_webhook_secret';
     public const LOTTERY_FREE_MONTHLY_LIMIT = 'lottery_free_monthly_limit';
+    public const ONLINE_PAYMENT_ENABLED = 'online_payment_enabled';
 
     public function get(string $code, ?string $default = null): ?string
     {
@@ -47,6 +48,13 @@ class Setting extends Model
     {
         return [
             self::LOTTERY_FREE_MONTHLY_LIMIT => getenv('LOTTERY_FREE_MONTHLY_LIMIT') ?: '3',
+        ];
+    }
+
+    public function getPaymentDefaults(): array
+    {
+        return [
+            self::ONLINE_PAYMENT_ENABLED => getenv('ONLINE_PAYMENT_ENABLED') ?: '1',
         ];
     }
 }

@@ -52,6 +52,7 @@ class CartController extends Controller
             'deliveryPricingVersion' => $deliveryZoneModel->getPricingVersion(),
             'dadataConfig' => $this->getDadataSettings(),
             'testAddresses' => $deliveryZoneModel->getTestAddresses(),
+            'onlinePaymentEnabled' => $this->isOnlinePaymentEnabled(),
             'pageMeta' => [
                 'title' => 'Корзина — Bunch flowers',
                 'description' => 'Проверьте позиции перед оформлением заказа.',
@@ -194,6 +195,14 @@ class CartController extends Controller
         $recipientName = trim((string) ($recipient['name'] ?? ''));
         $recipientPhone = trim((string) ($recipient['phone'] ?? ''));
         $comment = trim((string) ($payload['comment'] ?? ''));
+        $paymentMethod = trim((string) ($payload['payment_method'] ?? 'cash'));
+        $allowedPaymentMethods = ['online', 'sbp', 'cash'];
+        if (!in_array($paymentMethod, $allowedPaymentMethods, true)) {
+            $paymentMethod = 'cash';
+        }
+        if ($paymentMethod === 'online' && !$this->isOnlinePaymentEnabled()) {
+            $paymentMethod = 'sbp';
+        }
 
         $addressModel = new UserAddress();
         $userAddresses = $addressModel->getByUserId((int) $userId);
@@ -314,6 +323,7 @@ class CartController extends Controller
             echo json_encode([
                 'ok' => true,
                 'order_id' => $orderId,
+                'payment_link' => $paymentMethod === 'online' ? '/?page=order-payment&id=' . $orderId : null,
             ]);
         } catch (Throwable $e) {
             $this->logCheckoutError('Checkout failed', [
@@ -354,6 +364,18 @@ class CartController extends Controller
         $entry = sprintf("[%s] %s%s\n", date('c'), $message, $payload);
 
         file_put_contents($logDir . '/checkout.log', $entry, FILE_APPEND);
+    }
+
+    private function isOnlinePaymentEnabled(): bool
+    {
+        $settings = new Setting();
+        $defaults = $settings->getPaymentDefaults();
+        $raw = $settings->get(
+            Setting::ONLINE_PAYMENT_ENABLED,
+            $defaults[Setting::ONLINE_PAYMENT_ENABLED] ?? '1'
+        );
+
+        return filter_var($raw, FILTER_VALIDATE_BOOLEAN);
     }
 
 }

@@ -359,6 +359,7 @@ function initOrderFlow() {
     const recipientName = orderSection.querySelector('[data-recipient-name]');
     const recipientPhone = orderSection.querySelector('[data-recipient-phone]');
     const commentInput = orderSection.querySelector('[data-order-comment]');
+    const paymentButtons = Array.from(document.querySelectorAll('[data-payment-method]'));
 
     const attachPicker = (input) => {
         if (!input) return;
@@ -476,6 +477,19 @@ function initOrderFlow() {
         });
         recipientExtra.forEach((extra) => {
             extra.hidden = mode !== 'other';
+        });
+    };
+
+    const setPaymentMethod = (method) => {
+        paymentButtons.forEach((btn) => {
+            const isActive = btn.dataset.paymentMethod === method;
+            btn.classList.toggle('border-rose-200', isActive);
+            btn.classList.toggle('bg-rose-50', isActive);
+            btn.classList.toggle('text-rose-700', isActive);
+            btn.classList.toggle('shadow-sm', isActive);
+            btn.classList.toggle('border-slate-200', !isActive);
+            btn.classList.toggle('bg-white', !isActive);
+            btn.classList.toggle('text-slate-700', !isActive);
         });
     };
 
@@ -974,11 +988,13 @@ function initOrderFlow() {
     });
 
     const collectPayload = () => {
+        const activePayment = paymentButtons.find((btn) => btn.classList.contains('border-rose-200'));
         const payload = {
             mode: currentMode,
             date: dateInput?.value || '',
             time: timeInput?.value || '',
             comment: commentInput?.value || '',
+            payment_method: activePayment?.dataset.paymentMethod || 'cash',
         };
 
         if (currentMode === 'delivery') {
@@ -1066,6 +1082,11 @@ function initOrderFlow() {
                 throw new Error(data.error || 'Не удалось сохранить заказ');
             }
 
+            if (data.payment_link) {
+                window.location.href = data.payment_link;
+                return;
+            }
+
             window.location.href = '/?page=orders';
         } catch (error) {
             alert(error.message || 'Ошибка оформления заказа');
@@ -1076,6 +1097,14 @@ function initOrderFlow() {
     };
 
     submitButton.addEventListener('click', submitOrder);
+
+    if (paymentButtons.length) {
+        const defaultMethod = paymentButtons[0].dataset.paymentMethod || 'cash';
+        setPaymentMethod(defaultMethod);
+        paymentButtons.forEach((btn) => {
+            btn.addEventListener('click', () => setPaymentMethod(btn.dataset.paymentMethod || 'cash'));
+        });
+    }
 
     setRecipientMode('self');
     toggleDelivery('pickup');
