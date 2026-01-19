@@ -319,11 +319,18 @@ class CartController extends Controller
             ]);
 
             $cart->clear();
+            $paymentLink = null;
+            if ($paymentMethod === 'online') {
+                $paymentLink = $orderModel->getOnlinePaymentLink($orderId);
+                if ($paymentLink === null) {
+                    $paymentLink = '/?page=order-payment&id=' . $orderId;
+                }
+            }
 
             echo json_encode([
                 'ok' => true,
                 'order_id' => $orderId,
-                'payment_link' => $paymentMethod === 'online' ? '/?page=order-payment&id=' . $orderId : null,
+                'payment_link' => $paymentLink,
             ]);
         } catch (Throwable $e) {
             $this->logCheckoutError('Checkout failed', [

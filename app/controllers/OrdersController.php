@@ -151,6 +151,12 @@ class OrdersController extends Controller
             exit;
         }
 
+        $paymentLink = $this->orderModel->getOnlinePaymentLink((int) $order['id']);
+        if ($paymentLink) {
+            header('Location: ' . $paymentLink);
+            exit;
+        }
+
         $pageMeta = [
             'title' => 'Оплата заказа — Bunch flowers',
             'description' => 'Оплата заказа через активный платёжный шлюз.',
@@ -158,11 +164,16 @@ class OrdersController extends Controller
             'headerSubtitle' => 'Оплата заказа',
         ];
 
+        $settings = new Setting();
+        $gatewayDefaults = $settings->getPaymentDefaults();
+        $gatewayName = $settings->get(Setting::ONLINE_PAYMENT_GATEWAY, $gatewayDefaults[Setting::ONLINE_PAYMENT_GATEWAY] ?? 'robokassa');
+        $gatewayLabel = $gatewayName === 'robokassa' ? 'Robokassa' : ucfirst($gatewayName);
+
         $this->render('order-payment', [
             'pageMeta' => $pageMeta,
             'order' => $order,
             'gateway' => [
-                'name' => 'Robokassa',
+                'name' => $gatewayLabel,
                 'link' => '/?page=admin-services-payment',
             ],
         ]);

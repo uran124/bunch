@@ -148,6 +148,24 @@ class Order extends Model
         return (int) $stmt->fetchColumn();
     }
 
+    public function getOnlinePaymentLink(int $orderId): ?string
+    {
+        $order = $this->findById($orderId);
+        if (!$order) {
+            return null;
+        }
+
+        $settings = new Setting();
+        $paymentDefaults = $settings->getPaymentDefaults();
+        $gateway = $settings->get(Setting::ONLINE_PAYMENT_GATEWAY, $paymentDefaults[Setting::ONLINE_PAYMENT_GATEWAY] ?? 'robokassa');
+
+        if ($gateway !== 'robokassa') {
+            return null;
+        }
+
+        return $this->buildRobokassaPaymentLink($order, $settings);
+    }
+
     private function getOrdersByStatuses(int $userId, array $statuses, int $limit = 50, int $offset = 0): array
     {
         if (empty($statuses)) {
@@ -402,6 +420,67 @@ class Order extends Model
 
         $dt = DateTime::createFromFormat('H:i', $value);
         return $dt instanceof DateTime ? $dt->format('H:i:s') : null;
+    }
+
+    private function buildRobokassaPaymentLink(array $order, Setting $settings): ?string
+    {
+        $robokassaDefaults = $settings->getRobokassaDefaults();
+        $merchantLogin = trim((string) $settings->get(
+            Setting::ROBOKASSA_MERCHANT_LOGIN,
+            $robokassaDefaults[Setting::ROBOKASSA_MERCHANT_LOGIN] ?? ''
+        ));
+        $password1 = trim((string) $settings->get(
+            Setting::ROBOKASSA_PASSWORD1,
+            $robokassaDefaults[Setting::ROBOKASSA_PASSWORD1] ?? ''
+        ));
+
+        if ($merchantLogin === '' || $password1 === '') {
+            return null;
+        }
+
+        $orderId = (int) ($order['id'] ?? 0);
+        if ($orderId <= 0) {
+            return null;
+        }
+
+        $amount = number_format((float) ($order['total_amount'] ?? 0), 2, '.', '');
+        $description = 'Оплата заказа №' . str_pad((string) $orderId, 4, '0', STR_PAD_LEFT);
+        $signature = strtoupper(md5($merchantLogin . ':' . $amount . ':' . $orderId . ':' . $password1));
+
+        $query = [
+            'MerchantLogin' => $merchantLogin,
+            'OutSum' => $amount,
+            'InvId' => $orderId,
+            'Description' => $description,
+            'SignatureValue' => $signature,
+            'Culture' => 'ru',
+        ];
+
+        $isTest = filter_var(
+            $settings->get(Setting::ROBOKASSA_TEST_MODE, $robokassaDefaults[Setting::ROBOKASSA_TEST_MODE] ?? '0'),
+            FILTER_VALIDATE_BOOLEAN
+        );
+        if ($isTest) {
+            $query['IsTest'] = 1;
+        }
+
+        $successUrl = trim((string) $settings->get(
+            Setting::ROBOKASSA_SUCCESS_URL,
+            $robokassaDefaults[Setting::ROBOKASSA_SUCCESS_URL] ?? ''
+        ));
+        if ($successUrl !== '') {
+            $query['SuccessURL'] = $successUrl;
+        }
+
+        $failUrl = trim((string) $settings->get(
+            Setting::ROBOKASSA_FAIL_URL,
+            $robokassaDefaults[Setting::ROBOKASSA_FAIL_URL] ?? ''
+        ));
+        if ($failUrl !== '') {
+            $query['FailURL'] = $failUrl;
+        }
+
+        return 'https://auth.robokassa.ru/Merchant/Index.aspx?' . http_build_query($query);
     }
 
     private function mapAdminOrder(array $order, array $items = []): array

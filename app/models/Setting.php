@@ -8,6 +8,14 @@ class Setting extends Model
     public const TG_WEBHOOK_SECRET = 'telegram_webhook_secret';
     public const LOTTERY_FREE_MONTHLY_LIMIT = 'lottery_free_monthly_limit';
     public const ONLINE_PAYMENT_ENABLED = 'online_payment_enabled';
+    public const ONLINE_PAYMENT_GATEWAY = 'online_payment_gateway';
+    public const ROBOKASSA_MERCHANT_LOGIN = 'robokassa_merchant_login';
+    public const ROBOKASSA_PASSWORD1 = 'robokassa_password1';
+    public const ROBOKASSA_PASSWORD2 = 'robokassa_password2';
+    public const ROBOKASSA_TEST_MODE = 'robokassa_test_mode';
+    public const ROBOKASSA_RESULT_URL = 'robokassa_result_url';
+    public const ROBOKASSA_SUCCESS_URL = 'robokassa_success_url';
+    public const ROBOKASSA_FAIL_URL = 'robokassa_fail_url';
 
     public function get(string $code, ?string $default = null): ?string
     {
@@ -55,6 +63,20 @@ class Setting extends Model
     {
         return [
             self::ONLINE_PAYMENT_ENABLED => getenv('ONLINE_PAYMENT_ENABLED') ?: '1',
+            self::ONLINE_PAYMENT_GATEWAY => getenv('ONLINE_PAYMENT_GATEWAY') ?: 'robokassa',
+        ];
+    }
+
+    public function getRobokassaDefaults(): array
+    {
+        return [
+            self::ROBOKASSA_MERCHANT_LOGIN => getenv('ROBOKASSA_MERCHANT_LOGIN') ?: '',
+            self::ROBOKASSA_PASSWORD1 => getenv('ROBOKASSA_PASSWORD1') ?: '',
+            self::ROBOKASSA_PASSWORD2 => getenv('ROBOKASSA_PASSWORD2') ?: '',
+            self::ROBOKASSA_TEST_MODE => getenv('ROBOKASSA_TEST_MODE') ?: '0',
+            self::ROBOKASSA_RESULT_URL => getenv('ROBOKASSA_RESULT_URL') ?: '',
+            self::ROBOKASSA_SUCCESS_URL => getenv('ROBOKASSA_SUCCESS_URL') ?: '',
+            self::ROBOKASSA_FAIL_URL => getenv('ROBOKASSA_FAIL_URL') ?: '',
         ];
     }
 }

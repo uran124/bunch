@@ -1,5 +1,8 @@
 <?php /** @var array $pageMeta */ ?>
+<?php /** @var array $paymentSettings */ ?>
 <?php $pageMeta = $pageMeta ?? []; ?>
+<?php $paymentSettings = $paymentSettings ?? []; ?>
+<?php $robokassaSettings = $paymentSettings['robokassa'] ?? []; ?>
 
 <section class="flex flex-col gap-6">
     <header class="flex flex-wrap items-start justify-between gap-4">
@@ -110,7 +113,8 @@
                 </div>
 
                 <div class="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
-                    <form class="space-y-3 rounded-xl border border-slate-100 bg-slate-50 p-4">
+                    <form class="space-y-3 rounded-xl border border-slate-100 bg-slate-50 p-4" method="post" action="/?page=admin-services-payment">
+                        <input type="hidden" name="gateway" value="robokassa">
                         <div class="flex items-center justify-between gap-3">
                             <div>
                                 <p class="text-sm font-semibold text-slate-800">Данные магазина</p>
@@ -126,6 +130,8 @@
                                 <span class="text-xs uppercase tracking-[0.14em] text-slate-500">Merchant Login</span>
                                 <input
                                     type="text"
+                                    name="robokassa_merchant_login"
+                                    value="<?php echo htmlspecialchars((string) ($robokassaSettings['merchant_login'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
                                     placeholder="shop_bunch"
                                     class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-rose-500/30"
                                 >
@@ -134,6 +140,8 @@
                                 <span class="text-xs uppercase tracking-[0.14em] text-slate-500">Пароль #1</span>
                                 <input
                                     type="password"
+                                    name="robokassa_password1"
+                                    value="<?php echo htmlspecialchars((string) ($robokassaSettings['password1'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
                                     placeholder="••••••••"
                                     class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-rose-500/30"
                                 >
@@ -142,6 +150,8 @@
                                 <span class="text-xs uppercase tracking-[0.14em] text-slate-500">Пароль #2</span>
                                 <input
                                     type="password"
+                                    name="robokassa_password2"
+                                    value="<?php echo htmlspecialchars((string) ($robokassaSettings['password2'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
                                     placeholder="••••••••"
                                     class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-rose-500/30"
                                 >
@@ -152,7 +162,8 @@
                                 <span class="text-xs uppercase tracking-[0.14em] text-slate-500">Result URL</span>
                                 <input
                                     type="text"
-                                    value="https://bunchflowers.ru/api/payments/robokassa/result"
+                                    name="robokassa_result_url"
+                                    value="<?php echo htmlspecialchars((string) ($robokassaSettings['result_url'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
                                     class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-rose-500/30"
                                 >
                             </label>
@@ -161,7 +172,8 @@
                                     <span class="text-xs uppercase tracking-[0.14em] text-slate-500">Success URL</span>
                                     <input
                                         type="text"
-                                        value="https://bunchflowers.ru/order/success"
+                                        name="robokassa_success_url"
+                                        value="<?php echo htmlspecialchars((string) ($robokassaSettings['success_url'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
                                         class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-rose-500/30"
                                     >
                                 </label>
@@ -169,7 +181,8 @@
                                     <span class="text-xs uppercase tracking-[0.14em] text-slate-500">Fail URL</span>
                                     <input
                                         type="text"
-                                        value="https://bunchflowers.ru/order/fail"
+                                        name="robokassa_fail_url"
+                                        value="<?php echo htmlspecialchars((string) ($robokassaSettings['fail_url'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
                                         class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-rose-500/30"
                                     >
                                 </label>
@@ -180,7 +193,12 @@
                                 <p class="font-semibold">Тестовый режим</p>
                                 <p class="text-xs text-slate-500">Переключает запросы на sandbox Robokassa.</p>
                             </div>
-                            <input type="checkbox" class="h-5 w-5 rounded border-slate-300 text-rose-600 focus:ring-rose-500">
+                            <input
+                                type="checkbox"
+                                name="robokassa_test_mode"
+                                class="h-5 w-5 rounded border-slate-300 text-rose-600 focus:ring-rose-500"
+                                <?php echo !empty($robokassaSettings['is_test']) ? 'checked' : ''; ?>
+                            >
                         </label>
                         <button
                             type="submit"
