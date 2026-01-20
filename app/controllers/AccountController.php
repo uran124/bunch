@@ -196,6 +196,29 @@ class AccountController extends Controller
         ));
     }
 
+    public function notifications(): void
+    {
+        $userId = Auth::userId();
+        $userRow = $userId ? $this->userModel->findById($userId) : null;
+
+        if (!$userRow) {
+            header('Location: /login');
+            exit;
+        }
+
+        $notificationLog = new NotificationLog();
+        $notifications = $notificationLog->getForUser($userId, 120);
+
+        $pageMeta = [
+            'title' => 'Уведомления — Bunch flowers',
+            'description' => 'История уведомлений, которые приходили через Telegram-бота.',
+            'headerTitle' => 'Bunch flowers',
+            'headerSubtitle' => 'Уведомления',
+        ];
+
+        $this->render('account-notifications', compact('notifications', 'pageMeta'));
+    }
+
     public function updatePin(): void
     {
         header('Content-Type: application/json');

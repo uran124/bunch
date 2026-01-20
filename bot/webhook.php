@@ -75,6 +75,29 @@ if (!$chatId) {
     exit;
 }
 
+$supportChatId = -1002055168794;
+$supportThreadId = 1155;
+if ((int) $chatId === $supportChatId) {
+    $supportChat = new SupportChat();
+    if ($threadId !== null && (int) $threadId !== $supportThreadId) {
+        exit;
+    }
+
+    $replyTo = $message['reply_to_message'] ?? null;
+    $replyToId = $replyTo['message_id'] ?? null;
+    if ($replyToId && $text !== '') {
+        $userId = $supportChat->getUserIdForTelegramMessage((int) $replyToId);
+        if ($userId) {
+            $supportChat->appendMessage($userId, 'support', $text, [
+                'telegram' => [
+                    'message_id' => (int) ($message['message_id'] ?? 0),
+                ],
+            ]);
+        }
+    }
+    exit;
+}
+
 /**
  * NEW: Пассивный сбор метаданных для админки (НЕ влияет на текущую бизнес-логику).
  * Сохраняет последний апдейт и реестр чатов/тем в /bot/data.
@@ -123,8 +146,11 @@ $displayName = $username ? '@' . $username : ($fromName ?: 'Пользовате
 $forwardText = $text !== '' ? $text : '[без текста]';
 $telegram->sendMessage($unknownChatId, '[' . $displayName . ' ' . $forwardText . ']', [
     'message_thread_id' => $unknownThreadId,
+    'skip_log' => true,
 ]);
-$telegram->sendMessage((int) $chatId, 'Запрос зафиксирован. Я передал его менеджеру, он свяжется с вами в ближайшее время.');
+$telegram->sendMessage((int) $chatId, 'Запрос зафиксирован. Я передал его менеджеру, он свяжется с вами в ближайшее время.', [
+    'skip_log' => true,
+]);
 
 function getRequestHeaders(): array
 {
@@ -187,6 +213,7 @@ function requestPhone(Telegram $telegram, int $chatId): void
 
     $telegram->sendMessage($chatId, 'Отправьте свой номер, и я вышлю одноразовый код из 5 цифр для сайта.', [
         'reply_markup' => json_encode($keyboard, JSON_UNESCAPED_UNICODE),
+        'skip_log' => true,
     ]);
 }
 
@@ -219,9 +246,12 @@ function handleRegistrationCode(
 
         $telegram->sendMessage(
             $chatId,
-            'Вы уже зарегестрированны на bunch! Используйте ссылку чтобы войти: https://bunchflowers.ru/login, чтобы восстановить пароль: https://bunchflowers.ru/recover. Введите код для восстановления:'
+            'Вы уже зарегестрированны на bunch! Используйте ссылку чтобы войти: https://bunchflowers.ru/login, чтобы восстановить пароль: https://bunchflowers.ru/recover. Введите код для восстановления:',
+            ['skip_log' => true]
         );
-        $telegram->sendMessage($chatId, formatTelegramCode($code));
+        $telegram->sendMessage($chatId, formatTelegramCode($code), [
+            'skip_log' => true,
+        ]);
 
         $logger->logEvent('TG_ALREADY_REGISTERED_CODE_SENT', [
             'user_id' => $existingByChat['id'],
@@ -253,8 +283,12 @@ function handleRegistrationCode(
 
     $code = $verificationModel->createCode($chatId, 'register', $codePhone, $userId, $username, $name);
 
-    $telegram->sendMessage($chatId, 'Ваш код для регистрации на сайте:');
-    $telegram->sendMessage($chatId, formatTelegramCode($code));
+    $telegram->sendMessage($chatId, 'Ваш код для регистрации на сайте:', [
+        'skip_log' => true,
+    ]);
+    $telegram->sendMessage($chatId, formatTelegramCode($code), [
+        'skip_log' => true,
+    ]);
 
     $logger->logEvent('TG_REG_CODE_SENT', ['user_id' => $userId, 'chat_id' => $chatId, 'phone' => $phone]);
     $analytics->track('tg_code_sent', ['purpose' => 'register', 'user_id' => $userId]);
@@ -272,7 +306,9 @@ function handleRecoveryCode(
     $user = $userModel->findByTelegramChatId($chatId);
 
     if (!$user) {
-        $telegram->sendMessage($chatId, 'Пользователь не найден. Сначала получите код и привяжите номер телефона.');
+        $telegram->sendMessage($chatId, 'Пользователь не найден. Сначала получите код и привяжите номер телефона.', [
+            'skip_log' => true,
+        ]);
         return;
     }
 
@@ -283,8 +319,12 @@ function handleRecoveryCode(
     $logger->logEvent('TG_RECOVERY_CODE_SENT', ['user_id' => $user['id'], 'chat_id' => $chatId]);
     $analytics->track('tg_code_sent', ['purpose' => 'recover', 'user_id' => $user['id']]);
 
-    $telegram->sendMessage($chatId, 'Код для смены PIN:');
-    $telegram->sendMessage($chatId, formatTelegramCode($code));
+    $telegram->sendMessage($chatId, 'Код для смены PIN:', [
+        'skip_log' => true,
+    ]);
+    $telegram->sendMessage($chatId, formatTelegramCode($code), [
+        'skip_log' => true,
+    ]);
 }
 
 function normalisePhone(string $phone): string

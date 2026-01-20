@@ -3521,5 +3521,180 @@ function initInfoPanel() {
     overlay?.addEventListener('click', closePanel);
 }
 
+function initSupportChat() {
+    const modal = document.querySelector('[data-support-modal]');
+    const openButtons = document.querySelectorAll('[data-support-open]');
+    if (!modal || !openButtons.length) return;
+
+    const closeButtons = modal.querySelectorAll('[data-support-close]');
+    const list = modal.querySelector('[data-support-messages]');
+    const emptyState = modal.querySelector('[data-support-empty]');
+    const form = modal.querySelector('[data-support-form]');
+    const textarea = modal.querySelector('[data-support-input]');
+    const status = modal.querySelector('[data-support-status]');
+    let pollTimer = null;
+    let lastMessageId = null;
+
+    const formatTime = (iso) => {
+        if (!iso) return '';
+        const date = new Date(iso);
+        if (Number.isNaN(date.getTime())) return '';
+        return date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+    };
+
+    const renderMessage = (message) => {
+        const wrapper = document.createElement('div');
+        wrapper.className = `flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`;
+
+        const bubble = document.createElement('div');
+        bubble.className = message.sender === 'user'
+            ? 'max-w-[80%] rounded-2xl bg-rose-600 px-3 py-2 text-sm text-white shadow'
+            : 'max-w-[80%] rounded-2xl bg-white px-3 py-2 text-sm text-slate-700 shadow';
+        bubble.textContent = message.text || '';
+
+        const meta = document.createElement('div');
+        meta.className = message.sender === 'user'
+            ? 'mt-1 text-xs text-rose-100'
+            : 'mt-1 text-xs text-slate-400';
+        meta.textContent = formatTime(message.created_at);
+
+        bubble.appendChild(meta);
+        wrapper.appendChild(bubble);
+        list.appendChild(wrapper);
+    };
+
+    const setStatus = (text, tone = 'text-slate-500') => {
+        if (!status) return;
+        status.textContent = text;
+        status.className = `text-xs font-semibold ${tone}`;
+    };
+
+    const scrollToBottom = () => {
+        if (!list) return;
+        list.scrollTop = list.scrollHeight;
+    };
+
+    const loadMessages = async (initial = false) => {
+        const url = new URL('/support-messages', window.location.origin);
+        if (lastMessageId) {
+            url.searchParams.set('after', lastMessageId);
+        }
+
+        const response = await fetch(url.toString(), {
+            headers: {
+                'Accept': 'application/json',
+            },
+        });
+
+        if (response.status === 401) {
+            window.location.href = '/login';
+            return;
+        }
+
+        if (!response.ok) {
+            setStatus('Не удалось загрузить сообщения.', 'text-rose-600');
+            return;
+        }
+
+        const data = await response.json();
+        const messages = Array.isArray(data.messages) ? data.messages : [];
+        if (initial) {
+            list.innerHTML = '';
+            if (emptyState) {
+                list.appendChild(emptyState);
+            }
+        }
+
+        messages.forEach((message) => {
+            renderMessage(message);
+            lastMessageId = message.id || lastMessageId;
+        });
+
+        if (emptyState) {
+            const messageCount = Array.from(list.children).filter((child) => child !== emptyState).length;
+            emptyState.classList.toggle('hidden', messageCount > 0);
+        }
+
+        scrollToBottom();
+    };
+
+    const openModal = () => {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        document.body.classList.add('overflow-hidden');
+        lastMessageId = null;
+        setStatus('');
+        loadMessages(true);
+        pollTimer = window.setInterval(() => {
+            loadMessages();
+        }, 5000);
+    };
+
+    const closeModal = () => {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        document.body.classList.remove('overflow-hidden');
+        if (pollTimer) {
+            window.clearInterval(pollTimer);
+            pollTimer = null;
+        }
+    };
+
+    openButtons.forEach((button) => {
+        button.addEventListener('click', openModal);
+    });
+    closeButtons.forEach((button) => {
+        button.addEventListener('click', closeModal);
+    });
+    modal.addEventListener('click', (event) => {
+        if (event.target === modal) closeModal();
+    });
+
+    form?.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        if (!textarea) return;
+        const text = textarea.value.trim();
+        if (!text) {
+            setStatus('Введите сообщение.', 'text-rose-600');
+            return;
+        }
+
+        setStatus('Отправляем...', 'text-slate-500');
+        const response = await fetch('/support-message', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+            body: JSON.stringify({ message: text }),
+        });
+
+        if (response.status === 401) {
+            window.location.href = '/login';
+            return;
+        }
+
+        if (!response.ok) {
+            setStatus('Не удалось отправить сообщение.', 'text-rose-600');
+            return;
+        }
+
+        const data = await response.json();
+        if (data.message) {
+            renderMessage(data.message);
+            lastMessageId = data.message.id || lastMessageId;
+            textarea.value = '';
+            if (emptyState) {
+                emptyState.classList.add('hidden');
+            }
+            scrollToBottom();
+        }
+
+        setStatus('Отправлено.', 'text-emerald-600');
+        setTimeout(() => setStatus(''), 2000);
+    });
+}
+
 initCookieConsent();
 initInfoPanel();
+initSupportChat();

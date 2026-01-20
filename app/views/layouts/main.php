@@ -13,6 +13,9 @@ if ($currentPath === '' || $currentPath === 'index' || $currentPath === 'index.p
 $authPages = ['login', 'register', 'recover'];
 $isAuthPage = in_array($currentPage, $authPages, true);
 $isAdminPage = str_starts_with($currentPage, 'admin');
+$isAuthenticated = class_exists('Auth') ? Auth::check() : false;
+$currentUserRole = $currentUserRole ?? 'customer';
+$isAdminUser = $currentUserRole === 'admin';
 $mainClasses = 'mx-auto flex w-full max-w-6xl flex-1 flex-col gap-4 px-3 py-3 pb-[calc(6.5rem+env(safe-area-inset-bottom))] sm:gap-6 sm:px-4 sm:pt-8 sm:pb-[calc(6.5rem+env(safe-area-inset-bottom))]';
 if ($currentPage === 'home') {
     $mainClasses = 'mx-auto flex w-full max-w-6xl flex-1 flex-col gap-4 px-3 py-3 pb-[calc(3rem+env(safe-area-inset-bottom))] sm:gap-6 sm:px-4 sm:pt-8 sm:pb-[calc(6.5rem+env(safe-area-inset-bottom))]';
@@ -420,35 +423,52 @@ $adminNavigation = [
                     </a>
                 <?php endif; ?>
             </div>
-            <div class="hidden items-center gap-3 sm:flex">
+            <div class="<?php echo htmlspecialchars($isAdminPage ? 'flex items-center gap-3' : 'flex items-center gap-2', ENT_QUOTES, 'UTF-8'); ?>">
                 <?php if ($isAdminPage): ?>
                     <a class="inline-flex items-center gap-2 rounded-full border border-slate-700 bg-slate-900 px-3 py-2 text-sm font-semibold text-slate-200 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-500 hover:text-white" href="/">
                         <span class="material-symbols-rounded text-lg text-rose-400">arrow_back</span>
                         На сайт
                     </a>
                 <?php else: ?>
-                    <button class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
-                        <span class="material-symbols-rounded text-base">notifications</span>
-                        Уведомления
-                    </button>
-                    <button class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+                    <?php if ($isAdminUser): ?>
+                        <a
+                            class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:-translate-y-0.5 hover:text-rose-600 sm:h-auto sm:w-auto sm:justify-start sm:gap-2 sm:px-3 sm:py-2 sm:text-sm sm:font-semibold sm:text-slate-700 sm:shadow-sm sm:hover:shadow-md"
+                            href="/admin"
+                            aria-label="Админка"
+                        >
+                            <span class="material-symbols-rounded text-lg text-emerald-500">admin_panel_settings</span>
+                            <span class="hidden sm:inline">Админка</span>
+                        </a>
+                    <?php endif; ?>
+                    <?php if ($isAuthenticated): ?>
+                        <a
+                            class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:-translate-y-0.5 hover:text-rose-600 sm:h-auto sm:w-auto sm:justify-start sm:gap-2 sm:rounded-xl sm:px-3 sm:py-2 sm:text-sm sm:font-semibold sm:text-slate-700 sm:shadow-sm sm:hover:shadow-md"
+                            href="/account-notifications"
+                            aria-label="Уведомления"
+                        >
+                            <span class="material-symbols-rounded text-base">notifications</span>
+                            <span class="hidden sm:inline">Уведомления</span>
+                        </a>
+                    <?php endif; ?>
+                    <button
+                        class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:-translate-y-0.5 hover:text-rose-600 sm:h-auto sm:w-auto sm:justify-start sm:gap-2 sm:px-3 sm:py-2 sm:text-sm sm:font-semibold sm:text-slate-700 sm:shadow-sm sm:hover:shadow-md"
+                        type="button"
+                        data-support-open
+                        aria-label="Поддержка"
+                    >
                         <span class="material-symbols-rounded text-lg text-rose-500">support_agent</span>
-                        Поддержка
+                        <span class="hidden sm:inline">Поддержка</span>
+                    </button>
+                    <button
+                        class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:-translate-y-0.5 hover:text-rose-600 sm:hidden"
+                        type="button"
+                        data-info-open
+                        aria-label="Меню"
+                    >
+                        <span class="material-symbols-rounded text-xl">menu</span>
                     </button>
                 <?php endif; ?>
             </div>
-            <?php if (!$isAdminPage): ?>
-                <div class="flex items-center sm:hidden">
-                    <button
-                        class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:-translate-y-0.5 hover:text-rose-600"
-                        type="button"
-                        data-info-open
-                        aria-label="Информация"
-                    >
-                        <span class="material-symbols-rounded text-xl">info</span>
-                    </button>
-                </div>
-            <?php endif; ?>
         </div>
     </header>
 
@@ -574,11 +594,19 @@ $adminNavigation = [
                     </button>
                 </div>
                 <div class="space-y-3">
-                    <button class="flex w-full items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
-                        <span class="material-symbols-rounded text-base">notifications</span>
-                        Уведомления
-                    </button>
-                    <button class="flex w-full items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+                    <?php if ($isAdminUser): ?>
+                        <a class="flex w-full items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md" href="/admin">
+                            <span class="material-symbols-rounded text-base text-emerald-500">admin_panel_settings</span>
+                            Админка
+                        </a>
+                    <?php endif; ?>
+                    <?php if ($isAuthenticated): ?>
+                        <a class="flex w-full items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md" href="/account-notifications">
+                            <span class="material-symbols-rounded text-base">notifications</span>
+                            Уведомления
+                        </a>
+                    <?php endif; ?>
+                    <button class="flex w-full items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md" type="button" data-support-open>
                         <span class="material-symbols-rounded text-lg text-rose-500">support_agent</span>
                         Поддержка
                     </button>
@@ -611,6 +639,43 @@ $adminNavigation = [
                         <a class="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 transition hover:border-rose-200 hover:text-rose-600" href="/static/offer">Пользовательское соглашение</a>
                     </div>
                 </div>
+            </div>
+        </div>
+    <?php endif; ?>
+
+    <?php if (!$isAdminPage): ?>
+        <div class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/40 px-4 py-6" data-support-modal>
+            <div class="w-full max-w-lg space-y-4 rounded-3xl bg-white p-6 shadow-2xl">
+                <div class="flex items-start justify-between gap-3">
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Поддержка</p>
+                        <h2 class="text-xl font-semibold text-slate-900">Чат с менеджером</h2>
+                        <p class="mt-1 text-sm text-slate-500">Ответ придёт в это окно после ответа в Telegram.</p>
+                    </div>
+                    <button type="button" class="rounded-full border border-slate-200 p-2 text-slate-500 transition hover:border-rose-200 hover:text-rose-600" data-support-close>
+                        <span class="material-symbols-rounded text-base">close</span>
+                    </button>
+                </div>
+                <div class="max-h-[50vh] space-y-3 overflow-y-auto rounded-2xl border border-slate-100 bg-slate-50 p-3" data-support-messages>
+                    <p class="text-sm text-slate-500" data-support-empty>Пока нет сообщений. Напишите, чтобы начать диалог.</p>
+                </div>
+                <form class="space-y-2" data-support-form>
+                    <textarea
+                        class="min-h-[96px] w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-rose-300 focus:outline-none"
+                        placeholder="Напишите сообщение..."
+                        data-support-input
+                    ></textarea>
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <p class="text-xs font-semibold text-emerald-600" data-support-status></p>
+                        <button
+                            class="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white shadow-md shadow-rose-200 transition hover:-translate-y-0.5 hover:bg-rose-700"
+                            type="submit"
+                        >
+                            <span class="material-symbols-rounded text-base">send</span>
+                            Отправить
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     <?php endif; ?>
