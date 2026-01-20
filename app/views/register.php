@@ -37,27 +37,42 @@
 
         <?php if (($stage ?? 'code') === 'code'): ?>
             <div class="rounded-2xl border border-rose-100 bg-white/90 backdrop-blur-sm p-4 shadow-sm">
-                <div class="space-y-3">
-                    <div class="flex items-center gap-2 text-sm font-semibold text-slate-900">
-                        <span class="material-symbols-rounded text-base text-rose-600">info</span>
-                        <span>Введите одноразовый код</span>
+                <div class="space-y-3 lg:flex lg:items-start lg:justify-between lg:gap-6 lg:space-y-0">
+                    <div class="space-y-3">
+                        <div class="flex items-center gap-2 text-sm font-semibold text-slate-900">
+                            <span class="material-symbols-rounded text-base text-rose-600">info</span>
+                            <span>Введите одноразовый код</span>
+                        </div>
+                        <ol class="space-y-1.5 pl-4 text-xs text-slate-700 list-decimal marker:text-rose-600 marker:font-semibold">
+                            <li>Откройте телеграм бота по ссылке</li>
+                            <li>Отправьте команду /start</li>
+                            <li>Введите код ниже</li>
+                        </ol>
+                        <a
+                            href="https://t.me/<?php echo htmlspecialchars($botUsername ?? '', ENT_QUOTES, 'UTF-8'); ?>?start=register"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="group relative overflow-hidden rounded-xl bg-gradient-to-r from-rose-600 to-rose-700 px-4 py-2.5 text-center text-xs font-semibold text-white shadow-lg shadow-rose-500/25 transition hover:shadow-xl hover:shadow-rose-500/40 hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-1.5 lg:hidden"
+                        >
+                            <div class="absolute inset-0 bg-gradient-to-r from-rose-700 to-rose-800 opacity-0 group-hover:opacity-100 transition"></div>
+                            <span class="relative flex items-center gap-1.5">
+                                <span class="material-symbols-rounded text-sm">send</span>
+                                Получить код
+                            </span>
+                        </a>
                     </div>
-                    <ol class="space-y-1.5 pl-4 text-xs text-slate-700 list-decimal marker:text-rose-600 marker:font-semibold">
-                        <li>Откройте телеграм бота по ссылке</li>
-                        <li>Отправьте команду /start</li>
-                        <li>Введите код ниже</li>
-                    </ol>
                     <a
                         href="https://t.me/<?php echo htmlspecialchars($botUsername ?? '', ENT_QUOTES, 'UTF-8'); ?>?start=register"
                         target="_blank"
                         rel="noopener noreferrer"
-                        class="group relative overflow-hidden rounded-xl bg-gradient-to-r from-rose-600 to-rose-700 px-4 py-2.5 text-center text-xs font-semibold text-white shadow-lg shadow-rose-500/25 transition hover:shadow-xl hover:shadow-rose-500/40 hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-1.5 lg:hidden"
+                        class="hidden shrink-0 lg:flex items-center justify-center"
+                        aria-label="Открыть телеграм бота и получить код"
                     >
-                        <div class="absolute inset-0 bg-gradient-to-r from-rose-700 to-rose-800 opacity-0 group-hover:opacity-100 transition"></div>
-                        <span class="relative flex items-center gap-1.5">
-                            <span class="material-symbols-rounded text-sm">send</span>
-                            Получить код
-                        </span>
+                        <img
+                            src="/assets/images/bfb_qr.svg"
+                            alt="QR-код телеграм бота"
+                            class="h-36 w-36 rounded-2xl border border-rose-100 bg-white p-2 shadow-md"
+                        >
                     </a>
                     <a
                         href="https://t.me/<?php echo htmlspecialchars($botUsername ?? '', ENT_QUOTES, 'UTF-8'); ?>?start=register"
