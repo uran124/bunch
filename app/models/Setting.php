@@ -16,6 +16,7 @@ class Setting extends Model
     public const ROBOKASSA_RESULT_URL = 'robokassa_result_url';
     public const ROBOKASSA_SUCCESS_URL = 'robokassa_success_url';
     public const ROBOKASSA_FAIL_URL = 'robokassa_fail_url';
+    public const ROBOKASSA_SIGNATURE_ALGORITHM = 'robokassa_signature_algorithm';
 
     public function get(string $code, ?string $default = null): ?string
     {
@@ -77,6 +78,7 @@ class Setting extends Model
             self::ROBOKASSA_RESULT_URL => getenv('ROBOKASSA_RESULT_URL') ?: '',
             self::ROBOKASSA_SUCCESS_URL => getenv('ROBOKASSA_SUCCESS_URL') ?: '',
             self::ROBOKASSA_FAIL_URL => getenv('ROBOKASSA_FAIL_URL') ?: '',
+            self::ROBOKASSA_SIGNATURE_ALGORITHM => getenv('ROBOKASSA_SIGNATURE_ALGORITHM') ?: 'md5',
         ];
     }
 }

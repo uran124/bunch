@@ -2228,6 +2228,10 @@ class AdminController extends Controller
                         Setting::ROBOKASSA_FAIL_URL,
                         $robokassaDefaults[Setting::ROBOKASSA_FAIL_URL] ?? ''
                     ),
+                    'signature_algorithm' => $settings->get(
+                        Setting::ROBOKASSA_SIGNATURE_ALGORITHM,
+                        $robokassaDefaults[Setting::ROBOKASSA_SIGNATURE_ALGORITHM] ?? 'md5'
+                    ),
                     'is_test' => filter_var(
                         $settings->get(
                             Setting::ROBOKASSA_TEST_MODE,
@@ -2251,6 +2255,10 @@ class AdminController extends Controller
         $settings->set(Setting::ROBOKASSA_RESULT_URL, trim((string) ($_POST['robokassa_result_url'] ?? '')));
         $settings->set(Setting::ROBOKASSA_SUCCESS_URL, trim((string) ($_POST['robokassa_success_url'] ?? '')));
         $settings->set(Setting::ROBOKASSA_FAIL_URL, trim((string) ($_POST['robokassa_fail_url'] ?? '')));
+        $settings->set(
+            Setting::ROBOKASSA_SIGNATURE_ALGORITHM,
+            strtolower(trim((string) ($_POST['robokassa_signature_algorithm'] ?? 'md5')))
+        );
         $settings->set(Setting::ROBOKASSA_TEST_MODE, isset($_POST['robokassa_test_mode']) ? '1' : '0');
 
         header('Location: /admin-services-payment?status=saved');
