@@ -1,4 +1,9 @@
 <?php
+ini_set('display_errors', '0');
+ini_set('log_errors', '1');
+ini_set('error_log', __DIR__ . '/data/webhook_php_errors.log');
+error_reporting(E_ALL);
+
 require_once __DIR__ . '/../config.php';
 
 spl_autoload_register(function (string $class): void {
@@ -57,6 +62,7 @@ if (!$message) {
 }
 
 $chatId = $message['chat']['id'] ?? null;
+$threadId = $message['message_thread_id'] ?? null; // NEW: ID темы (топика) в группах с темами
 $username = $message['from']['username'] ?? null;
 $fromFirstName = trim($message['from']['first_name'] ?? '');
 $fromLastName = trim($message['from']['last_name'] ?? '');
@@ -69,6 +75,16 @@ if (!$chatId) {
     exit;
 }
 
+/**
+ * NEW: Пассивный сбор метаданных для админки (НЕ влияет на текущую бизнес-логику).
+ * Сохраняет последний апдейт и реестр чатов/тем в /bot/data.
+ */
+try {
+    tg_admin_passive_capture(__DIR__ . '/data', $update, $message, (int) $chatId, $threadId, $username, $fromName, $text);
+} catch (\Throwable $e) {
+    // Ничего не делаем, чтобы не ломать основной сценарий
+}
+
 if ($botToken === '') {
     $unknownLogger->logRaw(date('c') . ' missing TG_BOT_TOKEN');
     exit;
@@ -78,17 +94,17 @@ $telegram = new Telegram($botToken);
 $userModel = new User();
 
 if (preg_match('/^\/start(?:\s+|$)/u', $text) === 1) {
-    handleRegistrationCode($telegram, $userModel, $verificationModel, $chatId, $username, null, $appLogger, $analytics, $contact, $fromName);
+    handleRegistrationCode($telegram, $userModel, $verificationModel, (int) $chatId, $username, null, $appLogger, $analytics, $contact, $fromName);
     exit;
 }
 
 if (mb_stripos($text, 'восстановить pin') !== false || mb_stripos($text, 'восстановить пин') !== false) {
-    handleRecoveryCode($telegram, $userModel, $verificationModel, $chatId, $username, $appLogger, $analytics);
+    handleRecoveryCode($telegram, $userModel, $verificationModel, (int) $chatId, $username, $appLogger, $analytics);
     exit;
 }
 
 if (mb_stripos($text, 'получить код') !== false || mb_stripos($text, 'регистрация') !== false) {
-    handleRegistrationCode($telegram, $userModel, $verificationModel, $chatId, $username, null, $appLogger, $analytics, null, $fromName);
+    handleRegistrationCode($telegram, $userModel, $verificationModel, (int) $chatId, $username, null, $appLogger, $analytics, null, $fromName);
     exit;
 }
 
@@ -96,12 +112,12 @@ $phoneFromText = $text !== '' ? extractPhoneFromText($text) : null;
 
 if ($contact || $phoneFromText) {
     $phone = $contact['phone_number'] ?? $phoneFromText;
-    handleRegistrationCode($telegram, $userModel, $verificationModel, $chatId, $username, $phone, $appLogger, $analytics, $contact, $fromName);
+    handleRegistrationCode($telegram, $userModel, $verificationModel, (int) $chatId, $username, $phone, $appLogger, $analytics, $contact, $fromName);
     exit;
 }
 
 $unknownLogger->logRaw(date('c') . ' unhandled message: ' . $input);
-$telegram->sendMessage($chatId, 'Не понял запрос. Нажмите «Получить код» или отправьте номер телефона (можно с пробелами).');
+$telegram->sendMessage((int) $chatId, 'Не понял запрос. Нажмите «Получить код» или отправьте номер телефона (можно с пробелами).');
 
 function getRequestHeaders(): array
 {
@@ -295,4 +311,87 @@ function formatTelegramCode(string $code): string
     $safe = htmlspecialchars($code, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 
     return "<code>{$safe}</code>";
+}
+
+/**
+ * NEW: Пассивный сбор метаданных для админки (/bot/index.php)
+ * - сохраняет последний апдейт
+ * - ведет реестр всех увиденных chat_id и message_thread_id
+ *
+ * Никак не влияет на обработку сообщений в боте (всё в try/catch выше).
+ */
+function tg_admin_passive_capture(
+    string $dataDir,
+    array $update,
+    array $message,
+    int $chatId,
+    $threadId,
+    ?string $username,
+    ?string $fromName,
+    string $text
+): void {
+    if (!is_dir($dataDir)) {
+        @mkdir($dataDir, 0755, true);
+    }
+
+    $chatType = $message['chat']['type'] ?? null;
+    $chatTitle = $message['chat']['title'] ?? null;
+
+    $lastPayload = [
+        'received_at' => date('c'),
+        'update_id' => $update['update_id'] ?? null,
+        'chat_id' => $chatId,
+        'message_thread_id' => ($threadId !== null && $threadId !== '') ? (int) $threadId : null,
+        'chat_type' => $chatType,
+        'chat_title' => $chatTitle,
+        'from_username' => $username,
+        'from_name' => $fromName,
+        'text' => $text,
+    ];
+
+    // last update
+    $lastFile = rtrim($dataDir, '/') . '/telegram_last_update.json';
+    @file_put_contents($lastFile, json_encode($lastPayload, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT), LOCK_EX);
+
+    // registry
+    $registryFile = rtrim($dataDir, '/') . '/telegram_chat_registry.json';
+    $registry = [];
+
+    if (file_exists($registryFile)) {
+        $decoded = json_decode((string) file_get_contents($registryFile), true);
+        if (is_array($decoded)) {
+            $registry = $decoded;
+        }
+    }
+
+    $key = (string) $chatId;
+    if (!isset($registry[$key])) {
+        $registry[$key] = [
+            'chat_id' => $chatId,
+            'chat_type' => $chatType,
+            'chat_title' => $chatTitle,
+            'first_seen' => date('c'),
+            'last_seen' => date('c'),
+            'threads' => [],
+        ];
+    }
+
+    $registry[$key]['chat_type'] = $chatType ?? ($registry[$key]['chat_type'] ?? null);
+    $registry[$key]['chat_title'] = $chatTitle ?? ($registry[$key]['chat_title'] ?? null);
+    $registry[$key]['last_seen'] = date('c');
+
+    if ($threadId !== null && $threadId !== '') {
+        $tkey = (string) (int) $threadId;
+        if (!isset($registry[$key]['threads'][$tkey])) {
+            $registry[$key]['threads'][$tkey] = [
+                'message_thread_id' => (int) $threadId,
+                'first_seen' => date('c'),
+                'last_seen' => date('c'),
+            ];
+        } else {
+            $registry[$key]['threads'][$tkey]['last_seen'] = date('c');
+        }
+    }
+
+    @file_put_contents($registryFile, json_encode($registry, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT), LOCK_EX);
 }
