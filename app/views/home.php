@@ -434,7 +434,7 @@
         const qty = Number(qtyInput?.value || 1);
         const attributes = getSelectedAttributes(card);
 
-        const response = await fetch('/?page=cart-add', {
+        const response = await fetch('/cart-add', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

@@ -42,7 +42,7 @@ class PaymentController extends Controller
         ];
 
         $status = $statuses[$statusKey] ?? $statuses['result'];
-        $returnLink = Auth::check() ? '/?page=orders' : '/?page=home';
+        $returnLink = Auth::check() ? '/orders' : '/';
         $returnLabel = Auth::check() ? 'Перейти к заказам' : 'На главную';
 
         $pageMeta = [

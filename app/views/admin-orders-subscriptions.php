@@ -10,7 +10,7 @@
             <h1 class="text-3xl font-semibold text-slate-900"><?php echo htmlspecialchars($pageMeta['h1'] ?? 'Подписки', ENT_QUOTES, 'UTF-8'); ?></h1>
             <p class="max-w-3xl text-base text-slate-500">Настройте периодичность и скидочные ступени, чтобы клиент видел «Оформить подписку -N%» и получал рост скидки на каждый следующий букет.</p>
         </div>
-        <a href="/?page=admin" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+        <a href="/admin" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
             <span class="material-symbols-rounded text-base">arrow_back</span>
             В панель
         </a>
@@ -93,11 +93,11 @@
             </div>
             <p>Включите автопаузу подписок, если у поставки меньше 10% остатков — клиенты увидят уведомление о переносе доставки.</p>
             <div class="flex flex-wrap gap-2">
-                <a href="/?page=admin-supplies" class="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white shadow-sm shadow-emerald-200 transition hover:-translate-y-0.5 hover:shadow-md">
+                <a href="/admin-supplies" class="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white shadow-sm shadow-emerald-200 transition hover:-translate-y-0.5 hover:shadow-md">
                     <span class="material-symbols-rounded text-base">inventory</span>
                     Проверить поставки
                 </a>
-                <a href="/?page=admin-orders-one-time" class="inline-flex items-center gap-2 rounded-lg border border-emerald-200 bg-white px-3 py-2 text-sm font-semibold text-emerald-900 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+                <a href="/admin-orders-one-time" class="inline-flex items-center gap-2 rounded-lg border border-emerald-200 bg-white px-3 py-2 text-sm font-semibold text-emerald-900 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
                     <span class="material-symbols-rounded text-base">shopping_bag</span>
                     Разовые заказы
                 </a>

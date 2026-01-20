@@ -10,14 +10,14 @@
         </div>
         <div class="flex flex-wrap items-center gap-3">
             <a
-                href="/?page=admin-broadcast"
+                href="/admin-broadcast"
                 class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
             >
                 <span class="material-symbols-rounded text-base">send</span>
                 Рассылки
             </a>
             <a
-                href="/?page=admin"
+                href="/admin"
                 class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
             >
                 <span class="material-symbols-rounded text-base">arrow_back</span>
@@ -32,7 +32,7 @@
                 <article class="flex flex-wrap items-center justify-between gap-3 py-3" data-user-card="<?php echo (int) $user['id']; ?>">
                     <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-4">
                         <a
-                            href="/?page=admin-user&id=<?php echo (int) $user['id']; ?>"
+                            href="/admin-user?id=<?php echo (int) $user['id']; ?>"
                             class="text-base font-semibold text-slate-900 transition hover:text-rose-600"
                         >
                             <?php echo htmlspecialchars($user['name'] ?? 'Без имени', ENT_QUOTES, 'UTF-8'); ?>
@@ -63,7 +63,7 @@
             checkbox.disabled = true;
 
             try {
-                const response = await fetch('/?page=admin-users-toggle', {
+                const response = await fetch('/admin-users-toggle', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

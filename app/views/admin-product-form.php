@@ -13,11 +13,11 @@
             <h1 class="text-3xl font-semibold text-slate-900"><?php echo htmlspecialchars($pageMeta['h1'] ?? ($editingProduct ? 'Редактирование товара' : 'Новый товар'), ENT_QUOTES, 'UTF-8'); ?></h1>
         </div>
         <div class="flex flex-wrap items-center gap-3">
-            <a href="/?page=admin-products" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+            <a href="/admin-products" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
                 <span class="material-symbols-rounded text-base">arrow_back</span>
                 К товарам
             </a>
-            <a href="/?page=admin" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+            <a href="/admin" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
                 <span class="material-symbols-rounded text-base">dashboard</span>
                 В панель
             </a>
@@ -49,7 +49,7 @@
         <div class="space-y-3">
             <p class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500"><?php echo $editingProduct ? 'Редактирование товара' : 'Новый товар'; ?></p>
             <h2 class="text-xl font-semibold text-slate-900">Карточка товара</h2>
-            <form action="/?page=admin-product-save" method="post" enctype="multipart/form-data" class="space-y-3">
+            <form action="/admin-product-save" method="post" enctype="multipart/form-data" class="space-y-3">
                 <?php if ($editingProduct): ?>
                     <input type="hidden" name="product_id" value="<?php echo (int) $editingProduct['id']; ?>">
                 <?php endif; ?>
@@ -257,7 +257,7 @@
                             <?php if (!empty($productRelations['orders'])): ?>
                                 <div class="flex flex-wrap gap-2">
                                     <?php foreach ($productRelations['orders'] as $order): ?>
-                                        <a href="/?page=admin-order-one-time-edit&id=<?php echo (int) $order['id']; ?>" class="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 hover:border-rose-200 hover:text-rose-700">
+                                        <a href="/admin-order-one-time-edit?id=<?php echo (int) $order['id']; ?>" class="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 hover:border-rose-200 hover:text-rose-700">
                                             #<?php echo htmlspecialchars($order['number'], ENT_QUOTES, 'UTF-8'); ?>
                                         </a>
                                     <?php endforeach; ?>
@@ -271,7 +271,7 @@
                             <?php if (!empty($productRelations['subscriptions'])): ?>
                                 <div class="flex flex-col gap-2">
                                     <?php foreach ($productRelations['subscriptions'] as $subscription): ?>
-                                        <a href="/?page=admin-user&id=<?php echo (int) $subscription['user_id']; ?>" class="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 hover:border-rose-200 hover:text-rose-700">
+                                        <a href="/admin-user?id=<?php echo (int) $subscription['user_id']; ?>" class="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 hover:border-rose-200 hover:text-rose-700">
                                             <?php echo htmlspecialchars($subscription['name'] ?? 'Клиент', ENT_QUOTES, 'UTF-8'); ?>
                                             <span class="text-[11px] font-normal text-slate-500">(<?php echo htmlspecialchars($subscription['status'] ?? '—', ENT_QUOTES, 'UTF-8'); ?>)</span>
                                         </a>
@@ -287,7 +287,7 @@
                                 <div class="flex flex-col gap-2">
                                     <?php foreach ($productRelations['carts'] as $cart): ?>
                                         <?php if (!empty($cart['user_id'])): ?>
-                                            <a href="/?page=admin-user&id=<?php echo (int) $cart['user_id']; ?>" class="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 hover:border-rose-200 hover:text-rose-700">
+                                            <a href="/admin-user?id=<?php echo (int) $cart['user_id']; ?>" class="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 hover:border-rose-200 hover:text-rose-700">
                                                 <?php echo htmlspecialchars($cart['name'] ?? 'Клиент', ENT_QUOTES, 'UTF-8'); ?>
                                             </a>
                                         <?php else: ?>

@@ -10,7 +10,7 @@
             <p class="max-w-2xl text-base text-slate-500">Обновите параметры поставки, фото и даты. Тип поставки менять нельзя.</p>
         </div>
         <div class="flex flex-wrap items-center gap-3">
-            <a href="/?page=admin-supplies" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+            <a href="/admin-supplies" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
                 <span class="material-symbols-rounded text-base">arrow_back</span>
                 К списку поставок
             </a>
@@ -35,7 +35,7 @@
         </div>
     <?php endif; ?>
 
-    <form action="/?page=admin-supply-update" method="post" enctype="multipart/form-data" class="space-y-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-rose-50/60 ring-1 ring-transparent">
+    <form action="/admin-supply-update" method="post" enctype="multipart/form-data" class="space-y-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-rose-50/60 ring-1 ring-transparent">
         <input type="hidden" name="supply_id" value="<?php echo (int) $supply['id']; ?>">
         <div class="flex items-center justify-between">
             <div>

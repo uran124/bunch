@@ -19,7 +19,7 @@ if (!empty($promoItem['ends_at'])) {
             <p class="max-w-3xl text-base text-slate-500">Обновите параметры лимитированного товара.</p>
         </div>
         <div class="flex flex-wrap items-center gap-3">
-            <a href="/?page=admin-promos" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+            <a href="/admin-promos" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
                 <span class="material-symbols-rounded text-base">arrow_back</span>
                 Назад к акциям
             </a>
@@ -38,7 +38,7 @@ if (!empty($promoItem['ends_at'])) {
             <h2 class="text-xl font-semibold text-slate-900">Редактировать предложение</h2>
             <p class="text-sm text-slate-600">Настройте цену, лимит и дату окончания, чтобы контролировать доступность.</p>
         </div>
-        <form action="/?page=admin-promo-item-update" method="post" class="grid gap-3">
+        <form action="/admin-promo-item-update" method="post" class="grid gap-3">
             <input type="hidden" name="id" value="<?php echo (int) ($promoItem['id'] ?? 0); ?>">
             <label class="flex flex-col gap-2 text-sm font-semibold text-slate-700">
                 Название

@@ -2,7 +2,14 @@
 $pageMeta = $pageMeta ?? [];
 $pageTitle = $pageMeta['title'] ?? 'Bunch flowers — панель';
 $pageDescription = $pageMeta['description'] ?? 'Панель управления Bunch flowers.';
-$currentPage = $_GET['page'] ?? trim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/') ?: 'home';
+$currentPath = trim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/');
+if ($currentPath === '' || $currentPath === 'index' || $currentPath === 'index.php') {
+    $currentPage = 'home';
+} elseif (str_starts_with($currentPath, 'static/')) {
+    $currentPage = 'static';
+} else {
+    $currentPage = $currentPath;
+}
 $authPages = ['login', 'register', 'recover'];
 $isAuthPage = in_array($currentPage, $authPages, true);
 $isAdminPage = str_starts_with($currentPage, 'admin');
@@ -28,7 +35,7 @@ $adminNavigation = [
         'items' => [
             [
                 'label' => 'Обзор',
-                'href' => '/?page=admin',
+                'href' => '/admin',
                 'page' => 'admin',
                 'icon' => 'dashboard',
             ],
@@ -39,13 +46,13 @@ $adminNavigation = [
         'items' => [
             [
                 'label' => 'Пользователи',
-                'href' => '/?page=admin-users',
+                'href' => '/admin-users',
                 'page' => 'admin-users',
                 'icon' => 'group',
             ],
             [
                 'label' => 'Рассылки',
-                'href' => '/?page=admin-broadcast',
+                'href' => '/admin-broadcast',
                 'page' => 'admin-broadcast',
                 'icon' => 'campaign',
             ],
@@ -56,25 +63,25 @@ $adminNavigation = [
         'items' => [
             [
                 'label' => 'Товары',
-                'href' => '/?page=admin-products',
+                'href' => '/admin-products',
                 'page' => 'admin-products',
                 'icon' => 'inventory_2',
             ],
             [
                 'label' => 'Акции',
-                'href' => '/?page=admin-promos',
+                'href' => '/admin-promos',
                 'page' => 'admin-promos',
                 'icon' => 'local_offer',
             ],
             [
                 'label' => 'Атрибуты',
-                'href' => '/?page=admin-attributes',
+                'href' => '/admin-attributes',
                 'page' => 'admin-attributes',
                 'icon' => 'tune',
             ],
             [
                 'label' => 'Поставки',
-                'href' => '/?page=admin-supplies',
+                'href' => '/admin-supplies',
                 'page' => 'admin-supplies',
                 'icon' => 'local_shipping',
             ],
@@ -85,19 +92,19 @@ $adminNavigation = [
         'items' => [
             [
                 'label' => 'Разовые',
-                'href' => '/?page=admin-orders-one-time',
+                'href' => '/admin-orders-one-time',
                 'page' => 'admin-orders-one-time',
                 'icon' => 'shopping_bag',
             ],
             [
                 'label' => 'Подписки',
-                'href' => '/?page=admin-orders-subscriptions',
+                'href' => '/admin-orders-subscriptions',
                 'page' => 'admin-orders-subscriptions',
                 'icon' => 'autorenew',
             ],
             [
                 'label' => 'Мелкий опт',
-                'href' => '/?page=admin-orders-wholesale',
+                'href' => '/admin-orders-wholesale',
                 'page' => 'admin-orders-wholesale',
                 'icon' => 'inventory',
             ],
@@ -108,7 +115,7 @@ $adminNavigation = [
         'items' => [
             [
                 'label' => 'Онлайн-оплата',
-                'href' => '/?page=admin-services-payment',
+                'href' => '/admin-services-payment',
                 'page' => 'admin-services-payment',
                 'icon' => 'payments',
             ],
@@ -128,13 +135,13 @@ $adminNavigation = [
             ],
             [
                 'label' => 'Доставка',
-                'href' => '/?page=admin-services-delivery',
+                'href' => '/admin-services-delivery',
                 'page' => 'admin-services-delivery',
                 'icon' => 'map',
             ],
             [
                 'label' => 'Telegram бот',
-                'href' => '/?page=admin-services-telegram',
+                'href' => '/admin-services-telegram',
                 'page' => 'admin-services-telegram',
                 'icon' => 'send',
             ],
@@ -145,19 +152,19 @@ $adminNavigation = [
         'items' => [
             [
                 'label' => 'Статика',
-                'href' => '/?page=admin-content-static',
+                'href' => '/admin-content-static',
                 'page' => 'admin-content-static',
                 'icon' => 'text_snippet',
             ],
             [
                 'label' => 'Товары',
-                'href' => '/?page=admin-content-products',
+                'href' => '/admin-content-products',
                 'page' => 'admin-content-products',
                 'icon' => 'photo_library',
             ],
             [
                 'label' => 'Разделы',
-                'href' => '/?page=admin-content-sections',
+                'href' => '/admin-content-sections',
                 'page' => 'admin-content-sections',
                 'icon' => 'category',
             ],
@@ -398,11 +405,11 @@ $adminNavigation = [
         <div class="<?php echo htmlspecialchars($isAdminPage ? 'mx-auto flex w-full max-w-7xl items-center justify-between px-4 py-3 pl-20 sm:pl-24' : 'mx-auto flex w-full max-w-6xl items-center justify-between px-3 py-2', ENT_QUOTES, 'UTF-8'); ?>">
             <div>
                 <?php if ($isAdminPage): ?>
-                    <a class="text-lg font-semibold tracking-tight text-white" href="/?page=admin">
+                    <a class="text-lg font-semibold tracking-tight text-white" href="/admin">
                         bunch admin
                     </a>
                 <?php else: ?>
-                    <a class="flex items-center gap-3 text-lg font-semibold tracking-tight text-slate-900" href="/?page=home">
+                    <a class="flex items-center gap-3 text-lg font-semibold tracking-tight text-slate-900" href="/">
                         <img
                             alt="Bunch flowers"
                             class="h-8 w-auto"
@@ -459,20 +466,20 @@ $adminNavigation = [
 
     <?php
     $defaultInfoLinks = [
-        ['title' => 'О нас', 'href' => '/?page=about'],
-        ['title' => 'Наши розы', 'href' => '/?page=roses'],
-        ['title' => 'Оплата и доставка', 'href' => '/?page=delivery'],
-        ['title' => 'Как получить скидку?', 'href' => '/?page=discount'],
+        ['title' => 'О нас', 'href' => '/about'],
+        ['title' => 'Наши розы', 'href' => '/roses'],
+        ['title' => 'Оплата и доставка', 'href' => '/delivery'],
+        ['title' => 'Как получить скидку?', 'href' => '/discount'],
     ];
     $defaultLegalLinks = [
-        ['title' => 'Политика обработки персональных данных', 'href' => '/?page=static&slug=policy'],
-        ['title' => 'Согласие на обработку персональных данных', 'href' => '/?page=static&slug=consent'],
-        ['title' => 'Пользовательское соглашение', 'href' => '/?page=static&slug=offer'],
+        ['title' => 'Политика обработки персональных данных', 'href' => '/static/policy'],
+        ['title' => 'Согласие на обработку персональных данных', 'href' => '/static/consent'],
+        ['title' => 'Пользовательское соглашение', 'href' => '/static/offer'],
     ];
     $staticMenuPages = $staticMenuPages ?? [];
     $staticFooterPages = $staticFooterPages ?? [];
     $menuLinks = $staticMenuPages
-        ? array_map(static fn ($page) => ['title' => $page['title'], 'href' => '/?page=static&slug=' . urlencode($page['slug'])], $staticMenuPages)
+        ? array_map(static fn ($page) => ['title' => $page['title'], 'href' => '/static/' . urlencode($page['slug'])], $staticMenuPages)
         : $defaultInfoLinks;
     $footerColumns = [1 => [], 2 => []];
     foreach ($staticFooterPages as $page) {
@@ -480,7 +487,7 @@ $adminNavigation = [
         $column = in_array($column, [1, 2], true) ? $column : 1;
         $footerColumns[$column][] = [
             'title' => $page['title'],
-            'href' => '/?page=static&slug=' . urlencode($page['slug']),
+            'href' => '/static/' . urlencode($page['slug']),
         ];
     }
     $footerLinksFirst = $footerColumns[1] ?: $defaultInfoLinks;
@@ -492,7 +499,7 @@ $adminNavigation = [
             <div class="mx-auto w-full max-w-6xl px-4 py-6 text-xs text-slate-500">
                 <div class="grid gap-6 sm:grid-cols-3">
                     <div class="space-y-3">
-                        <a class="text-sm font-semibold text-slate-700 transition hover:text-rose-600" href="/?page=home">2026 bunch flowers - купить розы в Красноярске</a>
+                        <a class="text-sm font-semibold text-slate-700 transition hover:text-rose-600" href="/">2026 bunch flowers - купить розы в Красноярске</a>
                         <div class="flex flex-wrap gap-3 text-sm font-semibold">
                             <a class="text-slate-600 underline underline-offset-2 transition hover:text-rose-600" href="https://t.me/bunch_flowers" target="_blank" rel="noopener">Telegram</a>
                             <a class="text-slate-600 underline underline-offset-2 transition hover:text-rose-600" href="https://vk.com/bunchflowers" target="_blank" rel="noopener">VK</a>
@@ -579,7 +586,7 @@ $adminNavigation = [
                 <div class="space-y-3">
                     <p class="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Информация</p>
                     <div class="rounded-2xl border border-slate-100 bg-slate-50 p-3 text-sm text-slate-700">
-                        <a class="font-semibold text-slate-800 transition hover:text-rose-600" href="/?page=home">2026 bunch flowers - купить розы в Красноярске</a>
+                        <a class="font-semibold text-slate-800 transition hover:text-rose-600" href="/">2026 bunch flowers - купить розы в Красноярске</a>
                         <div class="mt-2 flex flex-wrap gap-3 text-sm font-semibold">
                             <a class="text-slate-600 underline underline-offset-2 transition hover:text-rose-600" href="https://t.me/bunch_flowers" target="_blank" rel="noopener">Telegram</a>
                             <a class="text-slate-600 underline underline-offset-2 transition hover:text-rose-600" href="https://vk.com/bunchflowers" target="_blank" rel="noopener">VK</a>
@@ -599,9 +606,9 @@ $adminNavigation = [
                         <?php endforeach; ?>
                     </div>
                     <div class="flex flex-col gap-2 text-sm font-semibold text-slate-700">
-                        <a class="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 transition hover:border-rose-200 hover:text-rose-600" href="/?page=static&slug=policy">Политика обработки персональных данных</a>
-                        <a class="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 transition hover:border-rose-200 hover:text-rose-600" href="/?page=static&slug=consent">Согласие на обработку персональных данных</a>
-                        <a class="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 transition hover:border-rose-200 hover:text-rose-600" href="/?page=static&slug=offer">Пользовательское соглашение</a>
+                        <a class="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 transition hover:border-rose-200 hover:text-rose-600" href="/static/policy">Политика обработки персональных данных</a>
+                        <a class="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 transition hover:border-rose-200 hover:text-rose-600" href="/static/consent">Согласие на обработку персональных данных</a>
+                        <a class="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 transition hover:border-rose-200 hover:text-rose-600" href="/static/offer">Пользовательское соглашение</a>
                     </div>
                 </div>
             </div>
@@ -618,7 +625,7 @@ $adminNavigation = [
                 <p class="text-sm text-slate-600">
                     Мы используем cookie, чтобы сайт работал корректно, а также для аналитики и маркетинга (Яндекс.Метрика, Google Analytics, пиксель VK).
                     Вы можете принять все cookie или настроить выбор. Подробнее — в
-                    <a class="text-rose-600 underline underline-offset-2" href="/?page=static&slug=policy">Политике обработки персональных данных</a>.
+                    <a class="text-rose-600 underline underline-offset-2" href="/static/policy">Политике обработки персональных данных</a>.
                 </p>
             </div>
             <div class="flex flex-wrap gap-2">
