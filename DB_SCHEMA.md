@@ -74,7 +74,7 @@ CREATE TABLE verification_codes (
   code VARCHAR(10) NOT NULL,
   purpose ENUM('register', 'recover') NOT NULL,
 
-  chat_id BIGINT NOT NULL,
+  chat_id BIGINT UNSIGNED NOT NULL,
   phone VARCHAR(20) NULL,
   name VARCHAR(100) NULL,
   username VARCHAR(64) NULL,
