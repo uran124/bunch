@@ -1,4 +1,4 @@
-<section class="relative w-full max-w-[420px] overflow-hidden rounded-3xl bg-gradient-to-br from-white via-rose-50 to-white shadow-2xl">
+<section class="relative w-full max-w-[460px] overflow-hidden rounded-3xl bg-gradient-to-br from-white via-rose-50 to-white shadow-2xl">
     <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(225,29,72,0.08),transparent_50%)] pointer-events-none"></div>
     <div class="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,rgba(244,63,94,0.08),transparent_50%)] pointer-events-none"></div>
     <div class="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-px bg-gradient-to-r from-transparent via-rose-400 to-transparent opacity-50 pointer-events-none"></div>
@@ -37,7 +37,7 @@
 
         <?php if (($stage ?? 'code') === 'code'): ?>
             <div class="rounded-2xl border border-rose-100 bg-white/90 backdrop-blur-sm p-4 shadow-sm">
-                <div class="space-y-3 lg:flex lg:items-start lg:justify-between lg:gap-6 lg:space-y-0">
+                <div class="space-y-3 lg:flex lg:items-start lg:justify-between lg:gap-0 lg:space-y-0">
                     <div class="space-y-3">
                         <div class="flex items-center gap-2 text-sm font-semibold text-slate-900">
                             <span class="material-symbols-rounded text-base text-rose-600">info</span>
