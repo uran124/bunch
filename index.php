@@ -85,6 +85,45 @@ spl_autoload_register(function (string $class): void {
 });
 
 $path = trim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/');
+$isStaticPath = str_starts_with($path, 'static/');
+
+$buildPageUrl = static function (string $page, array $query): string {
+    $page = trim($page, '/');
+
+    if ($page === '' || $page === 'home' || $page === 'index' || $page === 'index.php') {
+        $path = '/';
+    } elseif ($page === 'static' && !empty($query['slug'])) {
+        $path = '/static/' . rawurlencode((string) $query['slug']);
+        unset($query['slug']);
+    } else {
+        $path = '/' . $page;
+    }
+
+    if ($query) {
+        $path .= '?' . http_build_query($query);
+    }
+
+    return $path;
+};
+
+if ($isStaticPath) {
+    $slug = trim(substr($path, strlen('static/')), '/');
+    if ($slug !== '') {
+        $_GET['slug'] = urldecode($slug);
+        $path = 'static';
+    }
+}
+
+if ($path === 'static' && !$isStaticPath && !empty($_GET['slug']) && in_array($_SERVER['REQUEST_METHOD'], ['GET', 'HEAD'], true)) {
+    $redirectUrl = '/static/' . rawurlencode((string) $_GET['slug']);
+    $remainingQuery = $_GET;
+    unset($remainingQuery['slug'], $remainingQuery['page']);
+    if ($remainingQuery) {
+        $redirectUrl .= '?' . http_build_query($remainingQuery);
+    }
+    header('Location: ' . $redirectUrl, true, 301);
+    exit;
+}
 
 $buildPageUrl = static function (string $page, array $query): string {
     $page = trim($page, '/');
