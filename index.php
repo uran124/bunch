@@ -125,44 +125,6 @@ if ($path === 'static' && !$isStaticPath && !empty($_GET['slug']) && in_array($_
     exit;
 }
 
-$buildPageUrl = static function (string $page, array $query): string {
-    $page = trim($page, '/');
-
-    if ($page === '' || $page === 'home' || $page === 'index' || $page === 'index.php') {
-        $path = '/';
-    } elseif ($page === 'static' && !empty($query['slug'])) {
-        $path = '/static/' . rawurlencode((string) $query['slug']);
-        unset($query['slug']);
-    } else {
-        $path = '/' . $page;
-    }
-
-    if ($query) {
-        $path .= '?' . http_build_query($query);
-    }
-
-    return $path;
-};
-
-if (str_starts_with($path, 'static/')) {
-    $slug = trim(substr($path, strlen('static/')), '/');
-    if ($slug !== '') {
-        $_GET['slug'] = urldecode($slug);
-        $path = 'static';
-    }
-}
-
-if ($path === 'static' && !empty($_GET['slug']) && in_array($_SERVER['REQUEST_METHOD'], ['GET', 'HEAD'], true)) {
-    $redirectUrl = '/static/' . rawurlencode((string) $_GET['slug']);
-    $remainingQuery = $_GET;
-    unset($remainingQuery['slug'], $remainingQuery['page']);
-    if ($remainingQuery) {
-        $redirectUrl .= '?' . http_build_query($remainingQuery);
-    }
-    header('Location: ' . $redirectUrl, true, 301);
-    exit;
-}
-
 if (str_starts_with($path, 'api/')) {
     require_once __DIR__ . '/api/index.php';
     exit;
