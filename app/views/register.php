@@ -70,23 +70,11 @@
                     >
                         <img
                             src="/assets/images/bfb_qr.svg"
-                            alt="QR-код телеграм бота"
+                            alt="bunch flowers bot telegram"
                             class="h-36 w-36 rounded-2xl border border-rose-100 bg-white p-2 shadow-md"
                         >
                     </a>
-                    <a
-                        href="https://t.me/<?php echo htmlspecialchars($botUsername ?? '', ENT_QUOTES, 'UTF-8'); ?>?start=register"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="hidden lg:flex items-center justify-center"
-                        aria-label="Открыть телеграм бота и получить код"
-                    >
-                        <img
-                            src="/assets/images/bfb_qr.svg"
-                            alt="QR-код телеграм бота"
-                            class="h-36 w-36 rounded-2xl border border-rose-100 bg-white p-2 shadow-md"
-                        >
-                    </a>
+
                 </div>
             </div>
 
