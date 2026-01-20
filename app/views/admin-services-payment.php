@@ -138,23 +138,47 @@
                             </label>
                             <label class="space-y-1">
                                 <span class="text-xs uppercase tracking-[0.14em] text-slate-500">Пароль #1</span>
-                                <input
-                                    type="password"
-                                    name="robokassa_password1"
-                                    value="<?php echo htmlspecialchars((string) ($robokassaSettings['password1'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
-                                    placeholder="••••••••"
-                                    class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-rose-500/30"
-                                >
+                                <div class="relative">
+                                    <input
+                                        id="robokassa_password1"
+                                        type="password"
+                                        name="robokassa_password1"
+                                        value="<?php echo htmlspecialchars((string) ($robokassaSettings['password1'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
+                                        placeholder="••••••••"
+                                        class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 pr-10 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-rose-500/30"
+                                    >
+                                    <button
+                                        type="button"
+                                        class="password-toggle absolute right-2 top-1/2 flex -translate-y-1/2 items-center justify-center rounded-md p-1 text-slate-400 transition hover:text-slate-600"
+                                        data-target="robokassa_password1"
+                                        aria-label="Показать пароль"
+                                        aria-pressed="false"
+                                    >
+                                        <span class="material-symbols-rounded text-base">visibility</span>
+                                    </button>
+                                </div>
                             </label>
                             <label class="space-y-1">
                                 <span class="text-xs uppercase tracking-[0.14em] text-slate-500">Пароль #2</span>
-                                <input
-                                    type="password"
-                                    name="robokassa_password2"
-                                    value="<?php echo htmlspecialchars((string) ($robokassaSettings['password2'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
-                                    placeholder="••••••••"
-                                    class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-rose-500/30"
-                                >
+                                <div class="relative">
+                                    <input
+                                        id="robokassa_password2"
+                                        type="password"
+                                        name="robokassa_password2"
+                                        value="<?php echo htmlspecialchars((string) ($robokassaSettings['password2'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
+                                        placeholder="••••••••"
+                                        class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 pr-10 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-rose-500/30"
+                                    >
+                                    <button
+                                        type="button"
+                                        class="password-toggle absolute right-2 top-1/2 flex -translate-y-1/2 items-center justify-center rounded-md p-1 text-slate-400 transition hover:text-slate-600"
+                                        data-target="robokassa_password2"
+                                        aria-label="Показать пароль"
+                                        aria-pressed="false"
+                                    >
+                                        <span class="material-symbols-rounded text-base">visibility</span>
+                                    </button>
+                                </div>
                             </label>
                         </div>
                         <div class="grid gap-2 text-sm">
@@ -295,5 +319,26 @@
         if (initialTab) {
             setActive(initialTab);
         }
+
+        const passwordToggles = Array.from(document.querySelectorAll('.password-toggle'));
+        passwordToggles.forEach((toggle) => {
+            toggle.addEventListener('click', () => {
+                const targetId = toggle.dataset.target;
+                const input = targetId ? document.getElementById(targetId) : null;
+                if (!input) {
+                    return;
+                }
+
+                const isVisible = input.type === 'text';
+                input.type = isVisible ? 'password' : 'text';
+                toggle.setAttribute('aria-pressed', (!isVisible).toString());
+                toggle.setAttribute('aria-label', isVisible ? 'Показать пароль' : 'Скрыть пароль');
+
+                const icon = toggle.querySelector('.material-symbols-rounded');
+                if (icon) {
+                    icon.textContent = isVisible ? 'visibility' : 'visibility_off';
+                }
+            });
+        });
     });
 </script>
