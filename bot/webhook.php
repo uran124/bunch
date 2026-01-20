@@ -117,6 +117,13 @@ if ($contact || $phoneFromText) {
 }
 
 $unknownLogger->logRaw(date('c') . ' unhandled message: ' . $input);
+$unknownChatId = -1002055168794;
+$unknownThreadId = 1109;
+$displayName = $username ? '@' . $username : ($fromName ?: 'Пользователь ' . $chatId);
+$forwardText = $text !== '' ? $text : '[без текста]';
+$telegram->sendMessage($unknownChatId, '[' . $displayName . ' ' . $forwardText . ']', [
+    'message_thread_id' => $unknownThreadId,
+]);
 $telegram->sendMessage((int) $chatId, 'Не понял запрос. Нажмите «Получить код» или отправьте номер телефона (можно с пробелами).');
 
 function getRequestHeaders(): array

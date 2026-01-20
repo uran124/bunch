@@ -3,6 +3,8 @@
 
 class Order extends Model
 {
+    private const TELEGRAM_ADMIN_CHAT_ID = -1002055168794;
+    private const TELEGRAM_ADMIN_THREAD_ORDERS = 1096;
     private array $statusPaymentMap = [
         'paid' => ['confirmed', 'assembled', 'delivering', 'delivered'],
         'pending' => ['new'],
@@ -125,7 +127,14 @@ class Order extends Model
             'current_status' => 'new',
         ]);
 
-        return $stmt->rowCount() > 0;
+        if ($stmt->rowCount() <= 0) {
+            return false;
+        }
+
+        $this->notifyAdminOrderPaid($orderId);
+        $this->notifyUserOrderStatus($orderId, $userId, 'confirmed');
+
+        return true;
     }
 
     public function countCompletedOrdersForUser(int $userId): int
@@ -394,6 +403,18 @@ class Order extends Model
             }
 
             $this->db->commit();
+
+            $this->notifyAdminNewOrder($orderId, $cartItems, [
+                'delivery_type' => $deliveryType,
+                'scheduled_date' => $scheduledDate,
+                'scheduled_time' => $scheduledTime,
+                'address_text' => $addressText,
+                'address' => $payload['address'] ?? null,
+                'recipient_name' => $recipientName,
+                'recipient_phone' => $recipientPhone,
+                'total_amount' => $totalAmount,
+                'status' => 'new',
+            ]);
 
             return $orderId;
         } catch (Throwable $e) {
@@ -676,11 +697,153 @@ class Order extends Model
         return $this->statusPaymentMap[$filter] ?? [];
     }
 
+    public function notifyUserOrderStatus(int $orderId, int $userId, string $status): void
+    {
+        $message = $this->buildUserStatusMessage($orderId, $status);
+        if ($message === null) {
+            return;
+        }
+
+        $chatId = $this->getUserTelegramChatId($userId);
+        if (!$chatId) {
+            return;
+        }
+
+        $this->sendTelegramMessage($chatId, $message);
+    }
+
     private function emptyToNull(?string $value): ?string
     {
         $trimmed = trim((string) $value);
 
         return $trimmed === '' ? null : $trimmed;
+    }
+
+    private function notifyAdminNewOrder(int $orderId, array $cartItems, array $payload): void
+    {
+        $status = $payload['status'] ?? 'new';
+        $scheduled = $this->formatSchedule($payload['scheduled_date'] ?? null, $payload['scheduled_time'] ?? null);
+        $number = $this->formatOrderNumber($orderId);
+
+        $lines = [];
+        $lines[] = sprintf('Заказ %s %s (дата и время получения товара):', $number, $scheduled);
+
+        foreach ($cartItems as $item) {
+            $title = $item['name'] ?? 'Товар';
+            $qty = (int) ($item['qty'] ?? 0);
+            $lineTotal = (float) ($item['line_total'] ?? 0);
+            $lines[] = sprintf('%s, %d шт., %s', $title, $qty, $this->formatPrice($lineTotal));
+        }
+
+        $total = (float) ($payload['total_amount'] ?? 0);
+        $lines[] = 'Итого: ' . $this->formatPrice($total);
+
+        if (($payload['delivery_type'] ?? 'pickup') === 'delivery') {
+            $address = $this->buildAddressLine($payload['address_text'] ?? null, $payload['address'] ?? null);
+            $recipientName = $payload['recipient_name'] ?? null;
+            $recipientPhone = $payload['recipient_phone'] ?? null;
+            $lines[] = sprintf('[%s, %s, %s]', $address, $recipientName ?: 'Имя не указано', $recipientPhone ?: 'Телефон не указан');
+        } else {
+            $lines[] = 'Самовывоз';
+        }
+
+        $lines[] = 'Статус: ' . $this->mapOrderStatus($status);
+
+        $this->sendTelegramMessage(self::TELEGRAM_ADMIN_CHAT_ID, implode("\n", $lines), [
+            'message_thread_id' => self::TELEGRAM_ADMIN_THREAD_ORDERS,
+        ]);
+    }
+
+    private function notifyAdminOrderPaid(int $orderId): void
+    {
+        $message = sprintf('Заказ %s оплачен!', $this->formatOrderNumber($orderId));
+
+        $this->sendTelegramMessage(self::TELEGRAM_ADMIN_CHAT_ID, $message, [
+            'message_thread_id' => self::TELEGRAM_ADMIN_THREAD_ORDERS,
+        ]);
+    }
+
+    private function buildUserStatusMessage(int $orderId, string $status): ?string
+    {
+        $number = $this->formatOrderNumber($orderId);
+
+        return match ($status) {
+            'confirmed' => "Ваш заказ {$number} принят!",
+            'assembled' => "Ваш заказ {$number} собран.",
+            'delivering' => "Ваш заказ {$number} передан на доставку.",
+            'delivered' => "Ваш заказ {$number} вручен.",
+            'cancelled' => "Ваш заказ {$number} отменен.",
+            default => null,
+        };
+    }
+
+    private function formatOrderNumber(int $orderId): string
+    {
+        return '№' . str_pad((string) $orderId, 4, '0', STR_PAD_LEFT);
+    }
+
+    private function formatSchedule(?string $date, ?string $time): string
+    {
+        $parts = [];
+
+        if ($date) {
+            try {
+                $parts[] = (new DateTimeImmutable($date))->format('d.m');
+            } catch (Throwable $e) {
+                $parts[] = $date;
+            }
+        }
+
+        if ($time) {
+            $parts[] = substr($time, 0, 5);
+        }
+
+        return $parts ? implode(' ', $parts) : '—';
+    }
+
+    private function buildAddressLine(?string $addressText, ?array $addressDetails): string
+    {
+        $addressText = trim((string) $addressText);
+        if ($addressText !== '') {
+            return $addressText;
+        }
+
+        if (!$addressDetails) {
+            return 'Адрес не указан';
+        }
+
+        $parts = [];
+        foreach (['settlement', 'street', 'house', 'block', 'apartment'] as $key) {
+            $value = trim((string) ($addressDetails[$key] ?? ''));
+            if ($value !== '') {
+                $parts[] = $value;
+            }
+        }
+
+        return $parts ? implode(', ', $parts) : 'Адрес не указан';
+    }
+
+    private function getUserTelegramChatId(int $userId): ?int
+    {
+        $stmt = $this->db->prepare('SELECT telegram_chat_id FROM users WHERE id = :id LIMIT 1');
+        $stmt->execute(['id' => $userId]);
+        $chatId = $stmt->fetchColumn();
+
+        return $chatId ? (int) $chatId : null;
+    }
+
+    private function sendTelegramMessage(int $chatId, string $text, array $options = []): void
+    {
+        $settings = new Setting();
+        $defaults = $settings->getTelegramDefaults();
+        $token = $settings->get(Setting::TG_BOT_TOKEN, $defaults[Setting::TG_BOT_TOKEN] ?? '');
+
+        if ($token === '') {
+            return;
+        }
+
+        $telegram = new Telegram($token);
+        $telegram->sendMessage($chatId, $text, $options);
     }
 
     private function buildOrderPayload(array $order): array
