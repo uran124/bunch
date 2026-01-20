@@ -62,6 +62,40 @@ CREATE TABLE users (
 
 ---
 
+## 2.1. Таблица `verification_codes`
+
+Хранит одноразовые коды, которые выдаются ботом для регистрации и восстановления доступа.  
+Запись действует ограниченное время, после использования отмечается как `is_used = 1`.
+
+```sql
+CREATE TABLE verification_codes (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+
+  code VARCHAR(10) NOT NULL,
+  purpose ENUM('register', 'recover') NOT NULL,
+
+  chat_id BIGINT UNSIGNED NOT NULL,
+  phone VARCHAR(20) NULL,
+  name VARCHAR(100) NULL,
+  username VARCHAR(64) NULL,
+  user_id INT UNSIGNED NULL,
+
+  is_used TINYINT(1) NOT NULL DEFAULT 0,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  expires_at DATETIME NOT NULL,
+  used_at DATETIME NULL,
+
+  CONSTRAINT fk_verification_user
+    FOREIGN KEY (user_id) REFERENCES users(id)
+    ON DELETE SET NULL,
+
+  INDEX idx_code_purpose (code, purpose),
+  INDEX idx_chat_id (chat_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+```
+
+---
+
 ## 3. Таблица `user_addresses`
 
 Один пользователь может иметь несколько адресов.  
