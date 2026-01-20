@@ -51,13 +51,26 @@
                         href="https://t.me/<?php echo htmlspecialchars($botUsername ?? '', ENT_QUOTES, 'UTF-8'); ?>?start=register"
                         target="_blank"
                         rel="noopener noreferrer"
-                        class="group relative overflow-hidden rounded-xl bg-gradient-to-r from-rose-600 to-rose-700 px-4 py-2.5 text-center text-xs font-semibold text-white shadow-lg shadow-rose-500/25 transition hover:shadow-xl hover:shadow-rose-500/40 hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-1.5"
+                        class="group relative overflow-hidden rounded-xl bg-gradient-to-r from-rose-600 to-rose-700 px-4 py-2.5 text-center text-xs font-semibold text-white shadow-lg shadow-rose-500/25 transition hover:shadow-xl hover:shadow-rose-500/40 hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-1.5 lg:hidden"
                     >
                         <div class="absolute inset-0 bg-gradient-to-r from-rose-700 to-rose-800 opacity-0 group-hover:opacity-100 transition"></div>
                         <span class="relative flex items-center gap-1.5">
                             <span class="material-symbols-rounded text-sm">send</span>
                             Получить код
                         </span>
+                    </a>
+                    <a
+                        href="https://t.me/<?php echo htmlspecialchars($botUsername ?? '', ENT_QUOTES, 'UTF-8'); ?>?start=register"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="hidden lg:flex items-center justify-center"
+                        aria-label="Открыть телеграм бота и получить код"
+                    >
+                        <img
+                            src="/assets/images/bfb_qr.svg"
+                            alt="QR-код телеграм бота"
+                            class="h-36 w-36 rounded-2xl border border-rose-100 bg-white p-2 shadow-md"
+                        >
                     </a>
                 </div>
             </div>
