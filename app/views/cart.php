@@ -45,7 +45,7 @@ $primaryPaymentLabel = $onlinePaymentEnabled ? 'Оплата онлайн' : 'П
                 <h2 class="text-base font-semibold text-slate-900 sm:text-lg">Корзина пуста</h2>
                 <p class="text-xs text-slate-600 sm:text-sm">Добавьте букет на главной странице, чтобы перейти к оформлению.</p>
             </div>
-            <a href="/?page=home" class="inline-flex items-center justify-center gap-2 rounded-xl bg-rose-600 px-3 py-2 text-xs font-semibold text-white shadow-md shadow-rose-200 transition hover:-translate-y-0.5 hover:bg-rose-700 sm:px-4 sm:text-sm">
+            <a href="/" class="inline-flex items-center justify-center gap-2 rounded-xl bg-rose-600 px-3 py-2 text-xs font-semibold text-white shadow-md shadow-rose-200 transition hover:-translate-y-0.5 hover:bg-rose-700 sm:px-4 sm:text-sm">
                 <span class="material-symbols-rounded text-base">add_shopping_cart</span>
                 Перейти в каталог
             </a>
@@ -438,9 +438,9 @@ $primaryPaymentLabel = $onlinePaymentEnabled ? 'Оплата онлайн' : 'П
                 </button>
                 <p class="text-[11px] text-slate-500 sm:text-xs">
                     Нажимая «Оформить заказ», вы соглашаетесь с
-                    <a class="font-semibold text-rose-600 underline underline-offset-2" href="/?page=static&slug=offer">Пользовательским соглашением</a>
+                    <a class="font-semibold text-rose-600 underline underline-offset-2" href="/static/offer">Пользовательским соглашением</a>
                     и
-                    <a class="font-semibold text-rose-600 underline underline-offset-2" href="/?page=static&slug=policy">Политикой обработки персональных данных</a>.
+                    <a class="font-semibold text-rose-600 underline underline-offset-2" href="/static/policy">Политикой обработки персональных данных</a>.
                 </p>
             </aside>
         </div>

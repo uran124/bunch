@@ -62,7 +62,7 @@
                 </div>
             </div>
 
-            <form id="code-form" method="POST" action="/?page=register" class="grid gap-5">
+            <form id="code-form" method="POST" action="/register" class="grid gap-5">
                 <input type="hidden" name="step" value="verify_code">
                 <div class="flex justify-center">
                     <input
@@ -83,18 +83,18 @@
 
             <div class="flex justify-center">
                 <div class="grid grid-cols-2 gap-2.5 w-full max-w-xs">
-                    <a href="/?page=login" class="inline-flex items-center justify-center gap-1.5 rounded-xl border border-rose-200 bg-white/90 backdrop-blur-sm px-3 py-2.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-50 hover:border-rose-300">
+                    <a href="/login" class="inline-flex items-center justify-center gap-1.5 rounded-xl border border-rose-200 bg-white/90 backdrop-blur-sm px-3 py-2.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-50 hover:border-rose-300">
                         <span class="material-symbols-rounded text-sm">login</span>
                         Вход
                     </a>
-                    <a href="/?page=recover" class="inline-flex items-center justify-center gap-1.5 rounded-xl border border-rose-200 bg-white/90 backdrop-blur-sm px-3 py-2.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-50 hover:border-rose-300">
+                    <a href="/recover" class="inline-flex items-center justify-center gap-1.5 rounded-xl border border-rose-200 bg-white/90 backdrop-blur-sm px-3 py-2.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-50 hover:border-rose-300">
                         <span class="material-symbols-rounded text-sm">lock_reset</span>
                         Восстановление
                     </a>
                 </div>
             </div>
         <?php else: ?>
-            <form method="POST" action="/?page=register" class="grid gap-5">
+            <form method="POST" action="/register" class="grid gap-5">
                 <input type="hidden" name="step" value="complete_registration">
                 
                 <div class="flex justify-center">
@@ -185,7 +185,7 @@
                             >
                             <span>
                                 Я даю ИП Карлову Юрию Владимировичу (ОГРНИП 314245219700025, ИНН 245210307415) согласие на обработку моих персональных данных для регистрации и использования сайта bunchflowers.ru, оформления и исполнения заказов, связи со мной по вопросам заказа (включая доставку и оплату), а также для обеспечения работы и безопасности сайта. Обработка может включать сбор, запись, систематизацию, накопление, хранение, уточнение, использование, передачу (в объёме, необходимом для выполнения заказа — например, курьерам/службе такси и банку-эквайеру), обезличивание, блокирование и удаление данных. Я ознакомлен(а) с
-                                <a class="font-semibold text-rose-600 underline underline-offset-2" href="/?page=static&slug=policy">Политикой обработки персональных данных</a>
+                                <a class="font-semibold text-rose-600 underline underline-offset-2" href="/static/policy">Политикой обработки персональных данных</a>
                                 и понимаю, что могу отозвать согласие, направив обращение на
                                 <a class="font-semibold text-rose-600 underline underline-offset-2" href="mailto:937794@gmail.com">937794@gmail.com</a>.
                             </span>
@@ -222,11 +222,11 @@
 
             <div class="flex justify-center">
                 <div class="grid grid-cols-2 gap-2.5 w-full max-w-xs">
-                    <a href="/?page=login" class="inline-flex items-center justify-center gap-1.5 rounded-xl border border-rose-200 bg-white/90 backdrop-blur-sm px-3 py-2.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-50 hover:border-rose-300">
+                    <a href="/login" class="inline-flex items-center justify-center gap-1.5 rounded-xl border border-rose-200 bg-white/90 backdrop-blur-sm px-3 py-2.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-50 hover:border-rose-300">
                         <span class="material-symbols-rounded text-sm">login</span>
                         Вход
                     </a>
-                    <a href="/?page=recover" class="inline-flex items-center justify-center gap-1.5 rounded-xl border border-rose-200 bg-white/90 backdrop-blur-sm px-3 py-2.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-50 hover:border-rose-300">
+                    <a href="/recover" class="inline-flex items-center justify-center gap-1.5 rounded-xl border border-rose-200 bg-white/90 backdrop-blur-sm px-3 py-2.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-50 hover:border-rose-300">
                         <span class="material-symbols-rounded text-sm">lock_reset</span>
                         Восстановление
                     </a>
@@ -238,7 +238,7 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', () => {
-        const codeForm = document.querySelector('form[action="/?page=register"][method="POST"]');
+        const codeForm = document.querySelector('form[action="/register"][method="POST"]');
         const codeInput = document.getElementById('code');
         const phoneInput = document.getElementById('phone');
         let codeSubmitted = false;

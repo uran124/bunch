@@ -21,14 +21,14 @@
         </div>
         <div class="flex flex-wrap items-center gap-3">
             <a
-                href="/?page=admin-users"
+                href="/admin-users"
                 class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
             >
                 <span class="material-symbols-rounded text-base">arrow_back</span>
                 К списку
             </a>
             <a
-                href="/?page=admin-group-create"
+                href="/admin-group-create"
                 class="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-rose-200 transition hover:-translate-y-0.5 hover:shadow-xl"
             >
                 <span class="material-symbols-rounded text-base">group_add</span>
@@ -68,7 +68,7 @@
                 </div>
                 <div class="rounded-xl border border-slate-100 bg-white px-4 py-3 sm:col-span-2">
                     <p class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Роль пользователя</p>
-                    <form class="mt-2 flex flex-wrap items-center gap-3" action="/?page=admin-user-role" method="post">
+                    <form class="mt-2 flex flex-wrap items-center gap-3" action="/admin-user-role" method="post">
                         <input type="hidden" name="user_id" value="<?php echo (int) $user['id']; ?>">
                         <select
                             name="role"
@@ -241,7 +241,7 @@
             <div class="flex items-center gap-2">
                 <?php for ($i = 1; $i <= $totalPages; $i++): ?>
                     <a
-                        href="/?page=admin-user&id=<?php echo (int) $user['id']; ?>&p=<?php echo $i; ?>"
+                        href="/admin-user?id=<?php echo (int) $user['id']; ?>&p=<?php echo $i; ?>"
                         class="inline-flex h-9 min-w-[36px] items-center justify-center rounded-lg px-3 text-sm font-semibold transition <?php echo $i === $currentPage ? 'bg-rose-600 text-white shadow-lg shadow-rose-200' : 'bg-white text-slate-700 ring-1 ring-slate-200 hover:-translate-y-0.5 hover:ring-rose-200'; ?>"
                     >
                         <?php echo $i; ?>

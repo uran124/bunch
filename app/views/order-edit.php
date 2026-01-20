@@ -10,7 +10,7 @@
             <p class="text-sm text-slate-500">Измените детали доставки перед оплатой. После оплаты изменения станут недоступны.</p>
         </div>
         <a
-            href="/?page=orders"
+            href="/orders"
             class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
         >
             <span class="material-symbols-rounded text-base">arrow_back</span>
@@ -19,7 +19,7 @@
     </header>
 
     <div class="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-        <form method="post" action="/?page=order-edit" class="space-y-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+        <form method="post" action="/order-edit" class="space-y-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
             <input type="hidden" name="order_id" value="<?php echo (int) $order['id']; ?>">
 
             <div class="flex flex-wrap items-center justify-between gap-2">

@@ -149,7 +149,7 @@
             data-orders-history
             data-limit="<?php echo (int) $historyLimit; ?>"
             data-has-more="<?php echo $historyHasMore ? 'true' : 'false'; ?>"
-            data-endpoint="/?page=orders-history"
+            data-endpoint="/orders-history"
         >
             <div data-history-list class="grid gap-3">
                 <?php if (empty($completedOrders)): ?>

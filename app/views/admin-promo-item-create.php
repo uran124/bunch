@@ -8,7 +8,7 @@
             <p class="max-w-3xl text-base text-slate-500">Добавьте товар, который будет доступен ограниченное время или в фиксированном количестве.</p>
         </div>
         <div class="flex flex-wrap items-center gap-3">
-            <a href="/?page=admin-promos" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+            <a href="/admin-promos" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
                 <span class="material-symbols-rounded text-base">arrow_back</span>
                 Назад к акциям
             </a>
@@ -27,7 +27,7 @@
             <h2 class="text-xl font-semibold text-slate-900">Создать предложение</h2>
             <p class="text-sm text-slate-600">Настройте цену, лимит и дату окончания, чтобы контролировать доступность.</p>
         </div>
-        <form action="/?page=admin-promo-item-save" method="post" class="grid gap-3">
+        <form action="/admin-promo-item-save" method="post" class="grid gap-3">
             <label class="flex flex-col gap-2 text-sm font-semibold text-slate-700">
                 Название
                 <input type="text" name="title" class="rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-sm focus:border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-200" required>

@@ -5,15 +5,15 @@
     <header class="space-y-3">
         <p class="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">Каталог · Поставки</p>
         <div class="flex flex-wrap items-center gap-3">
-            <a href="/?page=admin-supply-standing" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+            <a href="/admin-supply-standing" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
                 <span class="material-symbols-rounded text-base">add_circle</span>
                 Добавить стендинг
             </a>
-            <a href="/?page=admin-supply-single" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+            <a href="/admin-supply-single" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
                 <span class="material-symbols-rounded text-base">calendar_add_on</span>
                 Разовая поставка
             </a>
-            <a href="/?page=admin" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+            <a href="/admin" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
                 <span class="material-symbols-rounded text-base">arrow_back</span>
                 В панель
             </a>
@@ -111,7 +111,7 @@
                                     <tr id="supply-<?php echo (int) $supply['id']; ?>" class="hover:bg-slate-50/60">
                                         <td class="px-4 py-3 text-left">
                                             <div class="flex flex-col gap-1">
-                                                <a href="/?page=admin-supply-edit&id=<?php echo (int) $supply['id']; ?>" class="font-semibold text-slate-900 underline-offset-4 hover:text-emerald-700 hover:underline">
+                                                <a href="/admin-supply-edit?id=<?php echo (int) $supply['id']; ?>" class="font-semibold text-slate-900 underline-offset-4 hover:text-emerald-700 hover:underline">
                                                     <?php echo htmlspecialchars($title, ENT_QUOTES, 'UTF-8'); ?>
                                                 </a>
                                                 <span class="text-xs text-slate-500"><?php echo (int) ($supply['stem_height_cm'] ?? 0); ?> см · <?php echo htmlspecialchars($quantityFormula, ENT_QUOTES, 'UTF-8'); ?></span>
@@ -128,7 +128,7 @@
                                         </td>
                                         <td class="px-4 py-3">
                                             <div class="flex items-center justify-end gap-2 text-sm font-semibold">
-                                                <form action="/?page=admin-supply-toggle-card" method="post">
+                                                <form action="/admin-supply-toggle-card" method="post">
                                                     <input type="hidden" name="supply_id" value="<?php echo (int) $supply['id']; ?>">
                                                     <input type="hidden" name="card_type" value="retail">
                                                     <input type="hidden" name="activate" value="<?php echo $hasProduct ? '0' : '1'; ?>">
@@ -136,7 +136,7 @@
                                                         <span class="material-symbols-rounded text-base <?php echo $hasProduct ? 'text-emerald-500' : 'text-slate-300'; ?>">local_florist</span>
                                                     </button>
                                                 </form>
-                                                <form action="/?page=admin-supply-toggle-card" method="post">
+                                                <form action="/admin-supply-toggle-card" method="post">
                                                     <input type="hidden" name="supply_id" value="<?php echo (int) $supply['id']; ?>">
                                                     <input type="hidden" name="card_type" value="wholesale">
                                                     <input type="hidden" name="activate" value="<?php echo $hasWholesale ? '0' : '1'; ?>">
@@ -144,7 +144,7 @@
                                                         <span class="material-symbols-rounded text-base <?php echo $hasWholesale ? 'text-emerald-500' : 'text-slate-300'; ?>">deployed_code</span>
                                                     </button>
                                                 </form>
-                                                <form action="/?page=admin-supply-toggle-card" method="post">
+                                                <form action="/admin-supply-toggle-card" method="post">
                                                     <input type="hidden" name="supply_id" value="<?php echo (int) $supply['id']; ?>">
                                                     <input type="hidden" name="card_type" value="box">
                                                     <input type="hidden" name="activate" value="<?php echo $hasBox ? '0' : '1'; ?>">
@@ -197,7 +197,7 @@
                                     <tr id="supply-<?php echo (int) $supply['id']; ?>" class="hover:bg-slate-50/60">
                                         <td class="px-4 py-3 text-left">
                                             <div class="flex flex-col gap-1">
-                                                <a href="/?page=admin-supply-edit&id=<?php echo (int) $supply['id']; ?>" class="font-semibold text-slate-900 underline-offset-4 hover:text-emerald-700 hover:underline">
+                                                <a href="/admin-supply-edit?id=<?php echo (int) $supply['id']; ?>" class="font-semibold text-slate-900 underline-offset-4 hover:text-emerald-700 hover:underline">
                                                     <?php echo htmlspecialchars($title, ENT_QUOTES, 'UTF-8'); ?>
                                                 </a>
                                                 <span class="text-xs text-slate-500"><?php echo (int) ($supply['stem_height_cm'] ?? 0); ?> см · <?php echo htmlspecialchars($quantityFormula, ENT_QUOTES, 'UTF-8'); ?></span>
@@ -214,7 +214,7 @@
                                         </td>
                                         <td class="px-4 py-3">
                                             <div class="flex items-center justify-end gap-2 text-sm font-semibold">
-                                                <form action="/?page=admin-supply-toggle-card" method="post">
+                                                <form action="/admin-supply-toggle-card" method="post">
                                                     <input type="hidden" name="supply_id" value="<?php echo (int) $supply['id']; ?>">
                                                     <input type="hidden" name="card_type" value="retail">
                                                     <input type="hidden" name="activate" value="<?php echo $hasProduct ? '0' : '1'; ?>">
@@ -222,7 +222,7 @@
                                                         <span class="material-symbols-rounded text-base <?php echo $hasProduct ? 'text-emerald-500' : 'text-slate-300'; ?>">local_florist</span>
                                                     </button>
                                                 </form>
-                                                <form action="/?page=admin-supply-toggle-card" method="post">
+                                                <form action="/admin-supply-toggle-card" method="post">
                                                     <input type="hidden" name="supply_id" value="<?php echo (int) $supply['id']; ?>">
                                                     <input type="hidden" name="card_type" value="wholesale">
                                                     <input type="hidden" name="activate" value="<?php echo $hasWholesale ? '0' : '1'; ?>">
@@ -230,7 +230,7 @@
                                                         <span class="material-symbols-rounded text-base <?php echo $hasWholesale ? 'text-emerald-500' : 'text-slate-300'; ?>">deployed_code</span>
                                                     </button>
                                                 </form>
-                                                <form action="/?page=admin-supply-toggle-card" method="post">
+                                                <form action="/admin-supply-toggle-card" method="post">
                                                     <input type="hidden" name="supply_id" value="<?php echo (int) $supply['id']; ?>">
                                                     <input type="hidden" name="card_type" value="box">
                                                     <input type="hidden" name="activate" value="<?php echo $hasBox ? '0' : '1'; ?>">

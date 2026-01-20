@@ -13,14 +13,14 @@
         </div>
         <div class="flex flex-wrap items-center gap-3">
             <a
-                href="/?page=admin-broadcast"
+                href="/admin-broadcast"
                 class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
             >
                 <span class="material-symbols-rounded text-base">send</span>
                 К рассылкам
             </a>
             <a
-                href="/?page=admin-users"
+                href="/admin-users"
                 class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
             >
                 <span class="material-symbols-rounded text-base">arrow_back</span>
@@ -39,7 +39,7 @@
         </div>
     <?php endif; ?>
 
-    <form method="post" action="/?page=admin-group-create" class="grid gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-rose-50/60 ring-1 ring-transparent">
+    <form method="post" action="/admin-group-create" class="grid gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-rose-50/60 ring-1 ring-transparent">
         <input type="hidden" name="group_id" id="group-id" value="<?php echo $selectedGroupId ? (int) $selectedGroupId : ''; ?>">
 
         <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">

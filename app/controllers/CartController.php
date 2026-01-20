@@ -323,7 +323,7 @@ class CartController extends Controller
             if ($paymentMethod === 'online') {
                 $paymentLink = $orderModel->getOnlinePaymentLink($orderId);
                 if ($paymentLink === null) {
-                    $paymentLink = '/?page=order-payment&id=' . $orderId;
+                    $paymentLink = '/order-payment?id=' . $orderId;
                 }
             }
 

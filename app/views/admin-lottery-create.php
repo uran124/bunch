@@ -9,7 +9,7 @@
             <p class="max-w-3xl text-base text-slate-500">Создайте призовой товар и параметры розыгрыша для клиентов.</p>
         </div>
         <div class="flex flex-wrap items-center gap-3">
-            <a href="/?page=admin-promos" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+            <a href="/admin-promos" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
                 <span class="material-symbols-rounded text-base">arrow_back</span>
                 Назад к акциям
             </a>
@@ -29,7 +29,7 @@
                 <h2 class="text-xl font-semibold text-slate-900">Ограничения бесплатных розыгрышей</h2>
             </div>
         </div>
-        <form action="/?page=admin-promo-settings-save" method="post" class="flex flex-wrap items-end gap-4 rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
+        <form action="/admin-promo-settings-save" method="post" class="flex flex-wrap items-end gap-4 rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
             <label class="grid gap-2 text-sm text-slate-600">
                 Лимит бесплатных участий на пользователя в месяц
                 <input type="number" name="free_lottery_monthly_limit" min="0" step="1" class="w-48 rounded-xl border border-slate-200 px-3 py-2 text-base text-slate-900" value="<?php echo (int) ($lotterySettings['freeMonthlyLimit'] ?? 0); ?>">
@@ -48,7 +48,7 @@
             <h2 class="text-xl font-semibold text-slate-900">Создать приз</h2>
             <p class="text-sm text-slate-600">Укажите цену билета и количество участников, чтобы запустить лотерею.</p>
         </div>
-        <form action="/?page=admin-lottery-save" method="post" class="grid gap-3">
+        <form action="/admin-lottery-save" method="post" class="grid gap-3">
             <label class="flex flex-col gap-2 text-sm font-semibold text-slate-700">
                 Название
                 <input type="text" name="title" class="rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-sm focus:border-violet-300 focus:outline-none focus:ring-2 focus:ring-violet-200" required>

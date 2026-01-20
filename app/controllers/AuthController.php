@@ -35,7 +35,7 @@ class AuthController extends Controller
     {
         Auth::logout();
         Session::destroy();
-        header('Location: /?page=login');
+        header('Location: /login');
         exit;
     }
 
@@ -75,7 +75,7 @@ class AuthController extends Controller
                         $this->logger->logEvent('LOGIN_SUCCESS', ['user_id' => $user['id'], 'phone' => $normalizedPhone]);
                         $this->analytics->track('login_success', ['user_id' => $user['id']]);
 
-                        $this->redirectAfterAuth('/?page=account');
+                        $this->redirectAfterAuth('/account');
                     }
                 }
             }
@@ -128,7 +128,7 @@ class AuthController extends Controller
                             $this->logger->logEvent('LOGIN_SUCCESS', ['user_id' => $existingByChat['id'], 'phone' => $existingByChat['phone'] ?? null]);
                             $this->analytics->track('login_success', ['user_id' => $existingByChat['id'], 'source' => 'register_code']);
 
-                            $this->redirectAfterAuth('/?page=home');
+                            $this->redirectAfterAuth('/');
                         }
 
                         $data = [
@@ -209,7 +209,7 @@ class AuthController extends Controller
                         Session::remove('register_verification');
 
                         Auth::login($userId);
-                        $this->redirectAfterAuth('/?page=account');
+                        $this->redirectAfterAuth('/account');
                     } else {
                         $stage = 'details';
                         $prefillName = $name;
@@ -352,7 +352,7 @@ class AuthController extends Controller
                             Session::remove('recover_verification');
                             Auth::login((int) $verification['user_id']);
                             Session::set('auth_notice', 'PIN обновлён, вход выполнен. Мы перенаправили вас на главную.');
-                            $this->redirectAfterAuth('/?page=home');
+                            $this->redirectAfterAuth('/');
                         }
                     } else {
                         $stage = 'reset';

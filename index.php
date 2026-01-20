@@ -85,6 +85,45 @@ spl_autoload_register(function (string $class): void {
 });
 
 $path = trim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/');
+$isStaticPath = str_starts_with($path, 'static/');
+
+$buildPageUrl = static function (string $page, array $query): string {
+    $page = trim($page, '/');
+
+    if ($page === '' || $page === 'home' || $page === 'index' || $page === 'index.php') {
+        $path = '/';
+    } elseif ($page === 'static' && !empty($query['slug'])) {
+        $path = '/static/' . rawurlencode((string) $query['slug']);
+        unset($query['slug']);
+    } else {
+        $path = '/' . $page;
+    }
+
+    if ($query) {
+        $path .= '?' . http_build_query($query);
+    }
+
+    return $path;
+};
+
+if ($isStaticPath) {
+    $slug = trim(substr($path, strlen('static/')), '/');
+    if ($slug !== '') {
+        $_GET['slug'] = urldecode($slug);
+        $path = 'static';
+    }
+}
+
+if ($path === 'static' && !$isStaticPath && !empty($_GET['slug']) && in_array($_SERVER['REQUEST_METHOD'], ['GET', 'HEAD'], true)) {
+    $redirectUrl = '/static/' . rawurlencode((string) $_GET['slug']);
+    $remainingQuery = $_GET;
+    unset($remainingQuery['slug'], $remainingQuery['page']);
+    if ($remainingQuery) {
+        $redirectUrl .= '?' . http_build_query($remainingQuery);
+    }
+    header('Location: ' . $redirectUrl, true, 301);
+    exit;
+}
 
 if (str_starts_with($path, 'api/')) {
     require_once __DIR__ . '/api/index.php';
@@ -94,6 +133,20 @@ if (str_starts_with($path, 'api/')) {
 Session::start();
 
 $router = new Router();
+
+if (isset($_GET['page'])) {
+    $requestedPage = (string) $_GET['page'];
+    $queryParams = $_GET;
+    unset($queryParams['page']);
+
+    if (in_array($_SERVER['REQUEST_METHOD'], ['GET', 'HEAD'], true)) {
+        $targetUrl = $buildPageUrl($requestedPage, $queryParams);
+        if ($targetUrl !== ($_SERVER['REQUEST_URI'] ?? '')) {
+            header('Location: ' . $targetUrl, true, 301);
+            exit;
+        }
+    }
+}
 
 $page = $_GET['page'] ?? $path;
 
@@ -238,12 +291,12 @@ if (!Auth::check() && !in_array($page, $publicPages, true)) {
     }
 
     Session::set('auth_redirect', $_SERVER['REQUEST_URI'] ?? '/');
-    header('Location: /?page=login');
+    header('Location: /login');
     exit;
 }
 
 if (Auth::check() && in_array($page, ['login', 'register', 'recover'], true)) {
-    header('Location: /?page=home');
+    header('Location: /');
     exit;
 }
 

@@ -13,7 +13,7 @@
         </div>
         <div class="flex flex-wrap items-center gap-3">
             <a
-                href="/?page=admin"
+                href="/admin"
                 class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
             >
                 <span class="material-symbols-rounded text-base">arrow_back</span>
@@ -33,7 +33,7 @@
     <?php endif; ?>
 
     <section class="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
-        <form method="post" action="/?page=admin-services-telegram" class="space-y-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <form method="post" action="/admin-services-telegram" class="space-y-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <div>
                 <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Telegram bot</p>
                 <h2 class="text-xl font-semibold text-slate-900">Доступы и webhook</h2>
