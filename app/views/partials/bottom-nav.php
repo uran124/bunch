@@ -1,5 +1,12 @@
 <?php
-$currentPage = $_GET['page'] ?? trim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/') ?: 'home';
+$currentPath = trim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/');
+if ($currentPath === '' || $currentPath === 'index' || $currentPath === 'index.php') {
+    $currentPage = 'home';
+} elseif (str_starts_with($currentPath, 'static/')) {
+    $currentPage = 'static';
+} else {
+    $currentPage = $currentPath;
+}
 $isWholesaleUser = $isWholesaleUser ?? false;
 $currentUserRole = $currentUserRole ?? 'customer';
 $isAdminUser = $currentUserRole === 'admin';
@@ -8,53 +15,53 @@ $navItems = [
     [
         'id' => 'home',
         'label' => 'Главная',
-        'href' => '/?page=home',
+        'href' => '/',
         'icon' => 'home'
     ],
     $isAdminUser
         ? [
             'id' => 'promo',
             'label' => 'Акции',
-            'href' => '/?page=promo',
+            'href' => '/promo',
             'icon' => 'local_offer'
         ]
         : ($isWholesaleUser
             ? [
                 'id' => 'wholesale',
                 'label' => 'Опт',
-                'href' => '/?page=wholesale',
+                'href' => '/wholesale',
                 'icon' => 'inventory'
             ]
             : [
                 'id' => 'promo',
                 'label' => 'Акции',
-                'href' => '/?page=promo',
+                'href' => '/promo',
                 'icon' => 'local_offer'
             ]),
     $isAdminUser
         ? [
             'id' => 'wholesale',
             'label' => 'Опт',
-            'href' => '/?page=wholesale',
+            'href' => '/wholesale',
             'icon' => 'inventory'
         ]
         : null,
     [
         'id' => 'cart',
         'label' => 'Корзина',
-        'href' => '/?page=cart',
+        'href' => '/cart',
         'icon' => 'shopping_cart'
     ],
     [
         'id' => 'orders',
         'label' => 'Заказы',
-        'href' => '/?page=orders',
+        'href' => '/orders',
         'icon' => 'inventory_2'
     ],
     [
         'id' => 'account',
         'label' => 'Профиль',
-        'href' => '/?page=account',
+        'href' => '/account',
         'icon' => 'account_circle'
     ],
 ];

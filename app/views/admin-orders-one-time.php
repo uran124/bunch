@@ -6,7 +6,6 @@
 <?php $message = $message ?? null; ?>
 <?php
 $returnQuery = [
-    'page' => 'admin-orders-one-time',
     'q' => $query,
     'status_filter' => $activeFilters['status'] ?? 'all',
     'payment_filter' => $activeFilters['payment'] ?? 'all',
@@ -20,15 +19,14 @@ $returnQuery = [
             <h1 class="text-3xl font-semibold text-slate-900"><?php echo htmlspecialchars($pageMeta['h1'] ?? 'Разовые заказы', ENT_QUOTES, 'UTF-8'); ?></h1>
             <p class="max-w-3xl text-base text-slate-500">Отслеживайте статусы, оплаты и доставку разовых заказов. Фильтры и поиск работают по данным из базы — можно быстро найти клиента или номер заказа.</p>
         </div>
-        <a href="/?page=admin" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+        <a href="/admin" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
             <span class="material-symbols-rounded text-base">arrow_back</span>
             В панель
         </a>
     </header>
 
     <div class="grid gap-4 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm shadow-rose-50/60 ring-1 ring-transparent lg:grid-cols-[1.4fr_1fr_1fr]">
-        <form method="get" action="/" class="contents" data-order-filters>
-            <input type="hidden" name="page" value="admin-orders-one-time">
+        <form method="get" action="/admin-orders-one-time" class="contents" data-order-filters>
             <label class="flex flex-col gap-2">
                 <input
                     type="search"
@@ -87,7 +85,6 @@ $returnQuery = [
             $deliveryTime = $order['scheduled_time_raw'] ? substr((string) $order['scheduled_time_raw'], 0, 5) : '—';
 
             $linkParams = [
-                'page' => 'admin-order-one-time-edit',
                 'id' => $order['id'],
                 'q' => $query,
                 'status_filter' => $activeFilters['status'] ?? 'all',
@@ -97,7 +94,7 @@ $returnQuery = [
             <article class="space-y-4 border-b border-slate-100 last:border-b-0 rounded-xl bg-slate-50 p-3">
                 <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div class="flex flex-wrap items-center gap-3 text-sm text-slate-700">
-                        <a href="/?<?php echo http_build_query($linkParams); ?>" class="text-base font-semibold text-rose-700 underline-offset-4 hover:text-rose-800 hover:underline">
+                        <a href="/admin-order-one-time-edit?<?php echo http_build_query($linkParams); ?>" class="text-base font-semibold text-rose-700 underline-offset-4 hover:text-rose-800 hover:underline">
                             <?php echo htmlspecialchars($order['number'], ENT_QUOTES, 'UTF-8'); ?>
                         </a>
                         <span class="inline-flex items-center gap-2 rounded-full bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-slate-200">
@@ -110,7 +107,7 @@ $returnQuery = [
                         </span>
                     </div>
                     <div class="flex flex-wrap items-center gap-2">
-                        <form method="post" action="/?page=admin-order-update" class="flex flex-wrap items-center gap-2">
+                        <form method="post" action="/admin-order-update" class="flex flex-wrap items-center gap-2">
                             <input type="hidden" name="order_id" value="<?php echo (int) $order['id']; ?>">
                             <input type="hidden" name="delivery_type" value="<?php echo htmlspecialchars($order['deliveryTypeValue'], ENT_QUOTES, 'UTF-8'); ?>">
                             <input type="hidden" name="scheduled_date" value="<?php echo htmlspecialchars($order['scheduled_date_raw'] ?? '', ENT_QUOTES, 'UTF-8'); ?>">
@@ -119,7 +116,7 @@ $returnQuery = [
                             <input type="hidden" name="recipient_phone" value="<?php echo htmlspecialchars($order['recipientPhoneRaw'] ?? '', ENT_QUOTES, 'UTF-8'); ?>">
                             <input type="hidden" name="address_text" value="<?php echo htmlspecialchars($order['addressTextRaw'] ?? '', ENT_QUOTES, 'UTF-8'); ?>">
                             <input type="hidden" name="comment" value="<?php echo htmlspecialchars($order['commentRaw'] ?? '', ENT_QUOTES, 'UTF-8'); ?>">
-                            <input type="hidden" name="return_url" value="<?php echo htmlspecialchars(http_build_query($returnQuery), ENT_QUOTES, 'UTF-8'); ?>">
+                            <input type="hidden" name="return_url" value="<?php echo htmlspecialchars('/admin-orders-one-time' . '?' . http_build_query($returnQuery), ENT_QUOTES, 'UTF-8'); ?>">
                             <label class="flex items-center gap-2 text-sm font-semibold text-slate-700">
                                 <select name="status" class="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-rose-300 focus:outline-none focus:ring-2 focus:ring-rose-200" data-order-status>
                                     <?php foreach ($filters['status'] as $value => $label): ?>
@@ -131,9 +128,9 @@ $returnQuery = [
                                 </select>
                             </label>
                         </form>
-                        <form method="post" action="/?page=admin-order-delete">
+                        <form method="post" action="/admin-order-delete">
                             <input type="hidden" name="order_id" value="<?php echo (int) $order['id']; ?>">
-                            <input type="hidden" name="return_url" value="<?php echo htmlspecialchars(http_build_query($returnQuery), ENT_QUOTES, 'UTF-8'); ?>">
+                            <input type="hidden" name="return_url" value="<?php echo htmlspecialchars('/admin-orders-one-time' . '?' . http_build_query($returnQuery), ENT_QUOTES, 'UTF-8'); ?>">
                             <button type="submit" class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-rose-200 bg-rose-50 text-rose-700 shadow-sm transition hover:-translate-y-0.5 hover:border-rose-300 hover:text-rose-800" data-order-delete aria-label="Удалить заказ">
                                 <span class="material-symbols-rounded text-base">delete</span>
                             </button>

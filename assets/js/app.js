@@ -50,7 +50,7 @@ function recalculateGrandTotal() {
 }
 
 async function addProductToCart(productId, qty = 1, attributes = []) {
-    const response = await fetch('/?page=cart-add', {
+    const response = await fetch('/cart-add', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -76,7 +76,7 @@ async function addProductToCart(productId, qty = 1, attributes = []) {
 }
 
 async function updateCartItemRequest(key, qty, attributes = []) {
-    const response = await fetch('/?page=cart-update', {
+    const response = await fetch('/cart-update', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -98,7 +98,7 @@ async function updateCartItemRequest(key, qty, attributes = []) {
 }
 
 async function removeCartItemRequest(key) {
-    const response = await fetch('/?page=cart-remove', {
+    const response = await fetch('/cart-remove', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -1068,7 +1068,7 @@ function initOrderFlow() {
         submitButton.classList.add('opacity-70');
 
         try {
-            const response = await fetch('/?page=cart-checkout', {
+            const response = await fetch('/cart-checkout', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -1087,7 +1087,7 @@ function initOrderFlow() {
                 return;
             }
 
-            window.location.href = '/?page=orders';
+            window.location.href = '/orders';
         } catch (error) {
             alert(error.message || 'Ошибка оформления заказа');
         } finally {
@@ -1360,7 +1360,7 @@ function initOrdersHistory() {
     const endMarker = container.querySelector('[data-history-end]');
     const sentinel = container.querySelector('[data-history-sentinel]');
     const limit = Number(container.dataset.limit || 10);
-    const endpoint = container.dataset.endpoint || '/?page=orders-history';
+    const endpoint = container.dataset.endpoint || '/orders-history';
 
     let hasMore = container.dataset.hasMore === 'true';
     let currentPage = 1;
@@ -1438,7 +1438,7 @@ function initOrdersHistory() {
 }
 
 async function updateNotificationSettings(payload) {
-    const response = await fetch('/?page=account-notifications', {
+    const response = await fetch('/account-notifications', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -1492,7 +1492,7 @@ function initNotificationToggles() {
 }
 
 async function submitPinChange(pin, pinConfirm) {
-    const response = await fetch('/?page=account-pin', {
+    const response = await fetch('/account-pin', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -3086,7 +3086,7 @@ function initPromoActions() {
     };
 
     const addPromoItemToCart = async (productId) => {
-        const response = await fetch('/?page=cart-add', {
+        const response = await fetch('/cart-add', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -3279,7 +3279,7 @@ function getPromoBotGuard() {
         enableButton.disabled = true;
         enableButton.classList.add('opacity-70');
         try {
-            await fetchJson('/?page=account-notifications', {
+            await fetchJson('/account-notifications', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

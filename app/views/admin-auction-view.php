@@ -15,7 +15,7 @@ $winnerLabel = ($lot['winner_last4'] ?? '----') !== '----' ? '…' . htmlspecial
             <p class="max-w-3xl text-base text-slate-500">Просмотр итоговой информации, участников и победителя.</p>
         </div>
         <div class="flex flex-wrap items-center gap-3">
-            <a href="/?page=admin-promos" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+            <a href="/admin-promos" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
                 <span class="material-symbols-rounded text-base">arrow_back</span>
                 К списку лотов
             </a>

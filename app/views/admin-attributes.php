@@ -10,11 +10,11 @@
             <p class="max-w-3xl text-base text-slate-500">Управляйте справочником атрибутов (высота стебля, вид оформления и т.д.) и значениями атрибутов с дельтой цены и фото.</p>
         </div>
         <div class="flex flex-wrap items-center gap-3">
-            <a href="/?page=admin-products" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+            <a href="/admin-products" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
                 <span class="material-symbols-rounded text-base">shopping_bag</span>
                 Товары
             </a>
-            <a href="/?page=admin" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+            <a href="/admin" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
                 <span class="material-symbols-rounded text-base">arrow_back</span>
                 В панель
             </a>
@@ -65,7 +65,7 @@
             </div>
         </div>
 
-        <form action="/?page=admin-attribute-save" method="post" class="space-y-3 rounded-xl border border-dashed border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700">
+        <form action="/admin-attribute-save" method="post" class="space-y-3 rounded-xl border border-dashed border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700">
             <div class="flex items-center gap-2 font-semibold text-emerald-900">
                 <span class="material-symbols-rounded text-base">add</span>
                 Новый атрибут
@@ -117,7 +117,7 @@
                 <p class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Значения атрибутов</p>
                 <h2 class="text-xl font-semibold text-slate-900">Редактор вариантов</h2>
             </div>
-            <a href="/?page=admin-products" class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-rose-200 hover:text-rose-700">
+            <a href="/admin-products" class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-rose-200 hover:text-rose-700">
                 <span class="material-symbols-rounded text-base">shoppingmode</span>
                 Привязать к товару
             </a>
@@ -126,7 +126,7 @@
             <?php foreach ($attributes as $attribute): ?>
                 <?php $attributeId = (int) $attribute['id']; ?>
                 <article id="attribute-<?php echo $attributeId; ?>" class="rounded-xl border border-slate-200 bg-slate-50 p-4 shadow-sm">
-                    <form action="/?page=admin-attribute-save" method="post" class="space-y-3">
+                    <form action="/admin-attribute-save" method="post" class="space-y-3">
                         <input type="hidden" name="id" value="<?php echo $attributeId; ?>">
                         <div class="flex flex-wrap items-start justify-between gap-3">
                             <div class="flex-1 space-y-2">
@@ -175,7 +175,7 @@
                     </form>
                     <div class="mt-4 space-y-2">
                         <?php foreach ($attribute['values'] as $value): ?>
-                            <form action="/?page=admin-attribute-value-save" method="post" enctype="multipart/form-data" class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700">
+                            <form action="/admin-attribute-value-save" method="post" enctype="multipart/form-data" class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700">
                                 <input type="hidden" name="attribute_id" value="<?php echo $attributeId; ?>">
                                 <input type="hidden" name="id" value="<?php echo (int) $value['id']; ?>">
                                 <div class="grid gap-2 sm:grid-cols-[1.4fr_1fr_1fr_80px] sm:items-center">
@@ -220,12 +220,12 @@
                                     </div>
                                 </div>
                             </form>
-                            <form id="delete-value-<?php echo (int) $value['id']; ?>" action="/?page=admin-attribute-value-delete" method="post" class="hidden">
+                            <form id="delete-value-<?php echo (int) $value['id']; ?>" action="/admin-attribute-value-delete" method="post" class="hidden">
                                 <input type="hidden" name="id" value="<?php echo (int) $value['id']; ?>">
                                 <input type="hidden" name="attribute_id" value="<?php echo $attributeId; ?>">
                             </form>
                         <?php endforeach; ?>
-                        <form action="/?page=admin-attribute-value-save" method="post" enctype="multipart/form-data" class="rounded-lg border border-dashed border-emerald-200 bg-white px-3 py-3 text-sm text-slate-700">
+                        <form action="/admin-attribute-value-save" method="post" enctype="multipart/form-data" class="rounded-lg border border-dashed border-emerald-200 bg-white px-3 py-3 text-sm text-slate-700">
                             <input type="hidden" name="attribute_id" value="<?php echo $attributeId; ?>">
                             <p class="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-600">Добавить вариант</p>
                             <div class="grid gap-2 sm:grid-cols-[1.4fr_1fr_1fr_80px] sm:items-center">
@@ -264,7 +264,7 @@
                                 </button>
                             </div>
                         </form>
-                        <form action="/?page=admin-attribute-delete" method="post" class="flex justify-end">
+                        <form action="/admin-attribute-delete" method="post" class="flex justify-end">
                             <input type="hidden" name="id" value="<?php echo $attributeId; ?>">
                             <button type="submit" class="inline-flex items-center gap-1 rounded-lg border border-rose-100 bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-700 hover:-translate-y-0.5 hover:border-rose-200">
                                 <span class="material-symbols-rounded text-base">delete</span>

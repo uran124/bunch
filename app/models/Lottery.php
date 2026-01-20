@@ -322,7 +322,7 @@ SQL;
         }
 
         $telegram = new Telegram($token);
-        $message = 'Розыгрыш состоялся! https://bunchflowers.ru/?page=promo';
+        $message = 'Розыгрыш состоялся! https://bunchflowers.ru/promo';
 
         foreach ($chatIds as $chatId) {
             $telegram->sendMessage((int) $chatId, $message);

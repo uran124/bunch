@@ -2,7 +2,8 @@
 <?php /** @var array $filters */ ?>
 <?php $pageMeta = $pageMeta ?? []; ?>
 <?php $message = $message ?? null; ?>
-<?php $returnQuery = $returnQuery ?? ['page' => 'admin-orders-one-time']; ?>
+<?php $returnQuery = $returnQuery ?? []; ?>
+<?php $returnPath = $returnPath ?? '/admin-orders-one-time'; ?>
 
 <section class="flex flex-col gap-6">
     <header class="flex flex-wrap items-start justify-between gap-4">
@@ -11,7 +12,7 @@
             <h1 class="text-3xl font-semibold text-slate-900">Карточка заказа</h1>
             <p class="max-w-3xl text-base text-slate-500">Обновляйте статус, параметры доставки и контактные данные получателя. Изменения сохраняются вручную.</p>
         </div>
-        <a href="/?<?php echo htmlspecialchars(http_build_query($returnQuery), ENT_QUOTES, 'UTF-8'); ?>" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+        <a href="<?php echo htmlspecialchars($returnPath . ($returnQuery ? '?' . http_build_query($returnQuery) : ''), ENT_QUOTES, 'UTF-8'); ?>" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
             <span class="material-symbols-rounded text-base">arrow_back</span>
             К списку заказов
         </a>
@@ -57,9 +58,9 @@
             </div>
         </div>
 
-        <form method="post" action="/?page=admin-order-update" class="mt-4 space-y-4">
+        <form method="post" action="/admin-order-update" class="mt-4 space-y-4">
             <input type="hidden" name="order_id" value="<?php echo (int) $selectedOrder['id']; ?>">
-            <input type="hidden" name="return_url" value="<?php echo htmlspecialchars(http_build_query(['page' => 'admin-order-one-time-edit', 'id' => $selectedOrder['id'], 'q' => $returnQuery['q'] ?? null, 'status_filter' => $returnQuery['status_filter'] ?? null, 'payment_filter' => $returnQuery['payment_filter'] ?? null]), ENT_QUOTES, 'UTF-8'); ?>">
+            <input type="hidden" name="return_url" value="<?php echo htmlspecialchars('/admin-order-one-time-edit' . '?' . http_build_query(['id' => $selectedOrder['id'], 'q' => $returnQuery['q'] ?? null, 'status_filter' => $returnQuery['status_filter'] ?? null, 'payment_filter' => $returnQuery['payment_filter'] ?? null]), ENT_QUOTES, 'UTF-8'); ?>">
             <div class="grid gap-4 md:grid-cols-2">
                 <label class="flex flex-col gap-2">
                     <span class="text-sm font-semibold text-slate-700">Статус</span>

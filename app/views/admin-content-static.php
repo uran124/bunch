@@ -23,7 +23,7 @@ $statusMessages = [
             <p class="max-w-3xl text-base text-slate-500">Создавайте страницы для меню и футера, управляйте их контентом и активностью.</p>
         </div>
         <div class="flex flex-wrap items-center gap-3">
-            <a href="/?page=admin" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+            <a href="/admin" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
                 <span class="material-symbols-rounded text-base">arrow_back</span>
                 В панель
             </a>
@@ -45,14 +45,14 @@ $statusMessages = [
                 </h2>
             </div>
             <?php if ($isEditing): ?>
-                <a class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-rose-200 hover:text-rose-700" href="/?page=admin-content-static">
+                <a class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-rose-200 hover:text-rose-700" href="/admin-content-static">
                     <span class="material-symbols-rounded text-base">add</span>
                     Создать новую
                 </a>
             <?php endif; ?>
         </div>
 
-        <form class="mt-4 grid gap-4" action="/?page=admin-static-page-save" method="post">
+        <form class="mt-4 grid gap-4" action="/admin-static-page-save" method="post">
             <?php if ($isEditing): ?>
                 <input type="hidden" name="id" value="<?php echo (int) $editPage['id']; ?>">
             <?php endif; ?>
@@ -77,7 +77,7 @@ $statusMessages = [
                         required
                         value="<?php echo htmlspecialchars($editPage['slug'] ?? '', ENT_QUOTES, 'UTF-8'); ?>"
                     >
-                    <span class="text-xs font-normal text-slate-400">Используйте латиницу, цифры и дефисы. Страница будет доступна по /?page=static&slug=...</span>
+                    <span class="text-xs font-normal text-slate-400">Используйте латиницу, цифры и дефисы. Страница будет доступна по /static/...</span>
                 </label>
             </div>
             <div class="space-y-3 text-sm font-semibold text-slate-700">
@@ -172,7 +172,7 @@ $statusMessages = [
                 <div class="text-sm font-semibold text-slate-900">#<?php echo (int) $page['id']; ?></div>
                 <div class="space-y-1">
                     <div class="text-base font-semibold text-slate-900"><?php echo htmlspecialchars($page['title'], ENT_QUOTES, 'UTF-8'); ?></div>
-                    <div class="text-sm text-slate-500"><?php echo htmlspecialchars('/?page=static&slug=' . $page['slug'], ENT_QUOTES, 'UTF-8'); ?></div>
+                    <div class="text-sm text-slate-500"><?php echo htmlspecialchars('/static/' . $page['slug'], ENT_QUOTES, 'UTF-8'); ?></div>
                 </div>
                 <div class="space-y-1 text-sm text-slate-700">
                     <div><?php echo (int) $page['show_in_footer'] === 1 ? 'Футер' : '—'; ?></div>
@@ -191,11 +191,11 @@ $statusMessages = [
                     <?php echo htmlspecialchars($page['updated_at'] ?? '', ENT_QUOTES, 'UTF-8'); ?>
                 </div>
                 <div class="flex flex-col items-end gap-2 text-sm font-semibold">
-                    <a href="/?page=admin-content-static&edit_id=<?php echo (int) $page['id']; ?>" class="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-2 text-slate-700 hover:-translate-y-0.5 hover:border-rose-200 hover:text-rose-700">
+                    <a href="/admin-content-static?edit_id=<?php echo (int) $page['id']; ?>" class="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-2 text-slate-700 hover:-translate-y-0.5 hover:border-rose-200 hover:text-rose-700">
                         <span class="material-symbols-rounded text-base">edit</span>
                         Изменить
                     </a>
-                    <form action="/?page=admin-static-page-toggle" method="post">
+                    <form action="/admin-static-page-toggle" method="post">
                         <input type="hidden" name="id" value="<?php echo (int) $page['id']; ?>">
                         <input type="hidden" name="active" value="<?php echo (int) $page['is_active'] === 1 ? 0 : 1; ?>">
                         <button class="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-2 text-slate-700 hover:-translate-y-0.5 hover:border-rose-200 hover:text-rose-700" type="submit">
@@ -203,7 +203,7 @@ $statusMessages = [
                             <?php echo (int) $page['is_active'] === 1 ? 'Деактивировать' : 'Активировать'; ?>
                         </button>
                     </form>
-                    <form action="/?page=admin-static-page-delete" method="post" onsubmit="return confirm('Удалить страницу?');">
+                    <form action="/admin-static-page-delete" method="post" onsubmit="return confirm('Удалить страницу?');">
                         <input type="hidden" name="id" value="<?php echo (int) $page['id']; ?>">
                         <button class="inline-flex items-center gap-1 rounded-lg border border-rose-100 bg-rose-50 px-3 py-2 text-rose-700 hover:-translate-y-0.5 hover:border-rose-200" type="submit">
                             <span class="material-symbols-rounded text-base">delete</span>
@@ -222,7 +222,7 @@ $statusMessages = [
     const editorContentInput = document.querySelector('[data-editor-content]');
     const editorVisual = document.querySelector('[data-editor-visual]');
     const editorHtml = document.querySelector('[data-editor-html]');
-    const editorForm = document.querySelector('form[action="/?page=admin-static-page-save"]');
+    const editorForm = document.querySelector('form[action="/admin-static-page-save"]');
 
     const updateEditorMode = () => {
         const selectedMode = document.querySelector('input[name="editor_mode"]:checked')?.value;

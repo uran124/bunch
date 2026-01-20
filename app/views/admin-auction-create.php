@@ -8,7 +8,7 @@
             <p class="max-w-3xl text-base text-slate-500">Заполните параметры аукционного лота, чтобы запустить акцию.</p>
         </div>
         <div class="flex flex-wrap items-center gap-3">
-            <a href="/?page=admin-promos" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+            <a href="/admin-promos" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
                 <span class="material-symbols-rounded text-base">arrow_back</span>
                 К списку лотов
             </a>
@@ -27,7 +27,7 @@
             <h2 class="text-xl font-semibold text-slate-900">Создать лот для торгов</h2>
             <p class="text-sm text-slate-600">Укажите шаг ставки и блиц-цену — клиент сможет выкупить лот сразу.</p>
         </div>
-        <form action="/?page=admin-auction-save" method="post" class="grid gap-3">
+        <form action="/admin-auction-save" method="post" class="grid gap-3">
             <label class="flex flex-col gap-2 text-sm font-semibold text-slate-700">
                 Название лота
                 <input name="title" required class="rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-sm focus:border-rose-300 focus:outline-none focus:ring-2 focus:ring-rose-200">

@@ -12,8 +12,7 @@
             <h1 class="text-3xl font-semibold text-slate-900"><?php echo htmlspecialchars($pageMeta['h1'] ?? 'Товары', ENT_QUOTES, 'UTF-8'); ?></h1>
         </div>
         <div class="flex flex-wrap items-center gap-3">
-            <form action="/" method="get" class="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm">
-                <input type="hidden" name="page" value="admin-products">
+            <form action="/admin-products" method="get" class="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm">
                 <label class="flex items-center gap-2">
                     <span class="text-xs uppercase tracking-[0.24em] text-slate-400">Показывать удалённые товары</span>
                     <span class="relative inline-flex h-6 w-11 cursor-pointer items-center">
@@ -23,15 +22,15 @@
                     </span>
                 </label>
             </form>
-            <a href="/?page=admin-product-form" class="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-emerald-200 transition hover:-translate-y-0.5 hover:shadow-md">
+            <a href="/admin-product-form" class="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-emerald-200 transition hover:-translate-y-0.5 hover:shadow-md">
                 <span class="material-symbols-rounded text-base">add</span>
                 Новый товар
             </a>
-            <a href="/?page=admin-promos" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+            <a href="/admin-promos" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
                 <span class="material-symbols-rounded text-base">redeem</span>
                 Акции
             </a>
-            <a href="/?page=admin" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+            <a href="/admin" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
                 <span class="material-symbols-rounded text-base">arrow_back</span>
                 В панель
             </a>
@@ -62,7 +61,7 @@
                                 <div>
                                     <span class="font-semibold text-rose-800">Заказы:</span>
                                     <?php foreach ($blockedRelations['orders'] as $index => $order): ?>
-                                        <a href="/?page=admin-order-one-time-edit&id=<?php echo (int) $order['id']; ?>" class="font-semibold text-rose-700 underline-offset-4 hover:underline">#<?php echo htmlspecialchars($order['number'], ENT_QUOTES, 'UTF-8'); ?></a><?php echo $index + 1 < count($blockedRelations['orders']) ? ', ' : ''; ?>
+                                        <a href="/admin-order-one-time-edit?id=<?php echo (int) $order['id']; ?>" class="font-semibold text-rose-700 underline-offset-4 hover:underline">#<?php echo htmlspecialchars($order['number'], ENT_QUOTES, 'UTF-8'); ?></a><?php echo $index + 1 < count($blockedRelations['orders']) ? ', ' : ''; ?>
                                     <?php endforeach; ?>
                                 </div>
                             <?php endif; ?>
@@ -70,7 +69,7 @@
                                 <div>
                                     <span class="font-semibold text-rose-800">Подписки:</span>
                                     <?php foreach ($blockedRelations['subscriptions'] as $index => $subscription): ?>
-                                        <a href="/?page=admin-user&id=<?php echo (int) $subscription['user_id']; ?>" class="font-semibold text-rose-700 underline-offset-4 hover:underline">
+                                        <a href="/admin-user?id=<?php echo (int) $subscription['user_id']; ?>" class="font-semibold text-rose-700 underline-offset-4 hover:underline">
                                             <?php echo htmlspecialchars($subscription['name'] ?? 'Клиент', ENT_QUOTES, 'UTF-8'); ?>
                                         </a><?php echo $index + 1 < count($blockedRelations['subscriptions']) ? ', ' : ''; ?>
                                     <?php endforeach; ?>
@@ -81,7 +80,7 @@
                                     <span class="font-semibold text-rose-800">Корзины:</span>
                                     <?php foreach ($blockedRelations['carts'] as $index => $cart): ?>
                                         <?php if (!empty($cart['user_id'])): ?>
-                                            <a href="/?page=admin-user&id=<?php echo (int) $cart['user_id']; ?>" class="font-semibold text-rose-700 underline-offset-4 hover:underline">
+                                            <a href="/admin-user?id=<?php echo (int) $cart['user_id']; ?>" class="font-semibold text-rose-700 underline-offset-4 hover:underline">
                                                 <?php echo htmlspecialchars($cart['name'] ?? 'Клиент', ENT_QUOTES, 'UTF-8'); ?>
                                             </a>
                                         <?php else: ?>
@@ -143,7 +142,7 @@
             <article class="grid grid-cols-[120px_1.6fr_1.2fr_120px_140px_120px_60px] items-center gap-4 border-b border-slate-100 px-5 py-4 text-sm last:border-b-0 <?php echo $isDeleted ? 'bg-slate-50/70' : ''; ?>">
                 <div class="font-semibold text-slate-900"><?php echo htmlspecialchars($articleLabel, ENT_QUOTES, 'UTF-8'); ?></div>
                 <div class="space-y-1">
-                    <a href="/?page=admin-product-form&edit_id=<?php echo (int) $product['id']; ?>" class="text-base font-semibold text-slate-900 underline-offset-4 hover:text-rose-600 hover:underline">
+                    <a href="/admin-product-form?edit_id=<?php echo (int) $product['id']; ?>" class="text-base font-semibold text-slate-900 underline-offset-4 hover:text-rose-600 hover:underline">
                         <?php echo htmlspecialchars($product['name'], ENT_QUOTES, 'UTF-8'); ?>
                     </a>
                     <?php if ($isDeleted): ?>
@@ -155,7 +154,7 @@
                 </div>
                 <div class="space-y-1">
                     <?php if (!empty($product['supply_id'])): ?>
-                        <a href="/?page=admin-supply-edit&id=<?php echo (int) $product['supply_id']; ?>" class="font-semibold text-slate-700 underline-offset-4 hover:text-emerald-700 hover:underline">
+                        <a href="/admin-supply-edit?id=<?php echo (int) $product['supply_id']; ?>" class="font-semibold text-slate-700 underline-offset-4 hover:text-emerald-700 hover:underline">
                             <?php echo htmlspecialchars($supplyTitle !== '' ? $supplyTitle : 'Поставка', ENT_QUOTES, 'UTF-8'); ?>
                         </a>
                     <?php else: ?>
@@ -165,7 +164,7 @@
                 <div class="text-slate-700"><?php echo htmlspecialchars($nextDeliveryLabel, ENT_QUOTES, 'UTF-8'); ?></div>
                 <div class="font-semibold text-slate-900"><?php echo htmlspecialchars($priceLabel, ENT_QUOTES, 'UTF-8'); ?> ₽</div>
                 <div>
-                    <form action="/?page=admin-product-toggle" method="post">
+                    <form action="/admin-product-toggle" method="post">
                         <input type="hidden" name="product_id" value="<?php echo (int) $product['id']; ?>">
                         <label class="relative inline-flex h-8 w-14 cursor-pointer items-center" aria-label="Активность товара">
                             <input type="checkbox" name="is_active" class="peer sr-only" onchange="this.form.submit()" <?php echo ($product['is_active'] ?? 0) ? 'checked' : ''; ?> <?php echo $isDeleted ? 'disabled' : ''; ?>>
@@ -175,7 +174,7 @@
                     </form>
                 </div>
                 <div class="flex justify-end">
-                    <form action="/?page=admin-product-delete" method="post" onsubmit="return confirm('Пометить товар как удалённый?');">
+                    <form action="/admin-product-delete" method="post" onsubmit="return confirm('Пометить товар как удалённый?');">
                         <input type="hidden" name="product_id" value="<?php echo (int) $product['id']; ?>">
                         <button type="submit" class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-rose-100 bg-rose-50 text-rose-700 transition hover:-translate-y-0.5 hover:border-rose-200 disabled:cursor-not-allowed disabled:opacity-60" aria-label="Удалить товар" <?php echo $isDeleted ? 'disabled' : ''; ?>>
                             <span class="material-symbols-rounded text-base">delete</span>
