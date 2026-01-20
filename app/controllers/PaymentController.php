@@ -10,7 +10,13 @@ class PaymentController extends Controller
 
     public function success(): void
     {
-        $this->renderStatusPage('success');
+        $orderId = $this->resolveOrderId();
+        if ($orderId > 0) {
+            $orderModel = new Order();
+            $orderModel->markPaidById($orderId);
+        }
+
+        $this->renderStatusPage('success', $orderId);
     }
 
     public function fail(): void
@@ -18,9 +24,9 @@ class PaymentController extends Controller
         $this->renderStatusPage('fail');
     }
 
-    private function renderStatusPage(string $statusKey): void
+    private function renderStatusPage(string $statusKey, ?int $orderId = null): void
     {
-        $orderId = $this->resolveOrderId();
+        $orderId = $orderId ?? $this->resolveOrderId();
         $orderNumber = $orderId > 0 ? '№' . str_pad((string) $orderId, 4, '0', STR_PAD_LEFT) : null;
 
         $statuses = [

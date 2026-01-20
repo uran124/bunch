@@ -137,6 +137,33 @@ class Order extends Model
         return true;
     }
 
+    public function markPaidById(int $orderId): bool
+    {
+        $stmt = $this->db->prepare(
+            'UPDATE orders SET status = :status, updated_at = NOW() WHERE id = :id AND status = :current_status'
+        );
+
+        $stmt->execute([
+            'id' => $orderId,
+            'status' => 'confirmed',
+            'current_status' => 'new',
+        ]);
+
+        if ($stmt->rowCount() <= 0) {
+            return false;
+        }
+
+        $order = $this->findById($orderId);
+        $userId = $order['user_id'] ?? null;
+        if ($userId) {
+            $this->notifyUserOrderStatus($orderId, (int) $userId, 'confirmed');
+        }
+
+        $this->notifyAdminOrderPaid($orderId);
+
+        return true;
+    }
+
     public function countCompletedOrdersForUser(int $userId): int
     {
         $stmt = $this->db->prepare(
