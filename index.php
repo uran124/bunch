@@ -169,6 +169,7 @@ $router->post('payment-result', [PaymentController::class, 'result']);
 $router->get('payment-success', [PaymentController::class, 'success']);
 $router->get('payment-fail', [PaymentController::class, 'fail']);
 $router->get('account', [AccountController::class, 'index']);
+$router->get('account-notifications', [AccountController::class, 'notifications']);
 $router->get('account-calendar', [AccountController::class, 'calendar']);
 $router->get('login', [AuthController::class, 'login']);
 $router->get('logout', [AuthController::class, 'logout']);
@@ -254,6 +255,8 @@ $router->post('order-edit', [OrdersController::class, 'update']);
 $router->post('order-payment', [OrdersController::class, 'pay']);
 $router->post('account-notifications', [AccountController::class, 'updateNotifications']);
 $router->post('account-pin', [AccountController::class, 'updatePin']);
+$router->get('support-messages', [SupportController::class, 'listMessages']);
+$router->post('support-message', [SupportController::class, 'sendMessage']);
 
 $publicPages = [
     'home',
