@@ -2011,6 +2011,9 @@ class AdminController extends Controller
         ];
 
         $orderModel->updateAdminOrder($orderId, $payload);
+        if ($order['status'] !== $payload['status']) {
+            $orderModel->notifyUserOrderStatus($orderId, (int) $order['user_id'], $payload['status']);
+        }
 
         $returnUrl = trim($_POST['return_url'] ?? '');
         $defaultQuery = ['id' => $orderId, 'result' => 'updated'];
