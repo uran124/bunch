@@ -111,6 +111,10 @@ $router->get('orders', [OrdersController::class, 'index']);
 $router->get('orders-history', [OrdersController::class, 'history']);
 $router->get('order-edit', [OrdersController::class, 'edit']);
 $router->get('order-payment', [OrdersController::class, 'payment']);
+$router->get('payment-result', [PaymentController::class, 'result']);
+$router->post('payment-result', [PaymentController::class, 'result']);
+$router->get('payment-success', [PaymentController::class, 'success']);
+$router->get('payment-fail', [PaymentController::class, 'fail']);
 $router->get('account', [AccountController::class, 'index']);
 $router->get('account-calendar', [AccountController::class, 'calendar']);
 $router->get('login', [AuthController::class, 'login']);
@@ -212,6 +216,9 @@ $publicPages = [
     'delivery',
     'discount',
     'static',
+    'payment-result',
+    'payment-success',
+    'payment-fail',
     'api-dadata-clean-address',
     'cart-add',
     'cart-update',
