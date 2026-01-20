@@ -71,7 +71,7 @@ class OrdersController extends Controller
 
         if (!$userId || $orderId <= 0) {
             Session::set('auth_notice', 'Заказ не найден.');
-            header('Location: /?page=orders');
+            header('Location: /orders');
             exit;
         }
 
@@ -79,13 +79,13 @@ class OrdersController extends Controller
 
         if (!$order) {
             Session::set('auth_notice', 'Заказ не найден.');
-            header('Location: /?page=orders');
+            header('Location: /orders');
             exit;
         }
 
         if ($order['status'] !== 'new') {
             Session::set('auth_notice', 'Изменение доступно только для новых заказов.');
-            header('Location: /?page=orders');
+            header('Location: /orders');
             exit;
         }
 
@@ -109,7 +109,7 @@ class OrdersController extends Controller
 
         if (!$userId || $orderId <= 0) {
             Session::set('auth_notice', 'Не удалось обновить заказ.');
-            header('Location: /?page=orders');
+            header('Location: /orders');
             exit;
         }
 
@@ -117,12 +117,12 @@ class OrdersController extends Controller
 
         if (!$updated) {
             Session::set('auth_notice', 'Изменение доступно только для новых заказов.');
-            header('Location: /?page=orders');
+            header('Location: /orders');
             exit;
         }
 
         Session::set('auth_notice', 'Заказ обновлён. Можно переходить к оплате.');
-        header('Location: /?page=orders');
+        header('Location: /orders');
         exit;
     }
 
@@ -133,7 +133,7 @@ class OrdersController extends Controller
 
         if (!$userId || $orderId <= 0) {
             Session::set('auth_notice', 'Заказ не найден.');
-            header('Location: /?page=orders');
+            header('Location: /orders');
             exit;
         }
 
@@ -141,13 +141,13 @@ class OrdersController extends Controller
 
         if (!$order) {
             Session::set('auth_notice', 'Заказ не найден.');
-            header('Location: /?page=orders');
+            header('Location: /orders');
             exit;
         }
 
         if ($order['status'] !== 'new') {
             Session::set('auth_notice', 'Этот заказ уже оплачен или в работе.');
-            header('Location: /?page=orders');
+            header('Location: /orders');
             exit;
         }
 
@@ -174,7 +174,7 @@ class OrdersController extends Controller
             'order' => $order,
             'gateway' => [
                 'name' => $gatewayLabel,
-                'link' => '/?page=admin-services-payment',
+                'link' => '/admin-services-payment',
             ],
         ]);
     }
@@ -186,7 +186,7 @@ class OrdersController extends Controller
 
         if (!$userId || $orderId <= 0) {
             Session::set('auth_notice', 'Не удалось начать оплату.');
-            header('Location: /?page=orders');
+            header('Location: /orders');
             exit;
         }
 
@@ -194,12 +194,12 @@ class OrdersController extends Controller
 
         if (!$paid) {
             Session::set('auth_notice', 'Оплата доступна только для новых заказов.');
-            header('Location: /?page=orders');
+            header('Location: /orders');
             exit;
         }
 
         Session::set('auth_notice', 'Оплата прошла успешно. Заказ передан в работу.');
-        header('Location: /?page=orders');
+        header('Location: /orders');
         exit;
     }
 
@@ -226,8 +226,8 @@ class OrdersController extends Controller
             'deliveryType' => $this->mapDeliveryType($order['delivery_type'] ?? 'pickup'),
             'scheduled' => implode(' · ', $scheduledParts),
             'address' => $order['address'] ?? null,
-            'editLink' => '/?page=order-edit&id=' . (int) $order['id'],
-            'paymentLink' => '/?page=order-payment&id=' . (int) $order['id'],
+            'editLink' => '/order-edit?id=' . (int) $order['id'],
+            'paymentLink' => '/order-payment?id=' . (int) $order['id'],
             'canEdit' => $order['status'] === 'new',
             'canPay' => $order['status'] === 'new',
             'item' => $firstItem ? [

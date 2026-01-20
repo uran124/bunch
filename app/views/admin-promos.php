@@ -14,23 +14,23 @@
             <p class="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">Каталог · Акции</p>
         </div>
         <div class="flex flex-wrap items-center gap-3">
-            <a href="/?page=admin-auction-create" class="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-rose-200 transition hover:-translate-y-0.5">
+            <a href="/admin-auction-create" class="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-rose-200 transition hover:-translate-y-0.5">
                 <span class="material-symbols-rounded text-base">add_circle</span>
                 Лот аукциона
             </a>
-            <a href="/?page=admin-promo-item-create" class="inline-flex items-center gap-2 rounded-xl bg-amber-500 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-amber-200 transition hover:-translate-y-0.5">
+            <a href="/admin-promo-item-create" class="inline-flex items-center gap-2 rounded-xl bg-amber-500 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-amber-200 transition hover:-translate-y-0.5">
                 <span class="material-symbols-rounded text-base">hourglass_top</span>
                 Лимитированный товар
             </a>
-            <a href="/?page=admin-lottery-create" class="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-violet-200 transition hover:-translate-y-0.5">
+            <a href="/admin-lottery-create" class="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-violet-200 transition hover:-translate-y-0.5">
                 <span class="material-symbols-rounded text-base">celebration</span>
                 Товар для розыгрыша
             </a>
-            <a href="/?page=admin-products" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+            <a href="/admin-products" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
                 <span class="material-symbols-rounded text-base">shopping_bag</span>
                 Товары
             </a>
-            <a href="/?page=admin" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+            <a href="/admin" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
                 <span class="material-symbols-rounded text-base">arrow_back</span>
                 В панель
             </a>
@@ -78,7 +78,7 @@
                 <article class="grid grid-cols-[80px_1.4fr_1fr_1fr_1fr] items-center gap-4 border-b border-slate-100 px-5 py-4 last:border-b-0">
                     <div class="text-sm font-semibold text-slate-900">#<?php echo (int) $item['id']; ?></div>
                     <div class="space-y-1">
-                        <a class="text-base font-semibold text-slate-900 transition hover:text-amber-600" href="/?page=admin-promo-item-edit&id=<?php echo (int) $item['id']; ?>">
+                        <a class="text-base font-semibold text-slate-900 transition hover:text-amber-600" href="/admin-promo-item-edit?id=<?php echo (int) $item['id']; ?>">
                             <?php echo htmlspecialchars($item['title'], ENT_QUOTES, 'UTF-8'); ?>
                         </a>
                         <div class="text-sm text-slate-500"><?php echo htmlspecialchars($item['label'] ?? 'Разовая акция', ENT_QUOTES, 'UTF-8'); ?></div>
@@ -114,7 +114,7 @@
                 <article class="grid grid-cols-[80px_1.4fr_1fr_1fr_1fr] items-center gap-4 border-b border-slate-100 px-5 py-4 last:border-b-0">
                     <div class="text-sm font-semibold text-slate-900">#<?php echo (int) $lottery['id']; ?></div>
                     <div class="space-y-1">
-                        <a class="text-base font-semibold text-slate-900 transition hover:text-violet-600" href="/?page=admin-lottery-edit&id=<?php echo (int) $lottery['id']; ?>">
+                        <a class="text-base font-semibold text-slate-900 transition hover:text-violet-600" href="/admin-lottery-edit?id=<?php echo (int) $lottery['id']; ?>">
                             <?php echo htmlspecialchars($lottery['title'], ENT_QUOTES, 'UTF-8'); ?>
                         </a>
                         <div class="text-sm text-slate-500"><?php echo htmlspecialchars($lottery['status'], ENT_QUOTES, 'UTF-8'); ?></div>
@@ -152,7 +152,7 @@
                 <article class="grid grid-cols-[70px_1.4fr_1fr_1fr_1fr_1fr] items-center gap-4 border-b border-slate-100 px-5 py-4 last:border-b-0">
                     <div class="text-sm font-semibold text-slate-900">#<?php echo (int) $auction['id']; ?></div>
                     <div class="space-y-1">
-                        <a class="text-base font-semibold text-slate-900 transition hover:text-rose-600" href="/?page=admin-auction-edit&id=<?php echo (int) $auction['id']; ?>">
+                        <a class="text-base font-semibold text-slate-900 transition hover:text-rose-600" href="/admin-auction-edit?id=<?php echo (int) $auction['id']; ?>">
                             <?php echo htmlspecialchars($auction['title'], ENT_QUOTES, 'UTF-8'); ?>
                         </a>
                         <div class="text-sm text-slate-500">Блиц: <?php echo !empty($auction['blitz_price']) ? number_format((int) floor((float) $auction['blitz_price']), 0, '.', ' ') . ' ₽' : '—'; ?></div>
@@ -196,7 +196,7 @@
                 <article class="grid grid-cols-[70px_1.4fr_1fr_1fr_1fr_1fr] items-center gap-4 border-b border-slate-100 px-5 py-4 last:border-b-0">
                     <div class="text-sm font-semibold text-slate-900">#<?php echo (int) $auction['id']; ?></div>
                     <div class="space-y-1">
-                        <a class="text-base font-semibold text-slate-900 transition hover:text-rose-600" href="/?page=admin-auction-view&id=<?php echo (int) $auction['id']; ?>">
+                        <a class="text-base font-semibold text-slate-900 transition hover:text-rose-600" href="/admin-auction-view?id=<?php echo (int) $auction['id']; ?>">
                             <?php echo htmlspecialchars($auction['title'], ENT_QUOTES, 'UTF-8'); ?>
                         </a>
                         <div class="text-sm text-slate-500">Блиц: <?php echo !empty($auction['blitz_price']) ? number_format((int) floor((float) $auction['blitz_price']), 0, '.', ' ') . ' ₽' : '—'; ?></div>

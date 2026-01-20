@@ -682,7 +682,7 @@ SQL;
         $telegram = new Telegram($token);
         $telegram->sendMessage(
             $chatId,
-            'Вашу ставку перебили! Перейти на страницу с аукционом https://bunchflowers.ru/?page=promo'
+            'Вашу ставку перебили! Перейти на страницу с аукционом https://bunchflowers.ru/promo'
         );
     }
 

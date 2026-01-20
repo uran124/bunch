@@ -8,7 +8,7 @@
         </div>
         <?php if (!empty($cartShortcut)): ?>
             <a
-                href="/?page=cart"
+                href="/cart"
                 class="inline-flex items-center gap-1 rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700 ring-1 ring-amber-100 hover:bg-amber-100"
             >
                 <span class="material-symbols-rounded text-base">shopping_bag</span>
@@ -272,7 +272,7 @@
                             <p class="text-xs font-semibold uppercase tracking-[0.06em] text-slate-500">Подписки</p>
                             <h3 class="text-lg font-semibold text-slate-900">Активных: <?php echo count($activeSubscriptions); ?></h3>
                         </div>
-                        <a href="/?page=subscription" class="inline-flex items-center gap-1 rounded-xl bg-emerald-600 px-3 py-2 text-xs font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+                        <a href="/subscription" class="inline-flex items-center gap-1 rounded-xl bg-emerald-600 px-3 py-2 text-xs font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
                             <span class="material-symbols-rounded text-base">event_repeat</span>
                             Управлять
                         </a>
@@ -436,7 +436,7 @@
                         <span class="material-symbols-rounded text-base">arrow_forward</span>
                     </a>
                     <?php if (!empty($cartShortcut)): ?>
-                        <a href="/?page=cart" class="flex items-center justify-between rounded-2xl bg-amber-50 px-3 py-2.5 text-xs font-semibold text-amber-800 ring-1 ring-amber-100 transition hover:-translate-y-0.5 hover:shadow-sm sm:px-4 sm:py-3 sm:text-sm">
+                        <a href="/cart" class="flex items-center justify-between rounded-2xl bg-amber-50 px-3 py-2.5 text-xs font-semibold text-amber-800 ring-1 ring-amber-100 transition hover:-translate-y-0.5 hover:shadow-sm sm:px-4 sm:py-3 sm:text-sm">
                             <span class="inline-flex items-center gap-2">
                                 <span class="material-symbols-rounded text-base">shopping_cart</span>
                                 В корзине: <?php echo htmlspecialchars($cartShortcut['title'], ENT_QUOTES, 'UTF-8'); ?><?php echo $cartShortcut['count'] > 1 ? ' +' . ((int) $cartShortcut['count'] - 1) . ' товар' : ''; ?>
@@ -519,7 +519,7 @@
                                 <span class="material-symbols-rounded text-base">lock_reset</span>
                                 Сменить PIN
                             </button>
-                            <a class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-rose-200 hover:text-rose-700 sm:px-4 sm:text-sm" href="/?page=logout">
+                            <a class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-rose-200 hover:text-rose-700 sm:px-4 sm:text-sm" href="/logout">
                                 <span class="material-symbols-rounded text-base">logout</span>
                                 Выйти
                             </a>

@@ -20,7 +20,7 @@
         </div>
         <div class="flex flex-wrap items-center gap-3">
             <a
-                href="/?page=admin"
+                href="/admin"
                 class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
             >
                 <span class="material-symbols-rounded text-base">arrow_back</span>

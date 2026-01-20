@@ -10,7 +10,7 @@
             <p class="max-w-3xl text-base text-slate-500">Редактируйте меню, лендинги и ярлыки в приложении. Кликайте на блоки, чтобы поменять заголовки, ссылки и статусы.</p>
         </div>
         <div class="flex flex-wrap items-center gap-3">
-            <a href="/?page=admin" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+            <a href="/admin" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
                 <span class="material-symbols-rounded text-base">arrow_back</span>
                 В панель
             </a>

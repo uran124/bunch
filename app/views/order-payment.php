@@ -11,7 +11,7 @@
             <p class="text-sm text-slate-500">Оплата проходит через активный шлюз <?php echo htmlspecialchars($gateway['name'], ENT_QUOTES, 'UTF-8'); ?>.</p>
         </div>
         <a
-            href="/?page=orders"
+            href="/orders"
             class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
         >
             <span class="material-symbols-rounded text-base">arrow_back</span>
@@ -49,7 +49,7 @@
                 </div>
             </div>
 
-            <form method="post" action="/?page=order-payment" class="rounded-3xl border border-emerald-200 bg-emerald-50 p-5 shadow-sm">
+            <form method="post" action="/order-payment" class="rounded-3xl border border-emerald-200 bg-emerald-50 p-5 shadow-sm">
                 <input type="hidden" name="order_id" value="<?php echo (int) $order['id']; ?>">
                 <div class="flex flex-wrap items-center justify-between gap-3">
                     <div class="space-y-1">

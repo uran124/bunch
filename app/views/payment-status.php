@@ -59,7 +59,7 @@ $style = $styles[$statusKey] ?? $styles['result'];
 
         <?php if ($orderId > 0 && Auth::check()): ?>
             <a
-                href="<?php echo htmlspecialchars('/?page=order-payment&id=' . $orderId, ENT_QUOTES, 'UTF-8'); ?>"
+                href="<?php echo htmlspecialchars('/order-payment?id=' . $orderId, ENT_QUOTES, 'UTF-8'); ?>"
                 class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
             >
                 <span class="material-symbols-rounded text-base">payments</span>

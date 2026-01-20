@@ -28,7 +28,7 @@ class AccountController extends Controller
         $userRow = $userId ? $this->userModel->findById($userId) : null;
 
         if (!$userRow) {
-            header('Location: /?page=login');
+            header('Location: /login');
             exit;
         }
 
@@ -105,7 +105,7 @@ class AccountController extends Controller
 
         $cart = new Cart();
         $cartShortcut = $this->buildCartShortcut($cart->getItems());
-        $ordersLink = '/?page=orders';
+        $ordersLink = '/orders';
 
         $deliveryZones = $deliveryZoneModel->getZones(true, true);
         $deliveryPricingVersion = $deliveryZoneModel->getPricingVersion();
@@ -172,7 +172,7 @@ class AccountController extends Controller
         $userRow = $userId ? $this->userModel->findById($userId) : null;
 
         if (!$userRow) {
-            header('Location: /?page=login');
+            header('Location: /login');
             exit;
         }
 
@@ -458,7 +458,7 @@ class AccountController extends Controller
                 'default' => true,
                 'channel' => 'push',
                 'sort_order' => 50,
-                'link' => '/?page=account-calendar',
+                'link' => '/account-calendar',
             ],
             [
                 'code' => 'holiday_preorders',

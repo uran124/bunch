@@ -15,7 +15,7 @@
         </div>
         <div class="flex flex-wrap items-center gap-3">
             <a
-                href="/?page=admin"
+                href="/admin"
                 class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
             >
                 <span class="material-symbols-rounded text-base">arrow_back</span>
@@ -113,7 +113,7 @@
                 </div>
 
                 <div class="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
-                    <form class="space-y-3 rounded-xl border border-slate-100 bg-slate-50 p-4" method="post" action="/?page=admin-services-payment">
+                    <form class="space-y-3 rounded-xl border border-slate-100 bg-slate-50 p-4" method="post" action="/admin-services-payment">
                         <input type="hidden" name="gateway" value="robokassa">
                         <div class="flex items-center justify-between gap-3">
                             <div>

@@ -36,7 +36,7 @@
         <?php endif; ?>
 
         <?php if (($stage ?? 'code') === 'code'): ?>
-            <form method="POST" action="/?page=recover" class="grid gap-5">
+            <form method="POST" action="/recover" class="grid gap-5">
                 <input type="hidden" name="step" value="request_code">
                 <div class="flex justify-center">
                     <div class="w-full max-w-xs">
@@ -75,7 +75,7 @@
                 </div>
             </form>
 
-            <form id="code-form" method="POST" action="/?page=recover" class="grid gap-5">
+            <form id="code-form" method="POST" action="/recover" class="grid gap-5">
                 <input type="hidden" name="step" value="verify_code">
                 <div class="flex justify-center">
                     <input
@@ -95,18 +95,18 @@
 
             <div class="flex justify-center">
                 <div class="grid grid-cols-2 gap-2.5 w-full max-w-xs">
-                    <a href="/?page=login" class="inline-flex items-center justify-center gap-1.5 rounded-xl border border-rose-200 bg-white/90 backdrop-blur-sm px-3 py-2.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-50 hover:border-rose-300">
+                    <a href="/login" class="inline-flex items-center justify-center gap-1.5 rounded-xl border border-rose-200 bg-white/90 backdrop-blur-sm px-3 py-2.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-50 hover:border-rose-300">
                         <span class="material-symbols-rounded text-sm">login</span>
                         Вход
                     </a>
-                    <a href="/?page=register" class="inline-flex items-center justify-center gap-1.5 rounded-xl border border-rose-200 bg-white/90 backdrop-blur-sm px-3 py-2.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-50 hover:border-rose-300">
+                    <a href="/register" class="inline-flex items-center justify-center gap-1.5 rounded-xl border border-rose-200 bg-white/90 backdrop-blur-sm px-3 py-2.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-50 hover:border-rose-300">
                         <span class="material-symbols-rounded text-sm">how_to_reg</span>
                         Регистрация
                     </a>
                 </div>
             </div>
         <?php else: ?>
-            <form method="POST" action="/?page=recover" class="grid gap-5">
+            <form method="POST" action="/recover" class="grid gap-5">
                 <input type="hidden" name="step" value="update_pin">
                 <div class="flex flex-col items-center gap-2">
                     <label class="text-xs font-medium text-slate-700">Новый PIN</label>
@@ -148,11 +148,11 @@
 
             <div class="flex justify-center">
                 <div class="grid grid-cols-2 gap-2.5 w-full max-w-xs">
-                    <a href="/?page=login" class="inline-flex items-center justify-center gap-1.5 rounded-xl border border-rose-200 bg-white/90 backdrop-blur-sm px-3 py-2.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-50 hover:border-rose-300">
+                    <a href="/login" class="inline-flex items-center justify-center gap-1.5 rounded-xl border border-rose-200 bg-white/90 backdrop-blur-sm px-3 py-2.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-50 hover:border-rose-300">
                         <span class="material-symbols-rounded text-sm">login</span>
                         Вход
                     </a>
-                    <a href="/?page=register" class="inline-flex items-center justify-center gap-1.5 rounded-xl border border-rose-200 bg-white/90 backdrop-blur-sm px-3 py-2.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-50 hover:border-rose-300">
+                    <a href="/register" class="inline-flex items-center justify-center gap-1.5 rounded-xl border border-rose-200 bg-white/90 backdrop-blur-sm px-3 py-2.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-50 hover:border-rose-300">
                         <span class="material-symbols-rounded text-sm">how_to_reg</span>
                         Регистрация
                     </a>

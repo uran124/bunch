@@ -14,14 +14,14 @@
         </div>
         <div class="flex flex-wrap items-center gap-3">
             <a
-                href="/?page=admin-group-create"
+                href="/admin-group-create"
                 class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
             >
                 <span class="material-symbols-rounded text-base">group_add</span>
                 Группы
             </a>
             <a
-                href="/?page=admin-users"
+                href="/admin-users"
                 class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
             >
                 <span class="material-symbols-rounded text-base">arrow_back</span>
@@ -37,7 +37,7 @@
     <?php endif; ?>
 
     <div class="grid gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-rose-50/60 ring-1 ring-transparent">
-        <form method="post" action="/?page=admin-broadcast" class="grid gap-3 lg:grid-cols-[1fr_1fr]">
+        <form method="post" action="/admin-broadcast" class="grid gap-3 lg:grid-cols-[1fr_1fr]">
             <div class="space-y-3">
                 <label class="flex flex-col gap-2">
                     <span class="text-sm font-semibold text-slate-700">Сообщение</span>
@@ -157,7 +157,7 @@
                 <div class="flex items-center gap-2">
                     <?php for ($page = 1; $page <= $totalPages; $page++): ?>
                         <a
-                            href="/?page=admin-broadcast&p=<?php echo $page; ?>"
+                            href="/admin-broadcast?p=<?php echo $page; ?>"
                             class="inline-flex h-9 w-9 items-center justify-center rounded-lg border <?php echo $page === $currentPage ? 'border-rose-300 bg-rose-50 text-rose-700' : 'border-slate-200 bg-white text-slate-700'; ?> text-sm font-semibold shadow-sm"
                         >
                             <?php echo $page; ?>

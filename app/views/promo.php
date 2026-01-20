@@ -310,10 +310,10 @@ foreach ($lotteries as $lottery) {
             <p class="text-sm text-slate-600">Для участия в акциях нужна авторизация.</p>
         </div>
         <div class="mt-4 flex items-center justify-end gap-2">
-            <a href="/?page=login" class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-rose-200 hover:text-rose-700">
+            <a href="/login" class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-rose-200 hover:text-rose-700">
                 Вход
             </a>
-            <a href="/?page=register" class="inline-flex items-center justify-center rounded-xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white shadow-md shadow-rose-200 transition hover:-translate-y-0.5 hover:bg-rose-700">
+            <a href="/register" class="inline-flex items-center justify-center rounded-xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white shadow-md shadow-rose-200 transition hover:-translate-y-0.5 hover:bg-rose-700">
                 Регистрация
             </a>
         </div>

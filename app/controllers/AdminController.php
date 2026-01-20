@@ -28,12 +28,12 @@ class AdminController extends Controller
                     [
                         'label' => 'Пользователи',
                         'description' => 'Профили клиентов и статусы доступа',
-                        'href' => '/?page=admin-users',
+                        'href' => '/admin-users',
                     ],
                     [
                         'label' => 'Рассылки',
                         'description' => 'E-mail, push и SMS кампании через телеграм-бота',
-                        'href' => '/?page=admin-broadcast',
+                        'href' => '/admin-broadcast',
                     ],
                 ],
             ],
@@ -43,22 +43,22 @@ class AdminController extends Controller
                     [
                         'label' => 'Товары',
                         'description' => 'Карточки товаров из поставок: характеристики, атрибуты, фото и цены',
-                        'href' => '/?page=admin-products',
+                        'href' => '/admin-products',
                     ],
                     [
                         'label' => 'Акции',
                         'description' => 'Спецпредложения и акционные товары без привязки к поставкам',
-                        'href' => '/?page=admin-promos',
+                        'href' => '/admin-promos',
                     ],
                     [
                         'label' => 'Атрибуты',
                         'description' => 'Высота стебля, виды оформления и другие варианты с ценой и фото',
-                        'href' => '/?page=admin-attributes',
+                        'href' => '/admin-attributes',
                     ],
                     [
                         'label' => 'Поставки',
                         'description' => 'Еженедельные поставки: сорт, страна, пачки, даты и бронирование под мелкий опт',
-                        'href' => '/?page=admin-supplies',
+                        'href' => '/admin-supplies',
                     ],
                 ],
             ],
@@ -68,18 +68,18 @@ class AdminController extends Controller
                     [
                         'label' => 'Товары',
                         'description' => 'Разовые покупки и статусы',
-                        'href' => '/?page=admin-orders-one-time',
+                        'href' => '/admin-orders-one-time',
                     ],
                     [
                         'label' => 'Подписки',
                         'description' => 'Регулярные доставки, паузы и скидки по периодичности',
                         'cta' => 'Настройка подписок',
-                        'href' => '/?page=admin-orders-subscriptions',
+                        'href' => '/admin-orders-subscriptions',
                     ],
                     [
                         'label' => 'Мелкий опт',
                         'description' => 'Групповые заказы и лимиты',
-                        'href' => '/?page=admin-orders-wholesale',
+                        'href' => '/admin-orders-wholesale',
                     ],
                 ],
             ],
@@ -90,7 +90,7 @@ class AdminController extends Controller
                         'label' => 'Онлайн оплата',
                         'description' => 'Платёжные шлюзы и возвраты',
                         'cta' => 'Настроить',
-                        'href' => '/?page=admin-services-payment',
+                        'href' => '/admin-services-payment',
                     ],
                     ['label' => 'Веб-аналитика яндекс метрика', 'description' => 'События, цели и конверсии'],
                     ['label' => 'Подключение к ЦРМ', 'description' => 'Синхронизация контактов и сделок'],
@@ -98,13 +98,13 @@ class AdminController extends Controller
                         'label' => 'DaData + зоны доставки',
                         'description' => 'Подсказки адресов, геокодинг и расчёт через turf.js',
                         'cta' => 'Настроить',
-                        'href' => '/?page=admin-services-delivery',
+                        'href' => '/admin-services-delivery',
                     ],
                     [
                         'label' => 'Телеграм бот',
                         'description' => 'Токен, username и секрет для вебхука',
                         'cta' => 'Настроить',
-                        'href' => '/?page=admin-services-telegram',
+                        'href' => '/admin-services-telegram',
                     ],
                 ],
             ],
@@ -114,17 +114,17 @@ class AdminController extends Controller
                     [
                         'label' => 'Статичный контент',
                         'description' => 'Блоки страниц и SEO-тексты',
-                        'href' => '/?page=admin-content-static',
+                        'href' => '/admin-content-static',
                     ],
                     [
                         'label' => 'Товары',
                         'description' => 'Фото, описания и атрибуты',
-                        'href' => '/?page=admin-content-products',
+                        'href' => '/admin-content-products',
                     ],
                     [
                         'label' => 'Разделы сайта',
                         'description' => 'Навигация и лендинги',
-                        'href' => '/?page=admin-content-sections',
+                        'href' => '/admin-content-sections',
                     ],
                 ],
             ],
@@ -411,7 +411,7 @@ class AdminController extends Controller
         $roleOptions = ['admin', 'manager', 'florist', 'courier', 'customer', 'wholesale'];
 
         if ($userId <= 0 || !in_array($role, $roleOptions, true)) {
-            header('Location: /?page=admin-user&id=' . $userId . '&message=role-error');
+            header('Location: /admin-user?id=' . $userId . '&message=role-error');
             return;
         }
 
@@ -426,7 +426,7 @@ class AdminController extends Controller
 
         $userModel->setRole($userId, $role);
 
-        header('Location: /?page=admin-user&id=' . $userId . '&message=role-updated');
+        header('Location: /admin-user?id=' . $userId . '&message=role-updated');
     }
 
     public function groupCreate(): void
@@ -475,7 +475,7 @@ class AdminController extends Controller
             $existing = $groupModel->find($groupId);
 
             if (!$existing || $existing['is_system']) {
-                header('Location: /?page=admin-group-create&message=not-found');
+                header('Location: /admin-group-create?message=not-found');
                 return;
             }
 
@@ -494,7 +494,7 @@ class AdminController extends Controller
             $targetId = $newGroupId;
         }
 
-        header('Location: /?page=admin-group-create&group=' . $targetId . '&message=saved');
+        header('Location: /admin-group-create?group=' . $targetId . '&message=saved');
     }
 
     public function broadcasts(): void
@@ -551,7 +551,7 @@ class AdminController extends Controller
         }
 
         if ($body === '') {
-            header('Location: /?page=admin-broadcast&message=body-required');
+            header('Location: /admin-broadcast?message=body-required');
             return;
         }
 
@@ -563,7 +563,7 @@ class AdminController extends Controller
             $broadcastModel->sendNow($messageId, $body, $groupIds);
         }
 
-        header('Location: /?page=admin-broadcast&message=created');
+        header('Location: /admin-broadcast?message=created');
     }
 
     public function catalogProducts(): void
@@ -692,7 +692,7 @@ class AdminController extends Controller
         $supply = $supplyModel->findById($supplyId);
 
         if (!$supply || $price <= 0) {
-            $redirect = '/?page=admin-product-form&status=error';
+            $redirect = '/admin-product-form?status=error';
             if ($productId > 0) {
                 $redirect .= '&edit_id=' . $productId;
             } elseif ($supplyId > 0) {
@@ -752,7 +752,7 @@ class AdminController extends Controller
         $productModel->setAttributes($productId, $attributeIds);
         $this->syncSupplyCardStatus($supplyId, $productType, $active);
 
-        header('Location: /?page=admin-product-form&status=saved&edit_id=' . $productId);
+        header('Location: /admin-product-form?status=saved&edit_id=' . $productId);
     }
 
     public function deleteProduct(): void
@@ -760,24 +760,24 @@ class AdminController extends Controller
         $productId = (int) ($_POST['product_id'] ?? 0);
 
         if ($productId <= 0) {
-            header('Location: /?page=admin-products&status=error');
+            header('Location: /admin-products?status=error');
             return;
         }
 
         $productModel = new Product();
         if ($productModel->hasBlockingRelations($productId)) {
-            header('Location: /?page=admin-products&status=delete-blocked&product_id=' . $productId);
+            header('Location: /admin-products?status=delete-blocked&product_id=' . $productId);
             return;
         }
 
         try {
             $productModel->markDeleted($productId);
         } catch (\PDOException $exception) {
-            header('Location: /?page=admin-products&status=delete-blocked&product_id=' . $productId);
+            header('Location: /admin-products?status=delete-blocked&product_id=' . $productId);
             return;
         }
 
-        header('Location: /?page=admin-products&status=deleted');
+        header('Location: /admin-products?status=deleted');
     }
 
     public function toggleProductActive(): void
@@ -785,7 +785,7 @@ class AdminController extends Controller
         $productId = (int) ($_POST['product_id'] ?? 0);
 
         if ($productId <= 0) {
-            header('Location: /?page=admin-products&status=error');
+            header('Location: /admin-products?status=error');
             return;
         }
 
@@ -798,7 +798,7 @@ class AdminController extends Controller
             $this->syncSupplyCardStatus((int) $product['supply_id'], $product['product_type'] ?? 'regular', $active);
         }
 
-        header('Location: /?page=admin-products');
+        header('Location: /admin-products');
     }
 
     public function catalogPromos(): void
@@ -887,14 +887,14 @@ class AdminController extends Controller
     {
         $promoId = (int) ($_GET['id'] ?? 0);
         if ($promoId <= 0) {
-            header('Location: /?page=admin-promos&status=error');
+            header('Location: /admin-promos?status=error');
             return;
         }
 
         $promoItemModel = new PromoItem();
         $promoItem = $promoItemModel->getById($promoId);
         if (!$promoItem) {
-            header('Location: /?page=admin-promos&status=error');
+            header('Location: /admin-promos?status=error');
             return;
         }
 
@@ -942,14 +942,14 @@ class AdminController extends Controller
     {
         $lotteryId = (int) ($_GET['id'] ?? 0);
         if ($lotteryId <= 0) {
-            header('Location: /?page=admin-promos&status=error');
+            header('Location: /admin-promos?status=error');
             return;
         }
 
         $lotteryModel = new Lottery();
         $lottery = $lotteryModel->getById($lotteryId);
         if (!$lottery) {
-            header('Location: /?page=admin-promos&status=error');
+            header('Location: /admin-promos?status=error');
             return;
         }
 
@@ -981,7 +981,7 @@ class AdminController extends Controller
     {
         $lotId = (int) ($_GET['id'] ?? 0);
         if ($lotId <= 0) {
-            header('Location: /?page=admin-promos&status=error');
+            header('Location: /admin-promos?status=error');
             return;
         }
 
@@ -989,7 +989,7 @@ class AdminController extends Controller
         $lot = $auctionModel->getAdminLotDetails($lotId);
 
         if (!$lot) {
-            header('Location: /?page=admin-promos&status=error');
+            header('Location: /admin-promos?status=error');
             return;
         }
 
@@ -1012,7 +1012,7 @@ class AdminController extends Controller
     {
         $lotId = (int) ($_GET['id'] ?? 0);
         if ($lotId <= 0) {
-            header('Location: /?page=admin-promos&status=error');
+            header('Location: /admin-promos?status=error');
             return;
         }
 
@@ -1020,7 +1020,7 @@ class AdminController extends Controller
         $lot = $auctionModel->getAdminLotDetails($lotId);
 
         if (!$lot) {
-            header('Location: /?page=admin-promos&status=error');
+            header('Location: /admin-promos?status=error');
             return;
         }
 
@@ -1053,7 +1053,7 @@ class AdminController extends Controller
         $photo = trim($_POST['photo_url'] ?? '');
 
         if ($title === '' || $ticketsTotal <= 0) {
-            header('Location: /?page=admin-promos&status=error');
+            header('Location: /admin-promos?status=error');
             return;
         }
 
@@ -1071,11 +1071,11 @@ class AdminController extends Controller
             ]);
         } catch (Throwable $e) {
             $this->logAdminError('Admin promos save lottery error', $e);
-            header('Location: /?page=admin-promos&status=error');
+            header('Location: /admin-promos?status=error');
             return;
         }
 
-        header('Location: /?page=admin-promos&status=saved');
+        header('Location: /admin-promos?status=saved');
     }
 
     public function updateLottery(): void
@@ -1090,7 +1090,7 @@ class AdminController extends Controller
         $photo = trim($_POST['photo_url'] ?? '');
 
         if ($lotteryId <= 0 || $title === '' || $ticketsTotal <= 0) {
-            header('Location: /?page=admin-promos&status=error');
+            header('Location: /admin-promos?status=error');
             return;
         }
 
@@ -1108,11 +1108,11 @@ class AdminController extends Controller
             ]);
         } catch (Throwable $e) {
             $this->logAdminError('Admin promos update lottery error', $e);
-            header('Location: /?page=admin-promos&status=error');
+            header('Location: /admin-promos?status=error');
             return;
         }
 
-        header('Location: /?page=admin-lottery-edit&id=' . $lotteryId . '&status=saved');
+        header('Location: /admin-lottery-edit?id=' . $lotteryId . '&status=saved');
     }
 
     public function saveAuctionLot(): void
@@ -1129,7 +1129,7 @@ class AdminController extends Controller
         $status = $_POST['status'] ?? 'draft';
 
         if ($title === '' || $bidStep <= 0 || $startPrice <= 0) {
-            header('Location: /?page=admin-promos&status=error');
+            header('Location: /admin-promos?status=error');
             return;
         }
 
@@ -1150,11 +1150,11 @@ class AdminController extends Controller
             ]);
         } catch (Throwable $e) {
             $this->logAdminError('Admin promos save auction error', $e);
-            header('Location: /?page=admin-promos&status=error');
+            header('Location: /admin-promos?status=error');
             return;
         }
 
-        header('Location: /?page=admin-promos&status=saved');
+        header('Location: /admin-promos?status=saved');
     }
 
     public function updateAuctionLot(): void
@@ -1172,14 +1172,14 @@ class AdminController extends Controller
         $status = $_POST['status'] ?? 'draft';
 
         if ($lotId <= 0 || $title === '' || $bidStep <= 0 || $startPrice <= 0) {
-            header('Location: /?page=admin-promos&status=error');
+            header('Location: /admin-promos?status=error');
             return;
         }
 
         $auctionModel = new AuctionLot();
         $existing = $auctionModel->getAdminLotDetails($lotId);
         if (!$existing) {
-            header('Location: /?page=admin-promos&status=error');
+            header('Location: /admin-promos?status=error');
             return;
         }
 
@@ -1199,11 +1199,11 @@ class AdminController extends Controller
             ]);
         } catch (Throwable $e) {
             $this->logAdminError('Admin promos update auction error', $e);
-            header('Location: /?page=admin-promos&status=error');
+            header('Location: /admin-promos?status=error');
             return;
         }
 
-        header('Location: /?page=admin-auction-edit&id=' . $lotId . '&status=saved');
+        header('Location: /admin-auction-edit?id=' . $lotId . '&status=saved');
     }
 
     public function savePromoItem(): void
@@ -1219,7 +1219,7 @@ class AdminController extends Controller
         $isActive = isset($_POST['is_active']) ? 1 : 0;
 
         if ($title === '' || $price <= 0 || $basePrice <= 0) {
-            header('Location: /?page=admin-promos&status=error');
+            header('Location: /admin-promos?status=error');
             return;
         }
 
@@ -1259,11 +1259,11 @@ class AdminController extends Controller
             ]);
         } catch (Throwable $e) {
             $this->logAdminError('Admin promos save promo item error', $e);
-            header('Location: /?page=admin-promos&status=error');
+            header('Location: /admin-promos?status=error');
             return;
         }
 
-        header('Location: /?page=admin-promos&status=saved');
+        header('Location: /admin-promos?status=saved');
     }
 
     public function updatePromoItem(): void
@@ -1280,7 +1280,7 @@ class AdminController extends Controller
         $isActive = isset($_POST['is_active']) ? 1 : 0;
 
         if ($promoId <= 0 || $title === '' || $price <= 0 || $basePrice <= 0) {
-            header('Location: /?page=admin-promos&status=error');
+            header('Location: /admin-promos?status=error');
             return;
         }
 
@@ -1290,7 +1290,7 @@ class AdminController extends Controller
         $productModel = new Product();
         $promoItem = $promoItemModel->getById($promoId);
         if (!$promoItem) {
-            header('Location: /?page=admin-promos&status=error');
+            header('Location: /admin-promos?status=error');
             return;
         }
 
@@ -1323,11 +1323,11 @@ class AdminController extends Controller
             ]);
         } catch (Throwable $e) {
             $this->logAdminError('Admin promos update promo item error', $e);
-            header('Location: /?page=admin-promos&status=error');
+            header('Location: /admin-promos?status=error');
             return;
         }
 
-        header('Location: /?page=admin-promo-item-edit&id=' . $promoId . '&status=saved');
+        header('Location: /admin-promo-item-edit?id=' . $promoId . '&status=saved');
     }
 
     public function savePromoCategories(): void
@@ -1344,11 +1344,11 @@ class AdminController extends Controller
             $promoCategoryModel->updateStatuses($statusMap);
         } catch (Throwable $e) {
             $this->logAdminError('Admin promos save promo categories error', $e);
-            header('Location: /?page=admin-promos&status=error');
+            header('Location: /admin-promos?status=error');
             return;
         }
 
-        header('Location: /?page=admin-promos&status=saved');
+        header('Location: /admin-promos?status=saved');
     }
 
     public function savePromoSettings(): void
@@ -1359,7 +1359,7 @@ class AdminController extends Controller
         $settings = new Setting();
         $settings->set(Setting::LOTTERY_FREE_MONTHLY_LIMIT, (string) $limit);
 
-        header('Location: /?page=admin-lottery-create&status=saved#promo-settings');
+        header('Location: /admin-lottery-create?status=saved#promo-settings');
     }
 
     public function catalogAttributes(): void
@@ -1392,7 +1392,7 @@ class AdminController extends Controller
         $isActive = isset($_POST['is_active']) ? 1 : 0;
 
         if ($name === '') {
-            header('Location: /?page=admin-attributes&status=error');
+            header('Location: /admin-attributes?status=error');
             return;
         }
 
@@ -1406,7 +1406,7 @@ class AdminController extends Controller
             'is_active' => $isActive,
         ]);
 
-        header('Location: /?page=admin-attributes&status=saved');
+        header('Location: /admin-attributes?status=saved');
     }
 
     public function deleteAttribute(): void
@@ -1414,14 +1414,14 @@ class AdminController extends Controller
         $id = (int) ($_POST['id'] ?? 0);
 
         if ($id <= 0) {
-            header('Location: /?page=admin-attributes&status=error');
+            header('Location: /admin-attributes?status=error');
             return;
         }
 
         $attributeModel = new AttributeModel();
         $attributeModel->delete($id);
 
-        header('Location: /?page=admin-attributes&status=deleted');
+        header('Location: /admin-attributes?status=deleted');
     }
 
     public function saveAttributeValue(): void
@@ -1440,7 +1440,7 @@ class AdminController extends Controller
         }
 
         if ($attributeId <= 0 || $value === '') {
-            header('Location: /?page=admin-attributes&status=error');
+            header('Location: /admin-attributes?status=error');
             return;
         }
 
@@ -1455,7 +1455,7 @@ class AdminController extends Controller
             'sort_order' => $sortOrder,
         ]);
 
-        header('Location: /?page=admin-attributes&status=saved#attribute-' . $attributeId);
+        header('Location: /admin-attributes?status=saved#attribute-' . $attributeId);
     }
 
     public function deleteAttributeValue(): void
@@ -1464,7 +1464,7 @@ class AdminController extends Controller
         $attributeId = (int) ($_POST['attribute_id'] ?? 0);
 
         if ($id <= 0) {
-            header('Location: /?page=admin-attributes&status=error');
+            header('Location: /admin-attributes?status=error');
             return;
         }
 
@@ -1472,7 +1472,7 @@ class AdminController extends Controller
         $attributeModel->deleteValue($id);
 
         $anchor = $attributeId > 0 ? '#attribute-' . $attributeId : '';
-        header('Location: /?page=admin-attributes&status=deleted' . $anchor);
+        header('Location: /admin-attributes?status=deleted' . $anchor);
     }
 
     private function handlePhotoUpload(string $fieldName, string $prefix): ?string
@@ -1543,7 +1543,7 @@ class AdminController extends Controller
         $supplyId = (int) ($_GET['id'] ?? 0);
 
         if ($supplyId <= 0) {
-            header('Location: /?page=admin-supplies&status=notfound');
+            header('Location: /admin-supplies?status=notfound');
             return;
         }
 
@@ -1551,7 +1551,7 @@ class AdminController extends Controller
         $supply = $supplyModel->findById($supplyId);
 
         if (!$supply) {
-            header('Location: /?page=admin-supplies&status=notfound');
+            header('Location: /admin-supplies?status=notfound');
             return;
         }
 
@@ -1610,7 +1610,7 @@ class AdminController extends Controller
         }
 
         if ($payload['flower_name'] === '' || $payload['variety'] === '' || !$payload['boxes_total'] || !$payload['packs_per_box'] || !$payload['stems_per_pack'] || empty($payload['first_delivery_date'])) {
-            header('Location: /?page=admin-supply-standing&status=error');
+            header('Location: /admin-supply-standing?status=error');
             return;
         }
 
@@ -1618,7 +1618,7 @@ class AdminController extends Controller
         $supplyId = $supplyModel->createStanding($payload);
         $this->createSupplyProducts($supplyId);
 
-        header('Location: /?page=admin-supplies&status=created');
+        header('Location: /admin-supplies?status=created');
     }
 
     public function createSingleSupply(): void
@@ -1657,7 +1657,7 @@ class AdminController extends Controller
         }
 
         if ($payload['flower_name'] === '' || $payload['variety'] === '' || !$payload['boxes_total'] || !$payload['packs_per_box'] || !$payload['stems_per_pack'] || empty($payload['planned_delivery_date'])) {
-            header('Location: /?page=admin-supply-single&status=error');
+            header('Location: /admin-supply-single?status=error');
             return;
         }
 
@@ -1665,7 +1665,7 @@ class AdminController extends Controller
         $supplyId = $supplyModel->createOneTime($payload);
         $this->createSupplyProducts($supplyId);
 
-        header('Location: /?page=admin-supplies&status=created');
+        header('Location: /admin-supplies?status=created');
     }
 
     public function updateSupply(): void
@@ -1676,7 +1676,7 @@ class AdminController extends Controller
         $existing = $supplyModel->findById($supplyId);
 
         if (!$existing) {
-            header('Location: /?page=admin-supplies&status=notfound');
+            header('Location: /admin-supplies?status=notfound');
             return;
         }
 
@@ -1724,7 +1724,7 @@ class AdminController extends Controller
             ]);
 
             if ($payload['flower_name'] === '' || $payload['variety'] === '' || !$payload['boxes_total'] || !$payload['packs_per_box'] || !$payload['stems_per_pack'] || empty($payload['first_delivery_date'])) {
-                header('Location: /?page=admin-supply-edit&id=' . $supplyId . '&status=error');
+                header('Location: /admin-supply-edit?id=' . $supplyId . '&status=error');
                 return;
             }
 
@@ -1739,14 +1739,14 @@ class AdminController extends Controller
             ]);
 
             if ($payload['flower_name'] === '' || $payload['variety'] === '' || !$payload['boxes_total'] || !$payload['packs_per_box'] || !$payload['stems_per_pack'] || empty($payload['planned_delivery_date'])) {
-                header('Location: /?page=admin-supply-edit&id=' . $supplyId . '&status=error');
+                header('Location: /admin-supply-edit?id=' . $supplyId . '&status=error');
                 return;
             }
 
             $supplyModel->updateOneTime($supplyId, $payload);
         }
 
-        header('Location: /?page=admin-supply-edit&id=' . $supplyId . '&status=saved');
+        header('Location: /admin-supply-edit?id=' . $supplyId . '&status=saved');
     }
 
     public function toggleSupplyCard(): void
@@ -1756,7 +1756,7 @@ class AdminController extends Controller
         $activateRaw = $_POST['activate'] ?? null;
 
         if ($supplyId <= 0 || !in_array($cardType, ['retail', 'wholesale', 'box'], true) || !in_array($activateRaw, ['0', '1'], true)) {
-            header('Location: /?page=admin-supplies&status=error');
+            header('Location: /admin-supplies?status=error');
             return;
         }
 
@@ -1766,7 +1766,7 @@ class AdminController extends Controller
         $supply = $supplyModel->findById($supplyId);
 
         if (!$supply) {
-            header('Location: /?page=admin-supplies&status=notfound');
+            header('Location: /admin-supplies?status=notfound');
             return;
         }
 
@@ -1779,7 +1779,7 @@ class AdminController extends Controller
         $this->syncSupplyProductStatus($supplyId, $cardType, $activate);
 
         $status = $activate ? 'card-activated' : 'card-deactivated';
-        header('Location: /?page=admin-supplies&status=' . $status . '#supply-' . $supplyId);
+        header('Location: /admin-supplies?status=' . $status . '#supply-' . $supplyId);
     }
 
     private function createSupplyProducts(int $supplyId): void
@@ -1938,7 +1938,7 @@ class AdminController extends Controller
         $paymentFilter = $_GET['payment_filter'] ?? 'all';
 
         if ($orderId <= 0) {
-            header('Location: /?page=admin-orders-one-time');
+            header('Location: /admin-orders-one-time');
             return;
         }
 
@@ -1946,7 +1946,7 @@ class AdminController extends Controller
         $order = $orderModel->getAdminOrderDetail($orderId);
 
         if (!$order) {
-            header('Location: /?page=admin-orders-one-time');
+            header('Location: /admin-orders-one-time');
             return;
         }
 
@@ -1972,8 +1972,8 @@ class AdminController extends Controller
                     'cancelled' => 'Отменён',
                 ],
             ],
+            'returnPath' => '/admin-orders-one-time',
             'returnQuery' => [
-                'page' => 'admin-orders-one-time',
                 'q' => $query,
                 'status_filter' => $statusFilter,
                 'payment_filter' => $paymentFilter,
@@ -1987,7 +1987,7 @@ class AdminController extends Controller
         $orderId = (int) ($_POST['order_id'] ?? 0);
 
         if ($orderId <= 0) {
-            header('Location: /?page=admin-orders-one-time&status=error');
+            header('Location: /admin-orders-one-time?status=error');
             return;
         }
 
@@ -1995,7 +1995,7 @@ class AdminController extends Controller
         $order = $orderModel->findById($orderId);
 
         if (!$order || $order['delivery_type'] === 'subscription') {
-            header('Location: /?page=admin-orders-one-time&status=error');
+            header('Location: /admin-orders-one-time?status=error');
             return;
         }
 
@@ -2013,17 +2013,29 @@ class AdminController extends Controller
         $orderModel->updateAdminOrder($orderId, $payload);
 
         $returnUrl = trim($_POST['return_url'] ?? '');
-        $query = ['page' => 'admin-orders-one-time', 'id' => $orderId, 'result' => 'updated'];
+        $defaultQuery = ['id' => $orderId, 'result' => 'updated'];
 
         if ($returnUrl !== '') {
-            parse_str($returnUrl, $returnParams);
-            if (is_array($returnParams)) {
-                $returnParams['result'] = 'updated';
-                $query = $returnParams;
+            $parsedUrl = parse_url($returnUrl);
+            $redirectPath = $parsedUrl['path'] ?? '/admin-orders-one-time';
+            $returnParams = [];
+
+            if (!empty($parsedUrl['query'])) {
+                parse_str($parsedUrl['query'], $returnParams);
             }
+
+            $returnParams['result'] = 'updated';
+            $redirectUrl = $redirectPath;
+
+            if ($returnParams) {
+                $redirectUrl .= '?' . http_build_query($returnParams);
+            }
+
+            header('Location: ' . $redirectUrl);
+            return;
         }
 
-        header('Location: /?' . http_build_query($query));
+        header('Location: /admin-orders-one-time?' . http_build_query($defaultQuery));
     }
 
     public function deleteOneTimeOrder(): void
@@ -2031,7 +2043,7 @@ class AdminController extends Controller
         $orderId = (int) ($_POST['order_id'] ?? 0);
 
         if ($orderId <= 0) {
-            header('Location: /?page=admin-orders-one-time&status=error');
+            header('Location: /admin-orders-one-time?status=error');
             return;
         }
 
@@ -2039,23 +2051,35 @@ class AdminController extends Controller
         $order = $orderModel->findById($orderId);
 
         if (!$order || $order['delivery_type'] === 'subscription') {
-            header('Location: /?page=admin-orders-one-time&status=error');
+            header('Location: /admin-orders-one-time?status=error');
             return;
         }
 
         $deleted = $orderModel->deleteAdminOrder($orderId);
         $returnUrl = trim($_POST['return_url'] ?? '');
-        $query = ['page' => 'admin-orders-one-time', 'result' => $deleted ? 'deleted' : 'error'];
+        $defaultQuery = ['result' => $deleted ? 'deleted' : 'error'];
 
         if ($returnUrl !== '') {
-            parse_str($returnUrl, $returnParams);
-            if (is_array($returnParams)) {
-                $returnParams['result'] = $deleted ? 'deleted' : 'error';
-                $query = $returnParams;
+            $parsedUrl = parse_url($returnUrl);
+            $redirectPath = $parsedUrl['path'] ?? '/admin-orders-one-time';
+            $returnParams = [];
+
+            if (!empty($parsedUrl['query'])) {
+                parse_str($parsedUrl['query'], $returnParams);
             }
+
+            $returnParams['result'] = $deleted ? 'deleted' : 'error';
+            $redirectUrl = $redirectPath;
+
+            if ($returnParams) {
+                $redirectUrl .= '?' . http_build_query($returnParams);
+            }
+
+            header('Location: ' . $redirectUrl);
+            return;
         }
 
-        header('Location: /?' . http_build_query($query));
+        header('Location: /admin-orders-one-time?' . http_build_query($defaultQuery));
     }
 
     public function ordersSubscriptions(): void
@@ -2154,7 +2178,7 @@ class AdminController extends Controller
         $settings->set(Setting::TG_BOT_USERNAME, $botUsername);
         $settings->set(Setting::TG_WEBHOOK_SECRET, $webhookSecret);
 
-        header('Location: /?page=admin-services-telegram&status=saved');
+        header('Location: /admin-services-telegram?status=saved');
         exit;
     }
 
@@ -2229,7 +2253,7 @@ class AdminController extends Controller
         $settings->set(Setting::ROBOKASSA_FAIL_URL, trim((string) ($_POST['robokassa_fail_url'] ?? '')));
         $settings->set(Setting::ROBOKASSA_TEST_MODE, isset($_POST['robokassa_test_mode']) ? '1' : '0');
 
-        header('Location: /?page=admin-services-payment&status=saved');
+        header('Location: /admin-services-payment?status=saved');
         exit;
     }
 
@@ -2251,7 +2275,7 @@ class AdminController extends Controller
         if ($editId > 0) {
             $editPage = $staticPageModel->getById($editId);
             if (!$editPage) {
-                header('Location: /?page=admin-content-static&status=notfound');
+                header('Location: /admin-content-static?status=notfound');
                 exit;
             }
         }
@@ -2281,7 +2305,7 @@ class AdminController extends Controller
         $footerColumn = in_array($footerColumn, [1, 2], true) ? $footerColumn : 1;
 
         if ($title === '' || $slug === '' || $content === '') {
-            header('Location: /?page=admin-content-static&status=error');
+            header('Location: /admin-content-static?status=error');
             exit;
         }
 
@@ -2305,11 +2329,11 @@ class AdminController extends Controller
             }
         } catch (Throwable $e) {
             $this->logAdminError('Static page save error', $e);
-            header('Location: /?page=admin-content-static&status=error');
+            header('Location: /admin-content-static?status=error');
             exit;
         }
 
-        header('Location: /?page=admin-content-static&status=saved');
+        header('Location: /admin-content-static?status=saved');
         exit;
     }
 
@@ -2320,12 +2344,12 @@ class AdminController extends Controller
         $active = (int) ($_POST['active'] ?? 0);
 
         if ($id <= 0) {
-            header('Location: /?page=admin-content-static&status=error');
+            header('Location: /admin-content-static?status=error');
             exit;
         }
 
         $staticPageModel->setActive($id, $active);
-        header('Location: /?page=admin-content-static&status=updated');
+        header('Location: /admin-content-static?status=updated');
         exit;
     }
 
@@ -2335,12 +2359,12 @@ class AdminController extends Controller
         $id = (int) ($_POST['id'] ?? 0);
 
         if ($id <= 0) {
-            header('Location: /?page=admin-content-static&status=error');
+            header('Location: /admin-content-static?status=error');
             exit;
         }
 
         $staticPageModel->delete($id);
-        header('Location: /?page=admin-content-static&status=deleted');
+        header('Location: /admin-content-static?status=deleted');
         exit;
     }
 
