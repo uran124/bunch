@@ -202,7 +202,7 @@ class Order extends Model
 
     public function getAdminOrders(?string $search = null, ?string $statusFilter = null, ?string $paymentFilter = null): array
     {
-        $sql = "SELECT o.*, u.name AS user_name, u.phone AS user_phone FROM orders o LEFT JOIN users u ON u.id = o.user_id WHERE o.delivery_type <> 'subscription'";
+        $sql = "SELECT o.*, u.name AS user_name, u.phone AS user_phone, u.email AS user_email FROM orders o LEFT JOIN users u ON u.id = o.user_id WHERE o.delivery_type <> 'subscription'";
         $params = [];
 
         if ($statusFilter && $statusFilter !== 'all') {
@@ -244,7 +244,7 @@ class Order extends Model
 
     public function getAdminOrderDetail(int $orderId): ?array
     {
-        $stmt = $this->db->prepare('SELECT o.*, u.name AS user_name, u.phone AS user_phone FROM orders o LEFT JOIN users u ON u.id = o.user_id WHERE o.id = :id LIMIT 1');
+        $stmt = $this->db->prepare('SELECT o.*, u.name AS user_name, u.phone AS user_phone, u.email AS user_email FROM orders o LEFT JOIN users u ON u.id = o.user_id WHERE o.id = :id LIMIT 1');
         $stmt->execute(['id' => $orderId]);
 
         $order = $stmt->fetch();
@@ -445,12 +445,27 @@ class Order extends Model
 
         $amount = number_format((float) ($order['total_amount'] ?? 0), 2, '.', '');
         $description = 'Оплата заказа №' . str_pad((string) $orderId, 4, '0', STR_PAD_LEFT);
-        $signaturePayload = $merchantLogin . ':' . $amount . ':' . $orderId . ':' . $password1;
         $signatureAlgorithm = strtolower((string) $settings->get(
             Setting::ROBOKASSA_SIGNATURE_ALGORITHM,
             $robokassaDefaults[Setting::ROBOKASSA_SIGNATURE_ALGORITHM] ?? 'md5'
         ));
         $signatureAlgorithm = $signatureAlgorithm === 'sha256' ? 'sha256' : 'md5';
+        $signaturePayload = $merchantLogin . ':' . $amount . ':' . $orderId . ':' . $password1;
+        $extraParams = [];
+        $customerEmail = trim((string) ($order['user_email'] ?? ''));
+        if ($customerEmail !== '' && filter_var($customerEmail, FILTER_VALIDATE_EMAIL)) {
+            $extraParams['Shp_email'] = $customerEmail;
+        }
+        if ($extraParams !== []) {
+            ksort($extraParams, SORT_STRING);
+            $signaturePayload .= ':' . implode(':', array_map(
+                static function (string $key, string $value): string {
+                    return $key . '=' . $value;
+                },
+                array_keys($extraParams),
+                array_values($extraParams)
+            ));
+        }
         $signature = strtoupper(hash($signatureAlgorithm, $signaturePayload));
 
         $query = [
@@ -462,6 +477,9 @@ class Order extends Model
             'Culture' => 'ru',
             'Encoding' => 'utf-8',
         ];
+        if ($extraParams !== []) {
+            $query = array_merge($query, $extraParams);
+        }
 
         $isTest = filter_var(
             $settings->get(Setting::ROBOKASSA_TEST_MODE, $robokassaDefaults[Setting::ROBOKASSA_TEST_MODE] ?? '0'),
