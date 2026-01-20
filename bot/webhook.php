@@ -124,7 +124,7 @@ $forwardText = $text !== '' ? $text : '[без текста]';
 $telegram->sendMessage($unknownChatId, '[' . $displayName . ' ' . $forwardText . ']', [
     'message_thread_id' => $unknownThreadId,
 ]);
-$telegram->sendMessage((int) $chatId, 'Не понял запрос. Нажмите «Получить код» или отправьте номер телефона (можно с пробелами).');
+$telegram->sendMessage((int) $chatId, 'Запрос зафиксирован. Я передал его менеджеру, он свяжется с вами в ближайшее время.');
 
 function getRequestHeaders(): array
 {
