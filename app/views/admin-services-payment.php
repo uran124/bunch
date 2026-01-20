@@ -180,6 +180,20 @@
                                     </button>
                                 </div>
                             </label>
+                            <label class="space-y-1">
+                                <span class="text-xs uppercase tracking-[0.14em] text-slate-500">Алгоритм подписи</span>
+                                <select
+                                    name="robokassa_signature_algorithm"
+                                    class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-rose-500/30"
+                                >
+                                    <?php $signatureAlgorithm = strtolower((string) ($robokassaSettings['signature_algorithm'] ?? 'md5')); ?>
+                                    <option value="md5" <?php echo $signatureAlgorithm === 'md5' ? 'selected' : ''; ?>>MD5</option>
+                                    <option value="sha256" <?php echo $signatureAlgorithm === 'sha256' ? 'selected' : ''; ?>>SHA-256</option>
+                                </select>
+                                <p class="text-xs text-slate-500">
+                                    Должен совпадать с настройкой подписи в кабинете Robokassa.
+                                </p>
+                            </label>
                         </div>
                         <div class="grid gap-2 text-sm">
                             <label class="space-y-1">

@@ -445,7 +445,13 @@ class Order extends Model
 
         $amount = number_format((float) ($order['total_amount'] ?? 0), 2, '.', '');
         $description = 'Оплата заказа №' . str_pad((string) $orderId, 4, '0', STR_PAD_LEFT);
-        $signature = strtoupper(md5($merchantLogin . ':' . $amount . ':' . $orderId . ':' . $password1));
+        $signaturePayload = $merchantLogin . ':' . $amount . ':' . $orderId . ':' . $password1;
+        $signatureAlgorithm = strtolower((string) $settings->get(
+            Setting::ROBOKASSA_SIGNATURE_ALGORITHM,
+            $robokassaDefaults[Setting::ROBOKASSA_SIGNATURE_ALGORITHM] ?? 'md5'
+        ));
+        $signatureAlgorithm = $signatureAlgorithm === 'sha256' ? 'sha256' : 'md5';
+        $signature = strtoupper(hash($signatureAlgorithm, $signaturePayload));
 
         $query = [
             'MerchantLogin' => $merchantLogin,
@@ -454,6 +460,7 @@ class Order extends Model
             'Description' => $description,
             'SignatureValue' => $signature,
             'Culture' => 'ru',
+            'Encoding' => 'utf-8',
         ];
 
         $isTest = filter_var(
