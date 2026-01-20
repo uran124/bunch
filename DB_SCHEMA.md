@@ -43,7 +43,7 @@ CREATE TABLE users (
   failed_pin_attempts TINYINT UNSIGNED NOT NULL DEFAULT 0,
   last_failed_pin_at DATETIME NULL,        -- защита от перебора PIN
 
-  telegram_chat_id BIGINT UNSIGNED NULL,   -- идентификатор чата в Telegram
+  telegram_chat_id BIGINT NULL,            -- идентификатор чата в Telegram
   telegram_username VARCHAR(64) NULL,      -- username в Telegram (без @)
 
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
