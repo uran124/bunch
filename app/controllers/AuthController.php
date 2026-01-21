@@ -286,6 +286,7 @@ class AuthController extends Controller
                         $safeCode = $this->formatTelegramCode($code);
                         $this->telegram->sendMessage($chatId, "Код для смены PIN: {$safeCode}\nВведите его на странице восстановления на сайте.", [
                             'parse_mode' => 'HTML',
+                            'skip_log' => true,
                         ]);
 
                         $successMessage = 'Одноразовый код отправлен в Telegram.';
