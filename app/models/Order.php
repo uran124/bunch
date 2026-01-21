@@ -442,6 +442,12 @@ class Order extends Model
                 'total_amount' => $totalAmount,
                 'status' => 'new',
             ]);
+            $this->logFrontpadNewOrder($orderId, $cartItems, [
+                'delivery_type' => $deliveryType,
+                'scheduled_date' => $scheduledDate,
+                'scheduled_time' => $scheduledTime,
+                'total_amount' => $totalAmount,
+            ]);
 
             return $orderId;
         } catch (Throwable $e) {
@@ -779,6 +785,45 @@ class Order extends Model
         $this->sendTelegramMessage(self::TELEGRAM_ADMIN_CHAT_ID, implode("\n", $lines), [
             'message_thread_id' => self::TELEGRAM_ADMIN_THREAD_ORDERS,
         ]);
+    }
+
+    private function logFrontpadNewOrder(int $orderId, array $cartItems, array $payload): void
+    {
+        $settings = new Setting();
+        $defaults = $settings->getFrontpadDefaults();
+        $secret = trim((string) $settings->get(
+            Setting::FRONTPAD_SECRET,
+            $defaults[Setting::FRONTPAD_SECRET] ?? ''
+        ));
+        $apiUrl = trim((string) $settings->get(
+            Setting::FRONTPAD_API_URL,
+            $defaults[Setting::FRONTPAD_API_URL] ?? ''
+        ));
+
+        $items = array_map(static function (array $item): array {
+            return [
+                'product_id' => (int) ($item['product_id'] ?? 0),
+                'name' => $item['name'] ?? 'Товар',
+                'qty' => (int) ($item['qty'] ?? 0),
+                'line_total' => (float) ($item['line_total'] ?? 0),
+            ];
+        }, $cartItems);
+
+        $logger = new Logger('frontpad.log');
+        $logger->logEvent(
+            $secret === '' || $apiUrl === '' ? 'frontpad.skip_missing_settings' : 'frontpad.order_created',
+            [
+                'order_id' => $orderId,
+                'delivery_type' => $payload['delivery_type'] ?? null,
+                'scheduled_date' => $payload['scheduled_date'] ?? null,
+                'scheduled_time' => $payload['scheduled_time'] ?? null,
+                'total_amount' => (float) ($payload['total_amount'] ?? 0),
+                'item_count' => count($items),
+                'items' => $items,
+                'api_url' => $apiUrl !== '' ? $apiUrl : null,
+                'configured' => $secret !== '' && $apiUrl !== '',
+            ]
+        );
     }
 
     private function notifyAdminOrderPaid(int $orderId): void
