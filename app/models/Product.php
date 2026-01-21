@@ -440,7 +440,7 @@ class Product extends Model
             $stmt = $this->db->prepare('SELECT attribute_id FROM product_attributes WHERE product_id = :product_id');
             $stmt->execute(['product_id' => $productId]);
 
-            return array_column($stmt->fetchAll(), 'attribute_id');
+            return array_map('intval', array_column($stmt->fetchAll(), 'attribute_id'));
         } catch (\PDOException $exception) {
             error_log('Failed to load product attribute ids: ' . $exception->getMessage());
             return [];
