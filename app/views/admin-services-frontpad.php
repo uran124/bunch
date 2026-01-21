@@ -2,6 +2,7 @@
 <?php $pageMeta = $pageMeta ?? []; ?>
 <?php $settings = $settings ?? []; ?>
 <?php $products = $products ?? []; ?>
+<?php $logEntries = $logEntries ?? []; ?>
 
 <section class="flex flex-col gap-6">
     <header class="flex flex-wrap items-start justify-between gap-4">
@@ -155,6 +156,31 @@
                     </form>
                 <?php endforeach; ?>
             </div>
+        </div>
+    </section>
+
+    <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+            <div>
+                <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Логи</p>
+                <h2 class="text-xl font-semibold text-slate-900">Запросы к FrontPad</h2>
+                <p class="text-sm text-slate-500">Последние отправки запросов, чтобы проверить ошибки интеграции.</p>
+            </div>
+            <span class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">storage/logs/frontpad.log</span>
+        </div>
+
+        <div class="mt-4 rounded-2xl border border-slate-100 bg-slate-50 p-4 text-xs text-slate-600">
+            <?php if (empty($logEntries)): ?>
+                <p>Логов пока нет. Проверьте, что интеграция пишет запросы в файл.</p>
+            <?php else: ?>
+                <ul class="space-y-2">
+                    <?php foreach ($logEntries as $entry): ?>
+                        <li class="break-all rounded-lg border border-slate-200 bg-white px-3 py-2 font-mono text-[11px] text-slate-700">
+                            <?php echo htmlspecialchars($entry, ENT_QUOTES, 'UTF-8'); ?>
+                        </li>
+                    <?php endforeach; ?>
+                </ul>
+            <?php endif; ?>
         </div>
     </section>
 </section>

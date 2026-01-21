@@ -2187,6 +2187,7 @@ class AdminController extends Controller
         $settings = new Setting();
         $defaults = $settings->getFrontpadDefaults();
         $productModel = new Product();
+        $logEntries = $this->getFrontpadLogEntries(__DIR__ . '/../../storage/logs/frontpad.log');
 
         $this->render('admin-services-frontpad', [
             'pageMeta' => $pageMeta,
@@ -2196,6 +2197,7 @@ class AdminController extends Controller
                 'apiUrl' => $settings->get(Setting::FRONTPAD_API_URL, $defaults[Setting::FRONTPAD_API_URL] ?? ''),
             ],
             'products' => $productModel->getAdminList(),
+            'logEntries' => $logEntries,
         ]);
     }
 
@@ -2223,6 +2225,20 @@ class AdminController extends Controller
 
         header('Location: /admin-services-frontpad?status=saved');
         exit;
+    }
+
+    private function getFrontpadLogEntries(string $logFile, int $limit = 50): array
+    {
+        if (!file_exists($logFile)) {
+            return [];
+        }
+
+        $lines = file($logFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+        if ($lines === false) {
+            return [];
+        }
+
+        return array_slice($lines, -$limit);
     }
 
     public function saveServiceTelegram(): void
