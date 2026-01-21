@@ -111,6 +111,60 @@
     <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <div class="flex flex-wrap items-center justify-between gap-3">
             <div>
+                <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Отправка заказа</p>
+                <h2 class="text-xl font-semibold text-slate-900">Параметры метода new_order</h2>
+                <p class="text-sm text-slate-500">Шпаргалка по параметрам для самовывоза и доставки.</p>
+            </div>
+            <span class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
+                <?php echo htmlspecialchars(($settings['apiUrl'] ?? 'https://app.frontpad.ru/api/index.php') . '?new_order', ENT_QUOTES, 'UTF-8'); ?>
+            </span>
+        </div>
+
+        <div class="mt-4 grid gap-4 lg:grid-cols-2">
+            <div class="rounded-xl border border-slate-100 bg-slate-50 p-4 text-sm text-slate-600">
+                <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Самовывоз</p>
+                <p class="mt-2 text-sm font-semibold text-slate-800">Метод: new_order</p>
+                <p class="mt-1 text-xs text-slate-500">
+                    URL запроса:
+                    <?php echo htmlspecialchars(($settings['apiUrl'] ?? 'https://app.frontpad.ru/api/index.php') . '?new_order', ENT_QUOTES, 'UTF-8'); ?>
+                </p>
+                <ul class="mt-3 list-disc space-y-1 pl-5 text-xs text-slate-500">
+                    <li><span class="font-semibold text-slate-700">secret</span> — секрет (обязательный).</li>
+                    <li><span class="font-semibold text-slate-700">product</span> — массив артикулов товаров (обязательный).</li>
+                    <li><span class="font-semibold text-slate-700">product_kol</span> — массив количества товаров (обязательный).</li>
+                    <li><span class="font-semibold text-slate-700">phone</span> — телефон заказчика, до 50 знаков.</li>
+                    <li><span class="font-semibold text-slate-700">name</span> — имя клиента, до 50 знаков.</li>
+                    <li><span class="font-semibold text-slate-700">descr</span> — примечание (комментарий, итоговая сумма, способ оплаты), до 100 знаков.</li>
+                    <li><span class="font-semibold text-slate-700">datetime</span> — время предзаказа в формате ГГГГ-ММ-ДД ЧЧ:ММ:СС.</li>
+                </ul>
+            </div>
+
+            <div class="rounded-xl border border-slate-100 bg-slate-50 p-4 text-sm text-slate-600">
+                <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Доставка</p>
+                <p class="mt-2 text-sm font-semibold text-slate-800">Метод: new_order</p>
+                <p class="mt-1 text-xs text-slate-500">
+                    URL запроса:
+                    <?php echo htmlspecialchars(($settings['apiUrl'] ?? 'https://app.frontpad.ru/api/index.php') . '?new_order', ENT_QUOTES, 'UTF-8'); ?>
+                </p>
+                <ul class="mt-3 list-disc space-y-1 pl-5 text-xs text-slate-500">
+                    <li><span class="font-semibold text-slate-700">secret</span> — секрет (обязательный).</li>
+                    <li><span class="font-semibold text-slate-700">product</span> — массив артикулов товаров (обязательный).</li>
+                    <li><span class="font-semibold text-slate-700">product_kol</span> — массив количества товаров (обязательный).</li>
+                    <li><span class="font-semibold text-slate-700">street</span> — улица, до 50 знаков.</li>
+                    <li><span class="font-semibold text-slate-700">home</span> — дом, до 50 знаков.</li>
+                    <li><span class="font-semibold text-slate-700">apart</span> — квартира, до 50 знаков.</li>
+                    <li><span class="font-semibold text-slate-700">phone</span> — телефон заказчика, до 50 знаков.</li>
+                    <li><span class="font-semibold text-slate-700">name</span> — имя клиента, до 50 знаков.</li>
+                    <li><span class="font-semibold text-slate-700">descr</span> — примечание (комментарий, имя/телефон получателя, итоговая сумма, способ оплаты), до 100 знаков.</li>
+                    <li><span class="font-semibold text-slate-700">datetime</span> — время предзаказа в формате ГГГГ-ММ-ДД ЧЧ:ММ:СС.</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+            <div>
                 <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Товары</p>
                 <h2 class="text-xl font-semibold text-slate-900">Артикулы для FrontPad</h2>
                 <p class="text-sm text-slate-500">Обновляйте артикулы товаров, которые будут продаваться через API.</p>
