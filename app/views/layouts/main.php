@@ -649,8 +649,6 @@ $adminNavigation = [
                 <div class="flex items-start justify-between gap-3">
                     <div>
                         <p class="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Поддержка</p>
-                        <h2 class="text-xl font-semibold text-slate-900">Чат с менеджером</h2>
-                        <p class="mt-1 text-sm text-slate-500">Ответ придёт в это окно после ответа в Telegram.</p>
                     </div>
                     <button type="button" class="rounded-full border border-slate-200 p-2 text-slate-500 transition hover:border-rose-200 hover:text-rose-600" data-support-close>
                         <span class="material-symbols-rounded text-base">close</span>

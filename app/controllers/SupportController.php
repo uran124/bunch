@@ -40,14 +40,14 @@ class SupportController extends Controller
         $name = trim((string) ($user['name'] ?? ''));
         $phone = trim((string) ($user['phone'] ?? ''));
         $label = $name !== '' ? $name : ('Пользователь #' . $userId);
-        $header = "Новый запрос поддержки\nКлиент: {$label}";
+        $prefix = $label;
         if ($phone !== '') {
-            $header .= "\nТелефон: {$phone}";
+            $prefix .= ": {$phone}";
         }
-        $header .= "\nID: {$userId}\n\n";
+        $prefix .= ' ';
 
         $entry = $this->supportChat->appendMessage($userId, 'user', $message);
-        $telegramMessageId = $this->sendToSupportChat($header . $message);
+        $telegramMessageId = $this->sendToSupportChat($prefix . $message);
         if ($telegramMessageId) {
             $this->supportChat->mapTelegramMessage($telegramMessageId, $userId);
         }
