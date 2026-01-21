@@ -101,6 +101,7 @@
                 </p>
             </div>
             <form method="post" action="https://app.frontpad.ru/api/index.php?new_order" class="grid gap-3 text-sm">
+                <input type="hidden" name="secret" value="<?php echo htmlspecialchars($settings['secret'] ?? '', ENT_QUOTES, 'UTF-8'); ?>">
                 <label class="space-y-1">
                     <span class="text-xs uppercase tracking-[0.14em] text-slate-500">product</span>
                     <input
