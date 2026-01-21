@@ -130,11 +130,10 @@ $adminNavigation = [
                 'disabled' => true,
             ],
             [
-                'label' => 'Интеграция CRM',
-                'href' => '#',
-                'page' => '',
+                'label' => 'FrontPad',
+                'href' => '/admin-services-frontpad',
+                'page' => 'admin-services-frontpad',
                 'icon' => 'hub',
-                'disabled' => true,
             ],
             [
                 'label' => 'Доставка',

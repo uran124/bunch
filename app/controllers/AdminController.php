@@ -93,7 +93,12 @@ class AdminController extends Controller
                         'href' => '/admin-services-payment',
                     ],
                     ['label' => 'Веб-аналитика яндекс метрика', 'description' => 'События, цели и конверсии'],
-                    ['label' => 'Подключение к ЦРМ', 'description' => 'Синхронизация контактов и сделок'],
+                    [
+                        'label' => 'FrontPad',
+                        'description' => 'Секрет API, товары и артикулы для синхронизации',
+                        'cta' => 'Настроить',
+                        'href' => '/admin-services-frontpad',
+                    ],
                     [
                         'label' => 'DaData + зоны доставки',
                         'description' => 'Подсказки адресов, геокодинг и расчёт через turf.js',
@@ -2167,6 +2172,57 @@ class AdminController extends Controller
                 'webhookSecret' => $settings->get(Setting::TG_WEBHOOK_SECRET, $defaults[Setting::TG_WEBHOOK_SECRET] ?? ''),
             ],
         ]);
+    }
+
+    public function serviceFrontpad(): void
+    {
+        $pageMeta = [
+            'title' => 'Настройка сервисов · FrontPad — админ-панель Bunch',
+            'description' => 'Секрет API, параметры интеграции и контроль артикулов товаров для синхронизации.',
+            'h1' => 'FrontPad',
+            'headerTitle' => 'Bunch Admin',
+            'headerSubtitle' => 'Сервисы · FrontPad',
+        ];
+
+        $settings = new Setting();
+        $defaults = $settings->getFrontpadDefaults();
+        $productModel = new Product();
+
+        $this->render('admin-services-frontpad', [
+            'pageMeta' => $pageMeta,
+            'status' => $_GET['status'] ?? null,
+            'settings' => [
+                'secret' => $settings->get(Setting::FRONTPAD_SECRET, $defaults[Setting::FRONTPAD_SECRET] ?? ''),
+                'apiUrl' => $settings->get(Setting::FRONTPAD_API_URL, $defaults[Setting::FRONTPAD_API_URL] ?? ''),
+            ],
+            'products' => $productModel->getAdminList(),
+        ]);
+    }
+
+    public function saveServiceFrontpad(): void
+    {
+        $settings = new Setting();
+        $action = trim((string) ($_POST['action'] ?? 'settings'));
+
+        if ($action === 'update_article') {
+            $productId = (int) ($_POST['product_id'] ?? 0);
+            $article = trim((string) ($_POST['product_article'] ?? ''));
+            $productModel = new Product();
+            if ($productId > 0) {
+                $productModel->updateArticle($productId, $article !== '' ? $article : null);
+            }
+            header('Location: /admin-services-frontpad?status=article_saved');
+            exit;
+        }
+
+        $secret = trim((string) ($_POST['frontpad_secret'] ?? ''));
+        $apiUrl = trim((string) ($_POST['frontpad_api_url'] ?? 'https://app.frontpad.ru/api/index.php'));
+
+        $settings->set(Setting::FRONTPAD_SECRET, $secret);
+        $settings->set(Setting::FRONTPAD_API_URL, $apiUrl);
+
+        header('Location: /admin-services-frontpad?status=saved');
+        exit;
     }
 
     public function saveServiceTelegram(): void
