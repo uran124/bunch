@@ -93,14 +93,124 @@
 
         <aside class="space-y-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <div>
-                <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Подсказка</p>
-                <h3 class="text-lg font-semibold text-slate-900">Подготовка к подключению</h3>
-                <ol class="mt-2 list-decimal space-y-1 pl-4 text-sm text-slate-500">
-                    <li>Включите API в разделе «Общие» настроек FrontPad.</li>
-                    <li>Сохраните секретный код (secret) и добавьте его в форму.</li>
-                    <li>Назначьте товарам уникальные цифровые артикулы в карточках.</li>
-                </ol>
+                <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Форма</p>
+                <h3 class="text-lg font-semibold text-slate-900">Отправка new_order</h3>
+                <p class="mt-2 text-sm text-slate-500">
+                    Быстрое создание запроса на
+                    <span class="font-semibold text-slate-700">https://app.frontpad.ru/api/index.php?new_order</span>.
+                </p>
             </div>
+            <form method="post" action="https://app.frontpad.ru/api/index.php?new_order" class="grid gap-3 text-sm">
+                <input type="hidden" name="secret" value="<?php echo htmlspecialchars($settings['secret'] ?? '', ENT_QUOTES, 'UTF-8'); ?>">
+                <div class="space-y-2">
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Позиции заказа</p>
+                        <p class="text-xs text-slate-400">Используйте индексы product[n], product_kol[n], product_mod[n] как в примере FrontPad.</p>
+                    </div>
+                    <div class="grid gap-2 text-xs text-slate-500">
+                        <div class="grid grid-cols-[1.4fr_0.8fr_1fr] gap-2 font-semibold uppercase tracking-[0.12em] text-slate-400">
+                            <span>product[n]</span>
+                            <span>product_kol[n]</span>
+                            <span>product_mod[n]</span>
+                        </div>
+                        <?php for ($index = 0; $index < 4; $index++): ?>
+                            <div class="grid grid-cols-[1.4fr_0.8fr_1fr] gap-2">
+                                <input
+                                    type="text"
+                                    name="<?php echo 'product[' . $index . ']'; ?>"
+                                    placeholder="Артикул <?php echo $index; ?>"
+                                    class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-rose-500/30"
+                                >
+                                <input
+                                    type="text"
+                                    name="<?php echo 'product_kol[' . $index . ']'; ?>"
+                                    placeholder="Кол-во"
+                                    class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-rose-500/30"
+                                >
+                                <input
+                                    type="text"
+                                    name="<?php echo 'product_mod[' . $index . ']'; ?>"
+                                    placeholder="Родитель"
+                                    class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-rose-500/30"
+                                >
+                            </div>
+                        <?php endfor; ?>
+                    </div>
+                    <p class="text-xs text-slate-400">Для модификаторов укажите индекс родительского товара в product_mod.</p>
+                </div>
+                <label class="space-y-1">
+                    <span class="text-xs uppercase tracking-[0.14em] text-slate-500">street</span>
+                    <input
+                        type="text"
+                        name="street"
+                        placeholder="Улица"
+                        class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-rose-500/30"
+                    >
+                </label>
+                <div class="grid grid-cols-2 gap-3">
+                    <label class="space-y-1">
+                        <span class="text-xs uppercase tracking-[0.14em] text-slate-500">home</span>
+                        <input
+                            type="text"
+                            name="home"
+                            placeholder="Дом"
+                            class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-rose-500/30"
+                        >
+                    </label>
+                    <label class="space-y-1">
+                        <span class="text-xs uppercase tracking-[0.14em] text-slate-500">apart</span>
+                        <input
+                            type="text"
+                            name="apart"
+                            placeholder="Квартира"
+                            class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-rose-500/30"
+                        >
+                    </label>
+                </div>
+                <label class="space-y-1">
+                    <span class="text-xs uppercase tracking-[0.14em] text-slate-500">phone</span>
+                    <input
+                        type="tel"
+                        name="phone"
+                        placeholder="+7 (000) 000-00-00"
+                        class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-rose-500/30"
+                    >
+                </label>
+                <label class="space-y-1">
+                    <span class="text-xs uppercase tracking-[0.14em] text-slate-500">name</span>
+                    <input
+                        type="text"
+                        name="name"
+                        placeholder="Имя клиента"
+                        class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-rose-500/30"
+                    >
+                </label>
+                <label class="space-y-1">
+                    <span class="text-xs uppercase tracking-[0.14em] text-slate-500">descr</span>
+                    <textarea
+                        name="descr"
+                        rows="3"
+                        placeholder="Комментарий к заказу"
+                        class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-rose-500/30"
+                    ></textarea>
+                </label>
+                <label class="space-y-1">
+                    <span class="text-xs uppercase tracking-[0.14em] text-slate-500">datetime</span>
+                    <input
+                        type="text"
+                        name="datetime"
+                        placeholder="2024-12-31 12:00:00"
+                        class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-rose-500/30"
+                    >
+                </label>
+                <button
+                    type="submit"
+                    class="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-rose-600 px-3 py-2 text-sm font-semibold text-white shadow-sm shadow-rose-200 transition hover:-translate-y-0.5 hover:shadow"
+                >
+                    <span class="material-symbols-rounded text-base">send</span>
+                    Отправить запрос
+                </button>
+            </form>
             <div class="rounded-xl border border-amber-100 bg-amber-50/70 p-4 text-sm text-amber-700">
                 <p class="font-semibold">Важно</p>
                 <p class="mt-2 text-xs text-amber-700">FrontPad запрещает автоматический перебор данных. Отправляйте запросы только после действий клиента.</p>
