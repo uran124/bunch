@@ -17,6 +17,8 @@ class Setting extends Model
     public const ROBOKASSA_SUCCESS_URL = 'robokassa_success_url';
     public const ROBOKASSA_FAIL_URL = 'robokassa_fail_url';
     public const ROBOKASSA_SIGNATURE_ALGORITHM = 'robokassa_signature_algorithm';
+    public const FRONTPAD_SECRET = 'frontpad_secret';
+    public const FRONTPAD_API_URL = 'frontpad_api_url';
 
     public function get(string $code, ?string $default = null): ?string
     {
@@ -79,6 +81,14 @@ class Setting extends Model
             self::ROBOKASSA_SUCCESS_URL => getenv('ROBOKASSA_SUCCESS_URL') ?: '',
             self::ROBOKASSA_FAIL_URL => getenv('ROBOKASSA_FAIL_URL') ?: '',
             self::ROBOKASSA_SIGNATURE_ALGORITHM => getenv('ROBOKASSA_SIGNATURE_ALGORITHM') ?: 'md5',
+        ];
+    }
+
+    public function getFrontpadDefaults(): array
+    {
+        return [
+            self::FRONTPAD_SECRET => getenv('FRONTPAD_SECRET') ?: '',
+            self::FRONTPAD_API_URL => getenv('FRONTPAD_API_URL') ?: 'https://app.frontpad.ru/api/index.php',
         ];
     }
 }

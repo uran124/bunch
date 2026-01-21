@@ -222,6 +222,15 @@ class Product extends Model
         ]);
     }
 
+    public function updateArticle(int $id, ?string $article): void
+    {
+        $stmt = $this->db->prepare("UPDATE {$this->table} SET article = :article WHERE id = :id");
+        $stmt->execute([
+            'article' => $article,
+            'id' => $id,
+        ]);
+    }
+
     public function updateCustom(int $id, array $payload): void
     {
         $sql = "UPDATE {$this->table} SET name = :name, alt_name = :alt_name, description = :description, price = :price, photo_url = :photo_url, photo_url_secondary = :photo_url_secondary, photo_url_tertiary = :photo_url_tertiary, category = :category, product_type = :product_type, is_active = :is_active WHERE id = :id";
