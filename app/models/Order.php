@@ -3,6 +3,7 @@
 
 class Order extends Model
 {
+    private const FRONTPAD_DELIVERY_ARTICLE = '999999';
     private const TELEGRAM_ADMIN_CHAT_ID = -1002055168794;
     private const TELEGRAM_ADMIN_THREAD_ORDERS = 1096;
     private array $statusPaymentMap = [
@@ -446,11 +447,20 @@ class Order extends Model
                 'total_amount' => $totalAmount,
                 'status' => 'new',
             ]);
-            $this->logFrontpadNewOrder($orderId, $cartItems, [
+            $this->sendFrontpadNewOrder($orderId, $cartItems, [
                 'delivery_type' => $deliveryType,
                 'scheduled_date' => $scheduledDate,
                 'scheduled_time' => $scheduledTime,
                 'total_amount' => $totalAmount,
+                'address_id' => $addressId,
+                'address_text' => $addressText,
+                'address' => $payload['address'] ?? null,
+                'recipient_name' => $recipientName,
+                'recipient_phone' => $recipientPhone,
+                'comment' => $comment,
+                'payment_method' => $payload['payment_method'] ?? null,
+                'customer_name' => $customer['name'] ?? null,
+                'customer_phone' => $customer['phone'] ?? null,
             ]);
 
             return $orderId;
@@ -806,7 +816,7 @@ class Order extends Model
         ]);
     }
 
-    private function logFrontpadNewOrder(int $orderId, array $cartItems, array $payload): void
+    private function sendFrontpadNewOrder(int $orderId, array $cartItems, array $payload): void
     {
         $settings = new Setting();
         $defaults = $settings->getFrontpadDefaults();
@@ -819,30 +829,201 @@ class Order extends Model
             $defaults[Setting::FRONTPAD_API_URL] ?? ''
         ));
 
-        $items = array_map(static function (array $item): array {
-            return [
-                'product_id' => (int) ($item['product_id'] ?? 0),
-                'name' => $item['name'] ?? 'Товар',
-                'qty' => (int) ($item['qty'] ?? 0),
-                'line_total' => (float) ($item['line_total'] ?? 0),
-            ];
-        }, $cartItems);
-
         $logger = new Logger('frontpad.log');
-        $logger->logEvent(
-            $secret === '' || $apiUrl === '' ? 'frontpad.skip_missing_settings' : 'frontpad.order_created',
-            [
+        if ($secret === '' || $apiUrl === '') {
+            $logger->logEvent('frontpad.skip_missing_settings', [
                 'order_id' => $orderId,
                 'delivery_type' => $payload['delivery_type'] ?? null,
-                'scheduled_date' => $payload['scheduled_date'] ?? null,
-                'scheduled_time' => $payload['scheduled_time'] ?? null,
                 'total_amount' => (float) ($payload['total_amount'] ?? 0),
-                'item_count' => count($items),
-                'items' => $items,
                 'api_url' => $apiUrl !== '' ? $apiUrl : null,
-                'configured' => $secret !== '' && $apiUrl !== '',
-            ]
-        );
+                'configured' => false,
+            ]);
+            return;
+        }
+
+        $frontpadPayload = $this->buildFrontpadPayload($orderId, $cartItems, $payload, $secret);
+        $response = $this->sendFrontpadRequest($apiUrl, $frontpadPayload);
+
+        $logPayload = $frontpadPayload;
+        $logPayload['secret'] = '***';
+
+        $logger->logEvent('frontpad.order_sent', [
+            'order_id' => $orderId,
+            'delivery_type' => $payload['delivery_type'] ?? null,
+            'scheduled_date' => $payload['scheduled_date'] ?? null,
+            'scheduled_time' => $payload['scheduled_time'] ?? null,
+            'total_amount' => (float) ($payload['total_amount'] ?? 0),
+            'api_url' => $apiUrl,
+            'payload' => $logPayload,
+            'response_code' => $response['status'] ?? null,
+            'response_body' => $response['body'] ?? null,
+            'response_error' => $response['error'] ?? null,
+            'success' => $response['ok'] ?? false,
+        ]);
+    }
+
+    private function buildFrontpadPayload(int $orderId, array $cartItems, array $payload, string $secret): array
+    {
+        $productIds = array_values(array_unique(array_map(
+            static fn (array $item): int => (int) ($item['product_id'] ?? 0),
+            $cartItems
+        )));
+        $articles = $this->fetchProductArticles($productIds);
+        $products = [];
+        $quantities = [];
+        $missingArticles = [];
+
+        foreach ($cartItems as $item) {
+            $productId = (int) ($item['product_id'] ?? 0);
+            if ($productId <= 0) {
+                continue;
+            }
+            $qty = (int) ($item['qty'] ?? 0);
+            if ($qty <= 0) {
+                continue;
+            }
+            $article = trim((string) ($articles[$productId] ?? ''));
+            if ($article === '') {
+                $missingArticles[] = $productId;
+                $article = (string) $productId;
+            }
+
+            $products[] = $article;
+            $quantities[] = $qty;
+        }
+
+        $deliveryType = $payload['delivery_type'] ?? 'pickup';
+        if ($deliveryType === 'delivery') {
+            $products[] = self::FRONTPAD_DELIVERY_ARTICLE;
+            $quantities[] = 1;
+        }
+
+        $addressDetails = $payload['address'] ?? [];
+        if (!$addressDetails && !empty($payload['address_id'])) {
+            $addressDetails = $this->fetchAddressDetails((int) $payload['address_id']);
+        }
+
+        $customerName = trim((string) ($payload['customer_name'] ?? ''));
+        $customerPhone = trim((string) ($payload['customer_phone'] ?? ''));
+        $recipientName = trim((string) ($payload['recipient_name'] ?? ''));
+        $recipientPhone = trim((string) ($payload['recipient_phone'] ?? ''));
+
+        $descriptionParts = [];
+        if ($deliveryType === 'delivery') {
+            if ($recipientName !== '') {
+                $descriptionParts[] = 'Получатель: ' . $recipientName;
+            }
+            if ($recipientPhone !== '') {
+                $descriptionParts[] = 'Телефон получателя: ' . $recipientPhone;
+            }
+        }
+        $comment = trim((string) ($payload['comment'] ?? ''));
+        if ($comment !== '') {
+            $descriptionParts[] = 'Комментарий: ' . $comment;
+        }
+        $descriptionParts[] = 'Итог: ' . (float) ($payload['total_amount'] ?? 0);
+        $descriptionParts[] = 'Оплата: ' . $this->mapPaymentMethodLabel($payload['payment_method'] ?? null);
+
+        $frontpadPayload = [
+            'secret' => $secret,
+            'product' => $products,
+            'product_kol' => $quantities,
+            'phone' => $customerPhone !== '' ? $customerPhone : $recipientPhone,
+            'descr' => implode(', ', $descriptionParts),
+            'name' => $customerName !== '' ? $customerName : $recipientName,
+        ];
+
+        if ($missingArticles) {
+            $frontpadPayload['descr'] .= ', Нет артикула у товаров: ' . implode(', ', $missingArticles);
+        }
+
+        if ($deliveryType === 'delivery') {
+            $frontpadPayload['street'] = trim((string) ($addressDetails['street'] ?? ''));
+            $frontpadPayload['home'] = trim((string) ($addressDetails['house'] ?? ''));
+            $frontpadPayload['apart'] = trim((string) ($addressDetails['apartment'] ?? ''));
+        }
+
+        $frontpadPayload['descr'] = trim($frontpadPayload['descr']);
+
+        return $frontpadPayload;
+    }
+
+    private function fetchProductArticles(array $productIds): array
+    {
+        $productIds = array_values(array_filter($productIds, static fn (int $id): bool => $id > 0));
+        if (!$productIds) {
+            return [];
+        }
+
+        $placeholders = implode(',', array_fill(0, count($productIds), '?'));
+        $stmt = $this->db->prepare("SELECT id, article FROM products WHERE id IN ($placeholders)");
+        $stmt->execute($productIds);
+        $rows = $stmt->fetchAll();
+
+        $articles = [];
+        foreach ($rows as $row) {
+            $articles[(int) ($row['id'] ?? 0)] = $row['article'] ?? null;
+        }
+
+        return $articles;
+    }
+
+    private function fetchAddressDetails(?int $addressId): array
+    {
+        if (!$addressId) {
+            return [];
+        }
+
+        $stmt = $this->db->prepare('SELECT settlement, street, house, apartment FROM user_addresses WHERE id = :id LIMIT 1');
+        $stmt->execute(['id' => $addressId]);
+        $row = $stmt->fetch();
+
+        return $row ?: [];
+    }
+
+    private function mapPaymentMethodLabel(?string $paymentMethod): string
+    {
+        return match ($paymentMethod) {
+            'online' => 'Онлайн',
+            'sbp' => 'СБП',
+            default => 'Наличные',
+        };
+    }
+
+    private function sendFrontpadRequest(string $apiUrl, array $payload): array
+    {
+        $target = trim($apiUrl);
+        if ($target === '') {
+            return [
+                'ok' => false,
+                'status' => null,
+                'body' => null,
+                'error' => 'missing_api_url',
+            ];
+        }
+
+        $endpoint = rtrim($target, '?') . '?new_order';
+
+        $ch = curl_init();
+        curl_setopt_array($ch, [
+            CURLOPT_URL => $endpoint,
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => http_build_query($payload, '', '&', PHP_QUERY_RFC1738),
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT => 15,
+        ]);
+
+        $body = curl_exec($ch);
+        $error = curl_error($ch);
+        $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        return [
+            'ok' => $body !== false && $error === '' && $status >= 200 && $status < 300,
+            'status' => $status !== 0 ? $status : null,
+            'body' => $body !== false ? $body : null,
+            'error' => $error !== '' ? $error : null,
+        ];
     }
 
     private function notifyAdminOrderPaid(int $orderId): void
