@@ -431,6 +431,8 @@ class Order extends Model
 
             $this->db->commit();
 
+            $customer = $this->getUserContact($userId);
+
             $this->notifyAdminNewOrder($orderId, $cartItems, [
                 'delivery_type' => $deliveryType,
                 'scheduled_date' => $scheduledDate,
@@ -439,6 +441,8 @@ class Order extends Model
                 'address' => $payload['address'] ?? null,
                 'recipient_name' => $recipientName,
                 'recipient_phone' => $recipientPhone,
+                'customer_name' => $customer['name'] ?? null,
+                'customer_phone' => $customer['phone'] ?? null,
                 'total_amount' => $totalAmount,
                 'status' => 'new',
             ]);
@@ -474,6 +478,18 @@ class Order extends Model
 
         $dt = DateTime::createFromFormat('H:i', $value);
         return $dt instanceof DateTime ? $dt->format('H:i:s') : null;
+    }
+
+    private function getUserContact(int $userId): array
+    {
+        $stmt = $this->db->prepare('SELECT name, phone FROM users WHERE id = :id LIMIT 1');
+        $stmt->execute(['id' => $userId]);
+        $row = $stmt->fetch();
+
+        return [
+            'name' => $row['name'] ?? null,
+            'phone' => $row['phone'] ?? null,
+        ];
     }
 
     private function buildRobokassaPaymentLink(array $order, Setting $settings): ?string
@@ -754,33 +770,36 @@ class Order extends Model
 
     private function notifyAdminNewOrder(int $orderId, array $cartItems, array $payload): void
     {
-        $status = $payload['status'] ?? 'new';
         $scheduled = $this->formatSchedule($payload['scheduled_date'] ?? null, $payload['scheduled_time'] ?? null);
         $number = $this->formatOrderNumber($orderId);
+        $customerName = $payload['customer_name'] ?? null;
+        $customerPhone = $payload['customer_phone'] ?? null;
+        $recipientName = $payload['recipient_name'] ?? null;
+        $recipientPhone = $payload['recipient_phone'] ?? null;
+
+        $displayName = $customerName ?: ($recipientName ?: 'Имя не указано');
+        $displayPhone = $customerPhone ?: ($recipientPhone ?: 'Телефон не указан');
 
         $lines = [];
-        $lines[] = sprintf('Заказ %s %s (дата и время получения товара):', $number, $scheduled);
+        $lines[] = trim(sprintf('%s %s %s %s', $number, $scheduled, $displayName, $displayPhone));
 
+        $itemSummaryParts = [];
         foreach ($cartItems as $item) {
             $title = $item['name'] ?? 'Товар';
             $qty = (int) ($item['qty'] ?? 0);
-            $lineTotal = (float) ($item['line_total'] ?? 0);
-            $lines[] = sprintf('%s, %d шт., %s', $title, $qty, $this->formatPrice($lineTotal));
+            $itemSummaryParts[] = sprintf('%s, %d шт.', $title, $qty);
         }
 
         $total = (float) ($payload['total_amount'] ?? 0);
-        $lines[] = 'Итого: ' . $this->formatPrice($total);
+        $itemsSummary = $itemSummaryParts ? implode('; ', $itemSummaryParts) : 'Товар';
+        $lines[] = sprintf('%s, %s', $itemsSummary, $this->formatPrice($total));
 
         if (($payload['delivery_type'] ?? 'pickup') === 'delivery') {
             $address = $this->buildAddressLine($payload['address_text'] ?? null, $payload['address'] ?? null);
-            $recipientName = $payload['recipient_name'] ?? null;
-            $recipientPhone = $payload['recipient_phone'] ?? null;
-            $lines[] = sprintf('[%s, %s, %s]', $address, $recipientName ?: 'Имя не указано', $recipientPhone ?: 'Телефон не указан');
+            $lines[] = sprintf('%s, %s, %s', $address, $recipientName ?: 'Имя не указано', $recipientPhone ?: 'Телефон не указан');
         } else {
             $lines[] = 'Самовывоз';
         }
-
-        $lines[] = 'Статус: ' . $this->mapOrderStatus($status);
 
         $this->sendTelegramMessage(self::TELEGRAM_ADMIN_CHAT_ID, implode("\n", $lines), [
             'message_thread_id' => self::TELEGRAM_ADMIN_THREAD_ORDERS,
