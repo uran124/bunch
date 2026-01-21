@@ -36,6 +36,14 @@
         <div class="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
             Артикул обновлён.
         </div>
+    <?php elseif (($status ?? '') === 'order_sent') : ?>
+        <div class="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+            Запрос в FrontPad отправлен, запись добавлена в лог.
+        </div>
+    <?php elseif (($status ?? '') === 'order_failed') : ?>
+        <div class="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
+            Не удалось отправить запрос в FrontPad. Проверьте лог для деталей.
+        </div>
     <?php endif; ?>
 
     <section class="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
@@ -100,7 +108,8 @@
                     <span class="font-semibold text-slate-700">https://app.frontpad.ru/api/index.php?new_order</span>.
                 </p>
             </div>
-            <form method="post" action="https://app.frontpad.ru/api/index.php?new_order" class="grid gap-3 text-sm">
+            <form method="post" action="/admin-services-frontpad" class="grid gap-3 text-sm">
+                <input type="hidden" name="action" value="send_order">
                 <input type="hidden" name="secret" value="<?php echo htmlspecialchars($settings['secret'] ?? '', ENT_QUOTES, 'UTF-8'); ?>">
                 <div class="space-y-2">
                     <div>

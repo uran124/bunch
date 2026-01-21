@@ -2217,6 +2217,44 @@ class AdminController extends Controller
             exit;
         }
 
+        if ($action === 'send_order') {
+            $defaults = $settings->getFrontpadDefaults();
+            $apiUrl = trim((string) $settings->get(
+                Setting::FRONTPAD_API_URL,
+                $defaults[Setting::FRONTPAD_API_URL] ?? ''
+            ));
+            $secret = trim((string) $settings->get(
+                Setting::FRONTPAD_SECRET,
+                $defaults[Setting::FRONTPAD_SECRET] ?? ''
+            ));
+            $payload = $_POST;
+            unset($payload['action']);
+
+            if (($payload['secret'] ?? '') === '' && $secret !== '') {
+                $payload['secret'] = $secret;
+            }
+
+            $response = $this->sendFrontpadNewOrder($apiUrl, $payload);
+            $logPayload = $payload;
+            if (isset($logPayload['secret'])) {
+                $logPayload['secret'] = '***';
+            }
+
+            $logger = new Logger('frontpad.log');
+            $logger->logEvent('frontpad.manual_order', [
+                'api_url' => $apiUrl !== '' ? $apiUrl : null,
+                'payload' => $logPayload,
+                'response_code' => $response['status'] ?? null,
+                'response_body' => $response['body'] ?? null,
+                'response_error' => $response['error'] ?? null,
+                'success' => $response['ok'] ?? false,
+            ]);
+
+            $status = ($response['ok'] ?? false) ? 'order_sent' : 'order_failed';
+            header('Location: /admin-services-frontpad?status=' . $status);
+            exit;
+        }
+
         $secret = trim((string) ($_POST['frontpad_secret'] ?? ''));
         $apiUrl = trim((string) ($_POST['frontpad_api_url'] ?? 'https://app.frontpad.ru/api/index.php'));
 
@@ -2239,6 +2277,42 @@ class AdminController extends Controller
         }
 
         return array_slice($lines, -$limit);
+    }
+
+    private function sendFrontpadNewOrder(string $apiUrl, array $payload): array
+    {
+        $target = trim($apiUrl);
+        if ($target === '') {
+            return [
+                'ok' => false,
+                'status' => null,
+                'body' => null,
+                'error' => 'missing_api_url',
+            ];
+        }
+
+        $endpoint = rtrim($target, '?') . '?new_order';
+
+        $ch = curl_init();
+        curl_setopt_array($ch, [
+            CURLOPT_URL => $endpoint,
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => http_build_query($payload),
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT => 15,
+        ]);
+
+        $body = curl_exec($ch);
+        $error = curl_error($ch);
+        $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        return [
+            'ok' => $body !== false && $error === '' && $status >= 200 && $status < 300,
+            'status' => $status !== 0 ? $status : null,
+            'body' => $body !== false ? $body : null,
+            'error' => $error !== '' ? $error : null,
+        ];
     }
 
     public function saveServiceTelegram(): void
