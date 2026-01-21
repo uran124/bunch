@@ -2297,7 +2297,7 @@ class AdminController extends Controller
         curl_setopt_array($ch, [
             CURLOPT_URL => $endpoint,
             CURLOPT_POST => true,
-            CURLOPT_POSTFIELDS => http_build_query($payload),
+            CURLOPT_POSTFIELDS => http_build_query($payload, '', '&', PHP_QUERY_RFC1738),
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_TIMEOUT => 15,
         ]);

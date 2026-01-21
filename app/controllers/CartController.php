@@ -316,6 +316,7 @@ class CartController extends Controller
                 'recipient_name' => $recipientName ?: null,
                 'recipient_phone' => $recipientPhone ?: null,
                 'comment' => $comment,
+                'payment_method' => $paymentMethod,
             ]);
 
             $cart->clear();
