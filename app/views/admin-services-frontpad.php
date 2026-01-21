@@ -102,24 +102,42 @@
             </div>
             <form method="post" action="https://app.frontpad.ru/api/index.php?new_order" class="grid gap-3 text-sm">
                 <input type="hidden" name="secret" value="<?php echo htmlspecialchars($settings['secret'] ?? '', ENT_QUOTES, 'UTF-8'); ?>">
-                <label class="space-y-1">
-                    <span class="text-xs uppercase tracking-[0.14em] text-slate-500">product</span>
-                    <input
-                        type="text"
-                        name="product"
-                        placeholder="Артикулы через запятую"
-                        class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-rose-500/30"
-                    >
-                </label>
-                <label class="space-y-1">
-                    <span class="text-xs uppercase tracking-[0.14em] text-slate-500">product_kol</span>
-                    <input
-                        type="text"
-                        name="product_kol"
-                        placeholder="Количество через запятую"
-                        class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-rose-500/30"
-                    >
-                </label>
+                <div class="space-y-2">
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Позиции заказа</p>
+                        <p class="text-xs text-slate-400">Используйте индексы product[n], product_kol[n], product_mod[n] как в примере FrontPad.</p>
+                    </div>
+                    <div class="grid gap-2 text-xs text-slate-500">
+                        <div class="grid grid-cols-[1.4fr_0.8fr_1fr] gap-2 font-semibold uppercase tracking-[0.12em] text-slate-400">
+                            <span>product[n]</span>
+                            <span>product_kol[n]</span>
+                            <span>product_mod[n]</span>
+                        </div>
+                        <?php for ($index = 0; $index < 4; $index++): ?>
+                            <div class="grid grid-cols-[1.4fr_0.8fr_1fr] gap-2">
+                                <input
+                                    type="text"
+                                    name="<?php echo 'product[' . $index . ']'; ?>"
+                                    placeholder="Артикул <?php echo $index; ?>"
+                                    class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-rose-500/30"
+                                >
+                                <input
+                                    type="text"
+                                    name="<?php echo 'product_kol[' . $index . ']'; ?>"
+                                    placeholder="Кол-во"
+                                    class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-rose-500/30"
+                                >
+                                <input
+                                    type="text"
+                                    name="<?php echo 'product_mod[' . $index . ']'; ?>"
+                                    placeholder="Родитель"
+                                    class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-rose-500/30"
+                                >
+                            </div>
+                        <?php endfor; ?>
+                    </div>
+                    <p class="text-xs text-slate-400">Для модификаторов укажите индекс родительского товара в product_mod.</p>
+                </div>
                 <label class="space-y-1">
                     <span class="text-xs uppercase tracking-[0.14em] text-slate-500">street</span>
                     <input
