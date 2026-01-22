@@ -2890,11 +2890,13 @@ function initAuctionModal() {
     const description = modal.querySelector('[data-auction-description]');
     const storePriceEl = modal.querySelector('[data-auction-store-price]');
     const blitzPriceEl = modal.querySelector('[data-auction-blitz-price]');
+    const priceBlock = modal.querySelector('[data-auction-price-block]');
     const countdownEl = modal.querySelector('[data-auction-countdown]');
     const photoEls = modal.querySelectorAll('[data-auction-photo]');
     const currentEl = modal.querySelector('[data-auction-current]');
     const stepEl = modal.querySelector('[data-auction-step]');
     const endsEl = modal.querySelector('[data-auction-ends]');
+    const actionsBlock = modal.querySelector('[data-auction-actions]');
     const historyToggle = modal.querySelector('[data-auction-history-toggle]');
     const historyList = modal.querySelector('[data-auction-history]');
     const amountInput = modal.querySelector('[data-auction-amount]');
@@ -3012,13 +3014,26 @@ function initAuctionModal() {
             });
         }
         updateCountdown(lot);
+        const isFinished = lot.status === 'finished';
+        if (priceBlock) {
+            priceBlock.classList.toggle('hidden', isFinished);
+        }
+        if (actionsBlock) {
+            actionsBlock.classList.toggle('hidden', isFinished);
+        }
+        if (countdownEl) {
+            countdownEl.classList.toggle('hidden', isFinished);
+        }
         if (countdownTimer) {
             clearInterval(countdownTimer);
         }
         countdownTimer = setInterval(() => updateCountdown(lot), 1000);
 
         if (blitzButton) {
-            if (lot.blitz_price) {
+            if (isFinished) {
+                blitzButton.disabled = true;
+                blitzButton.classList.add('opacity-60');
+            } else if (lot.blitz_price) {
                 blitzButton.disabled = false;
                 blitzButton.classList.remove('opacity-60');
                 blitzButton.textContent = `Выкупить за ${formatCurrency(lot.blitz_price)}`;
@@ -3027,6 +3042,14 @@ function initAuctionModal() {
                 blitzButton.classList.add('opacity-60');
                 blitzButton.textContent = 'Блиц не задан';
             }
+        }
+        if (bidButton) {
+            bidButton.disabled = isFinished;
+            bidButton.classList.toggle('opacity-60', isFinished);
+        }
+        if (amountInput) {
+            amountInput.disabled = isFinished;
+            amountInput.classList.toggle('opacity-60', isFinished);
         }
 
         renderBids(data.bids);
@@ -3152,14 +3175,40 @@ function initPromoActions() {
         if (!lot?.id) {
             return;
         }
+        const card = root.querySelector(`[data-auction-card][data-auction-id="${lot.id}"]`);
         const button = root.querySelector(`[data-auction-current-label][data-auction-id="${lot.id}"]`);
         const stepButton = root.querySelector(`[data-auction-step][data-auction-id="${lot.id}"]`);
-        if (!button) {
+        if (!button || !card) {
             return;
         }
+        const activeBlock = card.querySelector('[data-auction-active-block]');
+        const finishedBlock = card.querySelector('[data-auction-finished-block]');
+        const finishedPrice = card.querySelector('[data-auction-finished-price]');
+        const finishedBids = card.querySelector('[data-auction-finished-bids]');
+        const finishedWinner = card.querySelector('[data-auction-finished-winner]');
         const currentPriceEl = button.querySelector('[data-auction-current-price]');
         const bidCountEl = button.querySelector('[data-auction-bid-count]');
-        if (lot.status === 'finished' && lot.winner_last4 && lot.winning_amount !== null) {
+        const isFinished = lot.status === 'finished';
+        if (activeBlock && finishedBlock) {
+            activeBlock.classList.toggle('hidden', isFinished);
+            finishedBlock.classList.toggle('hidden', !isFinished);
+        }
+
+        if (isFinished) {
+            const winningAmount = lot.winning_amount ?? lot.current_price;
+            if (finishedPrice) {
+                finishedPrice.textContent = formatCurrency(winningAmount);
+            }
+            if (finishedBids) {
+                finishedBids.textContent = `Количество ставок: ${Number(lot.bid_count || 0)}`;
+            }
+            if (finishedWinner) {
+                const winnerLabel = lot.winner_last4 ? `…${lot.winner_last4}` : '—';
+                finishedWinner.textContent = `Победитель: ${winnerLabel}`;
+            }
+        }
+
+        if (isFinished && lot.winner_last4 && lot.winning_amount !== null) {
             if (currentPriceEl) {
                 currentPriceEl.textContent = `Победитель …${lot.winner_last4} ${formatCurrency(lot.winning_amount)}`;
             } else {
