@@ -11,6 +11,7 @@ $hasAnyPromos = $hasPromos || $hasAuctions || $hasLotteries;
 $isAuthenticated = $isAuthenticated ?? false;
 $botConnected = $botConnected ?? false;
 $botUsername = $botUsername ?? '';
+$currentUserId = class_exists('Auth') ? (int) Auth::userId() : 0;
 $botLink = $botUsername !== '' ? 'https://t.me/' . $botUsername . '?start=register' : '#';
 $promoEntries = [];
 
@@ -36,7 +37,7 @@ foreach ($lotteries as $lottery) {
 }
 ?>
 
-<section class="space-y-6" data-promo-root data-bot-connected="<?php echo $botConnected ? 'true' : 'false'; ?>" data-bot-link="<?php echo htmlspecialchars($botLink, ENT_QUOTES, 'UTF-8'); ?>" data-authenticated="<?php echo $isAuthenticated ? 'true' : 'false'; ?>">
+<section class="space-y-6" data-promo-root data-bot-connected="<?php echo $botConnected ? 'true' : 'false'; ?>" data-bot-link="<?php echo htmlspecialchars($botLink, ENT_QUOTES, 'UTF-8'); ?>" data-authenticated="<?php echo $isAuthenticated ? 'true' : 'false'; ?>" data-user-id="<?php echo $currentUserId; ?>">
     <header class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div class="space-y-1">
             <h1>
@@ -64,6 +65,9 @@ foreach ($lotteries as $lottery) {
                     $currentPrice = number_format((int) floor((float) $lot['current_price']), 0, '.', ' ') . ' ₽';
                     $blitzPrice = $lot['blitz_price'] !== null ? number_format((int) floor((float) $lot['blitz_price']), 0, '.', ' ') . ' ₽' : null;
                     $bidCount = (int) ($lot['bid_count'] ?? 0);
+                    $currentBidUserId = (int) ($lot['current_bid_user_id'] ?? 0);
+                    $isLeader = $currentUserId > 0 && $currentBidUserId > 0 && $currentBidUserId === $currentUserId;
+                    $showWinner = $lot['status'] === 'finished' && !empty($lot['winner_last4']) && $lot['winning_amount'] !== null;
                     $endsAtIso = null;
                     if (!empty($lot['ends_at'])) {
                         $endsAtIso = (new DateTime($lot['ends_at']))->format(DateTimeInterface::ATOM);
@@ -84,36 +88,63 @@ foreach ($lotteries as $lottery) {
                         <div class="flex flex-1 flex-col gap-2 p-4">
                             <button type="button" class="text-left" data-auction-open data-auction-id="<?php echo (int) $lot['id']; ?>">
                                 <h3 class="text-base font-semibold leading-tight text-slate-900"><?php echo htmlspecialchars($lot['title'], ENT_QUOTES, 'UTF-8'); ?></h3>
-                                <p class="text-sm text-slate-600"><?php echo htmlspecialchars($lot['description'] ?? '', ENT_QUOTES, 'UTF-8'); ?></p>
+                                <p class="text-xs text-slate-600"><?php echo htmlspecialchars($lot['description'] ?? '', ENT_QUOTES, 'UTF-8'); ?></p>
                             </button>
-                            <p class="text-sm font-semibold text-slate-700" data-countdown data-countdown-target="<?php echo htmlspecialchars((string) $endsAtIso, ENT_QUOTES, 'UTF-8'); ?>" data-countdown-finished-text="Аукцион завершился">
+                            <p class="text-center text-2xl font-semibold text-slate-900" data-countdown data-countdown-target="<?php echo htmlspecialchars((string) $endsAtIso, ENT_QUOTES, 'UTF-8'); ?>" data-countdown-finished-text="Аукцион завершился">
                                 <?php echo $lot['status'] === 'finished' ? 'Аукцион завершился' : 'До завершения —'; ?>
                             </p>
-                            <button type="button" class="text-left text-base font-semibold text-rose-700 transition hover:text-rose-800" data-auction-open data-auction-id="<?php echo (int) $lot['id']; ?>" data-auction-current-label>
-                                <?php if ($lot['status'] === 'finished' && !empty($lot['winner_last4']) && $lot['winning_amount'] !== null): ?>
-                                    Победитель …<?php echo htmlspecialchars($lot['winner_last4'], ENT_QUOTES, 'UTF-8'); ?> <?php echo number_format((int) floor((float) $lot['winning_amount']), 0, '.', ' '); ?> ₽
-                                <?php else: ?>
-                                    <?php echo htmlspecialchars($currentPrice, ENT_QUOTES, 'UTF-8'); ?> (<?php echo $bidCount; ?> ставок)
-                                <?php endif; ?>
-                            </button>
-                            <?php if ($blitzPrice): ?>
-                                <p class="text-sm text-slate-600">Блиц цена: <?php echo htmlspecialchars($blitzPrice, ENT_QUOTES, 'UTF-8'); ?></p>
-                            <?php endif; ?>
-                            <div class="mt-auto grid gap-2 sm:grid-cols-2">
-                                <button type="button" data-auction-step data-auction-id="<?php echo (int) $lot['id']; ?>" data-auction-step-value="<?php echo htmlspecialchars((string) ($lot['bid_step'] ?? 0), ENT_QUOTES, 'UTF-8'); ?>" data-requires-bot class="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-rose-200 hover:text-rose-700 disabled:cursor-not-allowed disabled:opacity-60" <?php echo $lot['status'] !== 'active' ? 'disabled' : ''; ?>>                                    + <?php echo number_format((float) $lot['bid_step'], 0, '.', ' '); ?> ₽
-                                </button>
-                                <button
-                                    type="button"
-                                    data-auction-blitz
-                                    data-auction-id="<?php echo (int) $lot['id']; ?>"
-                                    data-auction-title="<?php echo htmlspecialchars($lot['title'], ENT_QUOTES, 'UTF-8'); ?>"
-                                    data-auction-blitz-price="<?php echo htmlspecialchars((string) ($lot['blitz_price'] !== null ? (int) floor((float) $lot['blitz_price']) : ''), ENT_QUOTES, 'UTF-8'); ?>"
-                                    data-requires-bot
-                                    class="inline-flex items-center justify-center gap-2 rounded-2xl bg-rose-600 px-3 py-2 text-sm font-semibold text-white shadow-lg shadow-rose-200 transition hover:-translate-y-0.5 hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-60"
-                                    <?php echo $lot['status'] !== 'active' ? 'disabled' : ''; ?>
-                                >
-                                    Блиц
-                                </button>
+                            <div class="mt-auto grid gap-4 sm:grid-cols-2">
+                                <div class="flex flex-col gap-1">
+                                    <span class="text-xs font-semibold text-rose-600">Блиц цена:</span>
+                                    <span class="text-xl font-semibold text-rose-600">
+                                        <?php echo $blitzPrice ? htmlspecialchars($blitzPrice, ENT_QUOTES, 'UTF-8') : '—'; ?>
+                                    </span>
+                                    <button
+                                        type="button"
+                                        data-auction-blitz
+                                        data-auction-id="<?php echo (int) $lot['id']; ?>"
+                                        data-auction-title="<?php echo htmlspecialchars($lot['title'], ENT_QUOTES, 'UTF-8'); ?>"
+                                        data-auction-blitz-price="<?php echo htmlspecialchars((string) ($lot['blitz_price'] !== null ? (int) floor((float) $lot['blitz_price']) : ''), ENT_QUOTES, 'UTF-8'); ?>"
+                                        data-requires-bot
+                                        class="inline-flex items-center justify-center gap-2 rounded-2xl border border-rose-600 bg-white px-3 py-2 text-xs font-semibold text-rose-600 shadow-sm transition hover:-translate-y-0.5 hover:border-rose-700 hover:text-rose-700 disabled:cursor-not-allowed disabled:opacity-60"
+                                        <?php echo $lot['status'] !== 'active' || !$blitzPrice ? 'disabled' : ''; ?>
+                                    >
+                                        Блиц
+                                    </button>
+                                </div>
+                                <div class="flex flex-col gap-1">
+                                    <span class="text-xs font-semibold text-emerald-600">Текущая</span>
+                                    <button
+                                        type="button"
+                                        class="inline-flex items-center gap-2 text-left text-xl font-semibold text-emerald-600"
+                                        data-auction-open
+                                        data-auction-id="<?php echo (int) $lot['id']; ?>"
+                                        data-auction-current-label
+                                    >
+                                        <span data-auction-current-price>
+                                            <?php if ($showWinner): ?>
+                                                Победитель …<?php echo htmlspecialchars($lot['winner_last4'], ENT_QUOTES, 'UTF-8'); ?> <?php echo number_format((int) floor((float) $lot['winning_amount']), 0, '.', ' '); ?> ₽
+                                            <?php else: ?>
+                                                <?php echo htmlspecialchars($currentPrice, ENT_QUOTES, 'UTF-8'); ?>
+                                            <?php endif; ?>
+                                        </span>
+                                        <span class="inline-flex items-center gap-1" data-auction-bid-count<?php echo $showWinner ? ' hidden' : ''; ?>>
+                                            <span><?php echo $bidCount; ?></span>
+                                            <span class="material-symbols-rounded text-base" data-auction-bid-icon>gavel</span>
+                                        </span>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        data-auction-step
+                                        data-auction-id="<?php echo (int) $lot['id']; ?>"
+                                        data-auction-step-value="<?php echo htmlspecialchars((string) ($lot['bid_step'] ?? 0), ENT_QUOTES, 'UTF-8'); ?>"
+                                        data-requires-bot
+                                        class="inline-flex items-center justify-center gap-2 rounded-2xl border border-emerald-600 px-3 py-2 text-xs font-semibold shadow-sm transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60 <?php echo $isLeader ? 'bg-emerald-600 text-white' : 'bg-white text-emerald-600 hover:bg-emerald-50'; ?>"
+                                        <?php echo $lot['status'] !== 'active' ? 'disabled' : ''; ?>
+                                    >
+                                        + <?php echo number_format((float) $lot['bid_step'], 0, '.', ' '); ?> ₽
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </article>

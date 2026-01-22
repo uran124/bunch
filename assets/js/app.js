@@ -3153,15 +3153,43 @@ function initPromoActions() {
             return;
         }
         const button = root.querySelector(`[data-auction-current-label][data-auction-id="${lot.id}"]`);
+        const stepButton = root.querySelector(`[data-auction-step][data-auction-id="${lot.id}"]`);
         if (!button) {
             return;
         }
+        const currentPriceEl = button.querySelector('[data-auction-current-price]');
+        const bidCountEl = button.querySelector('[data-auction-bid-count]');
         if (lot.status === 'finished' && lot.winner_last4 && lot.winning_amount !== null) {
-            button.textContent = `Победитель …${lot.winner_last4} ${formatCurrency(lot.winning_amount)}`;
-            return;
+            if (currentPriceEl) {
+                currentPriceEl.textContent = `Победитель …${lot.winner_last4} ${formatCurrency(lot.winning_amount)}`;
+            } else {
+                button.textContent = `Победитель …${lot.winner_last4} ${formatCurrency(lot.winning_amount)}`;
+            }
+            bidCountEl?.setAttribute('hidden', 'hidden');
+        } else {
+            if (currentPriceEl) {
+                currentPriceEl.textContent = formatCurrency(lot.current_price);
+            } else {
+                button.textContent = formatCurrency(lot.current_price);
+            }
+            if (bidCountEl) {
+                bidCountEl.removeAttribute('hidden');
+                const countValue = bidCountEl.querySelector('span');
+                if (countValue) {
+                    countValue.textContent = String(Number(lot.bid_count || 0));
+                }
+            }
         }
-        const bidCount = Number(lot.bid_count || 0);
-        button.textContent = `${formatCurrency(lot.current_price)} (${bidCount} ставок)`;
+
+        if (stepButton) {
+            const currentUserId = Number(root.dataset.userId || 0);
+            const isLeader = currentUserId > 0 && Number(lot.current_bid_user_id || 0) === currentUserId;
+            stepButton.classList.toggle('bg-emerald-600', isLeader);
+            stepButton.classList.toggle('text-white', isLeader);
+            stepButton.classList.toggle('bg-white', !isLeader);
+            stepButton.classList.toggle('text-emerald-600', !isLeader);
+            stepButton.classList.toggle('hover:bg-emerald-50', !isLeader);
+        }
     };
 
     const refreshAuctionCard = async (lotId) => {
