@@ -247,10 +247,10 @@ foreach ($lotteries as $lottery) {
 </div>
 
 <div class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/40 p-4 backdrop-blur" data-auction-modal>
-    <div class="w-full max-w-3xl rounded-3xl bg-white p-4 shadow-2xl shadow-slate-500/20 sm:p-6">
+    <div class="flex w-full max-w-3xl max-h-[90vh] flex-col overflow-hidden rounded-3xl bg-white p-4 shadow-2xl shadow-slate-500/20 sm:p-6">
         <div class="flex items-start justify-between gap-4">
             <div class="space-y-1">
-                <h3 class="text-lg font-semibold text-slate-900">Карточка товара</h3>
+                <h3 class="text-lg font-semibold text-slate-900" data-auction-title></h3>
                 <p class="text-sm text-slate-500" data-auction-subtitle></p>
             </div>
             <button type="button" class="rounded-full border border-slate-200 bg-white p-2 text-slate-500 transition hover:border-rose-200 hover:text-rose-600" data-auction-close>
@@ -265,29 +265,28 @@ foreach ($lotteries as $lottery) {
                     </div>
                 <?php endfor; ?>
             </div>
-            <div class="text-lg font-semibold text-slate-900 sm:text-2xl" data-auction-title></div>
-            <p class="text-sm text-slate-600" data-auction-description></p>
-            <div class="grid gap-2 text-sm font-semibold text-slate-700 sm:grid-cols-3">
+            <p class="text-xs text-slate-600" data-auction-description></p>
+            <div class="grid grid-cols-3 gap-2 text-sm font-semibold text-slate-700">
                 <div class="rounded-2xl bg-slate-50 px-3 py-2 text-slate-500">
-                    В магазине
-                    <div class="text-base font-semibold text-slate-400 line-through" data-auction-store-price></div>
+                    <div class="text-xs font-semibold text-slate-400">В магазине</div>
+                    <div class="mt-1 text-center text-2xl font-semibold text-slate-400 line-through" data-auction-store-price></div>
                 </div>
                 <div class="rounded-2xl bg-rose-50 px-3 py-2 text-rose-600">
-                    Блиц-цена
-                    <div class="text-base font-semibold text-rose-600" data-auction-blitz-price></div>
+                    <div class="text-xs font-semibold text-rose-500">Блиц</div>
+                    <div class="mt-1 text-center text-2xl font-semibold text-rose-600" data-auction-blitz-price></div>
                 </div>
                 <div class="rounded-2xl bg-emerald-50 px-3 py-2 text-emerald-700">
-                    Текущая стоимость
-                    <div class="text-base font-semibold text-emerald-600" data-auction-current></div>
+                    <div class="text-xs font-semibold text-emerald-600">Текущая</div>
+                    <div class="mt-1 text-center text-2xl font-semibold text-emerald-600" data-auction-current></div>
                 </div>
             </div>
             <div class="text-center text-2xl font-bold text-slate-900 sm:text-3xl" data-auction-countdown></div>
-            <div class="grid gap-2 sm:grid-cols-[auto,1fr,auto] sm:items-center">
-                <button type="button" class="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-rose-200 hover:text-rose-700 disabled:cursor-not-allowed disabled:opacity-60" data-auction-blitz>
+            <div class="grid grid-cols-3 items-center gap-2">
+                <button type="button" class="inline-flex items-center justify-center gap-2 rounded-2xl border border-rose-600 bg-white px-3 py-2 text-xs font-semibold text-rose-600 shadow-sm transition hover:-translate-y-0.5 hover:border-rose-700 hover:text-rose-700 disabled:cursor-not-allowed disabled:opacity-60" data-auction-blitz>
                     Выкупить за —
                 </button>
-                <input type="number" step="1" min="1" class="w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-900" data-auction-amount>
-                <button type="button" class="inline-flex items-center justify-center rounded-2xl bg-rose-600 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white shadow-md shadow-rose-200 transition hover:-translate-y-0.5 hover:bg-rose-700" data-auction-bid>
+                <input type="number" step="1" min="1" class="w-full rounded-2xl border border-slate-200 px-3 py-2 text-center text-sm text-slate-900" data-auction-amount>
+                <button type="button" class="inline-flex items-center justify-center rounded-2xl bg-rose-600 px-4 py-2 text-xs font-semibold text-white shadow-md shadow-rose-200 transition hover:-translate-y-0.5 hover:bg-rose-700" data-auction-bid>
                     Сделать ставку
                 </button>
             </div>
@@ -296,7 +295,7 @@ foreach ($lotteries as $lottery) {
                     <span>История ставок</span>
                     <span class="material-symbols-rounded text-base">expand_more</span>
                 </button>
-                <div class="hidden space-y-2" data-auction-history></div>
+                <div class="hidden max-h-48 space-y-2 overflow-y-auto pr-1" data-auction-history></div>
             </div>
         </div>
         <div class="mt-4 flex justify-end border-t border-slate-100 pt-4">
