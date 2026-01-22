@@ -21,9 +21,7 @@ class SupportController extends Controller
     {
         header('Content-Type: application/json');
 
-        $identity = $this->resolveSupportIdentity();
-        $chatId = $identity['chatId'];
-        $label = $identity['label'];
+        $userId = Auth::userId();
 
         $payload = json_decode(file_get_contents('php://input'), true) ?: $_POST;
         $message = trim((string) ($payload['message'] ?? ''));
@@ -33,6 +31,24 @@ class SupportController extends Controller
             return;
         }
 
+        if ($userId) {
+            $identity = $this->resolveSupportIdentity();
+        } else {
+            $guestName = trim((string) ($payload['guest_name'] ?? ''));
+            $guestPhone = trim((string) ($payload['guest_phone'] ?? ''));
+            if ($guestName === '' || $guestPhone === '') {
+                http_response_code(422);
+                echo json_encode(['error' => 'Укажите имя и телефон']);
+                return;
+            }
+
+            Session::set('support_guest_name', $guestName);
+            Session::set('support_guest_phone', $guestPhone);
+            $identity = $this->resolveSupportIdentity();
+        }
+
+        $chatId = $identity['chatId'];
+        $label = $identity['label'];
         $prefix = $label . ' ';
 
         $entry = $this->supportChat->appendMessage($chatId, 'user', $message);
@@ -82,9 +98,18 @@ class SupportController extends Controller
         }
 
         $shortId = substr($guestId, 0, 6);
+        $guestName = trim((string) Session::get('support_guest_name'));
+        $guestPhone = trim((string) Session::get('support_guest_phone'));
+        $label = 'Гость #' . $shortId;
+        if ($guestName !== '') {
+            $label = 'Гость ' . $guestName;
+        }
+        if ($guestPhone !== '') {
+            $label .= ": {$guestPhone}";
+        }
         return [
             'chatId' => 'guest-' . $guestId,
-            'label' => 'Гость #' . $shortId,
+            'label' => $label,
         ];
     }
 
