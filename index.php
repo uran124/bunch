@@ -281,6 +281,8 @@ $publicPages = [
     'cart-add',
     'cart-update',
     'cart-remove',
+    'support-messages',
+    'support-message',
 ];
 
 if (!Auth::check() && !in_array($page, $publicPages, true)) {
