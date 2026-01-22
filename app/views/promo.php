@@ -55,7 +55,8 @@ foreach ($lotteries as $lottery) {
     <?php endif; ?>
 
     <?php if ($hasAnyPromos): ?>
-        <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" data-promo-items>
+        <div class="relative flex min-h-[calc(100svh-10rem)] items-center sm:min-h-0" data-promo-items>
+            <div class="flex snap-x gap-4 overflow-x-auto px-0 pb-6 pt-1 sm:pb-10 md:px-1" aria-label="Лента акций и предложений">
             <?php foreach ($promoEntries as $entry): ?>
                 <?php if ($entry['type'] === 'auction'): ?>
                     <?php
@@ -68,25 +69,27 @@ foreach ($lotteries as $lottery) {
                         $endsAtIso = (new DateTime($lot['ends_at']))->format(DateTimeInterface::ATOM);
                     }
                     ?>
-                    <article class="flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm" data-promo-item data-promo-type="auction">
+                    <article class="flex snap-center shrink-0 w-[82%] max-w-sm flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm md:w-[360px]" data-promo-item data-promo-type="auction">
                         <?php if (!empty($lot['photo'])): ?>
-                            <div class="relative">
+                            <button type="button" class="relative block w-full text-left" data-auction-open data-auction-id="<?php echo (int) $lot['id']; ?>">
                                 <img src="<?php echo htmlspecialchars($lot['photo'], ENT_QUOTES, 'UTF-8'); ?>" alt="<?php echo htmlspecialchars($lot['title'], ENT_QUOTES, 'UTF-8'); ?>" class="aspect-square w-full object-cover">
                                 <span class="absolute right-3 top-3 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-700 shadow">Аукцион</span>
-                            </div>
+                            </button>
                         <?php else: ?>
-                            <div class="relative flex aspect-square w-full items-center justify-center bg-slate-100 text-slate-400">
+                            <button type="button" class="relative flex aspect-square w-full items-center justify-center bg-slate-100 text-slate-400" data-auction-open data-auction-id="<?php echo (int) $lot['id']; ?>">
                                 <span class="material-symbols-rounded text-3xl">image</span>
                                 <span class="absolute right-3 top-3 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-700 shadow">Аукцион</span>
-                            </div>
+                            </button>
                         <?php endif; ?>
                         <div class="flex flex-1 flex-col gap-2 p-4">
-                            <h3 class="text-base font-semibold leading-tight text-slate-900"><?php echo htmlspecialchars($lot['title'], ENT_QUOTES, 'UTF-8'); ?></h3>
-                            <p class="text-sm text-slate-600"><?php echo htmlspecialchars($lot['description'] ?? '', ENT_QUOTES, 'UTF-8'); ?></p>
+                            <button type="button" class="text-left" data-auction-open data-auction-id="<?php echo (int) $lot['id']; ?>">
+                                <h3 class="text-base font-semibold leading-tight text-slate-900"><?php echo htmlspecialchars($lot['title'], ENT_QUOTES, 'UTF-8'); ?></h3>
+                                <p class="text-sm text-slate-600"><?php echo htmlspecialchars($lot['description'] ?? '', ENT_QUOTES, 'UTF-8'); ?></p>
+                            </button>
                             <p class="text-sm font-semibold text-slate-700" data-countdown data-countdown-target="<?php echo htmlspecialchars((string) $endsAtIso, ENT_QUOTES, 'UTF-8'); ?>" data-countdown-finished-text="Аукцион завершился">
                                 <?php echo $lot['status'] === 'finished' ? 'Аукцион завершился' : 'До завершения —'; ?>
                             </p>
-                            <button type="button" class="text-left text-base font-semibold text-rose-700 transition hover:text-rose-800" data-auction-open data-auction-id="<?php echo (int) $lot['id']; ?>">
+                            <button type="button" class="text-left text-base font-semibold text-rose-700 transition hover:text-rose-800" data-auction-open data-auction-id="<?php echo (int) $lot['id']; ?>" data-auction-current-label>
                                 <?php if ($lot['status'] === 'finished' && !empty($lot['winner_last4']) && $lot['winning_amount'] !== null): ?>
                                     Победитель …<?php echo htmlspecialchars($lot['winner_last4'], ENT_QUOTES, 'UTF-8'); ?> <?php echo number_format((int) floor((float) $lot['winning_amount']), 0, '.', ' '); ?> ₽
                                 <?php else: ?>
@@ -97,7 +100,7 @@ foreach ($lotteries as $lottery) {
                                 <p class="text-sm text-slate-600">Блиц цена: <?php echo htmlspecialchars($blitzPrice, ENT_QUOTES, 'UTF-8'); ?></p>
                             <?php endif; ?>
                             <div class="mt-auto grid gap-2 sm:grid-cols-2">
- <button type="button" data-auction-step data-auction-id="<?php echo (int) $lot['id']; ?>" data-auction-step-value="<?php echo htmlspecialchars((string) ($lot['bid_step'] ?? 0), ENT_QUOTES, 'UTF-8'); ?>" data-requires-bot class="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-rose-200 hover:text-rose-700 disabled:cursor-not-allowed disabled:opacity-60" <?php echo $lot['status'] !== 'active' ? 'disabled' : ''; ?>>                                    + <?php echo number_format((float) $lot['bid_step'], 0, '.', ' '); ?> ₽
+                                <button type="button" data-auction-step data-auction-id="<?php echo (int) $lot['id']; ?>" data-auction-step-value="<?php echo htmlspecialchars((string) ($lot['bid_step'] ?? 0), ENT_QUOTES, 'UTF-8'); ?>" data-requires-bot class="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-rose-200 hover:text-rose-700 disabled:cursor-not-allowed disabled:opacity-60" <?php echo $lot['status'] !== 'active' ? 'disabled' : ''; ?>>                                    + <?php echo number_format((float) $lot['bid_step'], 0, '.', ' '); ?> ₽
                                 </button>
                                 <button
                                     type="button"
@@ -120,7 +123,7 @@ foreach ($lotteries as $lottery) {
                     $productId = (int) ($item['product_id'] ?? 0);
                     $endsAtIso = $item['ends_at_iso'] ?? null;
                     ?>
-                    <article class="flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm" data-promo-item data-promo-type="promo" data-product-card data-product-id="<?php echo $productId; ?>">
+                    <article class="flex snap-center shrink-0 w-[82%] max-w-sm flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm md:w-[360px]" data-promo-item data-promo-type="promo" data-product-card data-product-id="<?php echo $productId; ?>">
                         <?php if (!empty($item['photo'])): ?>
                             <div class="relative">
                                 <img src="<?php echo htmlspecialchars($item['photo'], ENT_QUOTES, 'UTF-8'); ?>" alt="<?php echo htmlspecialchars($item['title'], ENT_QUOTES, 'UTF-8'); ?>" class="aspect-square w-full object-cover">
@@ -160,7 +163,7 @@ foreach ($lotteries as $lottery) {
                     $ticketLabel = $ticketPrice > 0 ? number_format($ticketPrice, 0, '.', ' ') . ' ₽' : 'Бесплатно';
                     $endsAtIso = $lottery['draw_at_iso'] ?? null;
                     ?>
-                    <article class="flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm" data-promo-item data-promo-type="lottery">
+                    <article class="flex snap-center shrink-0 w-[82%] max-w-sm flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm md:w-[360px]" data-promo-item data-promo-type="lottery">
                         <?php if (!empty($lottery['photo'])): ?>
                             <div class="relative">
                                 <img src="<?php echo htmlspecialchars($lottery['photo'], ENT_QUOTES, 'UTF-8'); ?>" alt="<?php echo htmlspecialchars($lottery['title'], ENT_QUOTES, 'UTF-8'); ?>" class="aspect-square w-full object-cover">
@@ -192,6 +195,7 @@ foreach ($lotteries as $lottery) {
                     </article>
                 <?php endif; ?>
             <?php endforeach; ?>
+            </div>
         </div>
     <?php endif; ?>
 </section>
@@ -243,39 +247,60 @@ foreach ($lotteries as $lottery) {
 </div>
 
 <div class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/40 p-4 backdrop-blur" data-auction-modal>
-    <div class="w-full max-w-xl rounded-2xl bg-white p-4 shadow-2xl shadow-slate-500/20">
-        <div class="flex items-start justify-between">
+    <div class="w-full max-w-3xl rounded-3xl bg-white p-4 shadow-2xl shadow-slate-500/20 sm:p-6">
+        <div class="flex items-start justify-between gap-4">
             <div class="space-y-1">
-                <h3 class="text-lg font-semibold text-slate-900" data-auction-title>Аукцион</h3>
+                <h3 class="text-lg font-semibold text-slate-900">Карточка товара</h3>
                 <p class="text-sm text-slate-500" data-auction-subtitle></p>
             </div>
             <button type="button" class="rounded-full border border-slate-200 bg-white p-2 text-slate-500 transition hover:border-rose-200 hover:text-rose-600" data-auction-close>
                 <span class="material-symbols-rounded text-base">close</span>
             </button>
         </div>
-        <div class="mt-4 space-y-3">
-            <div class="flex flex-wrap items-center gap-4 text-sm text-slate-600">
-                <span>Текущая цена: <strong class="text-slate-900" data-auction-current></strong></span>
-                <span>Шаг: <strong class="text-slate-900" data-auction-step></strong></span>
+        <div class="mt-4 space-y-4">
+            <div class="grid grid-cols-3 gap-2">
+                <?php for ($i = 0; $i < 3; $i++): ?>
+                    <div class="overflow-hidden rounded-2xl border border-slate-100 bg-slate-50">
+                        <img class="aspect-square w-full object-cover" src="/assets/images/products/bouquet.svg" alt="" data-auction-photo data-photo-index="<?php echo $i; ?>">
+                    </div>
+                <?php endfor; ?>
             </div>
-            <div class="text-sm text-slate-500">Окончание: <span data-auction-ends></span></div>
-            <div class="space-y-2">
-                <button type="button" class="hidden w-full items-center justify-between rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700 transition hover:border-emerald-300 hover:text-emerald-800" data-auction-history-toggle></button>
-                <div class="space-y-2" data-auction-bids></div>
-                <div class="hidden space-y-2" data-auction-history></div>
+            <div class="text-lg font-semibold text-slate-900 sm:text-2xl" data-auction-title></div>
+            <p class="text-sm text-slate-600" data-auction-description></p>
+            <div class="grid gap-2 text-sm font-semibold text-slate-700 sm:grid-cols-3">
+                <div class="rounded-2xl bg-slate-50 px-3 py-2 text-slate-500">
+                    В магазине
+                    <div class="text-base font-semibold text-slate-400 line-through" data-auction-store-price></div>
+                </div>
+                <div class="rounded-2xl bg-rose-50 px-3 py-2 text-rose-600">
+                    Блиц-цена
+                    <div class="text-base font-semibold text-rose-600" data-auction-blitz-price></div>
+                </div>
+                <div class="rounded-2xl bg-emerald-50 px-3 py-2 text-emerald-700">
+                    Текущая стоимость
+                    <div class="text-base font-semibold text-emerald-600" data-auction-current></div>
+                </div>
             </div>
-        </div>
-        <div class="mt-4 flex flex-col gap-2 border-t border-slate-100 pt-4">
-            <div class="flex items-center gap-2">
-                <input type="number" step="1" min="1" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-900" data-auction-amount>
-                <button type="button" class="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white shadow-md shadow-rose-200 transition hover:-translate-y-0.5 hover:bg-rose-700" data-auction-bid>
+            <div class="text-center text-2xl font-bold text-slate-900 sm:text-3xl" data-auction-countdown></div>
+            <div class="grid gap-2 sm:grid-cols-[auto,1fr,auto] sm:items-center">
+                <button type="button" class="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-rose-200 hover:text-rose-700 disabled:cursor-not-allowed disabled:opacity-60" data-auction-blitz>
+                    Выкупить за —
+                </button>
+                <input type="number" step="1" min="1" class="w-full rounded-2xl border border-slate-200 px-3 py-2 text-sm text-slate-900" data-auction-amount>
+                <button type="button" class="inline-flex items-center justify-center rounded-2xl bg-rose-600 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white shadow-md shadow-rose-200 transition hover:-translate-y-0.5 hover:bg-rose-700" data-auction-bid>
                     Сделать ставку
                 </button>
             </div>
-            <button type="button" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-rose-200 hover:text-rose-700" data-auction-blitz>
-                Блиц
-            </button>
-            <button type="button" class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-rose-200 hover:text-rose-700" data-auction-close>
+            <div class="space-y-2">
+                <button type="button" class="flex w-full items-center justify-between rounded-2xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-rose-200 hover:text-rose-700" data-auction-history-toggle>
+                    <span>История ставок</span>
+                    <span class="material-symbols-rounded text-base">expand_more</span>
+                </button>
+                <div class="hidden space-y-2" data-auction-history></div>
+            </div>
+        </div>
+        <div class="mt-4 flex justify-end border-t border-slate-100 pt-4">
+            <button type="button" class="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-rose-200 hover:text-rose-700" data-auction-close>
                 Закрыть
             </button>
         </div>

@@ -2887,10 +2887,14 @@ function initAuctionModal() {
     const guardAuth = getPromoAuthGuard();
     const title = modal.querySelector('[data-auction-title]');
     const subtitle = modal.querySelector('[data-auction-subtitle]');
+    const description = modal.querySelector('[data-auction-description]');
+    const storePriceEl = modal.querySelector('[data-auction-store-price]');
+    const blitzPriceEl = modal.querySelector('[data-auction-blitz-price]');
+    const countdownEl = modal.querySelector('[data-auction-countdown]');
+    const photoEls = modal.querySelectorAll('[data-auction-photo]');
     const currentEl = modal.querySelector('[data-auction-current]');
     const stepEl = modal.querySelector('[data-auction-step]');
     const endsEl = modal.querySelector('[data-auction-ends]');
-    const bidsEl = modal.querySelector('[data-auction-bids]');
     const historyToggle = modal.querySelector('[data-auction-history-toggle]');
     const historyList = modal.querySelector('[data-auction-history]');
     const amountInput = modal.querySelector('[data-auction-amount]');
@@ -2903,12 +2907,17 @@ function initAuctionModal() {
     let historyVisible = false;
     let historyLoaded = false;
     let historyBids = [];
+    let countdownTimer = null;
     const guardBot = getPromoBotGuard();
     const confirmBlitz = getAuctionBlitzConfirm();
 
     const closeModal = () => {
         modal.classList.add('hidden');
         modal.classList.remove('flex');
+        if (countdownTimer) {
+            clearInterval(countdownTimer);
+            countdownTimer = null;
+        }
         activeLotId = null;
         activeLot = null;
         historyVisible = false;
@@ -2935,32 +2944,46 @@ function initAuctionModal() {
         });
     };
 
-    const renderBids = (bids, lot) => {
-        bidsEl.classList.remove('hidden');
-        historyList?.classList.add('hidden');
-        if (historyToggle) {
-            historyToggle.classList.add('hidden');
-            historyToggle.innerHTML = '';
+    const renderBids = (bids) => {
+        if (!historyList || !historyToggle) return;
+        if (historyVisible) {
+            historyList.classList.remove('hidden');
+            renderBidRows(historyList, bids);
+        } else {
+            historyList.classList.add('hidden');
         }
+    };
 
-        if (lot?.status === 'finished') {
-            bidsEl.classList.add('hidden');
-            if (historyToggle) {
-                const winnerText =
-                    lot?.winner_last4 && lot?.winning_amount
-                        ? `Победитель ……${lot.winner_last4} ${formatCurrency(lot.winning_amount)}`
-                        : 'Аукцион завершён';
-                historyToggle.classList.remove('hidden');
-                historyToggle.innerHTML = `<span>${winnerText}</span><span>${historyVisible ? 'Скрыть историю' : 'История ставок'}</span>`;
-            }
-            if (historyVisible && historyList) {
-                historyList.classList.remove('hidden');
-                renderBidRows(historyList, historyBids);
-            }
+    const parseLotDate = (value) => {
+        if (!value) return null;
+        const normalized = value.includes('T') ? value : value.replace(' ', 'T');
+        const date = new Date(normalized);
+        return Number.isNaN(date.getTime()) ? null : date;
+    };
+
+    const updateCountdown = (lot) => {
+        if (!countdownEl) return;
+        if (!lot || lot.status === 'finished') {
+            countdownEl.textContent = 'Аукцион завершился';
             return;
         }
-
-        renderBidRows(bidsEl, bids);
+        const endsAt = parseLotDate(lot.ends_at);
+        if (!endsAt) {
+            countdownEl.textContent = '—';
+            return;
+        }
+        const now = new Date();
+        const diff = endsAt.getTime() - now.getTime();
+        if (diff <= 0) {
+            countdownEl.textContent = 'Аукцион завершился';
+            return;
+        }
+        const totalSeconds = Math.floor(diff / 1000);
+        const days = Math.floor(totalSeconds / 86400);
+        const hours = Math.floor((totalSeconds % 86400) / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = totalSeconds % 60;
+        countdownEl.textContent = `${days}д ${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
     };
 
     const loadLot = async (lotId, options = {}) => {
@@ -2972,37 +2995,54 @@ function initAuctionModal() {
             historyBids = data.bids;
         }
         if (title) title.textContent = lot.title;
-        if (subtitle) subtitle.textContent = lot.status === 'finished' ? 'Аукцион завершён.' : 'Ставка обновляется при каждом действии.';
+        if (subtitle) subtitle.textContent = lot.status === 'finished' ? 'Аукцион завершён.' : '';
+        if (description) description.textContent = lot.description || '';
+        if (storePriceEl) storePriceEl.textContent = formatCurrency(lot.store_price);
         if (currentEl) currentEl.textContent = formatCurrency(lot.current_price);
         if (stepEl) stepEl.textContent = formatCurrency(lot.bid_step);
         if (endsEl) endsEl.textContent = lot.ends_at || '—';
+        if (blitzPriceEl) blitzPriceEl.textContent = lot.blitz_price ? formatCurrency(lot.blitz_price) : '—';
         if (amountInput) amountInput.value = lot.min_bid;
+        if (photoEls.length) {
+            const fallback = '/assets/images/products/bouquet.svg';
+            const imageSrc = lot.image || fallback;
+            photoEls.forEach((photo) => {
+                photo.src = imageSrc;
+                photo.alt = lot.title || 'Лот';
+            });
+        }
+        updateCountdown(lot);
+        if (countdownTimer) {
+            clearInterval(countdownTimer);
+        }
+        countdownTimer = setInterval(() => updateCountdown(lot), 1000);
 
         if (blitzButton) {
             if (lot.blitz_price) {
                 blitzButton.disabled = false;
                 blitzButton.classList.remove('opacity-60');
-                blitzButton.innerHTML = `<span class="material-symbols-rounded text-base">bolt</span>Выкупить за ${formatCurrency(lot.blitz_price)}`;
+                blitzButton.textContent = `Выкупить за ${formatCurrency(lot.blitz_price)}`;
             } else {
                 blitzButton.disabled = true;
                 blitzButton.classList.add('opacity-60');
-                blitzButton.innerHTML = '<span class="material-symbols-rounded text-base">bolt</span>Блиц не задан';
+                blitzButton.textContent = 'Блиц не задан';
             }
         }
 
-        renderBids(data.bids, lot);
+        renderBids(data.bids);
     };
 
     historyToggle?.addEventListener('click', async () => {
         if (!activeLotId) return;
         try {
             historyVisible = !historyVisible;
+            historyToggle.setAttribute('aria-expanded', historyVisible ? 'true' : 'false');
             if (!historyLoaded) {
                 historyLoaded = true;
                 historyVisible = true;
                 await loadLot(activeLotId, { history: true });
             } else {
-                renderBids(historyBids, activeLot);
+                renderBids(historyBids);
             }
         } catch (error) {
             alert(error.message);
@@ -3064,6 +3104,7 @@ function initAuctionModal() {
                 await loadLot(lotId);
                 modal.classList.remove('hidden');
                 modal.classList.add('flex');
+                historyToggle?.setAttribute('aria-expanded', 'false');
             } catch (error) {
                 alert(error.message);
             }
@@ -3111,7 +3152,7 @@ function initPromoActions() {
         if (!lot?.id) {
             return;
         }
-        const button = root.querySelector(`[data-auction-open][data-auction-id="${lot.id}"]`);
+        const button = root.querySelector(`[data-auction-current-label][data-auction-id="${lot.id}"]`);
         if (!button) {
             return;
         }
