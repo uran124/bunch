@@ -95,7 +95,7 @@
                         data-price-tiers='<?php echo $priceTiersJson; ?>'
                         data-max-qty="<?php echo $maxQty; ?>"
                         data-available-qty="<?php echo $availableQty; ?>"
-                        class="snap-center shrink-0 w-[82%] max-w-xl rounded-3xl border border-slate-200 bg-white shadow-xl shadow-slate-200/70 transition md:w-[396px]"
+                        class="snap-center shrink-0 w-[82%] max-w-xl rounded-3xl border border-slate-200 bg-white shadow-xl shadow-slate-200/70 transition md:w-[360px] lg:w-[340px] xl:w-[320px]"
                     >
                         <div class="relative">
                             <?php if (!empty($product['photo_url'])): ?>
@@ -115,16 +115,16 @@
                             <?php endif; ?>
                         </div>
 
-                        <div class="space-y-0 px-2 pb-4 pt-2 md:space-y-6 md:px-5 md:pt-5">
-                            <div class="space-y-1 md:space-y-2">
+                        <div class="space-y-0 px-2 pb-4 pt-2 md:space-y-6 md:px-5 md:pt-5 lg:px-4 lg:pt-4">
+                            <div class="space-y-1 md:space-y-2 lg:space-y-1.5">
                                 <button type="button" class="text-left" data-product-modal-trigger>
-                                    <h2 class="text-base font-semibold leading-snug text-slate-900 md:text-2xl"><?php echo htmlspecialchars($displayName, ENT_QUOTES, 'UTF-8'); ?></h2>
+                                    <h2 class="text-base font-semibold leading-snug text-slate-900 md:text-2xl lg:text-xl"><?php echo htmlspecialchars($displayName, ENT_QUOTES, 'UTF-8'); ?></h2>
                                 </button>
-                                <p class="text-[11px] font-semibold text-slate-500 md:text-xs"><?php echo htmlspecialchars($salesComment, ENT_QUOTES, 'UTF-8'); ?></p>
+                                <p class="text-[11px] font-semibold text-slate-500 md:text-xs lg:text-[11px]"><?php echo htmlspecialchars($salesComment, ENT_QUOTES, 'UTF-8'); ?></p>
                             </div>
 
                             <div class="space-y-2 rounded-2xl bg-slate-50 p-2 md:space-y-3 md:p-4">
-                                <div class="flex items-center justify-between text-[11px] font-semibold text-slate-700 md:text-sm">
+                                <div class="flex items-center justify-between text-[11px] font-semibold text-slate-700 md:text-sm lg:text-xs">
                                     <span class="inline-flex items-center gap-2">
                                         <span class="material-symbols-rounded text-base">stacked_bar_chart</span>
                                         <?php echo htmlspecialchars($qtyLabel, ENT_QUOTES, 'UTF-8'); ?>
@@ -137,7 +137,7 @@
                                         value="1"
                                         inputmode="numeric"
                                         data-qty-value
-                                        class="w-16 rounded-lg bg-white px-2 py-1.5 text-base font-bold text-slate-900 shadow-inner shadow-rose-100/60 text-center md:text-xl"
+                                        class="w-16 rounded-lg bg-white px-2 py-1.5 text-base font-bold text-slate-900 shadow-inner shadow-rose-100/60 text-center md:text-xl lg:text-lg"
                                     >
                                 </div>
                                 <input
@@ -180,16 +180,16 @@
                                                     <?php
                                                     $priceDelta = (int) floor((float) $value['price_delta']);
                                                     ?>
-                                                    <button
+                                            <button
                                                         type="button"
                                                         data-attr-option
                                                         data-attr-id="<?php echo (int) $attribute['id']; ?>"
                                                         data-value-id="<?php echo (int) $value['id']; ?>"
                                                         data-price-delta="<?php echo $priceDelta; ?>"
-                                                        class="inline-flex items-center gap-2 whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600 md:text-sm"
+                                                        class="inline-flex items-center gap-2 whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600 md:text-sm lg:text-xs"
                                                     aria-label="<?php echo htmlspecialchars($attribute['name'] . ': ' . $value['value'], ENT_QUOTES, 'UTF-8'); ?>"
                                                 >
-                                                        <span class="text-xs font-semibold text-slate-800 md:text-sm"><?php echo htmlspecialchars($value['value'], ENT_QUOTES, 'UTF-8'); ?></span>
+                                                        <span class="text-xs font-semibold text-slate-800 md:text-sm lg:text-xs"><?php echo htmlspecialchars($value['value'], ENT_QUOTES, 'UTF-8'); ?></span>
                                                         <?php if ($priceDelta !== 0): ?>
                                                             <span class="text-xs font-semibold text-rose-600">+<?php echo $priceDelta; ?> ₽</span>
                                                         <?php endif; ?>
@@ -209,10 +209,10 @@
                                 </button>
                             </div>
 
-                            <div class="hidden flex-wrap items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-inner shadow-rose-100/60 md:flex">
+                            <div class="hidden flex-wrap items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-inner shadow-rose-100/60 md:flex lg:p-3">
                                 <span class="text-sm font-semibold text-slate-400 line-through" data-base-price-total>—</span>
-                                <span class="flex-1 text-center text-2xl font-bold text-rose-600" data-actual-price>—</span>
-                                <button type="button" data-add-to-cart class="inline-flex items-center justify-center gap-2 rounded-2xl bg-rose-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-rose-200 transition hover:-translate-y-0.5 hover:bg-rose-700">
+                                <span class="flex-1 text-center text-2xl font-bold text-rose-600 lg:text-xl" data-actual-price>—</span>
+                                <button type="button" data-add-to-cart class="inline-flex items-center justify-center gap-2 rounded-2xl bg-rose-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-rose-200 transition hover:-translate-y-0.5 hover:bg-rose-700 lg:px-3.5 lg:py-2.5 lg:text-xs">
                                     <span class="material-symbols-rounded text-base">shopping_cart</span>
                                     <span class="hidden sm:inline">В корзину</span>
                                 </button>
