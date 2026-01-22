@@ -91,6 +91,7 @@ SQL;
             }
             $currentBid = $bidModel->getCurrentBid((int) $row['id']);
             $currentPrice = $currentBid ? (int) floor((float) $currentBid['amount']) : (int) floor((float) $row['start_price']);
+            $currentBidUserId = $currentBid ? (int) $currentBid['user_id'] : null;
 
             return [
                 'id' => (int) $row['id'],
@@ -130,6 +131,8 @@ SQL;
         $bidModel = new AuctionBid();
         $currentBid = $bidModel->getCurrentBid($lotId);
         $currentPrice = $currentBid ? (int) floor((float) $currentBid['amount']) : (int) floor((float) $row['start_price']);
+        $currentBidUserId = $currentBid ? (int) $currentBid['user_id'] : null;
+        $bidCount = $bidModel->countLotBids($lotId);
 
         return [
             'id' => (int) $row['id'],
@@ -224,6 +227,7 @@ SQL;
             }
             $currentBid = $bidModel->getCurrentBid((int) $row['id']);
             $currentPrice = $currentBid ? (int) floor((float) $currentBid['amount']) : (int) floor((float) $row['start_price']);
+            $currentBidUserId = $currentBid ? (int) $currentBid['user_id'] : null;
             $statusLabel = $this->formatStatus($row);
             $timeLabel = $this->formatTimeLabel($row);
             $bidCount = $bidModel->countLotBids((int) $row['id']);
@@ -238,6 +242,7 @@ SQL;
                 'bid_step' => (int) floor((float) $row['bid_step']),
                 'blitz_price' => $row['blitz_price'] !== null ? (int) floor((float) $row['blitz_price']) : null,
                 'current_price' => $currentPrice,
+                'current_bid_user_id' => $currentBidUserId,
                 'status_label' => $statusLabel,
                 'time_label' => $timeLabel,
                 'status' => $row['status'],
@@ -283,6 +288,8 @@ SQL;
         $bidModel = new AuctionBid();
         $currentBid = $bidModel->getCurrentBid($lotId);
         $currentPrice = $currentBid ? (int) floor((float) $currentBid['amount']) : (int) floor((float) $row['start_price']);
+        $currentBidUserId = $currentBid ? (int) $currentBid['user_id'] : null;
+        $bidCount = $bidModel->countLotBids($lotId);
 
         return [
             'id' => (int) $row['id'],
@@ -297,6 +304,8 @@ SQL;
             'starts_at' => $row['starts_at'],
             'ends_at' => $row['ends_at'],
             'current_price' => $currentPrice,
+            'current_bid_user_id' => $currentBidUserId,
+            'bid_count' => $bidCount,
             'min_bid' => $currentBid ? $currentPrice + (int) floor((float) $row['bid_step']) : (int) floor((float) $row['start_price']),
             'winner_last4' => $this->getLast4($row['winner_phone'] ?? ''),
             'winning_amount' => $row['winning_amount'] !== null ? (int) floor((float) $row['winning_amount']) : null,
