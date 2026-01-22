@@ -86,9 +86,9 @@ if ((int) $chatId === $supportChatId) {
     $replyTo = $message['reply_to_message'] ?? null;
     $replyToId = $replyTo['message_id'] ?? null;
     if ($replyToId && $text !== '') {
-        $userId = $supportChat->getUserIdForTelegramMessage((int) $replyToId);
-        if ($userId) {
-            $supportChat->appendMessage($userId, 'support', $text, [
+        $chatId = $supportChat->getChatIdForTelegramMessage((int) $replyToId);
+        if ($chatId) {
+            $supportChat->appendMessage($chatId, 'support', $text, [
                 'telegram' => [
                     'message_id' => (int) ($message['message_id'] ?? 0),
                 ],
