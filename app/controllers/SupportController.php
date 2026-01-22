@@ -22,11 +22,6 @@ class SupportController extends Controller
         header('Content-Type: application/json');
 
         $userId = Auth::userId();
-        if (!$userId) {
-            http_response_code(401);
-            echo json_encode(['error' => 'Требуется вход в аккаунт']);
-            return;
-        }
 
         $payload = json_decode(file_get_contents('php://input'), true) ?: $_POST;
         $message = trim((string) ($payload['message'] ?? ''));
@@ -36,20 +31,30 @@ class SupportController extends Controller
             return;
         }
 
-        $user = $this->userModel->findById($userId) ?? [];
-        $name = trim((string) ($user['name'] ?? ''));
-        $phone = trim((string) ($user['phone'] ?? ''));
-        $label = $name !== '' ? $name : ('Пользователь #' . $userId);
-        $prefix = $label;
-        if ($phone !== '') {
-            $prefix .= ": {$phone}";
-        }
-        $prefix .= ' ';
+        if ($userId) {
+            $identity = $this->resolveSupportIdentity();
+        } else {
+            $guestName = trim((string) ($payload['guest_name'] ?? ''));
+            $guestPhone = trim((string) ($payload['guest_phone'] ?? ''));
+            if ($guestName === '' || $guestPhone === '') {
+                http_response_code(422);
+                echo json_encode(['error' => 'Укажите имя и телефон']);
+                return;
+            }
 
-        $entry = $this->supportChat->appendMessage($userId, 'user', $message);
+            Session::set('support_guest_name', $guestName);
+            Session::set('support_guest_phone', $guestPhone);
+            $identity = $this->resolveSupportIdentity();
+        }
+
+        $chatId = $identity['chatId'];
+        $label = $identity['label'];
+        $prefix = $label . ' ';
+
+        $entry = $this->supportChat->appendMessage($chatId, 'user', $message);
         $telegramMessageId = $this->sendToSupportChat($prefix . $message);
         if ($telegramMessageId) {
-            $this->supportChat->mapTelegramMessage($telegramMessageId, $userId);
+            $this->supportChat->mapTelegramMessage($telegramMessageId, $chatId);
         }
 
         echo json_encode(['ok' => true, 'message' => $entry]);
@@ -59,17 +64,53 @@ class SupportController extends Controller
     {
         header('Content-Type: application/json');
 
-        $userId = Auth::userId();
-        if (!$userId) {
-            http_response_code(401);
-            echo json_encode(['error' => 'Требуется вход в аккаунт']);
-            return;
-        }
+        $identity = $this->resolveSupportIdentity();
+        $chatId = $identity['chatId'];
 
         $afterId = isset($_GET['after']) ? (string) $_GET['after'] : null;
-        $messages = $this->supportChat->listMessages($userId, $afterId);
+        $messages = $this->supportChat->listMessages($chatId, $afterId);
 
         echo json_encode(['messages' => $messages]);
+    }
+
+    private function resolveSupportIdentity(): array
+    {
+        $userId = Auth::userId();
+        if ($userId) {
+            $user = $this->userModel->findById($userId) ?? [];
+            $name = trim((string) ($user['name'] ?? ''));
+            $phone = trim((string) ($user['phone'] ?? ''));
+            $label = $name !== '' ? $name : ('Пользователь #' . $userId);
+            if ($phone !== '') {
+                $label .= ": {$phone}";
+            }
+
+            return [
+                'chatId' => (string) $userId,
+                'label' => $label,
+            ];
+        }
+
+        $guestId = (string) Session::get('support_guest_id');
+        if ($guestId === '') {
+            $guestId = bin2hex(random_bytes(6));
+            Session::set('support_guest_id', $guestId);
+        }
+
+        $shortId = substr($guestId, 0, 6);
+        $guestName = trim((string) Session::get('support_guest_name'));
+        $guestPhone = trim((string) Session::get('support_guest_phone'));
+        $label = 'Гость #' . $shortId;
+        if ($guestName !== '') {
+            $label = 'Гость ' . $guestName;
+        }
+        if ($guestPhone !== '') {
+            $label .= ": {$guestPhone}";
+        }
+        return [
+            'chatId' => 'guest-' . $guestId,
+            'label' => $label,
+        ];
     }
 
     private function sendToSupportChat(string $text): ?int

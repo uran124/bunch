@@ -3531,9 +3531,57 @@ function initSupportChat() {
     const emptyState = modal.querySelector('[data-support-empty]');
     const form = modal.querySelector('[data-support-form]');
     const textarea = modal.querySelector('[data-support-input]');
+    const guestNameInput = modal.querySelector('[data-support-guest-name]');
+    const guestPhoneInput = modal.querySelector('[data-support-guest-phone]');
     const status = modal.querySelector('[data-support-status]');
     let pollTimer = null;
     let lastMessageId = null;
+    let phoneMaskReady = false;
+
+    const formatPhoneValue = (value) => {
+        const digits = value.replace(/\D/g, '');
+        let formatted = '+7';
+        if (digits.length > 1) {
+            formatted += ` (${digits.slice(1, 4)}`;
+        }
+        if (digits.length >= 5) {
+            formatted += `) ${digits.slice(4, 7)}`;
+        }
+        if (digits.length >= 8) {
+            formatted += `-${digits.slice(7, 9)}`;
+        }
+        if (digits.length >= 10) {
+            formatted += `-${digits.slice(9, 11)}`;
+        }
+        return formatted;
+    };
+
+    const initGuestPhoneMask = () => {
+        if (!guestPhoneInput || phoneMaskReady) return;
+        phoneMaskReady = true;
+
+        const setPhoneValue = (rawValue) => {
+            const digits = rawValue.replace(/\D/g, '');
+            guestPhoneInput.value = formatPhoneValue(digits);
+        };
+
+        guestPhoneInput.addEventListener('focus', () => {
+            if (!guestPhoneInput.value.trim()) {
+                guestPhoneInput.value = '+7';
+                guestPhoneInput.setSelectionRange(guestPhoneInput.value.length, guestPhoneInput.value.length);
+            }
+        });
+
+        guestPhoneInput.addEventListener('input', () => {
+            setPhoneValue(guestPhoneInput.value);
+        });
+
+        guestPhoneInput.addEventListener('keydown', (event) => {
+            if (guestPhoneInput.selectionStart <= 3 && ['Backspace', 'Delete'].includes(event.key)) {
+                event.preventDefault();
+            }
+        });
+    };
 
     const formatTime = (iso) => {
         if (!iso) return '';
@@ -3624,6 +3672,7 @@ function initSupportChat() {
         document.body.classList.add('overflow-hidden');
         lastMessageId = null;
         setStatus('');
+        initGuestPhoneMask();
         loadMessages(true);
         pollTimer = window.setInterval(() => {
             loadMessages();
@@ -3653,6 +3702,14 @@ function initSupportChat() {
     form?.addEventListener('submit', async (event) => {
         event.preventDefault();
         if (!textarea) return;
+        if (guestNameInput && guestPhoneInput) {
+            const guestName = guestNameInput.value.trim();
+            const guestPhone = guestPhoneInput.value.trim();
+            if (!guestName || !guestPhone) {
+                setStatus('Укажите имя и телефон.', 'text-rose-600');
+                return;
+            }
+        }
         const text = textarea.value.trim();
         if (!text) {
             setStatus('Введите сообщение.', 'text-rose-600');
@@ -3660,13 +3717,18 @@ function initSupportChat() {
         }
 
         setStatus('Отправляем...', 'text-slate-500');
+        const payload = { message: text };
+        if (guestNameInput && guestPhoneInput) {
+            payload.guest_name = guestNameInput.value.trim();
+            payload.guest_phone = guestPhoneInput.value.trim();
+        }
         const response = await fetch('/support-message', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'X-Requested-With': 'XMLHttpRequest',
             },
-            body: JSON.stringify({ message: text }),
+            body: JSON.stringify(payload),
         });
 
         if (response.status === 401) {

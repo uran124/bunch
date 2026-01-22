@@ -657,6 +657,30 @@ $adminNavigation = [
                     <p class="text-sm text-slate-500" data-support-empty>Пока нет сообщений. Напишите, чтобы начать диалог.</p>
                 </div>
                 <form class="space-y-2" data-support-form>
+                    <?php if (!$isAuthenticated): ?>
+                        <div class="grid gap-2 sm:grid-cols-2" data-support-guest>
+                            <label class="flex flex-col gap-1 text-xs font-semibold text-slate-600">
+                                Имя
+                                <input
+                                    class="w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-rose-300 focus:outline-none"
+                                    type="text"
+                                    placeholder="Ваше имя"
+                                    required
+                                    data-support-guest-name
+                                >
+                            </label>
+                            <label class="flex flex-col gap-1 text-xs font-semibold text-slate-600">
+                                Телефон
+                                <input
+                                    class="w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-rose-300 focus:outline-none"
+                                    type="tel"
+                                    placeholder="+7 (999) 123-45-67"
+                                    required
+                                    data-support-guest-phone
+                                >
+                            </label>
+                        </div>
+                    <?php endif; ?>
                     <textarea
                         class="min-h-[96px] w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-rose-300 focus:outline-none"
                         placeholder="Напишите сообщение..."
