@@ -1,6 +1,7 @@
 const pageId = document.body.dataset.page || '';
 let cartSubtotal = Number(document.querySelector('[data-cart-bouquet-total]')?.dataset.amount || 0);
 let deliveryPrice = Number(document.querySelector('[data-delivery-total]')?.dataset.amount || 0);
+let tulipBalance = Number(document.querySelector('[data-tulip-balance]')?.dataset.tulipBalance || 0);
 
 function formatCurrency(value) {
     const number = Number(value || 0);
@@ -38,8 +39,26 @@ function updateDeliveryPriceDisplay(value) {
     recalculateGrandTotal();
 }
 
+function getTulipDeduction() {
+    if (tulipBalance <= 0) {
+        return 0;
+    }
+    return Math.min(tulipBalance, cartSubtotal);
+}
+
+function updateTulipDeductionDisplay() {
+    const deduction = getTulipDeduction();
+    const target = document.querySelector('[data-tulip-deduction]');
+    if (target) {
+        target.dataset.amount = String(deduction);
+        target.textContent = formatCurrency(-deduction);
+    }
+}
+
 function recalculateGrandTotal() {
-    const total = cartSubtotal + deliveryPrice;
+    const tulipDeduction = getTulipDeduction();
+    const total = cartSubtotal - tulipDeduction + deliveryPrice;
+    updateTulipDeductionDisplay();
     document.querySelectorAll('[data-order-grand-total]').forEach((target) => {
         target.textContent = formatCurrency(total);
     });
@@ -1243,6 +1262,7 @@ function initCartPage() {
     initAccessories();
     initOrderFlow();
     initAttributeModal();
+    recalculateGrandTotal();
 }
 
 if (pageId === 'cart') {

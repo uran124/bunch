@@ -44,6 +44,10 @@
                                         <span class="text-slate-500">+ e-mail</span>
                                     <?php endif; ?>
                                 </span>
+                                <span class="inline-flex items-center gap-2 rounded-xl bg-rose-50 px-3 py-2 text-rose-700">
+                                    <img class="h-4 w-4" src="/assets/images/tulip.svg" alt="">
+                                    <span>Тюльпанчики: <?php echo (int) ($user['tulip_balance'] ?? 0); ?></span>
+                                </span>
                             </div>
                             <p class="hidden text-xs font-semibold text-emerald-700" data-account-name-status>Имя обновлено.</p>
                         </div>

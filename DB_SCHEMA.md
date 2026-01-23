@@ -36,6 +36,7 @@ CREATE TABLE users (
 
   is_active TINYINT(1) NOT NULL DEFAULT 1, -- флаг активности для CRM/рассылок
   role ENUM('admin', 'manager', 'florist', 'courier', 'customer', 'wholesale') NOT NULL DEFAULT 'customer',
+  tulip_balance INT NOT NULL DEFAULT 0,    -- баланс тюльпанчиков (кешбек-баллы)
 
   pin_hash VARCHAR(255) NOT NULL,          -- password_hash(pin)
   pin_updated_at DATETIME NULL,            -- когда PIN в последний раз меняли
@@ -59,6 +60,29 @@ CREATE TABLE users (
 - при неуспешном логине:
   - увеличивать `failed_pin_attempts`;
   - при достижении порога (например, 5) — временно блокировать логин с данного IP/по данному пользователю.
+
+---
+
+## 2.2. Таблица `cashback_levels`
+
+Уровни кешбека (тюльпанчики) и проценты начисления для разных типов покупки.
+
+```sql
+CREATE TABLE cashback_levels (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+
+  name VARCHAR(120) NOT NULL,
+  percent_single DECIMAL(5,2) NOT NULL DEFAULT 0, -- поштучные покупки
+  percent_pack   DECIMAL(5,2) NOT NULL DEFAULT 0, -- покупки пачками
+  percent_box    DECIMAL(5,2) NOT NULL DEFAULT 0, -- покупки коробками
+  percent_promo  DECIMAL(5,2) NOT NULL DEFAULT 0, -- акционные товары
+  sort_order INT NOT NULL DEFAULT 0,
+
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+```
 
 ---
 
@@ -220,6 +244,8 @@ CREATE TABLE products (
 
   category    ENUM('main', 'wholesale', 'accessory') NOT NULL DEFAULT 'main', -- витрина, опт или сопутствующие товары
   product_type ENUM('regular', 'small_wholesale', 'lottery', 'promo', 'auction', 'wholesale_box') NOT NULL DEFAULT 'regular',
+  allow_tulip_spend TINYINT(1) NOT NULL DEFAULT 1, -- можно тратить тюльпанчики
+  allow_tulip_earn  TINYINT(1) NOT NULL DEFAULT 1, -- начислять тюльпанчики
 
   is_base     TINYINT(1) NOT NULL DEFAULT 0, -- базовый продукт (массовая красная роза)
   is_active   TINYINT(1) NOT NULL DEFAULT 1,
@@ -304,6 +330,8 @@ CREATE TABLE promo_items (
   description TEXT NULL,
 
   price       INT NOT NULL DEFAULT 0,
+  allow_tulip_spend TINYINT(1) NOT NULL DEFAULT 1,
+  allow_tulip_earn TINYINT(1) NOT NULL DEFAULT 1,
   quantity    INT UNSIGNED NULL,
   ends_at     DATETIME NULL,
 

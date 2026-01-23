@@ -38,6 +38,16 @@ class AdminController extends Controller
                 ],
             ],
             [
+                'title' => 'Лояльность',
+                'items' => [
+                    [
+                        'label' => 'Кешбек',
+                        'description' => 'Уровни тюльпанчиков и правила начисления',
+                        'href' => '/admin-cashback',
+                    ],
+                ],
+            ],
+            [
                 'title' => 'Каталог',
                 'items' => [
                     [
@@ -198,6 +208,121 @@ class AdminController extends Controller
         ]);
     }
 
+    public function cashback(): void
+    {
+        $pageMeta = [
+            'title' => 'Кешбек — админ-панель Bunch',
+            'description' => 'Настройка уровней кешбека и правил начисления тюльпанчиков.',
+            'h1' => 'Кешбек',
+            'headerTitle' => 'Bunch Admin',
+            'headerSubtitle' => 'Тюльпанчики и правила',
+        ];
+
+        $cashbackLevelModel = new CashbackLevel();
+        $productModel = new Product();
+        $promoItemModel = new PromoItem();
+
+        $levels = $cashbackLevelModel->getAll();
+        $products = $productModel->getCashbackList();
+        $promoItems = $promoItemModel->getCashbackList();
+
+        $this->render('admin-cashback', [
+            'pageMeta' => $pageMeta,
+            'levels' => $levels,
+            'products' => $products,
+            'promoItems' => $promoItems,
+            'message' => $_GET['status'] ?? null,
+        ]);
+    }
+
+    public function saveCashbackLevel(): void
+    {
+        $id = (int) ($_POST['id'] ?? 0);
+        $name = trim((string) ($_POST['name'] ?? ''));
+
+        if ($name === '') {
+            header('Location: /admin-cashback?status=error');
+            return;
+        }
+
+        $payload = [
+            'id' => $id,
+            'name' => $name,
+            'percent_single' => (float) ($_POST['percent_single'] ?? 0),
+            'percent_pack' => (float) ($_POST['percent_pack'] ?? 0),
+            'percent_box' => (float) ($_POST['percent_box'] ?? 0),
+            'percent_promo' => (float) ($_POST['percent_promo'] ?? 0),
+            'sort_order' => (int) ($_POST['sort_order'] ?? 0),
+        ];
+
+        $cashbackLevelModel = new CashbackLevel();
+        try {
+            $cashbackLevelModel->save($payload);
+        } catch (Throwable $e) {
+            $this->logAdminError('Admin cashback save level error', $e);
+            header('Location: /admin-cashback?status=error');
+            return;
+        }
+
+        header('Location: /admin-cashback?status=saved');
+    }
+
+    public function toggleCashbackProduct(): void
+    {
+        header('Content-Type: application/json');
+
+        $payload = json_decode(file_get_contents('php://input'), true);
+        $productId = isset($payload['productId']) ? (int) $payload['productId'] : 0;
+        $allowSpend = isset($payload['allowSpend']) ? (bool) $payload['allowSpend'] : null;
+        $allowEarn = isset($payload['allowEarn']) ? (bool) $payload['allowEarn'] : null;
+
+        if ($productId <= 0 || $allowSpend === null || $allowEarn === null) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'Некорректные данные']);
+            return;
+        }
+
+        $productModel = new Product();
+        try {
+            $productModel->updateTulipSettings($productId, $allowSpend, $allowEarn);
+        } catch (Throwable $e) {
+            $this->logAdminError('Admin cashback product toggle error', $e);
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => 'Не удалось сохранить']);
+            return;
+        }
+
+        echo json_encode(['success' => true]);
+    }
+
+    public function toggleCashbackPromo(): void
+    {
+        header('Content-Type: application/json');
+
+        $payload = json_decode(file_get_contents('php://input'), true);
+        $promoId = isset($payload['promoId']) ? (int) $payload['promoId'] : 0;
+        $allowSpend = isset($payload['allowSpend']) ? (bool) $payload['allowSpend'] : null;
+        $allowEarn = isset($payload['allowEarn']) ? (bool) $payload['allowEarn'] : null;
+
+        if ($promoId <= 0 || $allowSpend === null || $allowEarn === null) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'Некорректные данные']);
+            return;
+        }
+
+        $promoItemModel = new PromoItem();
+        try {
+            $promoItemModel->updateTulipSettings($promoId, $allowSpend, $allowEarn);
+        } catch (Throwable $e) {
+            $this->logAdminError('Admin cashback promo toggle error', $e);
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => 'Не удалось сохранить']);
+            return;
+        }
+
+        echo json_encode(['success' => true]);
+    }
+
     public function toggleUserActive(): void
     {
         header('Content-Type: application/json');
@@ -285,6 +410,7 @@ class AdminController extends Controller
                 'name' => $userRecord['name'] ?: 'Без имени',
                 'phone' => $userRecord['phone'] ?? '',
                 'active' => (bool) ($userRecord['is_active'] ?? true),
+                'tulip_balance' => (int) ($userRecord['tulip_balance'] ?? 0),
                 'lastOrder' => $lastOrderDate ?: 'Нет заказов',
                 'lastOrderStatus' => $lastOrderStatus,
                 'role' => $role,

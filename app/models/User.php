@@ -82,12 +82,13 @@ SELECT
     u.name,
     u.phone,
     COALESCE(u.is_active, 1) AS is_active,
+    COALESCE(u.tulip_balance, 0) AS tulip_balance,
     u.telegram_chat_id,
     MAX(o.created_at) AS last_order_at,
     COUNT(o.id) AS deliveries
 FROM users u
 LEFT JOIN orders o ON o.user_id = u.id
-GROUP BY u.id, u.name, u.phone, u.is_active, u.telegram_chat_id
+GROUP BY u.id, u.name, u.phone, u.is_active, u.tulip_balance, u.telegram_chat_id
 ORDER BY COALESCE(MAX(o.created_at), u.created_at) DESC
 SQL;
 
@@ -104,6 +105,7 @@ SQL;
                 'name' => $row['name'] ?? 'Без имени',
                 'phone' => $row['phone'],
                 'active' => (bool) $row['is_active'],
+                'tulips' => (int) ($row['tulip_balance'] ?? 0),
                 'lastOrder' => $lastOrder,
                 'lastOrderText' => $lastOrder ?: 'Нет заказов',
                 'deliveries' => (int) $row['deliveries'],

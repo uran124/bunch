@@ -62,6 +62,17 @@ $adminNavigation = [
         ],
     ],
     [
+        'title' => 'Лояльность',
+        'items' => [
+            [
+                'label' => 'Кешбек',
+                'href' => '/admin-cashback',
+                'page' => 'admin-cashback',
+                'icon' => 'redeem',
+            ],
+        ],
+    ],
+    [
         'title' => 'Каталог',
         'items' => [
             [

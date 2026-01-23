@@ -44,6 +44,13 @@
                 <div class="text-base font-semibold text-slate-900"><?php echo htmlspecialchars($user['name'], ENT_QUOTES, 'UTF-8'); ?></div>
                 <div class="text-sm text-slate-500">Телефон: <?php echo htmlspecialchars($user['phone'], ENT_QUOTES, 'UTF-8'); ?></div>
                 <div class="text-sm text-slate-500">Роль: <?php echo htmlspecialchars($user['roleLabel'], ENT_QUOTES, 'UTF-8'); ?></div>
+                <div class="text-sm text-slate-500">
+                    Тюльпанчики:
+                    <span class="inline-flex items-center gap-1 font-semibold text-rose-600">
+                        <img class="h-4 w-4" src="/assets/images/tulip.svg" alt="">
+                        <?php echo (int) ($user['tulip_balance'] ?? 0); ?>
+                    </span>
+                </div>
                 <div class="flex flex-wrap gap-2 text-xs text-slate-500">
                     <span class="inline-flex items-center gap-1 rounded-full bg-slate-50 px-3 py-1 font-semibold ring-1 ring-slate-200">
                         <span class="material-symbols-rounded text-base text-emerald-500">check_circle</span>

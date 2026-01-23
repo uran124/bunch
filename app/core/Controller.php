@@ -54,6 +54,19 @@ abstract class Controller
             $data['isWholesaleUser'] = $data['currentUserRole'] === 'wholesale';
         }
 
+        if (!array_key_exists('tulipBalance', $data)) {
+            $tulipBalance = 0;
+            if (class_exists('Auth') && Auth::check()) {
+                $userId = Auth::userId();
+                if ($userId) {
+                    $userModel = new User();
+                    $user = $userModel->findById($userId);
+                    $tulipBalance = (int) ($user['tulip_balance'] ?? 0);
+                }
+            }
+            $data['tulipBalance'] = $tulipBalance;
+        }
+
         if (!array_key_exists('staticMenuPages', $data) || !array_key_exists('staticFooterPages', $data)) {
             $staticPageModel = class_exists('StaticPage') ? new StaticPage() : null;
             $data['staticMenuPages'] = $data['staticMenuPages'] ?? ($staticPageModel ? $staticPageModel->getActiveByPlacement('menu') : []);

@@ -36,6 +36,7 @@ class AccountController extends Controller
             'name' => $userRow['name'] ?: 'Без имени',
             'phone' => $userRow['phone'],
             'email' => $userRow['email'],
+            'tulip_balance' => (int) ($userRow['tulip_balance'] ?? 0),
         ];
 
         $addresses = $this->addressModel->getByUserId($userId);
