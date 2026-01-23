@@ -38,6 +38,10 @@
                             <?php echo htmlspecialchars($user['name'] ?? 'Без имени', ENT_QUOTES, 'UTF-8'); ?>
                         </a>
                         <span class="text-sm text-slate-500"><?php echo htmlspecialchars($user['phone'], ENT_QUOTES, 'UTF-8'); ?></span>
+                        <span class="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2 py-1 text-xs font-semibold text-rose-700 ring-1 ring-rose-100">
+                            <img class="h-3 w-3" src="/assets/images/tulip.svg" alt="">
+                            <?php echo (int) ($user['tulips'] ?? 0); ?>
+                        </span>
                     </div>
                     <label class="relative inline-flex h-9 w-16 cursor-pointer items-center" aria-label="Активность пользователя">
                         <input

@@ -55,6 +55,7 @@ CREATE TABLE users (
 
   is_active TINYINT(1) NOT NULL DEFAULT 1, -- активен ли пользователь для операций и рассылок
   role ENUM('admin', 'manager', 'florist', 'courier', 'customer', 'wholesale') NOT NULL DEFAULT 'customer',
+  tulip_balance INT NOT NULL DEFAULT 0,
   birthday_reminder_days TINYINT UNSIGNED NOT NULL DEFAULT 3,
   birthday_reminders JSON NULL,
 
@@ -66,6 +67,27 @@ CREATE TABLE users (
 
   telegram_chat_id BIGINT NULL,            -- идентификатор чата в Telegram
   telegram_username VARCHAR(64) NULL,      -- username в Telegram (без @)
+
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_unicode_ci;
+
+-- ==============================
+-- 1.1. Уровни кешбека
+-- ==============================
+
+CREATE TABLE cashback_levels (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+
+  name VARCHAR(120) NOT NULL,
+  percent_single DECIMAL(5,2) NOT NULL DEFAULT 0,
+  percent_pack DECIMAL(5,2) NOT NULL DEFAULT 0,
+  percent_box DECIMAL(5,2) NOT NULL DEFAULT 0,
+  percent_promo DECIMAL(5,2) NOT NULL DEFAULT 0,
+  sort_order INT NOT NULL DEFAULT 0,
 
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -242,6 +264,8 @@ CREATE TABLE products (
 
   category    ENUM('main', 'wholesale', 'accessory') NOT NULL DEFAULT 'main', -- витрина, опт или сопутствующие товары
   product_type ENUM('regular', 'small_wholesale', 'lottery', 'promo', 'auction', 'wholesale_box') NOT NULL DEFAULT 'regular',
+  allow_tulip_spend TINYINT(1) NOT NULL DEFAULT 1,
+  allow_tulip_earn TINYINT(1) NOT NULL DEFAULT 1,
 
   is_base     TINYINT(1) NOT NULL DEFAULT 0, -- базовый продукт (массовая роза)
   is_active   TINYINT(1) NOT NULL DEFAULT 1,
@@ -297,6 +321,8 @@ CREATE TABLE promo_items (
 
   base_price  INT NOT NULL DEFAULT 0,
   price       INT NOT NULL DEFAULT 0,
+  allow_tulip_spend TINYINT(1) NOT NULL DEFAULT 1,
+  allow_tulip_earn TINYINT(1) NOT NULL DEFAULT 1,
   quantity    INT UNSIGNED NULL,
   ends_at     DATETIME NULL,
 

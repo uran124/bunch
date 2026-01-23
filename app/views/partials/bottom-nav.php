@@ -10,6 +10,8 @@ if ($currentPath === '' || $currentPath === 'index' || $currentPath === 'index.p
 $isWholesaleUser = $isWholesaleUser ?? false;
 $currentUserRole = $currentUserRole ?? 'customer';
 $isAdminUser = $currentUserRole === 'admin';
+$isAuthenticated = class_exists('Auth') && Auth::check();
+$tulipBalance = (int) ($tulipBalance ?? 0);
 
 $navItems = [
     [
@@ -104,8 +106,16 @@ if ($userId) {
                 href="<?php echo $item['href']; ?>"
                 <?php echo $indicatorAttributes; ?>
             >
-                <span class="material-symbols-rounded text-xl">
-                    <?php echo $item['icon']; ?>
+                <span class="relative">
+                    <span class="material-symbols-rounded text-xl">
+                        <?php echo $item['icon']; ?>
+                    </span>
+                    <?php if ($item['id'] === 'account' && $isAuthenticated): ?>
+                        <span class="absolute -right-3 -top-2 inline-flex items-center gap-1 rounded-full bg-rose-50 px-1.5 py-0.5 text-[10px] font-semibold text-rose-600 shadow-sm shadow-rose-100">
+                            <img class="h-3 w-3" src="/assets/images/tulip.svg" alt="">
+                            <?php echo $tulipBalance; ?>
+                        </span>
+                    <?php endif; ?>
                 </span>
                 <span class="relative inline-flex items-center gap-1">
                     <?php echo $item['label']; ?>

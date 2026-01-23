@@ -19,6 +19,26 @@ class PromoItem extends Model
         return $stmt->fetchAll();
     }
 
+    public function getCashbackList(): array
+    {
+        $stmt = $this->db->query(
+            "SELECT id, title, price, is_active, allow_tulip_spend, allow_tulip_earn FROM {$this->table} ORDER BY created_at DESC"
+        );
+        return $stmt->fetchAll();
+    }
+
+    public function updateTulipSettings(int $id, bool $allowSpend, bool $allowEarn): void
+    {
+        $stmt = $this->db->prepare(
+            "UPDATE {$this->table} SET allow_tulip_spend = :allow_spend, allow_tulip_earn = :allow_earn WHERE id = :id"
+        );
+        $stmt->execute([
+            'id' => $id,
+            'allow_spend' => $allowSpend ? 1 : 0,
+            'allow_earn' => $allowEarn ? 1 : 0,
+        ]);
+    }
+
     public function getActiveList(): array
     {
         $stmt = $this->db->prepare(

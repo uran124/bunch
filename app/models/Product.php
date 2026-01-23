@@ -84,6 +84,25 @@ class Product extends Model
         return $products;
     }
 
+    public function getCashbackList(): array
+    {
+        $sql = "SELECT id, name, product_type, category, is_active, allow_tulip_spend, allow_tulip_earn FROM {$this->table} WHERE status = 'active' ORDER BY created_at DESC";
+        $stmt = $this->db->query($sql);
+        return $stmt->fetchAll();
+    }
+
+    public function updateTulipSettings(int $id, bool $allowSpend, bool $allowEarn): void
+    {
+        $stmt = $this->db->prepare(
+            "UPDATE {$this->table} SET allow_tulip_spend = :allow_spend, allow_tulip_earn = :allow_earn WHERE id = :id"
+        );
+        $stmt->execute([
+            'id' => $id,
+            'allow_spend' => $allowSpend ? 1 : 0,
+            'allow_earn' => $allowEarn ? 1 : 0,
+        ]);
+    }
+
     public function setActive(int $id, int $active): void
     {
         $stmt = $this->db->prepare("UPDATE {$this->table} SET is_active = :active WHERE id = :id");

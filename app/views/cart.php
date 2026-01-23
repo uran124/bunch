@@ -51,6 +51,10 @@ $primaryPaymentLabel = $onlinePaymentEnabled ? 'Оплата онлайн' : 'П
             </a>
         </div>
     <?php else: ?>
+        <?php
+        $tulipBalance = (int) ($tulipBalance ?? 0);
+        $autoTulipSpend = min($tulipBalance, (int) floor((float) ($totals['total'] ?? 0)));
+        ?>
         <div class="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
             <div class="space-y-4">
                 <?php foreach ($items as $item): ?>
@@ -393,6 +397,15 @@ $primaryPaymentLabel = $onlinePaymentEnabled ? 'Оплата онлайн' : 'П
                                 data-amount="<?php echo (float) ($totals['total'] ?? 0); ?>"
                             >
                                 <?php echo number_format((int) floor((float) ($totals['total'] ?? 0)), 0, '.', ' '); ?> ₽
+                            </span>
+                        </div>
+                        <div class="flex items-center justify-between" data-tulip-balance="<?php echo $tulipBalance; ?>">
+                            <span class="inline-flex items-center gap-2">
+                                <img class="h-4 w-4" src="/assets/images/tulip.svg" alt="">
+                                Автосписание тюльпанчиков
+                            </span>
+                            <span data-tulip-deduction data-amount="<?php echo $autoTulipSpend; ?>">
+                                <?php echo $autoTulipSpend > 0 ? '-' . number_format($autoTulipSpend, 0, '.', ' ') . ' ₽' : '0 ₽'; ?>
                             </span>
                         </div>
                         <div class="flex items-center justify-between" data-delivery-row>
