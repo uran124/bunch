@@ -155,4 +155,26 @@ SQL;
 
         $this->db->commit();
     }
+
+    public function addUserToGroup(int $groupId, int $userId): void
+    {
+        $stmt = $this->db->prepare(
+            'INSERT IGNORE INTO broadcast_group_users (group_id, user_id, added_at) VALUES (:group_id, :user_id, NOW())'
+        );
+        $stmt->execute([
+            'group_id' => $groupId,
+            'user_id' => $userId,
+        ]);
+    }
+
+    public function removeUserFromGroup(int $groupId, int $userId): void
+    {
+        $stmt = $this->db->prepare(
+            'DELETE FROM broadcast_group_users WHERE group_id = :group_id AND user_id = :user_id'
+        );
+        $stmt->execute([
+            'group_id' => $groupId,
+            'user_id' => $userId,
+        ]);
+    }
 }

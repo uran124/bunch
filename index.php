@@ -226,6 +226,8 @@ $router->post('admin-cashback-promo-toggle', [AdminController::class, 'toggleCas
 $router->post('admin-group-create', [AdminController::class, 'saveGroup']);
 $router->post('admin-broadcast', [AdminController::class, 'createBroadcast']);
 $router->post('admin-user-role', [AdminController::class, 'updateUserRole']);
+$router->post('admin-user-notifications', [AdminController::class, 'updateUserNotifications']);
+$router->post('admin-user-broadcast-group', [AdminController::class, 'updateUserBroadcastGroup']);
 $router->post('admin-supply-standing', [AdminController::class, 'createStandingSupply']);
 $router->post('admin-supply-single', [AdminController::class, 'createSingleSupply']);
 $router->post('admin-supply-update', [AdminController::class, 'updateSupply']);

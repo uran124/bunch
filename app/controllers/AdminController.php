@@ -518,6 +518,33 @@ class AdminController extends Controller
 
         $message = $_GET['message'] ?? null;
 
+        $notificationOptions = $this->getNotificationOptions();
+        $notificationSettings = [];
+        $notificationSettingModel = new NotificationSetting();
+        try {
+            $notificationSettingModel->syncTypes($notificationOptions);
+            $notificationSettings = $notificationSettingModel->getSettingsForUser($userId, $notificationOptions);
+        } catch (Throwable $e) {
+            $notificationSettings = array_reduce($notificationOptions, static function (array $carry, array $option): array {
+                if (!empty($option['code'])) {
+                    $carry[$option['code']] = (bool) ($option['default'] ?? true);
+                }
+
+                return $carry;
+            }, []);
+        }
+
+        $broadcastGroupModel = new BroadcastGroup();
+        $broadcastGroupModel->ensureSystemGroup();
+        $broadcastGroups = $broadcastGroupModel->editableWithCounts();
+        $membershipMap = $broadcastGroupModel->membershipMap();
+        $broadcastGroups = array_map(static function (array $group) use ($membershipMap, $userId): array {
+            $members = $membershipMap[$group['id']] ?? [];
+            $group['is_member'] = in_array($userId, $members, true);
+
+            return $group;
+        }, $broadcastGroups);
+
         $this->render('admin-user', [
             'pageMeta' => $pageMeta,
             'user' => $user,
@@ -532,7 +559,88 @@ class AdminController extends Controller
             'currentPage' => $currentPage,
             'addresses' => $addresses,
             'subscriptions' => $activeSubscriptions,
+            'notificationOptions' => $notificationOptions,
+            'notificationSettings' => $notificationSettings,
+            'broadcastGroups' => $broadcastGroups,
         ]);
+    }
+
+    public function updateUserNotifications(): void
+    {
+        header('Content-Type: application/json');
+
+        $payload = json_decode(file_get_contents('php://input'), true) ?: $_POST;
+        $userId = (int) ($payload['user_id'] ?? 0);
+        if ($userId <= 0) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Не найден пользователь']);
+            return;
+        }
+
+        $userModel = new User();
+        $user = $userModel->findById($userId);
+        if (!$user) {
+            http_response_code(404);
+            echo json_encode(['error' => 'Пользователь не найден']);
+            return;
+        }
+
+        $notificationOptions = $this->getNotificationOptions();
+        $notificationSettingModel = new NotificationSetting();
+        $notificationSettingModel->syncTypes($notificationOptions);
+
+        $notifications = $payload['notifications'] ?? [];
+        $preferences = [];
+        foreach ($notificationOptions as $option) {
+            $code = $option['code'];
+            $locked = !empty($option['locked']);
+            $default = (bool) ($option['default'] ?? true);
+            $preferences[$code] = $locked ? true : (bool) ($notifications[$code] ?? $default);
+        }
+
+        $notificationSettingModel->updateSettingsForUser($userId, $preferences);
+
+        echo json_encode(['ok' => true]);
+    }
+
+    public function updateUserBroadcastGroup(): void
+    {
+        header('Content-Type: application/json');
+
+        $payload = json_decode(file_get_contents('php://input'), true) ?: $_POST;
+        $userId = (int) ($payload['user_id'] ?? 0);
+        $groupId = (int) ($payload['group_id'] ?? 0);
+        $enabled = isset($payload['enabled']) ? (bool) $payload['enabled'] : null;
+
+        if ($userId <= 0 || $groupId <= 0 || $enabled === null) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Недостаточно данных']);
+            return;
+        }
+
+        $userModel = new User();
+        $user = $userModel->findById($userId);
+        if (!$user) {
+            http_response_code(404);
+            echo json_encode(['error' => 'Пользователь не найден']);
+            return;
+        }
+
+        $groupModel = new BroadcastGroup();
+        $group = $groupModel->find($groupId);
+        if (!$group || $group['is_system']) {
+            http_response_code(404);
+            echo json_encode(['error' => 'Группа не найдена']);
+            return;
+        }
+
+        if ($enabled) {
+            $groupModel->addUserToGroup($groupId, $userId);
+        } else {
+            $groupModel->removeUserFromGroup($groupId, $userId);
+        }
+
+        echo json_encode(['ok' => true]);
     }
 
     public function updateUserRole(): void
@@ -3183,6 +3291,63 @@ class AdminController extends Controller
             ['title' => 'Цветы к корпоративу', 'slug' => '/corporate', 'traffic' => '8% конверсии', 'status' => 'Опубликован'],
             ['title' => 'Подарочные сертификаты', 'slug' => '/gift-cards', 'traffic' => 'Тестируется', 'status' => 'Черновик'],
             ['title' => 'Еженедельные подборки', 'slug' => '/weekly-picks', 'traffic' => '5% конверсии', 'status' => 'Опубликован'],
+        ];
+    }
+
+    private function getNotificationOptions(): array
+    {
+        return [
+            [
+                'code' => 'order_updates',
+                'label' => 'Мои заказы',
+                'description' => 'Статусы и изменения по текущим заказам.',
+                'locked' => true,
+                'default' => true,
+                'channel' => 'push',
+                'sort_order' => 10,
+            ],
+            [
+                'code' => 'system_updates',
+                'label' => 'Системные уведомления',
+                'description' => 'Важные сообщения о безопасности и входах.',
+                'locked' => true,
+                'default' => true,
+                'channel' => 'system',
+                'sort_order' => 20,
+            ],
+            [
+                'code' => 'promo_bouquets',
+                'label' => 'Уведомить о букетах по акции',
+                'description' => 'Скидки и подборки букетов недели.',
+                'default' => true,
+                'channel' => 'push',
+                'sort_order' => 30,
+            ],
+            [
+                'code' => 'auction_updates',
+                'label' => 'Уведомить о новых аукционах',
+                'description' => 'Свежие позиции и результаты торгов.',
+                'default' => true,
+                'channel' => 'push',
+                'sort_order' => 40,
+            ],
+            [
+                'code' => 'birthday_reminders',
+                'label' => 'Напоминания о значимых днях',
+                'description' => 'Подготовим идеи и напомним заранее.',
+                'default' => true,
+                'channel' => 'push',
+                'sort_order' => 50,
+                'link' => '/account-calendar',
+            ],
+            [
+                'code' => 'holiday_preorders',
+                'label' => 'Предзаказы на праздники',
+                'description' => 'Закрепим букет до пиковой нагрузки.',
+                'default' => true,
+                'channel' => 'push',
+                'sort_order' => 60,
+            ],
         ];
     }
 

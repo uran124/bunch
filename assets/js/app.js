@@ -1511,6 +1511,108 @@ function initNotificationToggles() {
     });
 }
 
+async function updateAdminNotificationSettings(userId, payload) {
+    const response = await fetch('/admin-user-notifications', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+        },
+        body: JSON.stringify({ user_id: userId, notifications: payload }),
+    });
+
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok || !data.ok) {
+        throw new Error(data.error || 'Не удалось обновить рассылки');
+    }
+}
+
+function initAdminNotificationToggles() {
+    const toggles = Array.from(document.querySelectorAll('[data-admin-notification-toggle]'));
+    if (!toggles.length) return;
+
+    const status = document.querySelector('[data-admin-notification-status]');
+    const userId = Number(toggles[0].dataset.userId || 0);
+    if (!userId) return;
+
+    const collect = () => {
+        const payload = {};
+        toggles.forEach((toggle) => {
+            const code = toggle.dataset.adminNotificationToggle;
+            if (!code) return;
+            payload[code] = toggle.disabled ? true : toggle.checked;
+        });
+        return payload;
+    };
+
+    const showStatus = (message) => {
+        if (!status) return;
+        status.textContent = message;
+        status.classList.remove('hidden');
+        setTimeout(() => status.classList.add('hidden'), 2500);
+    };
+
+    toggles.forEach((toggle) => {
+        if (toggle.disabled) return;
+
+        toggle.addEventListener('change', async () => {
+            try {
+                await updateAdminNotificationSettings(userId, collect());
+                showStatus('Настройки обновлены.');
+            } catch (error) {
+                toggle.checked = !toggle.checked;
+                alert(error.message || 'Не удалось сохранить настройку');
+            }
+        });
+    });
+}
+
+async function updateAdminGroupMembership(userId, groupId, enabled) {
+    const response = await fetch('/admin-user-broadcast-group', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+        },
+        body: JSON.stringify({ user_id: userId, group_id: groupId, enabled }),
+    });
+
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok || !data.ok) {
+        throw new Error(data.error || 'Не удалось обновить группу');
+    }
+}
+
+function initAdminGroupToggles() {
+    const toggles = Array.from(document.querySelectorAll('[data-admin-group-toggle]'));
+    if (!toggles.length) return;
+
+    const status = document.querySelector('[data-admin-group-status]');
+
+    const showStatus = (message) => {
+        if (!status) return;
+        status.textContent = message;
+        status.classList.remove('hidden');
+        setTimeout(() => status.classList.add('hidden'), 2500);
+    };
+
+    toggles.forEach((toggle) => {
+        const userId = Number(toggle.dataset.userId || 0);
+        const groupId = Number(toggle.dataset.groupId || 0);
+        if (!userId || !groupId) return;
+
+        toggle.addEventListener('change', async () => {
+            try {
+                await updateAdminGroupMembership(userId, groupId, toggle.checked);
+                showStatus('Группы обновлены.');
+            } catch (error) {
+                toggle.checked = !toggle.checked;
+                alert(error.message || 'Не удалось сохранить группу');
+            }
+        });
+    });
+}
+
 async function submitPinChange(pin, pinConfirm) {
     const response = await fetch('/account-pin', {
         method: 'POST',
@@ -1891,6 +1993,11 @@ if (pageId === 'account') {
 
 if (pageId === 'account-calendar') {
     initBirthdayReminders();
+}
+
+if (pageId === 'admin-user') {
+    initAdminNotificationToggles();
+    initAdminGroupToggles();
 }
 
 function initAccountAddresses() {
