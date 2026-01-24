@@ -6,19 +6,13 @@
 <?php /** @var string|null $roleMessage */ ?>
 <?php /** @var string $roleMessageTone */ ?>
 <?php /** @var array $activeOrders */ ?>
+<?php /** @var array $notificationOptions */ ?>
+<?php /** @var array $notificationSettings */ ?>
+<?php /** @var array $broadcastGroups */ ?>
 <?php $pageMeta = $pageMeta ?? []; ?>
 
 <section class="flex flex-col gap-6">
     <header class="flex flex-wrap items-start justify-between gap-4">
-        <div class="space-y-2">
-            <p class="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">Клиент</p>
-            <h1 class="text-3xl font-semibold text-slate-900"><?php echo htmlspecialchars($pageMeta['h1'] ?? 'Карточка клиента', ENT_QUOTES, 'UTF-8'); ?></h1>
-            <p class="max-w-2xl text-base text-slate-500">Общая информация, адреса, подписки и история заказов разбитая на страницы.</p>
-            <div class="inline-flex items-center gap-2 rounded-full bg-rose-50 px-3 py-1 text-sm font-semibold text-rose-700 ring-1 ring-rose-200">
-                <span class="material-symbols-rounded text-base">send</span>
-                Рассылки через телеграм-бота
-            </div>
-        </div>
         <div class="flex flex-wrap items-center gap-3">
             <a
                 href="/admin-users"
@@ -56,10 +50,6 @@
                         <span class="material-symbols-rounded text-base text-emerald-500">check_circle</span>
                         <?php echo $user['active'] ? 'Активен' : 'Не активен'; ?>
                     </span>
-                    <span class="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-3 py-1 font-semibold ring-1 ring-indigo-200">
-                        <span class="material-symbols-rounded text-base text-indigo-500">verified_user</span>
-                        Пройдено KYC
-                    </span>
                 </div>
             </div>
             <div class="grid gap-3 sm:grid-cols-2">
@@ -67,11 +57,6 @@
                     <p class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Последний заказ</p>
                     <div class="mt-1 text-lg font-semibold text-slate-900"><?php echo htmlspecialchars($user['lastOrder'], ENT_QUOTES, 'UTF-8'); ?></div>
                     <p class="text-sm text-slate-500">Статус: <?php echo htmlspecialchars($user['lastOrderStatus'], ENT_QUOTES, 'UTF-8'); ?></p>
-                </div>
-                <div class="rounded-xl border border-rose-100 bg-rose-50 px-4 py-3">
-                    <p class="text-xs font-semibold uppercase tracking-[0.08em] text-rose-600">Рассылки</p>
-                    <div class="mt-1 text-lg font-semibold text-rose-700">Телеграм-бот</div>
-                    <p class="text-sm text-rose-600">Напоминания и акции уходят в личный чат.</p>
                 </div>
                 <div class="rounded-xl border border-slate-100 bg-white px-4 py-3 sm:col-span-2">
                     <p class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Роль пользователя</p>
@@ -100,6 +85,91 @@
                             </span>
                         <?php endif; ?>
                     </form>
+                </div>
+                <div class="rounded-xl border border-rose-100 bg-rose-50 px-4 py-3 sm:col-span-2">
+                    <div class="flex flex-wrap items-start justify-between gap-2">
+                        <div>
+                            <p class="text-xs font-semibold uppercase tracking-[0.08em] text-rose-600">Рассылки</p>
+                            <h3 class="mt-1 text-lg font-semibold text-rose-700">Настройка рассылок</h3>
+                            <p class="text-sm text-rose-600">Переключайте каналы и группы, изменения сохраняются сразу.</p>
+                        </div>
+                        <span class="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-xs font-semibold text-rose-700 ring-1 ring-rose-200">
+                            <span class="material-symbols-rounded text-base">notifications</span>
+                            Telegram-бот
+                        </span>
+                    </div>
+
+                    <div class="mt-4 space-y-4">
+                        <div class="space-y-3">
+                            <p class="text-xs font-semibold uppercase tracking-[0.08em] text-rose-600">Подключенные рассылки</p>
+                            <?php foreach ($notificationOptions as $option): ?>
+                                <?php
+                                $code = $option['code'];
+                                $enabled = !empty($notificationSettings[$code]);
+                                $locked = !empty($option['locked']);
+                                ?>
+                                <div class="flex items-start justify-between gap-4 rounded-2xl border border-rose-100 bg-white/70 px-3 py-2.5 sm:px-4 sm:py-3">
+                                    <div class="flex items-start gap-3">
+                                        <span class="material-symbols-rounded mt-0.5 text-base text-rose-500">notifications</span>
+                                        <div class="space-y-1">
+                                            <p class="text-sm font-semibold text-slate-900"><?php echo htmlspecialchars($option['label'], ENT_QUOTES, 'UTF-8'); ?></p>
+                                            <p class="text-xs text-slate-500"><?php echo htmlspecialchars($option['description'] ?? 'Будет учитываться при массовой отправке через админпанель.', ENT_QUOTES, 'UTF-8'); ?></p>
+                                            <?php if ($locked): ?>
+                                                <p class="text-[11px] font-semibold uppercase tracking-[0.08em] text-emerald-600">Всегда активно</p>
+                                            <?php endif; ?>
+                                        </div>
+                                    </div>
+                                    <label class="relative inline-flex cursor-pointer items-center">
+                                        <input
+                                            type="checkbox"
+                                            class="peer sr-only"
+                                            data-admin-notification-toggle="<?php echo htmlspecialchars($code, ENT_QUOTES, 'UTF-8'); ?>"
+                                            data-user-id="<?php echo (int) $user['id']; ?>"
+                                            <?php echo $enabled ? 'checked' : ''; ?>
+                                            <?php echo $locked ? 'disabled' : ''; ?>
+                                        >
+                                        <span class="h-6 w-11 rounded-full bg-rose-100 transition peer-checked:bg-emerald-500 peer-disabled:bg-rose-100/70"></span>
+                                        <span class="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow transition peer-checked:translate-x-5 peer-disabled:opacity-70"></span>
+                                    </label>
+                                </div>
+                            <?php endforeach; ?>
+                            <p class="text-xs text-rose-600">Все уведомления включены по умолчанию; изменения сохраняются сразу.</p>
+                            <p class="hidden text-xs font-semibold text-emerald-700" data-admin-notification-status>Настройки обновлены.</p>
+                        </div>
+
+                        <div class="space-y-3">
+                            <p class="text-xs font-semibold uppercase tracking-[0.08em] text-rose-600">Группы для рассылки</p>
+                            <?php if (empty($broadcastGroups)): ?>
+                                <div class="rounded-2xl border border-rose-100 bg-white/70 px-4 py-3 text-sm text-rose-700">
+                                    Группы рассылок пока не созданы.
+                                </div>
+                            <?php endif; ?>
+                            <?php foreach ($broadcastGroups as $group): ?>
+                                <div class="flex items-start justify-between gap-4 rounded-2xl border border-rose-100 bg-white/70 px-3 py-2.5 sm:px-4 sm:py-3">
+                                    <div class="flex items-start gap-3">
+                                        <span class="material-symbols-rounded mt-0.5 text-base text-rose-500">group</span>
+                                        <div class="space-y-1">
+                                            <p class="text-sm font-semibold text-slate-900"><?php echo htmlspecialchars($group['name'], ENT_QUOTES, 'UTF-8'); ?></p>
+                                            <p class="text-xs text-slate-500"><?php echo htmlspecialchars($group['description'] ?: 'Группа для таргетированной рассылки.', ENT_QUOTES, 'UTF-8'); ?></p>
+                                        </div>
+                                    </div>
+                                    <label class="relative inline-flex cursor-pointer items-center">
+                                        <input
+                                            type="checkbox"
+                                            class="peer sr-only"
+                                            data-admin-group-toggle="true"
+                                            data-group-id="<?php echo (int) $group['id']; ?>"
+                                            data-user-id="<?php echo (int) $user['id']; ?>"
+                                            <?php echo !empty($group['is_member']) ? 'checked' : ''; ?>
+                                        >
+                                        <span class="h-6 w-11 rounded-full bg-rose-100 transition peer-checked:bg-emerald-500"></span>
+                                        <span class="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow transition peer-checked:translate-x-5"></span>
+                                    </label>
+                                </div>
+                            <?php endforeach; ?>
+                            <p class="hidden text-xs font-semibold text-emerald-700" data-admin-group-status>Группы обновлены.</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
