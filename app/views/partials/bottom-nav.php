@@ -111,7 +111,10 @@ if ($userId) {
                         <?php echo $item['icon']; ?>
                     </span>
                     <?php if ($item['id'] === 'cart'): ?>
-                        <span class="absolute -right-2 -top-2 inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full px-1 text-[10px] font-semibold text-white <?php echo $cartCount > 0 ? 'bg-rose-500' : 'bg-slate-300'; ?>">
+                        <span
+                            class="absolute -right-2 -top-2 inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full px-1 text-[10px] font-semibold text-white <?php echo $cartCount > 0 ? 'bg-rose-500' : 'bg-slate-300'; ?>"
+                            data-cart-badge
+                        >
                             <?php echo $cartCount > 0 ? 1 : 0; ?>
                         </span>
                     <?php endif; ?>
