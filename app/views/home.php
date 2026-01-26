@@ -426,6 +426,11 @@
         document.querySelectorAll('[data-cart-indicator]').forEach((indicator) => {
             indicator.dataset.cartActive = isActive ? 'true' : 'false';
         });
+        document.querySelectorAll('[data-cart-badge]').forEach((badge) => {
+            badge.textContent = isActive ? '1' : '0';
+            badge.classList.toggle('bg-rose-500', isActive);
+            badge.classList.toggle('bg-slate-300', !isActive);
+        });
     }
 
     async function addCardToCart(card) {
