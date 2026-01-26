@@ -73,12 +73,12 @@ $navColumnsClass = $isAdminUser ? 'grid-cols-6' : 'grid-cols-5';
 $cart = class_exists('Cart') ? new Cart() : null;
 $cartCount = $cart ? $cart->getItemCount() : 0;
 $userId = class_exists('Auth') ? Auth::userId() : null;
-$hasActiveOrders = false;
+$activeOrderCount = 0;
 $hasActiveSubscriptions = false;
 if ($userId) {
     $orderModel = class_exists('Order') ? new Order() : null;
     $subscriptionModel = class_exists('Subscription') ? new Subscription() : null;
-    $hasActiveOrders = $orderModel ? !empty($orderModel->getActiveOrdersForUser($userId)) : false;
+    $activeOrderCount = $orderModel ? count($orderModel->getActiveOrdersForUser($userId)) : 0;
     $hasActiveSubscriptions = $subscriptionModel ? !empty($subscriptionModel->getActiveListForUser($userId)) : false;
 }
 ?>
@@ -96,7 +96,7 @@ if ($userId) {
                 $indicatorClasses = ' data-[cart-active=true]:bg-rose-50 data-[cart-active=true]:text-rose-600 data-[cart-active=true]:shadow-inner data-[cart-active=true]:shadow-rose-100';
             }
             if ($item['id'] === 'orders') {
-                $ordersActive = $hasActiveOrders || $hasActiveSubscriptions;
+                $ordersActive = $activeOrderCount > 0 || $hasActiveSubscriptions;
                 $indicatorAttributes = sprintf('data-orders-indicator data-orders-active="%s"', $ordersActive ? 'true' : 'false');
                 $indicatorClasses = ' data-[orders-active=true]:bg-emerald-50 data-[orders-active=true]:text-emerald-600 data-[orders-active=true]:shadow-inner data-[orders-active=true]:shadow-emerald-100';
             }
@@ -110,6 +110,16 @@ if ($userId) {
                     <span class="material-symbols-rounded text-xl">
                         <?php echo $item['icon']; ?>
                     </span>
+                    <?php if ($item['id'] === 'cart'): ?>
+                        <span class="absolute -right-2 -top-2 inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full px-1 text-[10px] font-semibold text-white <?php echo $cartCount > 0 ? 'bg-rose-500' : 'bg-slate-300'; ?>">
+                            <?php echo $cartCount > 0 ? 1 : 0; ?>
+                        </span>
+                    <?php endif; ?>
+                    <?php if ($item['id'] === 'orders' && $activeOrderCount > 0): ?>
+                        <span class="absolute -right-2 -top-2 inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-emerald-500 px-1 text-[10px] font-semibold text-white">
+                            <?php echo $activeOrderCount; ?>
+                        </span>
+                    <?php endif; ?>
                     <?php if ($item['id'] === 'account' && $isAuthenticated): ?>
                         <span class="absolute -right-3 -top-2 inline-flex items-center gap-1 rounded-full bg-rose-50 px-1.5 py-0.5 text-[10px] font-semibold text-rose-600 shadow-sm shadow-rose-100">
                             <img class="h-3 w-3" src="/assets/images/tulip.svg" alt="">
