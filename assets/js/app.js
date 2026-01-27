@@ -2,6 +2,75 @@ const pageId = document.body.dataset.page || '';
 let cartSubtotal = Number(document.querySelector('[data-cart-bouquet-total]')?.dataset.amount || 0);
 let deliveryPrice = Number(document.querySelector('[data-delivery-total]')?.dataset.amount || 0);
 let tulipBalance = Number(document.querySelector('[data-tulip-balance]')?.dataset.tulipBalance || 0);
+const KRASNOYARSK_TIME_ZONE = 'Asia/Krasnoyarsk';
+
+const getTimeZoneOffset = (timeZone, date) => {
+    const formatter = new Intl.DateTimeFormat('en-US', {
+        timeZone,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false,
+    });
+    const parts = formatter.formatToParts(date).reduce((acc, part) => {
+        if (part.type !== 'literal') {
+            acc[part.type] = part.value;
+        }
+        return acc;
+    }, {});
+    const asUTC = Date.UTC(
+        Number(parts.year),
+        Number(parts.month) - 1,
+        Number(parts.day),
+        Number(parts.hour),
+        Number(parts.minute),
+        Number(parts.second),
+    );
+    return asUTC - date.getTime();
+};
+
+const parseDateParts = (value) => {
+    const match = String(value)
+        .trim()
+        .match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2})(?::(\d{2}))?)?$/);
+    if (!match) return null;
+    return {
+        year: Number(match[1]),
+        month: Number(match[2]),
+        day: Number(match[3]),
+        hour: Number(match[4] || 0),
+        minute: Number(match[5] || 0),
+        second: Number(match[6] || 0),
+    };
+};
+
+const makeDateInTimeZone = (value, timeZone = KRASNOYARSK_TIME_ZONE) => {
+    if (!value) return null;
+    const raw = String(value).trim();
+    if (!raw) return null;
+    if (/[zZ]|[+-]\d{2}:\d{2}$/.test(raw)) {
+        const date = new Date(raw);
+        return Number.isNaN(date.getTime()) ? null : date;
+    }
+    const parts = parseDateParts(raw);
+    if (!parts) {
+        const normalized = raw.includes('T') ? raw : raw.replace(' ', 'T');
+        const fallback = new Date(normalized);
+        return Number.isNaN(fallback.getTime()) ? null : fallback;
+    }
+    const utcDate = new Date(Date.UTC(parts.year, parts.month - 1, parts.day, parts.hour, parts.minute, parts.second));
+    const offset = getTimeZoneOffset(timeZone, utcDate);
+    return new Date(utcDate.getTime() - offset);
+};
+
+const formatKrasnoyarskTime = (value) => {
+    const date = makeDateInTimeZone(value);
+    if (!date) return '';
+    return date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', timeZone: KRASNOYARSK_TIME_ZONE });
+};
 
 function formatCurrency(value) {
     const number = Number(value || 0);
@@ -3090,9 +3159,8 @@ function initAuctionModal() {
 
     const parseLotDate = (value) => {
         if (!value) return null;
-        const normalized = value.includes('T') ? value : value.replace(' ', 'T');
-        const date = new Date(normalized);
-        return Number.isNaN(date.getTime()) ? null : date;
+        const date = makeDateInTimeZone(value);
+        return date && !Number.isNaN(date.getTime()) ? date : null;
     };
 
     const updateCountdown = (lot) => {
@@ -3572,8 +3640,8 @@ function initCountdownTimers() {
         const target = element.dataset.countdownTarget;
         if (!target) return;
         const finishedText = element.dataset.countdownFinishedText || 'Завершено';
-        const end = new Date(target);
-        if (Number.isNaN(end.getTime())) {
+        const end = makeDateInTimeZone(target);
+        if (!end || Number.isNaN(end.getTime())) {
             return;
         }
         const now = new Date();
@@ -3835,9 +3903,7 @@ function initSupportChat() {
 
     const formatTime = (iso) => {
         if (!iso) return '';
-        const date = new Date(iso);
-        if (Number.isNaN(date.getTime())) return '';
-        return date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+        return formatKrasnoyarskTime(iso);
     };
 
     const renderMessage = (message) => {
