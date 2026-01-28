@@ -18,7 +18,7 @@ $currentUserRole = $currentUserRole ?? 'customer';
 $isAdminUser = $currentUserRole === 'admin';
 $mainClasses = 'mx-auto flex w-full max-w-6xl flex-1 flex-col gap-4 px-3 py-3 pb-[calc(6.5rem+env(safe-area-inset-bottom))] sm:gap-6 sm:px-4 sm:pt-8 sm:pb-[calc(6.5rem+env(safe-area-inset-bottom))]';
 if ($currentPage === 'home') {
-    $mainClasses = 'mx-auto flex w-full max-w-6xl flex-1 flex-col gap-4 px-3 py-3 pb-[calc(3rem+env(safe-area-inset-bottom))] sm:gap-6 sm:px-4 sm:pt-8 sm:pb-[calc(6.5rem+env(safe-area-inset-bottom))]';
+    $mainClasses = 'mx-auto flex w-full max-w-6xl flex-1 flex-col gap-4 px-3 py-0 pb-0 sm:gap-6 sm:px-4 sm:pt-8 sm:pb-[calc(6.5rem+env(safe-area-inset-bottom))] justify-center sm:justify-start';
 }
 if ($isAuthPage) {
     $mainClasses .= ' items-center justify-center';
@@ -27,6 +27,9 @@ if ($isAdminPage) {
     $mainClasses = 'mx-auto flex w-full max-w-7xl flex-1 flex-col gap-5 px-4 pb-10 pt-6 pl-20 sm:pl-24';
 }
 $bodyClasses = 'min-h-screen antialiased font-["Manrope",system-ui,sans-serif] flex flex-col pb-[calc(6.5rem+env(safe-area-inset-bottom))]';
+if ($currentPage === 'home') {
+    $bodyClasses = 'min-h-screen antialiased font-["Manrope",system-ui,sans-serif] flex flex-col pb-0 sm:pb-[calc(6.5rem+env(safe-area-inset-bottom))]';
+}
 if ($isAdminPage) {
     $bodyClasses .= ' bg-slate-950 text-slate-100';
 } else {
