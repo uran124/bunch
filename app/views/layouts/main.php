@@ -62,12 +62,6 @@ $adminNavigation = [
                 'page' => 'admin-broadcast',
                 'icon' => 'campaign',
             ],
-            [
-                'label' => 'Роли и доступы',
-                'href' => '/admin/roles-access',
-                'page' => 'admin/roles-access',
-                'icon' => 'admin_panel_settings',
-            ],
         ],
     ],
     [
