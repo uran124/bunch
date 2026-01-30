@@ -3,6 +3,11 @@
 
 class CartController extends Controller
 {
+    private const ORS_ORIGIN = [
+        'lat' => 56.054764,
+        'lon' => 92.909267,
+    ];
+
     public function index(): void
     {
         $cart = new Cart();
@@ -50,6 +55,10 @@ class CartController extends Controller
             'addresses' => $addresses,
             'deliveryZones' => $deliveryZoneModel->getZones(true, true),
             'deliveryPricingVersion' => $deliveryZoneModel->getPricingVersion(),
+            'deliveryPricingMode' => $this->getDeliveryPricingMode(),
+            'deliveryDistanceRates' => (new DeliveryDistanceRate())->getAll(),
+            'orsApiKey' => $this->getOpenRouteApiKey(),
+            'orsOrigin' => self::ORS_ORIGIN,
             'dadataConfig' => $this->getDadataSettings(),
             'testAddresses' => $deliveryZoneModel->getTestAddresses(),
             'onlinePaymentEnabled' => $this->isOnlinePaymentEnabled(),
@@ -208,6 +217,8 @@ class CartController extends Controller
         $userAddresses = $addressModel->getByUserId((int) $userId);
 
         $addressDetails = is_array($payload['address'] ?? null) ? $payload['address'] : [];
+        $deliveryPrice = $payload['delivery_price'] ?? null;
+        $distanceKm = null;
 
         if ($mode === 'delivery' && $addressId !== null) {
             $validAddressIds = array_map(static fn ($row) => (int) ($row['raw']['id'] ?? 0), $userAddresses);
@@ -234,6 +245,31 @@ class CartController extends Controller
             }
             if ($recipientPhone === '') {
                 $recipientPhone = trim((string) ($userProfile['phone'] ?? ''));
+            }
+        }
+
+        if ($mode === 'delivery' && $this->getDeliveryPricingMode() === 'ors') {
+            $pricingFallback = (int) ($this->getDadataSettings()['defaultDeliveryPrice'] ?? 0);
+            $distanceRates = (new DeliveryDistanceRate())->getAll();
+            $selectedAddress = $addressId ? $this->findAddressById($userAddresses, $addressId) : null;
+            $distanceKm = $this->resolveDistanceKm($selectedAddress, $addressDetails, $payload);
+
+            if ($distanceKm === null) {
+                $lat = $this->extractCoordinate($selectedAddress, $addressDetails, $payload, 'lat');
+                $lon = $this->extractCoordinate($selectedAddress, $addressDetails, $payload, 'lon');
+                if ($lat !== null && $lon !== null) {
+                    $distanceKm = $this->calculateDistanceKm($lon, $lat);
+                }
+            }
+
+            if ($distanceKm !== null) {
+                $deliveryPrice = $this->findDistancePrice($distanceKm, $distanceRates) ?? $pricingFallback;
+            } else {
+                $deliveryPrice = $pricingFallback;
+            }
+
+            if ($addressId && $distanceKm !== null && empty($selectedAddress['raw']['distance_km'])) {
+                $addressModel->updateDistanceForUser((int) $userId, $addressId, $distanceKm);
             }
         }
 
@@ -276,11 +312,12 @@ class CartController extends Controller
                     'zone_id' => $payload['zone_id'] ?? ($addressDetails['zone_id'] ?? null),
                     'zone_version' => $payload['zone_version'] ?? $payload['delivery_pricing_version'] ?? null,
                     'zone_calculated_at' => $zoneCalculatedAt,
-                    'last_delivery_price_hint' => $payload['delivery_price'] ?? null,
+                    'last_delivery_price_hint' => $deliveryPrice ?? null,
                     'location_source' => $addressDetails['location_source'] ?? ($payload['location_source'] ?? null),
                     'geo_quality' => $addressDetails['geo_quality'] ?? ($payload['geo_quality'] ?? null),
                     'lat' => $addressDetails['lat'] ?? null,
                     'lon' => $addressDetails['lon'] ?? null,
+                    'distance_km' => $distanceKm ?? ($payload['distance_km'] ?? null),
                 ]);
 
                 $validLocationSources = ['dadata', 'manual_pin', 'other'];
@@ -310,7 +347,7 @@ class CartController extends Controller
                 'address_text' => $addressText,
                  
                 'address' => $addressDetails,
-                'delivery_price' => $payload['delivery_price'] ?? null,
+                'delivery_price' => $deliveryPrice,
                 'zone_id' => $payload['zone_id'] ?? null,
                 'delivery_pricing_version' => $payload['delivery_pricing_version'] ?? null,
                 'recipient_name' => $recipientName ?: null,
@@ -359,6 +396,94 @@ class CartController extends Controller
         }
 
         return $dt->format('Y-m-d H:i:s');
+    }
+
+    private function getDeliveryPricingMode(): string
+    {
+        $settings = new Setting();
+        $defaults = $settings->getDeliveryDefaults();
+        $mode = $settings->get(Setting::DELIVERY_PRICING_MODE, $defaults[Setting::DELIVERY_PRICING_MODE] ?? 'turf');
+
+        return in_array($mode, ['turf', 'ors'], true) ? $mode : 'turf';
+    }
+
+    private function getOpenRouteApiKey(): string
+    {
+        $settings = new Setting();
+        $defaults = $settings->getDeliveryDefaults();
+
+        return (string) $settings->get(Setting::OPENROUTE_API_KEY, $defaults[Setting::OPENROUTE_API_KEY] ?? '');
+    }
+
+    private function findAddressById(array $addresses, int $addressId): ?array
+    {
+        foreach ($addresses as $address) {
+            if (isset($address['raw']['id']) && (int) $address['raw']['id'] === $addressId) {
+                return $address;
+            }
+        }
+        return null;
+    }
+
+    private function extractCoordinate(?array $selectedAddress, array $addressDetails, array $payload, string $key): ?float
+    {
+        $value = $addressDetails[$key] ?? ($payload[$key] ?? null);
+        if ($value === null && $selectedAddress) {
+            $value = $selectedAddress['raw'][$key] ?? null;
+        }
+        if ($value === null || $value === '') {
+            return null;
+        }
+        $number = (float) $value;
+        return is_finite($number) && $number !== 0.0 ? $number : null;
+    }
+
+    private function resolveDistanceKm(?array $selectedAddress, array $addressDetails, array $payload): ?float
+    {
+        $distanceRaw = $addressDetails['distance_km'] ?? ($payload['distance_km'] ?? null);
+        if ($distanceRaw === null && $selectedAddress) {
+            $distanceRaw = $selectedAddress['raw']['distance_km'] ?? null;
+        }
+        if ($distanceRaw === null || $distanceRaw === '') {
+            return null;
+        }
+        $distance = (float) $distanceRaw;
+        if (!is_finite($distance) || $distance <= 0) {
+            return null;
+        }
+        return round($distance, 2);
+    }
+
+    private function calculateDistanceKm(float $lon, float $lat): ?float
+    {
+        $apiKey = $this->getOpenRouteApiKey();
+        if ($apiKey === '') {
+            return null;
+        }
+        $client = new OpenRouteServiceClient($apiKey);
+        return $client->getDistanceKm(
+            [self::ORS_ORIGIN['lon'], self::ORS_ORIGIN['lat']],
+            [$lon, $lat]
+        );
+    }
+
+    private function findDistancePrice(float $distanceKm, array $rates): ?int
+    {
+        foreach ($rates as $rate) {
+            $min = isset($rate['min_km']) ? (float) $rate['min_km'] : null;
+            $max = isset($rate['max_km']) && $rate['max_km'] !== null ? (float) $rate['max_km'] : null;
+            if ($min === null) {
+                continue;
+            }
+            if ($distanceKm < $min) {
+                continue;
+            }
+            if ($max !== null && $distanceKm > $max) {
+                continue;
+            }
+            return (int) ($rate['price'] ?? 0);
+        }
+        return null;
     }
 
     private function logCheckoutError(string $message, array $context = []): void
