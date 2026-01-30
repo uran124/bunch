@@ -226,6 +226,7 @@ class OrdersController extends Controller
             'deliveryType' => $this->mapDeliveryType($order['delivery_type'] ?? 'pickup'),
             'scheduled' => implode(' · ', $scheduledParts),
             'address' => $order['address'] ?? null,
+            'deliveryPrice' => isset($order['delivery_price']) ? $this->formatPrice((float) $order['delivery_price']) : null,
             'editLink' => '/order-edit?id=' . (int) $order['id'],
             'paymentLink' => '/order-payment?id=' . (int) $order['id'],
             'canEdit' => $order['status'] === 'new',
