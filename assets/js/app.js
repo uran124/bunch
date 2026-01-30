@@ -1041,7 +1041,7 @@ function initOrderFlow() {
     const buildDistanceQuote = (payload) => {
         const distanceKm = payload.distance_km ?? null;
         if (distanceKm === null) return null;
-        const price = findDistancePrice(distanceKm) ?? Number(fallbackDeliveryPrice) || 0;
+        const price = findDistancePrice(distanceKm) ?? (Number(fallbackDeliveryPrice) || 0);
         return {
             ...payload,
             delivery_price: price,
