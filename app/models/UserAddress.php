@@ -18,7 +18,8 @@ class UserAddress extends Model
             entrance, floor, intercom, delivery_comment,
             label, is_default,
             fias_id, kladr_id, postal_code, region, city_district,
-            last_delivery_price_hint
+            last_delivery_price_hint,
+            distance_km
         ) VALUES (
             :user_id, 1, 0, NOW(),
             :settlement, :street, :house, :apartment, :address_text,
@@ -28,7 +29,8 @@ class UserAddress extends Model
             :entrance, :floor, :intercom, :delivery_comment,
             :label, :is_default,
             :fias_id, :kladr_id, :postal_code, :region, :city_district,
-            :last_delivery_price_hint
+            :last_delivery_price_hint,
+            :distance_km
         )';
 
         $stmt = $this->db->prepare($sql);
@@ -60,6 +62,7 @@ class UserAddress extends Model
             'region' => $this->emptyToNull($data['region'] ?? null),
             'city_district' => $this->emptyToNull($data['city_district'] ?? null),
             'last_delivery_price_hint' => isset($data['last_delivery_price_hint']) ? (int) floor((float) $data['last_delivery_price_hint']) : null,
+            'distance_km' => $this->normalizeDistance($data['distance_km'] ?? null),
         ]);
 
         return (int) $this->db->lastInsertId();
@@ -88,6 +91,7 @@ class UserAddress extends Model
             zone_calculated_at = :zone_calculated_at,
             zone_version = :zone_version,
             last_delivery_price_hint = :last_delivery_price_hint,
+            distance_km = :distance_km,
             recipient_name = :recipient_name,
             recipient_phone = :recipient_phone,
             entrance = :entrance,
@@ -113,12 +117,25 @@ class UserAddress extends Model
             'zone_calculated_at' => $this->emptyToNull($data['zone_calculated_at'] ?? null),
             'zone_version' => $this->emptyToNull($data['zone_version'] ?? null),
             'last_delivery_price_hint' => isset($data['last_delivery_price_hint']) ? (int) floor((float) $data['last_delivery_price_hint']) : null,
+            'distance_km' => $this->normalizeDistance($data['distance_km'] ?? null),
             'recipient_name' => $this->emptyToNull($data['recipient_name'] ?? null),
             'recipient_phone' => $this->emptyToNull($data['recipient_phone'] ?? null),
             'entrance' => $this->emptyToNull($data['entrance'] ?? null),
             'floor' => $this->emptyToNull($data['floor'] ?? null),
             'intercom' => $this->emptyToNull($data['intercom'] ?? null),
             'delivery_comment' => $this->emptyToNull($data['delivery_comment'] ?? null),
+            'id' => $addressId,
+            'user_id' => $userId,
+        ]);
+
+        return $stmt->rowCount() > 0;
+    }
+
+    public function updateDistanceForUser(int $userId, int $addressId, ?float $distanceKm): bool
+    {
+        $stmt = $this->db->prepare('UPDATE user_addresses SET distance_km = :distance_km, updated_at = NOW() WHERE id = :id AND user_id = :user_id');
+        $stmt->execute([
+            'distance_km' => $this->normalizeDistance($distanceKm),
             'id' => $addressId,
             'user_id' => $userId,
         ]);
@@ -191,5 +208,17 @@ class UserAddress extends Model
         $trimmed = trim((string) $value);
 
         return $trimmed === '' ? null : $trimmed;
+    }
+
+    private function normalizeDistance($value): ?float
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+        $number = (float) $value;
+        if (!is_finite($number) || $number <= 0) {
+            return null;
+        }
+        return round($number, 2);
     }
 }
