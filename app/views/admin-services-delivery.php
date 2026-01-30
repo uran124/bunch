@@ -245,6 +245,138 @@
         </article>
     </section>
 
+    <section class="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
+        <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <form id="delivery-pricing-form" action="/admin-services-delivery" method="post" class="space-y-4">
+                <div class="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Стоимость доставки</p>
+                        <h2 class="text-xl font-semibold text-slate-900">Режим расчёта</h2>
+                        <p class="text-sm text-slate-500">Переключите источник расчёта стоимости: зоны turf.js или километраж OpenRouteService.</p>
+                    </div>
+                    <?php if (($status ?? null) === 'saved'): ?>
+                        <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-200">
+                            <span class="material-symbols-rounded text-base">task_alt</span>
+                            Сохранено
+                        </span>
+                    <?php endif; ?>
+                </div>
+
+                <div class="grid gap-3 sm:grid-cols-2">
+                    <label class="flex items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 text-sm text-slate-800">
+                        <span class="font-semibold">Turf.js (зоны)</span>
+                        <input
+                            type="radio"
+                            name="delivery_pricing_mode"
+                            value="turf"
+                            <?php echo ($deliveryPricingMode ?? 'turf') === 'turf' ? 'checked' : ''; ?>
+                            class="h-5 w-5 text-rose-600 focus:ring-rose-500"
+                        >
+                    </label>
+                    <label class="flex items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 text-sm text-slate-800">
+                        <span class="font-semibold">OpenRouteService (км)</span>
+                        <input
+                            type="radio"
+                            name="delivery_pricing_mode"
+                            value="ors"
+                            <?php echo ($deliveryPricingMode ?? 'turf') === 'ors' ? 'checked' : ''; ?>
+                            class="h-5 w-5 text-rose-600 focus:ring-rose-500"
+                        >
+                    </label>
+                </div>
+
+                <input type="hidden" name="ors_api_key" id="ors-api-key-setting" value="<?php echo htmlspecialchars($orsApiKey ?? '', ENT_QUOTES, 'UTF-8'); ?>">
+
+                <div class="rounded-xl border border-slate-100 bg-slate-50 p-4">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <div>
+                            <p class="text-sm font-semibold text-slate-800">Тарифы по километражу</p>
+                            <p class="text-xs text-slate-500">Используются при выборе OpenRouteService.</p>
+                        </div>
+                        <button type="button" id="distance-rate-add" class="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:-translate-y-0.5 hover:shadow-sm">
+                            <span class="material-symbols-rounded text-base text-rose-500">add</span>
+                            Добавить
+                        </button>
+                    </div>
+
+                    <div class="mt-3 space-y-2" id="distance-rate-list">
+                        <?php if (!empty($distanceRates)): ?>
+                            <?php foreach ($distanceRates as $rate): ?>
+                                <div class="distance-rate-row grid gap-2 rounded-xl border border-slate-200 bg-white p-3 text-sm sm:grid-cols-[1fr_1fr_1fr_auto]">
+                                    <label class="space-y-1">
+                                        <span class="text-[11px] uppercase tracking-[0.08em] text-slate-500">От, км</span>
+                                        <input type="number" step="0.1" name="distance_min_km[]" value="<?php echo htmlspecialchars((string) $rate['min_km'], ENT_QUOTES, 'UTF-8'); ?>" class="w-full rounded-lg border border-slate-200 px-3 py-2 font-semibold text-slate-900 focus:border-rose-300 focus:outline-none">
+                                    </label>
+                                    <label class="space-y-1">
+                                        <span class="text-[11px] uppercase tracking-[0.08em] text-slate-500">До, км</span>
+                                        <input type="number" step="0.1" name="distance_max_km[]" value="<?php echo htmlspecialchars((string) ($rate['max_km'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>" class="w-full rounded-lg border border-slate-200 px-3 py-2 font-semibold text-slate-900 focus:border-rose-300 focus:outline-none">
+                                    </label>
+                                    <label class="space-y-1">
+                                        <span class="text-[11px] uppercase tracking-[0.08em] text-slate-500">Цена, ₽</span>
+                                        <input type="number" step="1" name="distance_price[]" value="<?php echo htmlspecialchars((string) $rate['price'], ENT_QUOTES, 'UTF-8'); ?>" class="w-full rounded-lg border border-slate-200 px-3 py-2 font-semibold text-slate-900 focus:border-rose-300 focus:outline-none">
+                                    </label>
+                                    <button type="button" class="distance-rate-remove inline-flex items-center justify-center rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700 transition hover:-translate-y-0.5 hover:shadow-sm">
+                                        <span class="material-symbols-rounded text-base">delete</span>
+                                    </button>
+                                </div>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <div class="distance-rate-row grid gap-2 rounded-xl border border-slate-200 bg-white p-3 text-sm sm:grid-cols-[1fr_1fr_1fr_auto]">
+                                <label class="space-y-1">
+                                    <span class="text-[11px] uppercase tracking-[0.08em] text-slate-500">От, км</span>
+                                    <input type="number" step="0.1" name="distance_min_km[]" class="w-full rounded-lg border border-slate-200 px-3 py-2 font-semibold text-slate-900 focus:border-rose-300 focus:outline-none">
+                                </label>
+                                <label class="space-y-1">
+                                    <span class="text-[11px] uppercase tracking-[0.08em] text-slate-500">До, км</span>
+                                    <input type="number" step="0.1" name="distance_max_km[]" class="w-full rounded-lg border border-slate-200 px-3 py-2 font-semibold text-slate-900 focus:border-rose-300 focus:outline-none">
+                                </label>
+                                <label class="space-y-1">
+                                    <span class="text-[11px] uppercase tracking-[0.08em] text-slate-500">Цена, ₽</span>
+                                    <input type="number" step="1" name="distance_price[]" class="w-full rounded-lg border border-slate-200 px-3 py-2 font-semibold text-slate-900 focus:border-rose-300 focus:outline-none">
+                                </label>
+                                <button type="button" class="distance-rate-remove inline-flex items-center justify-center rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700 transition hover:-translate-y-0.5 hover:shadow-sm">
+                                    <span class="material-symbols-rounded text-base">delete</span>
+                                </button>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+
+                <button
+                    type="submit"
+                    class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-rose-200 transition hover:-translate-y-0.5 hover:shadow-xl"
+                >
+                    <span class="material-symbols-rounded text-base">save</span>
+                    Сохранить настройки
+                </button>
+            </form>
+        </article>
+
+        <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div class="space-y-3">
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Пояснение</p>
+                    <h2 class="text-xl font-semibold text-slate-900">Как используется километраж</h2>
+                    <p class="text-sm text-slate-500">Сначала берём сохранённый километраж адреса, затем считаем новый и фиксируем его.</p>
+                </div>
+                <ul class="space-y-2 text-sm text-slate-600">
+                    <li class="flex items-start gap-2">
+                        <span class="mt-1 h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
+                        <span>Если километраж сохранён — используем его и сопоставляем с диапазоном.</span>
+                    </li>
+                    <li class="flex items-start gap-2">
+                        <span class="mt-1 h-2.5 w-2.5 rounded-full bg-indigo-500"></span>
+                        <span>Если километраж пустой — считаем через OpenRouteService и записываем в адрес.</span>
+                    </li>
+                    <li class="flex items-start gap-2">
+                        <span class="mt-1 h-2.5 w-2.5 rounded-full bg-amber-500"></span>
+                        <span>Стоимость берётся из таблицы диапазонов километража.</span>
+                    </li>
+                </ul>
+            </div>
+        </article>
+    </section>
+
     <section class="grid gap-4 xl:grid-cols-[0.8fr_1.2fr]">
         <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <div class="flex items-start justify-between gap-3">
@@ -266,6 +398,7 @@
                         type="text"
                         id="ors-api-key"
                         name="orsApiKey"
+                        value="<?php echo htmlspecialchars($orsApiKey ?? '', ENT_QUOTES, 'UTF-8'); ?>"
                         placeholder="Вставьте ключ OpenRouteService"
                         class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-sm focus:border-rose-300 focus:outline-none focus:ring-2 focus:ring-rose-200"
                     >
@@ -466,6 +599,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const result = document.getElementById('address-zone-result');
     const steps = document.querySelectorAll('#address-steps [data-step]');
     const orsKeyInput = document.getElementById('ors-api-key');
+    const orsKeySettingInput = document.getElementById('ors-api-key-setting');
+    const distanceRateList = document.getElementById('distance-rate-list');
+    const distanceRateAdd = document.getElementById('distance-rate-add');
     let orsApiKey = '';
 
     const colorPool = ['#f43f5e', '#06b6d4', '#a855f7', '#f97316', '#22c55e'];
@@ -737,7 +873,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function hydrateOrsApiKey() {
         try {
             const cached = localStorage.getItem('orsApiKey');
-            if (cached) {
+            if (cached && !orsApiKey) {
                 orsApiKey = cached;
             }
         } catch (e) {
@@ -745,7 +881,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (orsKeyInput) {
-            orsKeyInput.value = orsApiKey;
+            if (!orsKeyInput.value) {
+                orsKeyInput.value = orsApiKey;
+            }
+            orsApiKey = orsKeyInput.value;
+        }
+
+        if (orsKeySettingInput) {
+            orsKeySettingInput.value = orsApiKey;
         }
     }
 
@@ -971,6 +1114,14 @@ document.addEventListener('DOMContentLoaded', () => {
     hydrateOrsApiKey();
     refreshMapFromZones();
 
+    const syncOrsKey = () => {
+        if (orsKeySettingInput && orsKeyInput) {
+            orsKeySettingInput.value = orsKeyInput.value.trim();
+        }
+    };
+
+    orsKeyInput?.addEventListener('input', syncOrsKey);
+
     credentialsForm?.addEventListener('submit', (event) => {
         event.preventDefault();
 
@@ -1027,6 +1178,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const orsKeyValue = (orsKeyInput?.value || '').trim();
 
         orsApiKey = orsKeyValue;
+        syncOrsKey();
         if (orsKeyValue) {
             try {
                 localStorage.setItem('orsApiKey', orsKeyValue);
@@ -1071,6 +1223,49 @@ document.addEventListener('DOMContentLoaded', () => {
             setStepStatus('route', 'Маршрут недоступен', 'bg-amber-50 text-amber-700 ring-1 ring-amber-200');
             result.innerHTML += ' <span class="block mt-2 text-slate-600">OpenRouteService не вернул маршрут. Проверьте API-ключ.</span>';
         }
+    });
+
+    const buildDistanceRow = () => {
+        const row = document.createElement('div');
+        row.className = 'distance-rate-row grid gap-2 rounded-xl border border-slate-200 bg-white p-3 text-sm sm:grid-cols-[1fr_1fr_1fr_auto]';
+        row.innerHTML = `
+            <label class="space-y-1">
+                <span class="text-[11px] uppercase tracking-[0.08em] text-slate-500">От, км</span>
+                <input type="number" step="0.1" name="distance_min_km[]" class="w-full rounded-lg border border-slate-200 px-3 py-2 font-semibold text-slate-900 focus:border-rose-300 focus:outline-none">
+            </label>
+            <label class="space-y-1">
+                <span class="text-[11px] uppercase tracking-[0.08em] text-slate-500">До, км</span>
+                <input type="number" step="0.1" name="distance_max_km[]" class="w-full rounded-lg border border-slate-200 px-3 py-2 font-semibold text-slate-900 focus:border-rose-300 focus:outline-none">
+            </label>
+            <label class="space-y-1">
+                <span class="text-[11px] uppercase tracking-[0.08em] text-slate-500">Цена, ₽</span>
+                <input type="number" step="1" name="distance_price[]" class="w-full rounded-lg border border-slate-200 px-3 py-2 font-semibold text-slate-900 focus:border-rose-300 focus:outline-none">
+            </label>
+            <button type="button" class="distance-rate-remove inline-flex items-center justify-center rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700 transition hover:-translate-y-0.5 hover:shadow-sm">
+                <span class="material-symbols-rounded text-base">delete</span>
+            </button>
+        `;
+        return row;
+    };
+
+    const attachDistanceRowListeners = (scope) => {
+        scope.querySelectorAll('.distance-rate-remove').forEach((button) => {
+            button.addEventListener('click', () => {
+                const row = button.closest('.distance-rate-row');
+                row?.remove();
+            });
+        });
+    };
+
+    if (distanceRateList) {
+        attachDistanceRowListeners(distanceRateList);
+    }
+
+    distanceRateAdd?.addEventListener('click', () => {
+        if (!distanceRateList) return;
+        const row = buildDistanceRow();
+        distanceRateList.appendChild(row);
+        attachDistanceRowListeners(row);
     });
 });
 </script>
