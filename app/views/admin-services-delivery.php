@@ -249,9 +249,9 @@
         <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <div class="flex items-start justify-between gap-3">
                 <div>
-                    <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Тестирование</p>
-                    <h2 class="text-xl font-semibold text-slate-900">Проверка попадания адреса</h2>
-                    <p class="text-sm text-slate-500">Улица и дом проходят через DaData, затем точка проверяется в полигонах.</p>
+                    <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">OpenRouteService</p>
+                    <h2 class="text-xl font-semibold text-slate-900">Маршрут и проверка зоны</h2>
+                    <p class="text-sm text-slate-500">Адрес определяем в DaData, зону — через turf.js, а километраж — через OpenRouteService.</p>
                 </div>
                 <span class="inline-flex items-center gap-1 rounded-full bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-slate-200">
                     <span class="material-symbols-rounded text-base text-emerald-500">task_alt</span>
@@ -260,6 +260,16 @@
             </div>
 
             <form id="address-zone-form" class="mt-4 space-y-3">
+                <label class="flex flex-col gap-2">
+                    <span class="text-sm font-semibold text-slate-700">Ключ OpenRouteService</span>
+                    <input
+                        type="text"
+                        id="ors-api-key"
+                        name="orsApiKey"
+                        placeholder="Вставьте ключ OpenRouteService"
+                        class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-sm focus:border-rose-300 focus:outline-none focus:ring-2 focus:ring-rose-200"
+                    >
+                </label>
                 <label class="flex flex-col gap-2">
                     <span class="text-sm font-semibold text-slate-700">Адрес для теста</span>
                     <input
@@ -289,6 +299,10 @@
                             <li class="flex items-start gap-2">
                                 <span class="mt-0.5 h-2.5 w-2.5 rounded-full bg-rose-500"></span>
                                 <span>Попадание в зону и стоимость</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <span class="mt-0.5 h-2.5 w-2.5 rounded-full bg-sky-500"></span>
+                                <span>Маршрут и километраж (OpenRouteService)</span>
                             </li>
                         </ol>
                     </div>
@@ -320,6 +334,13 @@
                                 <span class="flex items-center gap-2">
                                     <span class="material-symbols-rounded text-base text-rose-500">task_alt</span>
                                     Определение зоны
+                                </span>
+                                <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">Ожидает</span>
+                            </li>
+                            <li class="flex items-center justify-between gap-2 rounded-lg bg-white px-3 py-2 text-sm text-slate-800" data-step="route">
+                                <span class="flex items-center gap-2">
+                                    <span class="material-symbols-rounded text-base text-sky-500">route</span>
+                                    Маршрут OpenRouteService
                                 </span>
                                 <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">Ожидает</span>
                             </li>
@@ -444,6 +465,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('address-zone-form');
     const result = document.getElementById('address-zone-result');
     const steps = document.querySelectorAll('#address-steps [data-step]');
+    const orsKeyInput = document.getElementById('ors-api-key');
+    let orsApiKey = '';
 
     const colorPool = ['#f43f5e', '#06b6d4', '#a855f7', '#f97316', '#22c55e'];
 
@@ -711,6 +734,21 @@ document.addEventListener('DOMContentLoaded', () => {
         if (secretKeyDisplay) secretKeyDisplay.textContent = formatKey(dadataConfig?.secretKey || '');
     }
 
+    function hydrateOrsApiKey() {
+        try {
+            const cached = localStorage.getItem('orsApiKey');
+            if (cached) {
+                orsApiKey = cached;
+            }
+        } catch (e) {
+            console.error('Не удалось загрузить ключ OpenRouteService из localStorage', e);
+        }
+
+        if (orsKeyInput) {
+            orsKeyInput.value = orsApiKey;
+        }
+    }
+
     function normalizeText(value) {
         return value.trim().toLowerCase();
     }
@@ -861,7 +899,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function resetSteps() {
         setStepStatus('connect', 'Готово', 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200');
-        ['address', 'coords', 'zone'].forEach((step) => {
+        ['address', 'coords', 'zone', 'route'].forEach((step) => {
             setStepStatus(step, 'Ожидает', 'bg-slate-100 text-slate-600');
         });
     }
@@ -908,7 +946,29 @@ document.addEventListener('DOMContentLoaded', () => {
         showStatus(`Точка ${addressText} вне зон.`, 'warn');
     }
 
+    async function getRoadDistance(startCoords, endCoords, apiKey) {
+        if (!apiKey) return null;
+        const response = await fetch('https://api.openrouteservice.org/v2/directions/driving-car', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: apiKey,
+            },
+            body: JSON.stringify({ coordinates: [startCoords, endCoords] }),
+        }).catch(() => null);
+
+        if (!response?.ok) {
+            return null;
+        }
+
+        const data = await response.json().catch(() => null);
+        const meters = data?.routes?.[0]?.summary?.distance;
+        if (!Number.isFinite(meters)) return null;
+        return meters / 1000;
+    }
+
     hydrateCredentials();
+    hydrateOrsApiKey();
     refreshMapFromZones();
 
     credentialsForm?.addEventListener('submit', (event) => {
@@ -964,6 +1024,16 @@ document.addEventListener('DOMContentLoaded', () => {
         event.preventDefault();
         const addressRaw = document.getElementById('address-full').value || '';
         const addressValue = normalizeText(addressRaw);
+        const orsKeyValue = (orsKeyInput?.value || '').trim();
+
+        orsApiKey = orsKeyValue;
+        if (orsKeyValue) {
+            try {
+                localStorage.setItem('orsApiKey', orsKeyValue);
+            } catch (e) {
+                console.error('Не удалось сохранить ключ OpenRouteService', e);
+            }
+        }
 
         resetSteps();
 
@@ -990,6 +1060,16 @@ document.addEventListener('DOMContentLoaded', () => {
             result.innerHTML = `<strong class="text-slate-900">${geocoded.label}</strong> находится в зоне <strong class="text-slate-900">${zone.name}</strong>. Стоимость доставки: <strong class="text-slate-900">${zone.price} ₽</strong>.`;
         } else {
             useFallbackResult(geocoded.label);
+        }
+
+        const originCoords = [mapCenter[1], mapCenter[0]];
+        const distanceKm = await getRoadDistance(originCoords, geocoded.coords, orsApiKey);
+        if (distanceKm !== null) {
+            setStepStatus('route', 'Маршрут найден', 'bg-sky-50 text-sky-700 ring-1 ring-sky-200');
+            result.innerHTML += ` <span class="block mt-2 text-slate-600">Километраж по дороге: <strong class="text-slate-900">${distanceKm.toFixed(2)} км</strong>.</span>`;
+        } else {
+            setStepStatus('route', 'Маршрут недоступен', 'bg-amber-50 text-amber-700 ring-1 ring-amber-200');
+            result.innerHTML += ' <span class="block mt-2 text-slate-600">OpenRouteService не вернул маршрут. Проверьте API-ключ.</span>';
         }
     });
 });
