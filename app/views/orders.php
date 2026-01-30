@@ -56,17 +56,6 @@
 
             <?php if (!empty($activeOrders)): ?>
                 <div class="rounded-3xl border border-amber-200 bg-amber-50 p-3 shadow-sm sm:p-5">
-                    <div class="flex items-center justify-between gap-3">
-                        <div class="space-y-1">
-                            <p class="text-xs font-semibold uppercase tracking-[0.06em] text-amber-700">Активные заказы</p>
-                            <h3 class="text-base font-semibold text-slate-900 sm:text-lg">В работе</h3>
-                        </div>
-                        <span class="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-xs font-semibold text-amber-700 shadow-sm ring-1 ring-amber-100">
-                            <span class="material-symbols-rounded text-base">push_pin</span>
-                            Закреплено
-                        </span>
-                    </div>
-
                     <div class="mt-4 grid gap-3">
                             <?php foreach ($activeOrders as $order): ?>
                                 <?php
@@ -81,51 +70,53 @@
                                 };
                                 ?>
                             <article class="flex items-start gap-3 rounded-2xl bg-white p-3 shadow-inner shadow-amber-100 sm:p-4">
-                                <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-50 text-amber-700 sm:h-12 sm:w-12">
-                                    <span class="material-symbols-rounded text-xl">local_shipping</span>
-                                </div>
                                 <div class="flex-1 space-y-2">
                                     <div class="flex flex-wrap items-center justify-between gap-2">
                                         <div class="flex flex-wrap items-center gap-2 text-sm font-semibold text-slate-900">
                                             <span><?php echo htmlspecialchars($order['number'], ENT_QUOTES, 'UTF-8'); ?></span>
-                                            <span class="text-slate-500">· <?php echo htmlspecialchars($order['createdAt'], ENT_QUOTES, 'UTF-8'); ?></span>
+                                            <span class="inline-flex items-center gap-1 text-slate-500">
+                                                <span class="material-symbols-rounded text-base text-amber-600"><?php echo $order['deliveryType'] === 'Доставка' ? 'local_shipping' : 'storefront'; ?></span>
+                                                <span><?php echo htmlspecialchars($order['scheduled'] ?: 'Дата уточняется', ENT_QUOTES, 'UTF-8'); ?></span>
+                                            </span>
                                         </div>
                                         <span class="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ring-1 <?php echo $badgeClasses; ?>">
                                             <span class="material-symbols-rounded text-base">radio_button_checked</span>
                                             <?php echo htmlspecialchars($order['statusLabel'], ENT_QUOTES, 'UTF-8'); ?>
                                         </span>
                                     </div>
-                                    <?php if (!empty($order['item'])): ?>
-                                        <p class="text-sm font-semibold text-slate-900"><?php echo htmlspecialchars($order['item']['title'], ENT_QUOTES, 'UTF-8'); ?> ×<?php echo (int) $order['item']['qty']; ?> · <?php echo htmlspecialchars($order['item']['unit'], ENT_QUOTES, 'UTF-8'); ?></p>
-                                    <?php endif; ?>
+                                    <div class="space-y-1">
+                                        <?php if (!empty($order['item'])): ?>
+                                            <p class="text-sm font-semibold text-slate-900"><?php echo htmlspecialchars($order['item']['title'], ENT_QUOTES, 'UTF-8'); ?> ×<?php echo (int) $order['item']['qty']; ?> · <?php echo htmlspecialchars($order['item']['unit'], ENT_QUOTES, 'UTF-8'); ?></p>
+                                        <?php endif; ?>
+                                        <?php if ($order['deliveryType'] === 'Доставка'): ?>
+                                            <div class="flex items-center justify-between text-sm font-semibold text-slate-900">
+                                                <span>Доставка</span>
+                                                <span><?php echo htmlspecialchars($order['deliveryPrice'] ?? '—', ENT_QUOTES, 'UTF-8'); ?></span>
+                                            </div>
+                                            <p class="text-[10px] text-slate-500"><?php echo htmlspecialchars($order['address'] ?: 'Адрес уточняется', ENT_QUOTES, 'UTF-8'); ?></p>
+                                        <?php endif; ?>
+                                    </div>
                                     <div class="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-700 sm:text-sm">
-                                        <span class="inline-flex items-center gap-1">
-                                            <span class="material-symbols-rounded text-base text-amber-600"><?php echo $order['deliveryType'] === 'Доставка' ? 'local_shipping' : 'storefront'; ?></span>
-                                            <span><?php echo htmlspecialchars($order['deliveryType'], ENT_QUOTES, 'UTF-8'); ?></span>
-                                            <?php if (!empty($order['scheduled'])): ?>
-                                                <span>· <?php echo htmlspecialchars($order['scheduled'], ENT_QUOTES, 'UTF-8'); ?></span>
-                                            <?php endif; ?>
-                                        </span>
+                                        <div class="flex flex-wrap items-center gap-2">
+                                            <a
+                                                href="<?php echo htmlspecialchars($order['editLink'], ENT_QUOTES, 'UTF-8'); ?>"
+                                                class="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md <?php echo $order['canEdit'] ? '' : 'pointer-events-none opacity-50'; ?>"
+                                                <?php echo $order['canEdit'] ? '' : 'aria-disabled="true"'; ?>
+                                            >
+                                                <span class="material-symbols-rounded text-base">edit</span>
+                                                Изменить
+                                            </a>
+                                            <a
+                                                href="<?php echo htmlspecialchars($order['paymentLink'], ENT_QUOTES, 'UTF-8'); ?>"
+                                                class="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-600 px-3 py-1 text-xs font-semibold text-white shadow-sm shadow-amber-200 transition hover:-translate-y-0.5 hover:shadow-md <?php echo $order['canPay'] ? '' : 'pointer-events-none bg-slate-200 text-slate-500 shadow-none opacity-70'; ?>"
+                                                <?php echo $order['canPay'] ? '' : 'aria-disabled="true"'; ?>
+                                            >
+                                                <span class="material-symbols-rounded text-base">payments</span>
+                                                Оплатить
+                                            </a>
+                                        </div>
                                         <span class="text-sm font-semibold text-slate-900 sm:text-base"><?php echo htmlspecialchars($order['total'], ENT_QUOTES, 'UTF-8'); ?></span>
                                     </div>
-                                </div>
-                                <div class="flex flex-col items-end gap-2">
-                                    <a
-                                        href="<?php echo htmlspecialchars($order['editLink'], ENT_QUOTES, 'UTF-8'); ?>"
-                                        class="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md <?php echo $order['canEdit'] ? '' : 'pointer-events-none opacity-50'; ?>"
-                                        <?php echo $order['canEdit'] ? '' : 'aria-disabled="true"'; ?>
-                                    >
-                                        <span class="material-symbols-rounded text-base">edit</span>
-                                        Изменить
-                                    </a>
-                                    <a
-                                        href="<?php echo htmlspecialchars($order['paymentLink'], ENT_QUOTES, 'UTF-8'); ?>"
-                                        class="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-600 px-3 py-1 text-xs font-semibold text-white shadow-sm shadow-amber-200 transition hover:-translate-y-0.5 hover:shadow-md <?php echo $order['canPay'] ? '' : 'pointer-events-none bg-slate-200 text-slate-500 shadow-none opacity-70'; ?>"
-                                        <?php echo $order['canPay'] ? '' : 'aria-disabled="true"'; ?>
-                                    >
-                                        <span class="material-symbols-rounded text-base">payments</span>
-                                        Оплатить
-                                    </a>
                                 </div>
                             </article>
                         <?php endforeach; ?>

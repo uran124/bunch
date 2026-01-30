@@ -1137,6 +1137,7 @@ class Order extends Model
             'status' => $order['status'],
             'created_at' => $order['created_at'],
             'total_amount' => (float) $order['total_amount'],
+            'delivery_price' => isset($order['delivery_price']) ? (float) $order['delivery_price'] : null,
             'delivery_type' => $order['delivery_type'] ?? ($order['address_id'] ? 'delivery' : 'pickup'),
             'scheduled_date' => $order['scheduled_date'] ?? null,
             'scheduled_time' => $order['scheduled_time'] ?? null,
