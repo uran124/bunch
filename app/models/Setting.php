@@ -19,6 +19,8 @@ class Setting extends Model
     public const ROBOKASSA_SIGNATURE_ALGORITHM = 'robokassa_signature_algorithm';
     public const FRONTPAD_SECRET = 'frontpad_secret';
     public const FRONTPAD_API_URL = 'frontpad_api_url';
+    public const DELIVERY_PRICING_MODE = 'delivery_pricing_mode';
+    public const OPENROUTE_API_KEY = 'openroute_api_key';
 
     public function get(string $code, ?string $default = null): ?string
     {
@@ -89,6 +91,14 @@ class Setting extends Model
         return [
             self::FRONTPAD_SECRET => getenv('FRONTPAD_SECRET') ?: '',
             self::FRONTPAD_API_URL => getenv('FRONTPAD_API_URL') ?: 'https://app.frontpad.ru/api/index.php',
+        ];
+    }
+
+    public function getDeliveryDefaults(): array
+    {
+        return [
+            self::DELIVERY_PRICING_MODE => getenv('DELIVERY_PRICING_MODE') ?: 'turf',
+            self::OPENROUTE_API_KEY => getenv('OPENROUTE_API_KEY') ?: '',
         ];
     }
 }

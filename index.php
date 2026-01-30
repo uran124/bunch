@@ -242,6 +242,7 @@ $router->post('admin-product-toggle', [AdminController::class, 'toggleProductAct
 $router->post('admin-services-payment', [AdminController::class, 'saveServicePayment']);
 $router->post('admin-services-telegram', [AdminController::class, 'saveServiceTelegram']);
 $router->post('admin-services-frontpad', [AdminController::class, 'saveServiceFrontpad']);
+$router->post('admin-services-delivery', [AdminController::class, 'saveServiceDelivery']);
 $router->post('admin-lottery-save', [AdminController::class, 'saveLottery']);
 $router->post('admin-lottery-update', [AdminController::class, 'updateLottery']);
 $router->post('admin-auction-save', [AdminController::class, 'saveAuctionLot']);
