@@ -1,0 +1,12 @@
+ALTER TABLE user_addresses
+  ADD COLUMN distance_km DECIMAL(8,2) NULL AFTER last_delivery_price_hint;
+
+CREATE TABLE IF NOT EXISTS delivery_distance_rates (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  min_km DECIMAL(8,2) NOT NULL,
+  max_km DECIMAL(8,2) NULL,
+  price INT NOT NULL DEFAULT 0,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_distance_range (min_km, max_km)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

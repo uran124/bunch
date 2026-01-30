@@ -492,6 +492,22 @@ function initOrderFlow() {
         }
     })();
 
+    const deliveryPricingMode = orderSection.dataset.deliveryPricingMode || 'turf';
+
+    const deliveryDistanceRanges = (() => {
+        try {
+            return JSON.parse(orderSection.dataset.deliveryDistanceRanges || '[]');
+        } catch (e) {
+            return [];
+        }
+    })();
+
+    const orsApiKey = orderSection.dataset.orsApiKey || '';
+    const orsOrigin = {
+        lat: Number(orderSection.dataset.orsOriginLat || 0) || 0,
+        lon: Number(orderSection.dataset.orsOriginLon || 0) || 0,
+    };
+
     const testAddresses = (() => {
         try {
             return JSON.parse(orderSection.dataset.testAddresses || '[]');
@@ -989,6 +1005,49 @@ function initOrderFlow() {
         };
     };
 
+    const findDistancePrice = (distanceKm) => {
+        const distance = Number(distanceKm);
+        if (!Number.isFinite(distance)) return null;
+        for (const range of deliveryDistanceRanges) {
+            const min = Number(range.min_km ?? range.minKm ?? range.min) || 0;
+            const maxRaw = range.max_km ?? range.maxKm ?? range.max;
+            const max = maxRaw === null || maxRaw === '' || typeof maxRaw === 'undefined' ? null : Number(maxRaw);
+            if (distance < min) continue;
+            if (max !== null && Number.isFinite(max) && distance > max) continue;
+            const price = Number(range.price ?? 0);
+            return Number.isFinite(price) ? price : null;
+        }
+        return null;
+    };
+
+    const getRoadDistance = async (startCoords, endCoords) => {
+        if (!orsApiKey) return null;
+        const response = await fetch('https://api.openrouteservice.org/v2/directions/driving-car', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: orsApiKey,
+            },
+            body: JSON.stringify({ coordinates: [startCoords, endCoords] }),
+        }).catch(() => null);
+
+        if (!response?.ok) return null;
+        const data = await response.json().catch(() => null);
+        const meters = data?.routes?.[0]?.summary?.distance;
+        if (!Number.isFinite(meters)) return null;
+        return meters / 1000;
+    };
+
+    const buildDistanceQuote = (payload) => {
+        const distanceKm = payload.distance_km ?? null;
+        if (distanceKm === null) return null;
+        const price = findDistancePrice(distanceKm) ?? (Number(fallbackDeliveryPrice) || 0);
+        return {
+            ...payload,
+            delivery_price: price,
+        };
+    };
+
     const updateDeliveryQuote = async () => {
         if (currentMode !== 'delivery') return;
         const baseAddress = composeBaseAddress();
@@ -1001,6 +1060,85 @@ function initOrderFlow() {
         }
 
         const chosenAddress = selectedAddressId ? findAddressById(selectedAddressId) : null;
+        if (deliveryPricingMode === 'ors') {
+            const savedDistance = chosenAddress?.raw?.distance_km ? Number(chosenAddress.raw.distance_km) : null;
+            const lat = Number(chosenAddress?.raw?.lat || 0);
+            const lon = Number(chosenAddress?.raw?.lon || 0);
+            const zoneFromPoint = lat && lon ? findZoneForPoint([lon, lat]) : null;
+            const zoneFromId = deliveryZones.find((zone) => Number(zone.id) === Number(chosenAddress?.raw?.zone_id || 0));
+            const zone = zoneFromPoint || zoneFromId || null;
+
+            if (chosenAddress && savedDistance) {
+                const quote = buildDistanceQuote({
+                    address_text: composeAddressText(),
+                    label: chosenAddress?.address || composeAddressText() || 'Адрес доставки',
+                    lat: lat || null,
+                    lon: lon || null,
+                    zone_id: zone?.id || chosenAddress?.raw?.zone_id || null,
+                    zone_version: chosenAddress?.raw?.zone_version || deliveryPricingVersion,
+                    zone_calculated_at: chosenAddress?.raw?.zone_calculated_at || new Date().toISOString(),
+                    location_source: chosenAddress?.raw?.location_source || 'stored',
+                    geo_quality: chosenAddress?.raw?.geo_quality || null,
+                    settlement: chosenAddress?.raw?.settlement || '',
+                    street: chosenAddress?.raw?.street || '',
+                    house: chosenAddress?.raw?.house || '',
+                    distance_km: savedDistance,
+                });
+
+                if (quote) {
+                    lastDeliveryQuote = quote;
+                    const priceText = quote.delivery_price.toLocaleString('ru-RU');
+                    setDeliveryHint(
+                        `${quote.label}${zone?.name ? ` в зоне «${zone.name}»` : ''}. ${savedDistance.toFixed(2)} км, доставка ${priceText} ₽`,
+                        'success',
+                    );
+                    updateDeliveryPriceDisplay(quote.delivery_price);
+                    return;
+                }
+            }
+
+            if (chosenAddress && lat && lon) {
+                setDeliveryHint('Рассчитываем километраж по адресу...', 'muted');
+                const distanceKm = await getRoadDistance([orsOrigin.lon, orsOrigin.lat], [lon, lat]);
+                if (distanceKm === null) {
+                    useFallbackDeliveryQuote(addressText, 'Не удалось получить километраж. Проверьте настройки OpenRouteService.');
+                    return;
+                }
+
+                const quote = buildDistanceQuote({
+                    address_text: composeAddressText(),
+                    label: chosenAddress?.address || composeAddressText() || 'Адрес доставки',
+                    lat,
+                    lon,
+                    zone_id: zone?.id || chosenAddress?.raw?.zone_id || null,
+                    zone_version: chosenAddress?.raw?.zone_version || deliveryPricingVersion,
+                    zone_calculated_at: chosenAddress?.raw?.zone_calculated_at || new Date().toISOString(),
+                    location_source: chosenAddress?.raw?.location_source || 'stored',
+                    geo_quality: chosenAddress?.raw?.geo_quality || null,
+                    settlement: chosenAddress?.raw?.settlement || '',
+                    street: chosenAddress?.raw?.street || '',
+                    house: chosenAddress?.raw?.house || '',
+                    distance_km: distanceKm,
+                });
+
+                if (quote) {
+                    lastDeliveryQuote = quote;
+                    const priceText = quote.delivery_price.toLocaleString('ru-RU');
+                    setDeliveryHint(
+                        `${quote.label}${zone?.name ? ` в зоне «${zone.name}»` : ''}. ${distanceKm.toFixed(2)} км, доставка ${priceText} ₽`,
+                        'success',
+                    );
+                    updateDeliveryPriceDisplay(quote.delivery_price);
+                    return;
+                }
+            }
+
+            if (chosenAddress) {
+                useFallbackDeliveryQuote(addressText, 'Для сохранённого адреса не удалось получить километраж.');
+                return;
+            }
+        }
+
         const savedQuote = chosenAddress ? buildQuoteFromSavedAddress(chosenAddress) : null;
         if (savedQuote) {
             const zoneName = deliveryZones.find((zone) => Number(zone.id) === Number(savedQuote.zone_id))?.name || '';
@@ -1022,6 +1160,58 @@ function initOrderFlow() {
 
         if (chosenAddress) {
             useFallbackDeliveryQuote(addressText, 'Для сохранённого адреса нет координат или зоны.');
+            return;
+        }
+
+        if (deliveryPricingMode === 'ors') {
+            setDeliveryHint('Ищем адрес в DaData и считаем километраж...', 'muted');
+
+            try {
+                const geocoded = await geocodeWithDadata(baseAddress);
+                if (!geocoded) {
+                    useFallbackDeliveryQuote(
+                        addressText,
+                        'Не удалось получить координаты этого адреса. Попробуйте уточнить улицу и дом.',
+                    );
+                    return;
+                }
+
+                const zone = findZoneForPoint([geocoded.lon, geocoded.lat]);
+                const distanceKm = await getRoadDistance([orsOrigin.lon, orsOrigin.lat], [geocoded.lon, geocoded.lat]);
+                if (distanceKm === null) {
+                    useFallbackDeliveryQuote(addressText, 'OpenRouteService не вернул маршрут. Проверьте ключ.');
+                    return;
+                }
+
+                const quote = buildDistanceQuote({
+                    address_text: addressText,
+                    label: geocoded.label,
+                    lat: geocoded.lat,
+                    lon: geocoded.lon,
+                    zone_id: zone?.id || null,
+                    zone_version: deliveryPricingVersion,
+                    zone_calculated_at: new Date().toISOString(),
+                    location_source: 'dadata',
+                    geo_quality: geocoded.qc,
+                    settlement: geocoded.settlement || '',
+                    street: geocoded.street || '',
+                    house: geocoded.house || '',
+                    distance_km: distanceKm,
+                });
+
+                if (!quote) {
+                    useFallbackDeliveryQuote(addressText, 'Не удалось сопоставить километраж с тарифами.');
+                    return;
+                }
+
+                lastDeliveryQuote = quote;
+                const priceText = quote.delivery_price.toLocaleString('ru-RU');
+                const zoneLabel = zone?.name ? ` в зоне «${zone.name}»` : '';
+                setDeliveryHint(`${geocoded.label}${zoneLabel}. ${distanceKm.toFixed(2)} км, доставка ${priceText} ₽`, 'success');
+                updateDeliveryPriceDisplay(quote.delivery_price);
+            } catch (e) {
+                useFallbackDeliveryQuote(addressText, 'Ошибка при расчёте километража. Попробуйте снова.');
+            }
             return;
         }
 
@@ -1140,6 +1330,9 @@ function initOrderFlow() {
                 payload.zone_id = lastDeliveryQuote.zone_id;
                 payload.delivery_pricing_version = lastDeliveryQuote.zone_version;
                 payload.zone_calculated_at = lastDeliveryQuote.zone_calculated_at;
+                if (lastDeliveryQuote.distance_km) {
+                    payload.distance_km = lastDeliveryQuote.distance_km;
+                }
                 payload.address = {
                     ...payload.address,
                     location_source: lastDeliveryQuote.location_source,
@@ -1149,6 +1342,7 @@ function initOrderFlow() {
                     zone_id: lastDeliveryQuote.zone_id,
                     zone_version: lastDeliveryQuote.zone_version,
                     zone_calculated_at: lastDeliveryQuote.zone_calculated_at,
+                    distance_km: lastDeliveryQuote.distance_km || null,
                 };
             }
         }

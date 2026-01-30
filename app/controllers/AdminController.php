@@ -2374,6 +2374,9 @@ class AdminController extends Controller
         ];
 
         $zoneModel = new DeliveryZone();
+        $settings = new Setting();
+        $defaults = $settings->getDeliveryDefaults();
+        $distanceRateModel = new DeliveryDistanceRate();
 
         $this->render('admin-services-delivery', [
             'pageMeta' => $pageMeta,
@@ -2381,7 +2384,70 @@ class AdminController extends Controller
             'zones' => $zoneModel->getZones(false, true),
             'deliveryPricingVersion' => $zoneModel->getPricingVersion(),
             'testAddresses' => $zoneModel->getTestAddresses(),
+            'deliveryPricingMode' => $settings->get(
+                Setting::DELIVERY_PRICING_MODE,
+                $defaults[Setting::DELIVERY_PRICING_MODE] ?? 'turf'
+            ),
+            'orsApiKey' => $settings->get(
+                Setting::OPENROUTE_API_KEY,
+                $defaults[Setting::OPENROUTE_API_KEY] ?? ''
+            ),
+            'distanceRates' => $distanceRateModel->getAll(),
+            'status' => $_GET['status'] ?? null,
         ]);
+    }
+
+    public function saveServiceDelivery(): void
+    {
+        $settings = new Setting();
+        $defaults = $settings->getDeliveryDefaults();
+
+        $modeRaw = trim((string) ($_POST['delivery_pricing_mode'] ?? ''));
+        $mode = in_array($modeRaw, ['turf', 'ors'], true) ? $modeRaw : ($defaults[Setting::DELIVERY_PRICING_MODE] ?? 'turf');
+        $orsApiKey = trim((string) ($_POST['ors_api_key'] ?? ''));
+
+        $minValues = $_POST['distance_min_km'] ?? [];
+        $maxValues = $_POST['distance_max_km'] ?? [];
+        $priceValues = $_POST['distance_price'] ?? [];
+
+        $ranges = [];
+        $rowCount = max(count($minValues), count($maxValues), count($priceValues));
+        for ($i = 0; $i < $rowCount; $i += 1) {
+            $minRaw = $minValues[$i] ?? null;
+            $maxRaw = $maxValues[$i] ?? null;
+            $priceRaw = $priceValues[$i] ?? null;
+
+            if ($minRaw === null && $maxRaw === null && $priceRaw === null) {
+                continue;
+            }
+
+            $minKm = is_numeric($minRaw) ? round((float) $minRaw, 2) : null;
+            $maxKm = is_numeric($maxRaw) ? round((float) $maxRaw, 2) : null;
+            $price = is_numeric($priceRaw) ? (int) floor((float) $priceRaw) : null;
+
+            if ($minKm === null || $price === null) {
+                continue;
+            }
+
+            $ranges[] = [
+                'min_km' => $minKm,
+                'max_km' => $maxKm,
+                'price' => $price,
+            ];
+        }
+
+        usort($ranges, static function (array $a, array $b): int {
+            return ($a['min_km'] <=> $b['min_km']) ?: (($a['max_km'] ?? 0) <=> ($b['max_km'] ?? 0));
+        });
+
+        $settings->set(Setting::DELIVERY_PRICING_MODE, $mode);
+        $settings->set(Setting::OPENROUTE_API_KEY, $orsApiKey);
+
+        $distanceRateModel = new DeliveryDistanceRate();
+        $distanceRateModel->saveRanges($ranges);
+
+        header('Location: /admin-services-delivery?status=saved');
+        exit;
     }
 
     public function serviceTelegram(): void
