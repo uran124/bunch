@@ -6,15 +6,24 @@
                 Ваш аккаунт
             </p>
         </div>
-        <?php if (!empty($cartShortcut)): ?>
+        <div class="flex flex-wrap items-center gap-2">
+            <?php if (!empty($cartShortcut)): ?>
+                <a
+                    href="/cart"
+                    class="inline-flex items-center gap-1 rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700 ring-1 ring-amber-100 hover:bg-amber-100"
+                >
+                    <span class="material-symbols-rounded text-base">shopping_bag</span>
+                    В корзине: <?php echo htmlspecialchars($cartShortcut['title'], ENT_QUOTES, 'UTF-8'); ?><?php echo $cartShortcut['qty'] > 1 ? ' ×' . (int) $cartShortcut['qty'] : ''; ?>
+                </a>
+            <?php endif; ?>
             <a
-                href="/cart"
-                class="inline-flex items-center gap-1 rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700 ring-1 ring-amber-100 hover:bg-amber-100"
+                class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-rose-200 hover:text-rose-700"
+                href="/logout"
             >
-                <span class="material-symbols-rounded text-base">shopping_bag</span>
-                В корзине: <?php echo htmlspecialchars($cartShortcut['title'], ENT_QUOTES, 'UTF-8'); ?><?php echo $cartShortcut['qty'] > 1 ? ' ×' . (int) $cartShortcut['qty'] : ''; ?>
+                <span class="material-symbols-rounded text-base">logout</span>
+                Выйти
             </a>
-        <?php endif; ?>
+        </div>
     </header>
 
     <div class="grid gap-4 lg:grid-cols-3 sm:gap-5">
