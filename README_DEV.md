@@ -51,14 +51,11 @@ Bunch flowers продаёт импортную красную розу прем
 - Свой лёгкий MVC‑слой: `Controller`, `Model`, `View`, `Router`, `Auth`, `Session`.
 - База данных: **MySQL**.
 
-Параметры подключения к БД (боевые — не выкладывать в публичные репозитории):
+Параметры подключения к БД **не храним в репозитории**. Настройте их в `config.local.php`
+или через переменные окружения (`DB_HOST`, `DB_NAME`, `DB_USER`, `DB_PASS`).
 
-- Host: `188.127.239.143`
-- DB name: `bunch`
-- User: `bunch`
-- Password: `tM1pE1iN5g`
-
-Подключение инкапсулировано в `app/core/Database.php` и настраивается через `config.php`.
+Шаблон доступен в `config.local.php.example`. Подключение инкапсулировано в
+`app/core/Database.php` и настраивается через `config.php`.
 
 ### 2.2. Фронтэнд
 
