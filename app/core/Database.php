@@ -18,7 +18,14 @@ class Database
 
             try {
                 self::$instance = new PDO($dsn, DB_USER, DB_PASS, $options);
-                self::$instance->exec("SET time_zone = '+07:00'");
+                $timezone = new DateTimeZone(APP_TIMEZONE);
+                $offsetSeconds = $timezone->getOffset(new DateTime('now', $timezone));
+                $offsetSign = $offsetSeconds >= 0 ? '+' : '-';
+                $offsetSeconds = abs($offsetSeconds);
+                $offsetHours = (int) floor($offsetSeconds / 3600);
+                $offsetMinutes = (int) floor(($offsetSeconds % 3600) / 60);
+                $offset = sprintf('%s%02d:%02d', $offsetSign, $offsetHours, $offsetMinutes);
+                self::$instance->exec("SET time_zone = '{$offset}'");
             } catch (PDOException $e) {
                 error_log('DB connection error: ' . $e->getMessage());
 

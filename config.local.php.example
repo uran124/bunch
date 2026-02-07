@@ -1,0 +1,15 @@
+<?php
+// Локальные/боевые секреты и параметры окружения.
+// Скопируйте файл в config.local.php и заполните значениями для своей среды.
+
+define('DB_HOST', '127.0.0.1');
+define('DB_NAME', 'bunch');
+define('DB_USER', 'bunch');
+define('DB_PASS', '');
+
+define('APP_ENV', 'dev'); // prod | dev
+define('APP_DEBUG', true);
+define('APP_TIMEZONE', 'Asia/Krasnoyarsk');
+
+define('DADATA_API_KEY', '');
+define('DADATA_SECRET_KEY', '');
