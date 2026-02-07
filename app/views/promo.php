@@ -204,16 +204,23 @@ foreach ($lotteries as $lottery) {
                     $ticketPrice = (int) floor((float) $lottery['ticket_price']);
                     $ticketLabel = $ticketPrice > 0 ? number_format($ticketPrice, 0, '.', ' ') . ' ₽' : 'Бесплатно';
                     $endsAtIso = $lottery['draw_at_iso'] ?? null;
+                    $isRecentlyFinished = !empty($lottery['is_recently_finished']);
                     ?>
                     <article class="flex snap-center shrink-0 w-[82%] max-w-sm flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm md:w-[360px]" data-promo-item data-promo-type="lottery">
                         <?php if (!empty($lottery['photo'])): ?>
                             <div class="relative">
                                 <img src="<?php echo htmlspecialchars($lottery['photo'], ENT_QUOTES, 'UTF-8'); ?>" alt="<?php echo htmlspecialchars($lottery['title'], ENT_QUOTES, 'UTF-8'); ?>" class="aspect-square w-full object-cover">
+                                <?php if ($isRecentlyFinished): ?>
+                                    <span class="absolute inset-0 bg-white/60"></span>
+                                <?php endif; ?>
                                 <span class="absolute right-3 top-3 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-700 shadow">Розыгрыш</span>
                             </div>
                         <?php else: ?>
                             <div class="relative flex aspect-square w-full items-center justify-center bg-slate-100 text-slate-400">
                                 <span class="material-symbols-rounded text-3xl">image</span>
+                                <?php if ($isRecentlyFinished): ?>
+                                    <span class="absolute inset-0 bg-white/60"></span>
+                                <?php endif; ?>
                                 <span class="absolute right-3 top-3 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-700 shadow">Розыгрыш</span>
                             </div>
                         <?php endif; ?>

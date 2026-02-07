@@ -77,13 +77,22 @@ SQL;
 
         $stmt = $this->db->query($sql);
         $rows = $stmt->fetchAll();
+        $now = new DateTimeImmutable();
+        $recentThreshold = $now->modify('-7 days');
+        $entries = [];
 
-        return array_values(array_filter(array_map(function (array $row): array {
+        foreach ($rows as $index => $row) {
             $row['status'] = $this->finalizeIfReady($row);
             $stats = $this->getTicketStats((int) $row['id'], (int) $row['tickets_total']);
-            $drawAt = $row['draw_at'] ? new DateTime($row['draw_at']) : null;
+            $drawAt = $row['draw_at'] ? new DateTimeImmutable($row['draw_at']) : null;
+            $resolvedStatus = $this->resolveStatus($row['status'], $stats);
+            $isRecentlyFinished = $drawAt && $resolvedStatus === 'finished' && $drawAt >= $recentThreshold && $drawAt <= $now;
 
-            return [
+            if ($resolvedStatus !== 'active' && !$isRecentlyFinished) {
+                continue;
+            }
+
+            $entries[] = [
                 'id' => (int) $row['id'],
                 'title' => $row['name'],
                 'photo' => $row['photo_url'],
@@ -95,11 +104,26 @@ SQL;
                 'tickets_paid' => $stats['paid'],
                 'draw_at' => $drawAt ? $drawAt->format('d.m H:i') : 'Дата уточняется',
                 'draw_at_iso' => $drawAt ? $drawAt->format(DateTimeInterface::ATOM) : null,
-                'status' => $this->resolveStatus($row['status'], $stats),
+                'status' => $resolvedStatus,
+                'is_recently_finished' => $isRecentlyFinished,
+                'sort_index' => $index,
             ];
-        }, $rows), static function (array $row): bool {
-            return $row['status'] === 'active';
-        }));
+        }
+
+        usort($entries, static function (array $left, array $right): int {
+            if ($left['is_recently_finished'] === $right['is_recently_finished']) {
+                return $left['sort_index'] <=> $right['sort_index'];
+            }
+
+            return $left['is_recently_finished'] ? 1 : -1;
+        });
+
+        foreach ($entries as &$entry) {
+            unset($entry['sort_index']);
+        }
+        unset($entry);
+
+        return array_values($entries);
     }
 
     public function getAdminList(): array
