@@ -205,8 +205,11 @@ SQL;
         );
         $rows = $stmt->fetchAll();
         $bidModel = new AuctionBid();
+        $now = new DateTimeImmutable();
+        $recentThreshold = $now->modify('-7 days');
+        $entries = [];
 
-        return array_map(function (array $row) use ($bidModel): array {
+        foreach ($rows as $index => $row) {
             $this->finalizeIfEnded((int) $row['id']);
             if ($row['status'] === 'active' && $row['ends_at']) {
                 $endsAt = new DateTime($row['ends_at']);
@@ -225,6 +228,13 @@ SQL;
                 $refresh->execute(['id' => (int) $row['id']]);
                 $row = $refresh->fetch() ?: $row;
             }
+
+            $endsAt = $row['ends_at'] ? new DateTimeImmutable($row['ends_at']) : null;
+            $isRecentlyFinished = $endsAt && $row['status'] === 'finished' && $endsAt >= $recentThreshold && $endsAt <= $now;
+            if ($row['status'] !== 'active' && !$isRecentlyFinished) {
+                continue;
+            }
+
             $currentBid = $bidModel->getCurrentBid((int) $row['id']);
             $currentPrice = $currentBid ? (int) floor((float) $currentBid['amount']) : (int) floor((float) $row['start_price']);
             $currentBidUserId = $currentBid ? (int) $currentBid['user_id'] : null;
@@ -232,7 +242,7 @@ SQL;
             $timeLabel = $this->formatTimeLabel($row);
             $bidCount = $bidModel->countLotBids((int) $row['id']);
 
-            return [
+            $entries[] = [
                 'id' => (int) $row['id'],
                 'title' => $row['title'],
                 'description' => $row['description'],
@@ -251,8 +261,25 @@ SQL;
                 'bid_count' => $bidCount,
                 'starts_at' => $row['starts_at'],
                 'ends_at' => $row['ends_at'],
+                'is_recently_finished' => $isRecentlyFinished,
+                'sort_index' => $index,
             ];
-        }, $rows);
+        }
+
+        usort($entries, static function (array $left, array $right): int {
+            if ($left['is_recently_finished'] === $right['is_recently_finished']) {
+                return $left['sort_index'] <=> $right['sort_index'];
+            }
+
+            return $left['is_recently_finished'] ? 1 : -1;
+        });
+
+        foreach ($entries as &$entry) {
+            unset($entry['sort_index']);
+        }
+        unset($entry);
+
+        return array_values($entries);
     }
 
     public function getLotDetails(int $lotId): ?array
