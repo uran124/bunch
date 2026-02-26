@@ -514,6 +514,15 @@ $adminNavigation = [
     $menuLinks = $staticMenuPages
         ? array_map(static fn ($page) => ['title' => $page['title'], 'href' => '/static/' . urlencode($page['slug'])], $staticMenuPages)
         : $defaultInfoLinks;
+    $deliveryInfoLink = ['title' => 'Оплата и доставка', 'href' => '/delivery'];
+    $hasDeliveryInMenu = array_reduce(
+        $menuLinks,
+        static fn (bool $found, array $link): bool => $found || (($link['href'] ?? '') === $deliveryInfoLink['href']),
+        false
+    );
+    if (!$hasDeliveryInMenu) {
+        $menuLinks[] = $deliveryInfoLink;
+    }
     $footerColumns = [1 => [], 2 => []];
     foreach ($staticFooterPages as $page) {
         $column = (int) ($page['footer_column'] ?? 1);
@@ -524,6 +533,14 @@ $adminNavigation = [
         ];
     }
     $footerLinksFirst = $footerColumns[1] ?: $defaultInfoLinks;
+    $hasDeliveryInFooter = array_reduce(
+        $footerLinksFirst,
+        static fn (bool $found, array $link): bool => $found || (($link['href'] ?? '') === $deliveryInfoLink['href']),
+        false
+    );
+    if (!$hasDeliveryInFooter) {
+        $footerLinksFirst[] = $deliveryInfoLink;
+    }
     $footerLinksSecond = $footerColumns[2] ?: $defaultLegalLinks;
     ?>
 
