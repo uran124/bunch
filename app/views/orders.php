@@ -56,7 +56,13 @@
 
             <?php if (!empty($activeOrders)): ?>
                 <div class="rounded-3xl border border-amber-200 bg-amber-50 p-3 shadow-sm sm:p-5">
-                    <div class="mt-4 grid gap-3">
+                    <div class="space-y-1">
+                        <p class="text-xs font-semibold uppercase tracking-[0.06em] text-amber-700">Активные заказы</p>
+                        <h3 class="text-base font-semibold text-slate-900 sm:text-lg">Бесконечная лента со свайпом</h3>
+                    </div>
+
+                    <div class="mt-4 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" data-active-orders-carousel>
+                        <div class="flex w-max gap-3" data-active-orders-track>
                             <?php foreach ($activeOrders as $order): ?>
                                 <?php
                                 $badgeClasses = match ($order['status']) {
@@ -69,7 +75,7 @@
                                     default => 'bg-slate-50 text-slate-700 ring-slate-100',
                                 };
                                 ?>
-                            <article class="flex items-start gap-3 rounded-2xl bg-white p-3 shadow-inner shadow-amber-100 sm:p-4">
+                            <article class="flex min-w-[18rem] max-w-[20rem] shrink-0 items-start gap-3 rounded-2xl bg-white p-3 shadow-inner shadow-amber-100 sm:p-4" data-active-order-card>
                                 <div class="flex-1 space-y-2">
                                     <div class="flex flex-wrap items-center justify-between gap-2">
                                         <div class="flex flex-wrap items-center gap-2 text-sm font-semibold text-slate-900">
@@ -120,6 +126,7 @@
                                 </div>
                             </article>
                         <?php endforeach; ?>
+                        </div>
                     </div>
                 </div>
             <?php endif; ?>
