@@ -43,6 +43,8 @@ class InfoController extends Controller
             'orsApiKey' => (string) $settings->get(Setting::OPENROUTE_API_KEY, $defaults[Setting::OPENROUTE_API_KEY] ?? ''),
             'orsOrigin' => self::ORS_ORIGIN,
             'deliveryFallbackPrice' => (int) ($defaults['defaultDeliveryPrice'] ?? 0),
+            'dadataConfig' => $this->getDadataSettings(),
+            'testAddresses' => (new DeliveryZone())->getTestAddresses(),
             'pageMeta' => [
                 'title' => 'Оплата и доставка — Bunch flowers',
                 'description' => 'Условия оплаты, доставки и самовывоза.',

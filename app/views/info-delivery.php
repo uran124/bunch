@@ -8,6 +8,8 @@ $deliveryDistanceRates = is_array($deliveryDistanceRates ?? null) ? $deliveryDis
 $orsApiKey = (string) ($orsApiKey ?? '');
 $orsOrigin = is_array($orsOrigin ?? null) ? $orsOrigin : ['lat' => '', 'lon' => ''];
 $deliveryFallbackPrice = (int) ($deliveryFallbackPrice ?? 0);
+$dadataConfig = is_array($dadataConfig ?? null) ? $dadataConfig : [];
+$testAddresses = is_array($testAddresses ?? null) ? $testAddresses : [];
 ?>
 
 <section class="space-y-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -20,20 +22,23 @@ $deliveryFallbackPrice = (int) ($deliveryFallbackPrice ?? 0);
         data-ors-origin-lat="<?php echo htmlspecialchars((string) ($orsOrigin['lat'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
         data-ors-origin-lon="<?php echo htmlspecialchars((string) ($orsOrigin['lon'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
         data-delivery-fallback="<?php echo htmlspecialchars((string) $deliveryFallbackPrice, ENT_QUOTES, 'UTF-8'); ?>"
+        data-dadata-config="<?php echo htmlspecialchars(json_encode($dadataConfig, JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8'); ?>"
+        data-test-addresses="<?php echo htmlspecialchars(json_encode($testAddresses, JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8'); ?>"
     >
         <div class="space-y-1">
             <p class="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Информация</p>
             <h1 class="text-2xl font-bold tracking-tight text-slate-900">Оплата и доставка</h1>
-            <p class="text-sm text-slate-500">Введите адрес как в корзине — посчитаем километраж и определим стоимость по тарифному диапазону.</p>
+            <p class="text-sm text-slate-500">Введите адрес как в корзине — выберите из подсказок DaData, затем посчитаем километраж и стоимость.</p>
         </div>
 
         <label class="space-y-2 text-sm font-medium text-slate-700">
             Адрес доставки
-            <div class="flex flex-col gap-2 sm:flex-row">
+            <div class="relative flex flex-col gap-2 sm:flex-row">
                 <input
                     type="text"
                     class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-rose-300 focus:outline-none focus:ring-2 focus:ring-rose-200"
                     placeholder="Красноярск, ул. Авиаторов, 1"
+                    autocomplete="off"
                     data-delivery-address
                 >
                 <button
@@ -41,6 +46,10 @@ $deliveryFallbackPrice = (int) ($deliveryFallbackPrice ?? 0);
                     class="inline-flex items-center justify-center rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-60"
                     data-delivery-calc-btn
                 >Рассчитать</button>
+                <div
+                    class="absolute left-0 right-0 top-[calc(100%+4px)] z-20 hidden max-h-64 overflow-y-auto rounded-xl border border-slate-200 bg-white p-1 shadow-xl"
+                    data-delivery-suggestion-list
+                ></div>
             </div>
         </label>
 
@@ -98,6 +107,7 @@ $deliveryFallbackPrice = (int) ($deliveryFallbackPrice ?? 0);
     const priceNode = calculator.querySelector('[data-delivery-price]');
     const rangeNode = calculator.querySelector('[data-delivery-range]');
     const statusNode = calculator.querySelector('[data-delivery-status]');
+    const suggestionList = calculator.querySelector('[data-delivery-suggestion-list]');
 
     const deliveryPricingMode = calculator.dataset.deliveryPricingMode || 'turf';
     const orsApiKey = (calculator.dataset.orsApiKey || '').trim();
@@ -106,6 +116,20 @@ $deliveryFallbackPrice = (int) ($deliveryFallbackPrice ?? 0);
         lon: Number(calculator.dataset.orsOriginLon || 0),
     };
     const fallbackDeliveryPrice = Number(calculator.dataset.deliveryFallback || 0);
+    const dadataConfig = (() => {
+        try {
+            return JSON.parse(calculator.dataset.dadataConfig || '{}');
+        } catch (e) {
+            return {};
+        }
+    })();
+    const testAddresses = (() => {
+        try {
+            return JSON.parse(calculator.dataset.testAddresses || '[]');
+        } catch (e) {
+            return [];
+        }
+    })();
     const distanceRanges = (() => {
         try {
             return JSON.parse(calculator.dataset.deliveryDistanceRanges || '[]');
@@ -113,6 +137,8 @@ $deliveryFallbackPrice = (int) ($deliveryFallbackPrice ?? 0);
             return [];
         }
     })();
+
+    let lastSuggestionRequestId = 0;
 
     const setStatus = (text, tone = 'muted') => {
         statusNode.className = 'text-sm font-semibold';
@@ -125,6 +151,102 @@ $deliveryFallbackPrice = (int) ($deliveryFallbackPrice ?? 0);
         }
         statusNode.textContent = text;
     };
+
+    const normalizeText = (value) => String(value || '').toLowerCase().replace(/ё/g, 'е').trim();
+    const DADATA_CENTER = { lat: 56.233717, lon: 92.8426 };
+
+    const formatAddressFromDadata = (data = {}) => {
+        const cityLabel = data.settlement_with_type || data.city_with_type || data.settlement || data.city || '';
+        const street = data.street_with_type || data.street || '';
+        const house = data.house ? `д. ${data.house}` : '';
+        return [cityLabel, street, house].filter(Boolean).join(', ');
+    };
+
+    const hideSuggestions = () => {
+        if (!suggestionList) return;
+        suggestionList.classList.add('hidden');
+    };
+
+    const renderSuggestions = (suggestions) => {
+        if (!suggestionList) return;
+
+        suggestionList.innerHTML = '';
+        if (!suggestions.length) {
+            hideSuggestions();
+            return;
+        }
+
+        suggestions.forEach((item) => {
+            const data = item.data || {};
+            const formatted = formatAddressFromDadata(data) || item.value || '';
+            const row = document.createElement('button');
+            row.type = 'button';
+            row.className = 'flex w-full items-start gap-2 rounded-xl px-3 py-2 text-left text-sm font-semibold text-slate-800 hover:bg-rose-50';
+            row.innerHTML = `
+                <span class="material-symbols-rounded text-base text-rose-500">location_on</span>
+                <span class="flex-1">${formatted}</span>
+            `;
+            row.addEventListener('click', () => {
+                addressInput.value = formatted;
+                hideSuggestions();
+                setStatus('Адрес выбран из подсказок. Нажмите «Рассчитать».');
+            });
+            suggestionList.appendChild(row);
+        });
+
+        suggestionList.classList.remove('hidden');
+    };
+
+    const fetchSuggestions = async (query, requestId) => {
+        if (!query || query.length < 3) return [];
+
+        if (dadataConfig.apiKey) {
+            const response = await fetch('https://suggestions.dadata.ru/suggestions/api/4_1/rs/suggest/address', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Accept: 'application/json',
+                    Authorization: `Token ${dadataConfig.apiKey}`,
+                },
+                body: JSON.stringify({
+                    query,
+                    count: 8,
+                    locations_geo: [
+                        {
+                            lat: DADATA_CENTER.lat,
+                            lon: DADATA_CENTER.lon,
+                            radius_meters: 60000,
+                        },
+                    ],
+                }),
+            }).catch(() => null);
+
+            if (response?.ok) {
+                const payload = await response.json().catch(() => null);
+                if (requestId === lastSuggestionRequestId) {
+                    return payload?.suggestions || [];
+                }
+            }
+        }
+
+        return testAddresses
+            .filter((item) => normalizeText(item.label).includes(normalizeText(query)))
+            .slice(0, 8)
+            .map((item) => ({ value: item.label, data: { city_with_type: item.label } }));
+    };
+
+    const debouncedSuggest = (() => {
+        let timer;
+        return (value) => {
+            clearTimeout(timer);
+            timer = setTimeout(async () => {
+                lastSuggestionRequestId += 1;
+                const requestId = lastSuggestionRequestId;
+                const suggestions = await fetchSuggestions(value.trim(), requestId);
+                renderSuggestions(suggestions);
+            }, 250);
+        };
+    })();
 
     const findDistancePriceRange = (distanceKm) => {
         const distance = Number(distanceKm);
@@ -216,13 +338,14 @@ $deliveryFallbackPrice = (int) ($deliveryFallbackPrice ?? 0);
             return;
         }
 
+        hideSuggestions();
         setStatus('Проверяем адрес и считаем маршрут...');
         calcButton.disabled = true;
 
         try {
             const point = await geocodeWithDadata(query);
             if (!point) {
-                throw new Error('Не удалось получить координаты адреса. Уточните адрес и повторите расчёт.');
+                throw new Error('Не удалось получить координаты адреса. Выберите адрес из подсказок и повторите расчёт.');
             }
 
             const distanceKm = await getRoadDistance([orsOrigin.lon, orsOrigin.lat], [point.lon, point.lat]);
@@ -241,6 +364,22 @@ $deliveryFallbackPrice = (int) ($deliveryFallbackPrice ?? 0);
             calcButton.disabled = false;
         }
     };
+
+    addressInput.addEventListener('input', () => {
+        debouncedSuggest(addressInput.value || '');
+    });
+
+    addressInput.addEventListener('focus', () => {
+        if ((addressInput.value || '').trim().length >= 3) {
+            debouncedSuggest(addressInput.value || '');
+        }
+    });
+
+    document.addEventListener('click', (event) => {
+        if (!calculator.contains(event.target)) {
+            hideSuggestions();
+        }
+    });
 
     calcButton.addEventListener('click', calculate);
     addressInput.addEventListener('keydown', (event) => {
