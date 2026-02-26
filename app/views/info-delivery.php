@@ -2,28 +2,31 @@
 $pageMeta = array_merge($pageMeta ?? [], [
     'title' => $pageMeta['title'] ?? 'Оплата и доставка — Bunch flowers',
 ]);
+
+$deliveryPricingMode = $deliveryPricingMode ?? 'turf';
+$deliveryDistanceRates = is_array($deliveryDistanceRates ?? null) ? $deliveryDistanceRates : [];
+$orsApiKey = (string) ($orsApiKey ?? '');
+$orsOrigin = is_array($orsOrigin ?? null) ? $orsOrigin : ['lat' => '', 'lon' => ''];
+$deliveryFallbackPrice = (int) ($deliveryFallbackPrice ?? 0);
 ?>
 
 <section class="space-y-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-    <header class="space-y-2">
-        <p class="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Информация</p>
-        <h1 class="text-2xl font-bold tracking-tight text-slate-900">Оплата и доставка</h1>
-        <p class="text-sm text-slate-500">Введите адрес и сразу узнайте примерный километраж и стоимость доставки.</p>
-    </header>
-
     <div
         class="space-y-4 rounded-2xl border border-rose-100 bg-rose-50/40 p-4"
         data-delivery-calculator
-        data-shop-lat="56.047130"
-        data-shop-lon="92.919190"
-        data-base-price="390"
-        data-price-per-km="35"
-        data-free-radius-km="3"
+        data-delivery-pricing-mode="<?php echo htmlspecialchars($deliveryPricingMode, ENT_QUOTES, 'UTF-8'); ?>"
+        data-delivery-distance-ranges="<?php echo htmlspecialchars(json_encode($deliveryDistanceRates, JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8'); ?>"
+        data-ors-api-key="<?php echo htmlspecialchars($orsApiKey, ENT_QUOTES, 'UTF-8'); ?>"
+        data-ors-origin-lat="<?php echo htmlspecialchars((string) ($orsOrigin['lat'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
+        data-ors-origin-lon="<?php echo htmlspecialchars((string) ($orsOrigin['lon'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
+        data-delivery-fallback="<?php echo htmlspecialchars((string) $deliveryFallbackPrice, ENT_QUOTES, 'UTF-8'); ?>"
     >
         <div class="space-y-1">
-            <h2 class="text-base font-semibold text-slate-900">Калькулятор доставки</h2>
-            <p class="text-xs text-slate-500">Стоимость рассчитывается автоматически по вашему адресу.</p>
+            <p class="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Информация</p>
+            <h1 class="text-2xl font-bold tracking-tight text-slate-900">Оплата и доставка</h1>
+            <p class="text-sm text-slate-500">Введите адрес как в корзине — посчитаем километраж и определим стоимость по тарифному диапазону.</p>
         </div>
+
         <label class="space-y-2 text-sm font-medium text-slate-700">
             Адрес доставки
             <div class="flex flex-col gap-2 sm:flex-row">
@@ -35,7 +38,7 @@ $pageMeta = array_merge($pageMeta ?? [], [
                 >
                 <button
                     type="button"
-                    class="inline-flex items-center justify-center rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700"
+                    class="inline-flex items-center justify-center rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-60"
                     data-delivery-calc-btn
                 >Рассчитать</button>
             </div>
@@ -51,10 +54,12 @@ $pageMeta = array_merge($pageMeta ?? [], [
                 <p class="text-lg font-semibold text-slate-900" data-delivery-price>—</p>
             </div>
             <div class="rounded-xl bg-white p-3 shadow-sm">
-                <p class="text-xs text-slate-500">Статус</p>
-                <p class="text-sm font-semibold text-slate-700" data-delivery-status>Введите адрес для расчёта</p>
+                <p class="text-xs text-slate-500">Тарифный диапазон</p>
+                <p class="text-sm font-semibold text-slate-700" data-delivery-range>—</p>
             </div>
         </div>
+
+        <p class="text-sm font-semibold text-slate-700" data-delivery-status>Введите адрес для расчёта</p>
     </div>
 
     <div class="space-y-4 text-sm text-slate-700">
@@ -70,18 +75,9 @@ $pageMeta = array_merge($pageMeta ?? [], [
             <h2 class="text-base font-semibold text-slate-900">Доставка</h2>
             <ul class="list-disc space-y-1 pl-5">
                 <li>доставляем ежедневно по выбранному интервалу;</li>
-                <li>расчёт стоимости на странице показывает ориентир, финальная сумма подтверждается менеджером;</li>
-                <li>уточняем детали по телефону перед выездом курьера;</li>
-                <li>бережная транспортировка в защитной упаковке.</li>
-            </ul>
-        </div>
-        <div class="space-y-2">
-            <h2 class="text-base font-semibold text-slate-900">Как мы считаем стоимость</h2>
-            <ul class="list-disc space-y-1 pl-5">
-                <li>базовая стоимость доставки по городу — от 390 ₽;</li>
-                <li>в радиусе 3 км от мастерской действует базовый тариф;</li>
-                <li>дальше 3 км добавляется 35 ₽ за каждый следующий километр;</li>
-                <li>для удалённых районов и срочной доставки стоимость может отличаться.</li>
+                <li>расчёт на странице ориентировочный, финальную сумму подтверждает менеджер;</li>
+                <li>стоимость рассчитывается по километражу и тарифным диапазонам, как в корзине;</li>
+                <li>уточняем детали по телефону перед выездом курьера.</li>
             </ul>
         </div>
         <div class="space-y-2">
@@ -100,28 +96,23 @@ $pageMeta = array_merge($pageMeta ?? [], [
     const calcButton = calculator.querySelector('[data-delivery-calc-btn]');
     const distanceNode = calculator.querySelector('[data-delivery-distance]');
     const priceNode = calculator.querySelector('[data-delivery-price]');
+    const rangeNode = calculator.querySelector('[data-delivery-range]');
     const statusNode = calculator.querySelector('[data-delivery-status]');
 
-    const shopLat = Number(calculator.dataset.shopLat || 0);
-    const shopLon = Number(calculator.dataset.shopLon || 0);
-    const basePrice = Number(calculator.dataset.basePrice || 390);
-    const pricePerKm = Number(calculator.dataset.pricePerKm || 35);
-    const freeRadiusKm = Number(calculator.dataset.freeRadiusKm || 3);
-
-    const toRadians = (degrees) => degrees * (Math.PI / 180);
-    const haversineKm = (lat1, lon1, lat2, lon2) => {
-        const earthRadius = 6371;
-        const dLat = toRadians(lat2 - lat1);
-        const dLon = toRadians(lon2 - lon1);
-        const a = Math.sin(dLat / 2) ** 2
-            + Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) * Math.sin(dLon / 2) ** 2;
-        return 2 * earthRadius * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const deliveryPricingMode = calculator.dataset.deliveryPricingMode || 'turf';
+    const orsApiKey = (calculator.dataset.orsApiKey || '').trim();
+    const orsOrigin = {
+        lat: Number(calculator.dataset.orsOriginLat || 0),
+        lon: Number(calculator.dataset.orsOriginLon || 0),
     };
-
-    const updateOutput = (distanceKm, price) => {
-        distanceNode.textContent = `${distanceKm.toFixed(1)} км`;
-        priceNode.textContent = `${Math.round(price).toLocaleString('ru-RU')} ₽`;
-    };
+    const fallbackDeliveryPrice = Number(calculator.dataset.deliveryFallback || 0);
+    const distanceRanges = (() => {
+        try {
+            return JSON.parse(calculator.dataset.deliveryDistanceRanges || '[]');
+        } catch (e) {
+            return [];
+        }
+    })();
 
     const setStatus = (text, tone = 'muted') => {
         statusNode.className = 'text-sm font-semibold';
@@ -135,6 +126,84 @@ $pageMeta = array_merge($pageMeta ?? [], [
         statusNode.textContent = text;
     };
 
+    const findDistancePriceRange = (distanceKm) => {
+        const distance = Number(distanceKm);
+        if (!Number.isFinite(distance)) return null;
+
+        for (const range of distanceRanges) {
+            const min = Number(range.min_km ?? range.minKm ?? range.min) || 0;
+            const maxRaw = range.max_km ?? range.maxKm ?? range.max;
+            const max = maxRaw === null || maxRaw === '' || typeof maxRaw === 'undefined' ? null : Number(maxRaw);
+            if (distance < min) continue;
+            if (max !== null && Number.isFinite(max) && distance > max) continue;
+
+            const price = Number(range.price ?? 0);
+            return {
+                min,
+                max,
+                price: Number.isFinite(price) ? price : fallbackDeliveryPrice,
+            };
+        }
+
+        return null;
+    };
+
+    const getRoadDistance = async (startCoords, endCoords) => {
+        if (!orsApiKey) return null;
+
+        const response = await fetch('https://api.openrouteservice.org/v2/directions/driving-car', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: orsApiKey,
+            },
+            body: JSON.stringify({ coordinates: [startCoords, endCoords] }),
+        }).catch(() => null);
+
+        if (!response?.ok) return null;
+        const data = await response.json().catch(() => null);
+        const meters = data?.routes?.[0]?.summary?.distance;
+        if (!Number.isFinite(meters)) return null;
+
+        return meters / 1000;
+    };
+
+    const geocodeWithDadata = async (query) => {
+        const response = await fetch('/api/dadata/clean-address', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+            body: JSON.stringify({ query }),
+        }).catch(() => null);
+
+        if (!response?.ok) return null;
+        const data = await response.json().catch(() => null);
+        if (!Array.isArray(data) || !data[0]) return null;
+
+        const row = data[0];
+        const lat = Number(row.geo_lat || 0);
+        const lon = Number(row.geo_lon || 0);
+        if (!lat || !lon) return null;
+
+        return { lat, lon };
+    };
+
+    const updateOutput = (distanceKm, price, priceRange) => {
+        distanceNode.textContent = `${distanceKm.toFixed(2)} км`;
+        priceNode.textContent = `${Math.round(price).toLocaleString('ru-RU')} ₽`;
+
+        if (!priceRange) {
+            rangeNode.textContent = 'Не найден, применён fallback';
+            return;
+        }
+
+        rangeNode.textContent = priceRange.max === null
+            ? `от ${priceRange.min.toFixed(2)} км`
+            : `${priceRange.min.toFixed(2)}–${priceRange.max.toFixed(2)} км`;
+    };
+
     const calculate = async () => {
         const query = (addressInput.value || '').trim();
         if (!query) {
@@ -142,34 +211,30 @@ $pageMeta = array_merge($pageMeta ?? [], [
             return;
         }
 
-        setStatus('Проверяем адрес и считаем расстояние...');
+        if (deliveryPricingMode !== 'ors') {
+            setStatus('Сейчас активирован расчёт по зонам. Километражный расчёт недоступен.', 'error');
+            return;
+        }
+
+        setStatus('Проверяем адрес и считаем маршрут...');
         calcButton.disabled = true;
 
         try {
-            const response = await fetch('/api-dadata-clean-address', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ query }),
-            });
-            const data = await response.json().catch(() => ({}));
-            if (!response.ok) {
-                throw new Error(data.error || 'Не удалось получить координаты адреса.');
+            const point = await geocodeWithDadata(query);
+            if (!point) {
+                throw new Error('Не удалось получить координаты адреса. Уточните адрес и повторите расчёт.');
             }
 
-            const targetLat = Number(data.geo_lat || 0);
-            const targetLon = Number(data.geo_lon || 0);
-            if (!targetLat || !targetLon) {
-                throw new Error('Для адреса не найдены координаты. Уточните адрес и повторите расчёт.');
+            const distanceKm = await getRoadDistance([orsOrigin.lon, orsOrigin.lat], [point.lon, point.lat]);
+            if (distanceKm === null) {
+                throw new Error('Не удалось получить километраж маршрута. Попробуйте позже.');
             }
 
-            const distanceKm = haversineKm(shopLat, shopLon, targetLat, targetLon);
-            const paidDistance = Math.max(0, distanceKm - freeRadiusKm);
-            const totalPrice = basePrice + paidDistance * pricePerKm;
+            const priceRange = findDistancePriceRange(distanceKm);
+            const price = priceRange ? priceRange.price : fallbackDeliveryPrice;
 
-            updateOutput(distanceKm, totalPrice);
-            setStatus('Расчёт готов. Это ориентировочная стоимость доставки.', 'success');
+            updateOutput(distanceKm, price, priceRange);
+            setStatus('Расчёт готов: километраж сопоставлен с тарифным диапазоном.', 'success');
         } catch (error) {
             setStatus(error.message || 'Не удалось выполнить расчёт. Попробуйте позже.', 'error');
         } finally {
