@@ -1725,6 +1725,54 @@ function initOrdersHistory() {
     }
 }
 
+function initActiveOrdersCarousel() {
+    const carousel = document.querySelector('[data-active-orders-carousel]');
+    const track = carousel?.querySelector('[data-active-orders-track]');
+    if (!carousel || !track) return;
+
+    const sourceCards = Array.from(track.querySelectorAll('[data-active-order-card]'));
+    if (sourceCards.length <= 1) return;
+
+    sourceCards.forEach((card) => {
+        const clone = card.cloneNode(true);
+        clone.setAttribute('aria-hidden', 'true');
+        track.appendChild(clone);
+    });
+
+    const halfWidth = track.scrollWidth / 2;
+    let isPaused = false;
+    const speed = 0.45;
+
+    const tick = () => {
+        if (!isPaused) {
+            carousel.scrollLeft += speed;
+            if (carousel.scrollLeft >= halfWidth) {
+                carousel.scrollLeft = 0;
+            }
+        }
+        window.requestAnimationFrame(tick);
+    };
+
+    const pause = () => {
+        isPaused = true;
+    };
+
+    const resume = () => {
+        isPaused = false;
+    };
+
+    carousel.addEventListener('pointerdown', pause);
+    carousel.addEventListener('pointerup', resume);
+    carousel.addEventListener('pointercancel', resume);
+    carousel.addEventListener('pointerleave', resume);
+    carousel.addEventListener('mouseenter', pause);
+    carousel.addEventListener('mouseleave', resume);
+    carousel.addEventListener('touchstart', pause, { passive: true });
+    carousel.addEventListener('touchend', resume);
+
+    window.requestAnimationFrame(tick);
+}
+
 async function updateNotificationSettings(payload) {
     const response = await fetch('/account-notifications', {
         method: 'POST',
@@ -2935,6 +2983,7 @@ function initAccountProfile() {
 
 if (pageId === 'orders') {
     initOrdersHistory();
+    initActiveOrdersCarousel();
 }
 
 async function fetchJson(url, options) {
