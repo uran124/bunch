@@ -5,29 +5,30 @@ abstract class Controller
 {
     protected function getCurrentUserRole(): string
     {
-        if (!class_exists('Auth') || !Auth::check()) {
+        if (!class_exists('Auth')) {
             return 'customer';
         }
 
-        $userId = Auth::userId();
-        if (!$userId) {
-            return 'customer';
-        }
-
-        $userModel = new User();
-        $user = $userModel->findById($userId);
-
-        return $user['role'] ?? 'customer';
+        return Auth::role();
     }
 
     protected function isWholesaleUser(): bool
     {
-        return $this->getCurrentUserRole() === 'wholesale';
+        return $this->hasAnyRole('wholesale');
     }
 
     protected function isAdminUser(): bool
     {
-        return $this->getCurrentUserRole() === 'admin';
+        return $this->hasAnyRole('admin');
+    }
+
+    protected function hasAnyRole(string ...$roles): bool
+    {
+        if (!class_exists('Auth') || !Auth::check()) {
+            return false;
+        }
+
+        return Auth::hasRole(...$roles);
     }
 
     protected function getDadataSettings(): array

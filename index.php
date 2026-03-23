@@ -188,28 +188,4 @@ if ($page === '' || $page === 'index' || $page === 'index.php') {
     $page = 'home';
 }
 
-$publicPages = $routesConfig['publicPages'];
-
-if (!Auth::check() && !in_array($page, $publicPages, true)) {
-    $requestedWith = strtolower((string) ($_SERVER['HTTP_X_REQUESTED_WITH'] ?? ''));
-    $acceptHeader = strtolower((string) ($_SERVER['HTTP_ACCEPT'] ?? ''));
-    $isAjax = $requestedWith === 'xmlhttprequest' || str_contains($acceptHeader, 'application/json');
-
-    if ($isAjax) {
-        http_response_code(401);
-        header('Content-Type: application/json');
-        echo json_encode(['error' => 'Требуется авторизация']);
-        exit;
-    }
-
-    Session::set('auth_redirect', $_SERVER['REQUEST_URI'] ?? '/');
-    header('Location: /login');
-    exit;
-}
-
-if (Auth::check() && in_array($page, ['login', 'register', 'recover'], true)) {
-    header('Location: /');
-    exit;
-}
-
 $router->dispatch($page, $_SERVER['REQUEST_METHOD']);
