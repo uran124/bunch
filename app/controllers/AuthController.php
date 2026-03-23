@@ -71,7 +71,7 @@ class AuthController extends Controller
                         $this->analytics->track('login_fail', ['phone' => $normalizedPhone]);
                     } else {
                         $this->userModel->resetFailedAttempts((int) $user['id']);
-                        Auth::login((int) $user['id']);
+                        Auth::login((int) $user['id'], (string) ($user['role'] ?? 'customer'));
                         $this->logger->logEvent('LOGIN_SUCCESS', ['user_id' => $user['id'], 'phone' => $normalizedPhone]);
                         $this->analytics->track('login_success', ['user_id' => $user['id']]);
 
@@ -124,7 +124,7 @@ class AuthController extends Controller
                         if ($existingByChat) {
                             Session::set('auth_notice', 'Такой пользователь уже есть. Мы выполнили вход и перенаправили вас на главную.');
                             $this->userModel->resetFailedAttempts((int) $existingByChat['id']);
-                            Auth::login((int) $existingByChat['id']);
+                            Auth::login((int) $existingByChat['id'], (string) ($existingByChat['role'] ?? 'customer'));
                             $this->logger->logEvent('LOGIN_SUCCESS', ['user_id' => $existingByChat['id'], 'phone' => $existingByChat['phone'] ?? null]);
                             $this->analytics->track('login_success', ['user_id' => $existingByChat['id'], 'source' => 'register_code']);
 
@@ -208,7 +208,7 @@ class AuthController extends Controller
                         $this->analytics->track('registration_complete', ['user_id' => $userId]);
                         Session::remove('register_verification');
 
-                        Auth::login($userId);
+                        Auth::login($userId, (string) ($existingUser['role'] ?? 'customer'));
                         $this->redirectAfterAuth('/account');
                     } else {
                         $stage = 'details';
@@ -351,7 +351,7 @@ class AuthController extends Controller
                             $this->analytics->track('pin_recovered', ['user_id' => $verification['user_id']]);
 
                             Session::remove('recover_verification');
-                            Auth::login((int) $verification['user_id']);
+                            Auth::login((int) $verification['user_id'], (string) ($user['role'] ?? 'customer'));
                             Session::set('auth_notice', 'PIN обновлён, вход выполнен. Мы перенаправили вас на главную.');
                             $this->redirectAfterAuth('/');
                         }
