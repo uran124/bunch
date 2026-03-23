@@ -3,6 +3,15 @@
 
 class AdminController extends Controller
 {
+    public function __construct()
+    {
+        if (!$this->isAdminUser()) {
+            http_response_code(403);
+            header('Location: /');
+            exit;
+        }
+    }
+
     private function logAdminError(string $context, Throwable $e): void
     {
         $logFile = __DIR__ . '/../../storage/logs/error.log';

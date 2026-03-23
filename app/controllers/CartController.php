@@ -185,6 +185,7 @@ class CartController extends Controller
         $payload = json_decode(file_get_contents('php://input'), true) ?: $_POST;
         $cart = new Cart();
         $items = $cart->getItems();
+        $userId = Auth::userId();
 
         if (empty($items)) {
             $this->logCheckoutError('Empty cart on checkout', ['user_id' => $userId]);
@@ -193,7 +194,6 @@ class CartController extends Controller
             return;
         }
 
-        $userId = Auth::userId();
         $mode = $payload['mode'] ?? 'pickup';
         $date = $payload['date'] ?? null;
         $time = $payload['time'] ?? null;
