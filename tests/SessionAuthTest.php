@@ -22,6 +22,7 @@ final class SessionAuthTest extends TestCase
 
         // Ensure clean superglobal for deterministic assertions
         $_SESSION = [];
+        $_POST = [];
         Session::start();
     }
 
@@ -64,5 +65,21 @@ final class SessionAuthTest extends TestCase
         $this->assertFalse(Auth::check());
         $this->assertNull(Auth::userId());
         $this->assertSame('customer', Auth::role());
+    }
+
+    public function testCsrfTokenIsStableWithinSessionAndValidated(): void
+    {
+        $token = Csrf::token();
+
+        $this->assertNotSame('', $token);
+        $this->assertSame($token, Csrf::token());
+
+        $_POST['_csrf'] = $token;
+
+        $this->assertTrue(Csrf::isValidRequest());
+
+        $_POST['_csrf'] = 'invalid';
+
+        $this->assertFalse(Csrf::isValidRequest());
     }
 }

@@ -23,6 +23,12 @@ header('Content-Type: application/json; charset=utf-8');
 $path = trim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/');
 $resource = ltrim(substr($path, strlen('api/')), '/');
 
+if (Csrf::shouldProtectMethod() && shouldValidateApiCsrf() && !Csrf::isValidRequest()) {
+    http_response_code(403);
+    echo json_encode(['error' => 'Недействительный CSRF-токен'], JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
 if (str_starts_with($resource, 'account/addresses')) {
     handleAccountAddresses($resource);
     exit;
@@ -69,6 +75,17 @@ switch ($resource) {
     default:
         http_response_code(404);
         echo json_encode(['error' => 'Endpoint not found']);
+}
+
+function shouldValidateApiCsrf(): bool
+{
+    $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
+
+    if (stripos($authHeader, 'Token ') === 0 || stripos($authHeader, 'Bearer ') === 0) {
+        return false;
+    }
+
+    return true;
 }
 
 function handleDeliveryZones(): void

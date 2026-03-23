@@ -19,7 +19,7 @@ return [
         $router->get('order-edit', [OrdersController::class, 'edit'], $authOnly);
         $router->get('order-payment', [OrdersController::class, 'payment'], $authOnly);
         $router->get('payment-result', [PaymentController::class, 'result']);
-        $router->post('payment-result', [PaymentController::class, 'result']);
+        $router->post('payment-result', [PaymentController::class, 'result'], ['csrf:off']);
         $router->get('payment-success', [PaymentController::class, 'success']);
         $router->get('payment-fail', [PaymentController::class, 'fail']);
         $router->get('account', [AccountController::class, 'index'], $authOnly);

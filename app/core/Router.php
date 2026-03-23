@@ -42,6 +42,11 @@ class Router
             return null;
         }
 
+        $csrfMiddleware = new RouteCsrfMiddleware();
+        if (!$csrfMiddleware->handle($middleware, $method)) {
+            return null;
+        }
+
         [$controllerClass, $action] = $handler;
 
         if (!class_exists($controllerClass)) {
@@ -67,6 +72,49 @@ class Router
                 'description' => 'Запрашиваемая страница не найдена.',
             ],
         ]);
+    }
+}
+
+class RouteCsrfMiddleware
+{
+    public function handle(array $middleware, string $method): bool
+    {
+        if (!Csrf::shouldProtectMethod($method)) {
+            return true;
+        }
+
+        if (in_array('csrf:off', $middleware, true)) {
+            return true;
+        }
+
+        if (Csrf::isValidRequest()) {
+            return true;
+        }
+
+        return $this->denyInvalidToken();
+    }
+
+    private function denyInvalidToken(): bool
+    {
+        if ($this->isAjaxRequest()) {
+            http_response_code(403);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'Недействительный CSRF-токен']);
+            return false;
+        }
+
+        http_response_code(403);
+        header('Content-Type: text/html; charset=UTF-8');
+        echo 'Сессия формы устарела. Обновите страницу и повторите действие.';
+        return false;
+    }
+
+    private function isAjaxRequest(): bool
+    {
+        $requestedWith = strtolower((string) ($_SERVER['HTTP_X_REQUESTED_WITH'] ?? ''));
+        $acceptHeader = strtolower((string) ($_SERVER['HTTP_ACCEPT'] ?? ''));
+
+        return $requestedWith === 'xmlhttprequest' || str_contains($acceptHeader, 'application/json');
     }
 }
 

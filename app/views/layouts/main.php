@@ -16,6 +16,7 @@ $isAdminPage = str_starts_with($currentPage, 'admin');
 $isAuthenticated = class_exists('Auth') ? Auth::check() : false;
 $currentUserRole = $currentUserRole ?? 'customer';
 $isAdminUser = $currentUserRole === 'admin';
+$csrfToken = class_exists('Csrf') ? Csrf::token() : '';
 $mainClasses = 'mx-auto flex w-full max-w-6xl flex-1 flex-col gap-4 px-3 py-3 pb-[calc(6.5rem+env(safe-area-inset-bottom))] sm:gap-6 sm:px-4 sm:pt-8 sm:pb-[calc(6.5rem+env(safe-area-inset-bottom))]';
 if ($currentPage === 'home') {
     $mainClasses = 'mx-auto flex w-full max-w-6xl flex-1 flex-col gap-4 px-3 py-0 pb-0 sm:gap-6 sm:px-4 sm:pt-8 sm:pb-[calc(6.5rem+env(safe-area-inset-bottom))] justify-center sm:justify-start';
@@ -195,6 +196,7 @@ $adminNavigation = [
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo htmlspecialchars($pageTitle, ENT_QUOTES, 'UTF-8'); ?></title>
     <meta name="description" content="<?php echo htmlspecialchars($pageDescription, ENT_QUOTES, 'UTF-8'); ?>">
+    <meta name="csrf-token" content="<?php echo htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8'); ?>">
     <link rel="icon" href="/favicon.ico" sizes="any">
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
@@ -361,6 +363,61 @@ $adminNavigation = [
             }
         </style>
     <?php endif; ?>
+    <script>
+        window.BUNCH_CSRF_TOKEN = <?php echo json_encode($csrfToken, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const csrfToken = window.BUNCH_CSRF_TOKEN || '';
+            if (!csrfToken) {
+                return;
+            }
+
+            const ensureFormToken = (form) => {
+                if (!(form instanceof HTMLFormElement)) {
+                    return;
+                }
+
+                const method = String(form.getAttribute('method') || 'GET').toUpperCase();
+                if (['GET', 'HEAD', 'OPTIONS'].includes(method)) {
+                    return;
+                }
+
+                let input = form.querySelector('input[name="_csrf"]');
+                if (!input) {
+                    input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = '_csrf';
+                    form.appendChild(input);
+                }
+
+                input.value = csrfToken;
+            };
+
+            document.querySelectorAll('form').forEach(ensureFormToken);
+
+            document.addEventListener('submit', (event) => {
+                ensureFormToken(event.target);
+            }, true);
+
+            const observer = new MutationObserver((mutations) => {
+                mutations.forEach((mutation) => {
+                    mutation.addedNodes.forEach((node) => {
+                        if (!(node instanceof HTMLElement)) {
+                            return;
+                        }
+
+                        if (node.matches?.('form')) {
+                            ensureFormToken(node);
+                        }
+
+                        node.querySelectorAll?.('form').forEach(ensureFormToken);
+                    });
+                });
+            });
+
+            observer.observe(document.body, { childList: true, subtree: true });
+        });
+    </script>
 </head>
 <body
     class="<?php echo htmlspecialchars($bodyClasses, ENT_QUOTES, 'UTF-8'); ?>"

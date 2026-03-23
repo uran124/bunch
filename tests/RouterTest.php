@@ -12,7 +12,9 @@ final class RouterTest extends TestCase
         }
 
         $_SESSION = [];
+        $_POST = [];
         $_SERVER['REQUEST_URI'] = '/';
+        $_SERVER['REQUEST_METHOD'] = 'GET';
         $_SERVER['HTTP_ACCEPT'] = 'text/html';
         unset($_SERVER['HTTP_X_REQUESTED_WITH']);
         Session::start();
@@ -25,6 +27,7 @@ final class RouterTest extends TestCase
         }
 
         $_SESSION = [];
+        $_POST = [];
     }
 
     public function testDispatchReturnsControllerResponse(): void
@@ -115,6 +118,36 @@ final class RouterTest extends TestCase
 
         $this->assertNull($result);
         $this->assertSame(403, http_response_code());
+    }
+
+    public function testDispatchRejectsPostWithoutCsrfToken(): void
+    {
+        $router = new Router();
+        $router->post('account', [RouterTestStubController::class, 'hello'], ['auth']);
+        Auth::login(7, 'customer');
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+        $_SERVER['HTTP_ACCEPT'] = 'application/json';
+
+        ob_start();
+        $result = $router->dispatch('account', 'POST');
+        $output = ob_get_clean();
+
+        $this->assertNull($result);
+        $this->assertSame(403, http_response_code());
+        $this->assertStringContainsString('CSRF', $output);
+    }
+
+    public function testDispatchAllowsPostWithCsrfToken(): void
+    {
+        $router = new Router();
+        $router->post('account', [RouterTestStubController::class, 'hello'], ['auth']);
+        Auth::login(7, 'customer');
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+        $_POST['_csrf'] = Csrf::token();
+
+        $result = $router->dispatch('account', 'POST');
+
+        $this->assertSame('ok:hello', $result);
     }
 }
 
