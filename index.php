@@ -35,7 +35,7 @@ $buildLogContext = static function () use ($requestId): array {
     ];
 
     if (class_exists('Auth') && Auth::check()) {
-        $context['user_id'] = Auth::id();
+        $context['user_id'] = Auth::userId();
     }
 
     return $context;
