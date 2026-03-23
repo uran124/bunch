@@ -10,7 +10,7 @@ class CartController extends Controller
 
     public function index(): void
     {
-        $cart = new Cart();
+        $cart = $this->makeCart();
         if (Auth::check()) {
             $auctionModel = new AuctionLot();
             $pendingLots = $auctionModel->getPendingWinnerLots((int) Auth::userId());
@@ -91,7 +91,7 @@ class CartController extends Controller
         }
 
         try {
-            $cart = new Cart();
+            $cart = $this->makeCart();
             $item = $cart->addItem($productId, $qty, $attributes);
             $totals = $cart->getTotals();
 
@@ -124,7 +124,7 @@ class CartController extends Controller
         }
 
         try {
-            $cart = new Cart();
+            $cart = $this->makeCart();
             $item = $cart->updateItem($key, $qty, is_array($attributes) ? $attributes : []);
             $totals = $cart->getTotals();
 
@@ -155,7 +155,7 @@ class CartController extends Controller
         }
 
         try {
-            $cart = new Cart();
+            $cart = $this->makeCart();
             $cart->removeItem($key);
             $totals = $cart->getTotals();
 
@@ -183,7 +183,7 @@ class CartController extends Controller
         }
 
         $payload = json_decode(file_get_contents('php://input'), true) ?: $_POST;
-        $cart = new Cart();
+        $cart = $this->makeCart();
         $items = $cart->getItems();
         $userId = Auth::userId();
 
@@ -497,6 +497,11 @@ class CartController extends Controller
         $entry = sprintf("[%s] %s%s\n", date('c'), $message, $payload);
 
         file_put_contents($logDir . '/checkout.log', $entry, FILE_APPEND);
+    }
+
+    protected function makeCart(): Cart
+    {
+        return new Cart();
     }
 
     private function isOnlinePaymentEnabled(): bool

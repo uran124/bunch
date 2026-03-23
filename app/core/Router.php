@@ -62,6 +62,13 @@ class Router
         return $controller->{$action}();
     }
 
+    public function getRoute(string $page, string $method = 'GET'): ?array
+    {
+        $method = strtoupper($method);
+
+        return $this->routes[$method][$page] ?? null;
+    }
+
     private function renderNotFound(): void
     {
         http_response_code(404);
