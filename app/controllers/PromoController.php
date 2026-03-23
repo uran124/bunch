@@ -5,11 +5,6 @@ class PromoController extends Controller
 {
     public function index()
     {
-        if ($this->isWholesaleUser() && !$this->isAdminUser()) {
-            header('Location: /');
-            return;
-        }
-
         $pageMeta = [
             'title' => 'Акции и спецпредложения — Bunch flowers',
             'description' => 'Разовые акции и спецпредложения с ограниченным количеством.',

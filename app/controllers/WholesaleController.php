@@ -5,11 +5,6 @@ class WholesaleController extends Controller
 {
     public function index(): void
     {
-        if (!$this->isWholesaleUser() && !$this->isAdminUser()) {
-            header('Location: /');
-            return;
-        }
-
         $productModel = new Product();
         $products = $productModel->getWholesaleCatalog();
 

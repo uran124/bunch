@@ -3,6 +3,48 @@ let cartSubtotal = Number(document.querySelector('[data-cart-bouquet-total]')?.d
 let deliveryPrice = Number(document.querySelector('[data-delivery-total]')?.dataset.amount || 0);
 let tulipBalance = Number(document.querySelector('[data-tulip-balance]')?.dataset.tulipBalance || 0);
 const KRASNOYARSK_TIME_ZONE = 'Asia/Krasnoyarsk';
+const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+
+const getCsrfToken = () => {
+    if (typeof window !== 'undefined' && typeof window.BUNCH_CSRF_TOKEN === 'string' && window.BUNCH_CSRF_TOKEN !== '') {
+        return window.BUNCH_CSRF_TOKEN;
+    }
+
+    return csrfMeta?.getAttribute('content') || '';
+};
+
+const isStateChangingMethod = (method) => !['GET', 'HEAD', 'OPTIONS'].includes(String(method || 'GET').toUpperCase());
+const nativeFetch = window.fetch.bind(window);
+
+window.fetch = (input, init = {}) => {
+    const request = input instanceof Request ? input : new Request(input, init);
+    const url = new URL(request.url, window.location.origin);
+
+    if (url.origin !== window.location.origin || !isStateChangingMethod(request.method)) {
+        return nativeFetch(input, init);
+    }
+
+    const token = getCsrfToken();
+    if (!token) {
+        return nativeFetch(input, init);
+    }
+
+    if (input instanceof Request) {
+        const headers = new Headers(input.headers);
+        if (!headers.has('X-CSRF-Token')) {
+            headers.set('X-CSRF-Token', token);
+        }
+
+        return nativeFetch(new Request(input, { headers }));
+    }
+
+    const headers = new Headers(init.headers || {});
+    if (!headers.has('X-CSRF-Token')) {
+        headers.set('X-CSRF-Token', token);
+    }
+
+    return nativeFetch(input, { ...init, headers });
+};
 
 const getTimeZoneOffset = (timeZone, date) => {
     const formatter = new Intl.DateTimeFormat('en-US', {
