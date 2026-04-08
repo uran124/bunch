@@ -474,7 +474,10 @@ $adminNavigation = [
             </div>
         </aside>
     <?php endif; ?>
-    <header class="<?php echo htmlspecialchars($isAdminPage ? 'sticky top-0 z-30 border-b border-slate-800 bg-slate-950/80 backdrop-blur' : 'sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur', ENT_QUOTES, 'UTF-8'); ?>">
+    <header
+        class="<?php echo htmlspecialchars($isAdminPage ? 'sticky top-0 z-30 border-b border-slate-800 bg-slate-950/80 backdrop-blur' : 'sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur', ENT_QUOTES, 'UTF-8'); ?>"
+        <?php if (!$isAdminPage): ?>data-layout-header<?php endif; ?>
+    >
         <div class="<?php echo htmlspecialchars($isAdminPage ? 'mx-auto flex w-full max-w-7xl items-center justify-between px-4 py-3 pl-20 sm:pl-24' : 'mx-auto flex w-full max-w-6xl items-center justify-between px-3 py-2', ENT_QUOTES, 'UTF-8'); ?>">
             <div>
                 <?php if ($isAdminPage): ?>
@@ -542,7 +545,7 @@ $adminNavigation = [
         </div>
     </header>
 
-    <main class="<?php echo htmlspecialchars($mainClasses, ENT_QUOTES, 'UTF-8'); ?>">
+    <main class="<?php echo htmlspecialchars($mainClasses, ENT_QUOTES, 'UTF-8'); ?>" <?php if (!$isAdminPage): ?>data-layout-main<?php endif; ?>>
         <?php
         $notice = Session::get('auth_notice');
         if ($notice) {
