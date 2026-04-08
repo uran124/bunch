@@ -23,7 +23,7 @@ header('Content-Type: application/json; charset=utf-8');
 $path = trim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/');
 $resource = ltrim(substr($path, strlen('api/')), '/');
 
-if (Csrf::shouldProtectMethod() && shouldValidateApiCsrf() && !Csrf::isValidRequest()) {
+if (Csrf::shouldProtectMethod() && shouldValidateApiCsrf($resource) && !Csrf::isValidRequest()) {
     http_response_code(403);
     echo json_encode(['error' => 'Недействительный CSRF-токен'], JSON_UNESCAPED_UNICODE);
     exit;
@@ -72,13 +72,20 @@ switch ($resource) {
     case 'auction/blitz':
         handleAuctionBlitz();
         break;
+    case 'internal/telegram/handle-update':
+        handleInternalTelegramUpdate();
+        break;
     default:
         http_response_code(404);
         echo json_encode(['error' => 'Endpoint not found']);
 }
 
-function shouldValidateApiCsrf(): bool
+function shouldValidateApiCsrf(string $resource): bool
 {
+    if ($resource === 'internal/telegram/handle-update') {
+        return false;
+    }
+
     $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
 
     if (stripos($authHeader, 'Token ') === 0 || stripos($authHeader, 'Bearer ') === 0) {
@@ -795,4 +802,362 @@ function handleAuctionBlitz(): void
         http_response_code(400);
         echo json_encode(['error' => $e->getMessage()], JSON_UNESCAPED_UNICODE);
     }
+}
+
+function handleInternalTelegramUpdate(): void
+{
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        http_response_code(405);
+        echo json_encode(['ok' => false, 'decision' => 'error', 'errors' => ['Method not allowed']], JSON_UNESCAPED_UNICODE);
+        return;
+    }
+
+    $rawBody = file_get_contents('php://input');
+    if (!is_string($rawBody)) {
+        $rawBody = '';
+    }
+
+    $keyId = trim((string) ($_SERVER['HTTP_X_BOT_KEY_ID'] ?? ''));
+    $timestampRaw = trim((string) ($_SERVER['HTTP_X_BOT_TIMESTAMP'] ?? ''));
+    $nonce = trim((string) ($_SERVER['HTTP_X_BOT_NONCE'] ?? ''));
+    $signatureHeader = trim((string) ($_SERVER['HTTP_X_BOT_SIGNATURE'] ?? ''));
+
+    if (
+        $keyId === ''
+        || $timestampRaw === ''
+        || $nonce === ''
+        || $signatureHeader === ''
+        || !preg_match('/^\d+$/', $timestampRaw)
+    ) {
+        http_response_code(401);
+        echo json_encode(['ok' => false, 'decision' => 'error', 'actions' => [], 'errors' => ['Missing or invalid auth headers']], JSON_UNESCAPED_UNICODE);
+        return;
+    }
+
+    $expectedKeyId = defined('TG_INTERNAL_API_KEY_ID') ? (string) TG_INTERNAL_API_KEY_ID : 'bunch-bot-v1';
+    $secret = defined('TG_INTERNAL_API_SECRET') ? (string) TG_INTERNAL_API_SECRET : '';
+    $maxSkew = defined('TG_INTERNAL_API_MAX_SKEW_SECONDS') ? (int) TG_INTERNAL_API_MAX_SKEW_SECONDS : 300;
+
+    if ($keyId !== $expectedKeyId || $secret === '') {
+        http_response_code(401);
+        echo json_encode(['ok' => false, 'decision' => 'error', 'actions' => [], 'errors' => ['Invalid key id or secret is not configured']], JSON_UNESCAPED_UNICODE);
+        return;
+    }
+
+    $timestamp = (int) $timestampRaw;
+    $now = time();
+    if (abs($now - $timestamp) > $maxSkew) {
+        http_response_code(408);
+        echo json_encode(['ok' => false, 'decision' => 'error', 'actions' => [], 'errors' => ['Request timestamp is expired']], JSON_UNESCAPED_UNICODE);
+        return;
+    }
+
+    if (!preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i', $nonce)) {
+        http_response_code(422);
+        echo json_encode(['ok' => false, 'decision' => 'error', 'actions' => [], 'errors' => ['Invalid nonce format']], JSON_UNESCAPED_UNICODE);
+        return;
+    }
+
+    $providedSignature = $signatureHeader;
+    if (stripos($providedSignature, 'sha256=') === 0) {
+        $providedSignature = substr($providedSignature, 7);
+    }
+
+    $signedPayload = $timestampRaw . '.' . $nonce . '.' . $rawBody;
+    $expectedSignature = hash_hmac('sha256', $signedPayload, $secret);
+
+    if (!hash_equals($expectedSignature, strtolower($providedSignature))) {
+        http_response_code(401);
+        echo json_encode(['ok' => false, 'decision' => 'error', 'actions' => [], 'errors' => ['Invalid signature']], JSON_UNESCAPED_UNICODE);
+        return;
+    }
+
+    $nonceCache = internalTelegramReadCache('telegram_api_nonce_cache.json');
+    internalTelegramGcCache($nonceCache, $now, 24 * 3600);
+    if (isset($nonceCache[$nonce])) {
+        http_response_code(409);
+        echo json_encode(['ok' => false, 'decision' => 'error', 'actions' => [], 'errors' => ['Nonce already used']], JSON_UNESCAPED_UNICODE);
+        return;
+    }
+    $nonceCache[$nonce] = $now;
+    internalTelegramWriteCache('telegram_api_nonce_cache.json', $nonceCache);
+
+    $payload = json_decode($rawBody, true);
+    if (!is_array($payload) || !is_array($payload['update'] ?? null)) {
+        http_response_code(422);
+        echo json_encode(['ok' => false, 'decision' => 'error', 'actions' => [], 'errors' => ['Invalid payload body']], JSON_UNESCAPED_UNICODE);
+        return;
+    }
+
+    $update = $payload['update'];
+    $updateId = isset($update['update_id']) ? (int) $update['update_id'] : 0;
+    $message = $update['message'] ?? null;
+
+    if ($updateId <= 0) {
+        http_response_code(422);
+        echo json_encode(['ok' => false, 'decision' => 'error', 'actions' => [], 'errors' => ['update.update_id is required']], JSON_UNESCAPED_UNICODE);
+        return;
+    }
+
+    $idempotencyKey = 'tg:' . $updateId;
+    $idempotencyCache = internalTelegramReadCache('telegram_api_idempotency_cache.json');
+    internalTelegramGcCache($idempotencyCache, $now, 24 * 3600);
+
+    if (isset($idempotencyCache[$idempotencyKey])) {
+        echo json_encode([
+            'ok' => true,
+            'decision' => 'duplicate',
+            'idempotency_key' => $idempotencyKey,
+            'actions' => [],
+            'events' => [],
+            'errors' => [],
+        ], JSON_UNESCAPED_UNICODE);
+        return;
+    }
+
+    if (!is_array($message)) {
+        $idempotencyCache[$idempotencyKey] = $now;
+        internalTelegramWriteCache('telegram_api_idempotency_cache.json', $idempotencyCache);
+
+        echo json_encode([
+            'ok' => true,
+            'decision' => 'ignored',
+            'idempotency_key' => $idempotencyKey,
+            'actions' => [],
+            'events' => [],
+            'errors' => [],
+        ], JSON_UNESCAPED_UNICODE);
+        return;
+    }
+
+    $chatId = (int) ($message['chat']['id'] ?? 0);
+    if ($chatId <= 0) {
+        http_response_code(422);
+        echo json_encode(['ok' => false, 'decision' => 'error', 'actions' => [], 'errors' => ['message.chat.id is required']], JSON_UNESCAPED_UNICODE);
+        return;
+    }
+
+    $userModel = new User();
+    $verificationModel = new VerificationCode();
+    $logger = new Logger();
+    $analytics = new Analytics();
+
+    $username = $message['from']['username'] ?? null;
+    $fromFirstName = trim((string) ($message['from']['first_name'] ?? ''));
+    $fromLastName = trim((string) ($message['from']['last_name'] ?? ''));
+    $fromName = trim($fromFirstName . ' ' . $fromLastName) ?: null;
+    $text = trim((string) ($message['text'] ?? ''));
+    $contact = is_array($message['contact'] ?? null) ? $message['contact'] : null;
+    $phoneFromText = $text !== '' ? internalTelegramExtractPhoneFromText($text) : null;
+
+    $actions = [];
+    $events = [];
+    $decision = 'handled';
+
+    if (preg_match('/^\/start(?:\s+|$)/u', $text) === 1) {
+        [$actions, $events] = internalTelegramBuildRegistrationCodeActions($userModel, $verificationModel, $chatId, $username, null, $logger, $analytics, $contact, $fromName);
+    } elseif (mb_stripos($text, 'восстановить pin') !== false || mb_stripos($text, 'восстановить пин') !== false) {
+        [$actions, $events] = internalTelegramBuildRecoveryCodeActions($userModel, $verificationModel, $chatId, $username, $logger, $analytics);
+    } elseif (mb_stripos($text, 'получить код') !== false || mb_stripos($text, 'регистрация') !== false) {
+        [$actions, $events] = internalTelegramBuildRegistrationCodeActions($userModel, $verificationModel, $chatId, $username, null, $logger, $analytics, null, $fromName);
+    } elseif ($contact || $phoneFromText) {
+        $phone = $contact['phone_number'] ?? $phoneFromText;
+        [$actions, $events] = internalTelegramBuildRegistrationCodeActions($userModel, $verificationModel, $chatId, $username, $phone, $logger, $analytics, $contact, $fromName);
+    } else {
+        $decision = 'ignored';
+    }
+
+    $idempotencyCache[$idempotencyKey] = $now;
+    internalTelegramWriteCache('telegram_api_idempotency_cache.json', $idempotencyCache);
+
+    echo json_encode([
+        'ok' => true,
+        'decision' => $decision,
+        'idempotency_key' => $idempotencyKey,
+        'actions' => $actions,
+        'events' => $events,
+        'errors' => [],
+    ], JSON_UNESCAPED_UNICODE);
+}
+
+function internalTelegramBuildRegistrationCodeActions(
+    User $userModel,
+    VerificationCode $verificationModel,
+    int $chatId,
+    ?string $username,
+    ?string $phone,
+    Logger $logger,
+    Analytics $analytics,
+    ?array $contact = null,
+    ?string $fallbackName = null
+): array {
+    $actions = [];
+    $events = [];
+    $phone = $phone ? internalTelegramNormalisePhone($phone) : null;
+    $existingByChat = $userModel->findByTelegramChatId($chatId);
+
+    if ($existingByChat) {
+        $code = $verificationModel->createCode(
+            $chatId,
+            'recover',
+            $existingByChat['phone'],
+            (int) $existingByChat['id'],
+            $username,
+            $existingByChat['name'] ?? null
+        );
+
+        $userModel->linkTelegram((int) $existingByChat['id'], $chatId, $username);
+
+        $actions[] = internalTelegramBuildSendMessageAction($chatId, 'Вы уже зарегестрированны на bunch! Используйте ссылку чтобы войти: https://bunchflowers.ru/login, чтобы восстановить пароль: https://bunchflowers.ru/recover. Введите код для восстановления:');
+        $actions[] = internalTelegramBuildSendMessageAction($chatId, internalTelegramFormatCode($code));
+
+        $eventPayload = ['user_id' => (int) $existingByChat['id'], 'chat_id' => $chatId];
+        $logger->logEvent('TG_ALREADY_REGISTERED_CODE_SENT', $eventPayload);
+        $analytics->track('tg_code_sent', ['purpose' => 'recover', 'user_id' => (int) $existingByChat['id']]);
+        $events[] = ['name' => 'TG_ALREADY_REGISTERED_CODE_SENT', 'payload' => $eventPayload];
+
+        return [$actions, $events];
+    }
+
+    $existing = $phone ? $userModel->findByPhone($phone) : $userModel->findByTelegramChatId($chatId);
+    $userId = $existing ? (int) $existing['id'] : null;
+    $name = $existing['name'] ?? null;
+
+    if ($contact) {
+        $firstName = trim((string) ($contact['first_name'] ?? ''));
+        $lastName = trim((string) ($contact['last_name'] ?? ''));
+        $name = trim($firstName . ' ' . $lastName) ?: null;
+    }
+
+    if (!$name && $fallbackName) {
+        $name = $fallbackName;
+    }
+
+    if ($existing) {
+        $userModel->linkTelegram((int) $existing['id'], $chatId, $username);
+    }
+
+    $codePhone = $phone ?? ($existing['phone'] ?? null);
+    $code = $verificationModel->createCode($chatId, 'register', $codePhone, $userId, $username, $name);
+
+    $actions[] = internalTelegramBuildSendMessageAction($chatId, 'Ваш код для регистрации на сайте:');
+    $actions[] = internalTelegramBuildSendMessageAction($chatId, internalTelegramFormatCode($code));
+
+    $eventPayload = ['user_id' => $userId, 'chat_id' => $chatId, 'phone' => $phone];
+    $logger->logEvent('TG_REG_CODE_SENT', $eventPayload);
+    $analytics->track('tg_code_sent', ['purpose' => 'register', 'user_id' => $userId]);
+    $events[] = ['name' => 'TG_REG_CODE_SENT', 'payload' => $eventPayload];
+
+    return [$actions, $events];
+}
+
+function internalTelegramBuildRecoveryCodeActions(
+    User $userModel,
+    VerificationCode $verificationModel,
+    int $chatId,
+    ?string $username,
+    Logger $logger,
+    Analytics $analytics
+): array {
+    $actions = [];
+    $events = [];
+    $user = $userModel->findByTelegramChatId($chatId);
+
+    if (!$user) {
+        $actions[] = internalTelegramBuildSendMessageAction($chatId, 'Пользователь не найден. Сначала получите код и привяжите номер телефона.');
+        return [$actions, $events];
+    }
+
+    $code = $verificationModel->createCode($chatId, 'recover', $user['phone'], (int) $user['id'], $username, $user['name'] ?? null);
+    $userModel->linkTelegram((int) $user['id'], $chatId, $username);
+
+    $actions[] = internalTelegramBuildSendMessageAction($chatId, 'Код для смены PIN:');
+    $actions[] = internalTelegramBuildSendMessageAction($chatId, internalTelegramFormatCode($code));
+
+    $eventPayload = ['user_id' => (int) $user['id'], 'chat_id' => $chatId];
+    $logger->logEvent('TG_RECOVERY_CODE_SENT', $eventPayload);
+    $analytics->track('tg_code_sent', ['purpose' => 'recover', 'user_id' => (int) $user['id']]);
+    $events[] = ['name' => 'TG_RECOVERY_CODE_SENT', 'payload' => $eventPayload];
+
+    return [$actions, $events];
+}
+
+function internalTelegramBuildSendMessageAction(int $chatId, string $text, array $options = []): array
+{
+    $actionOptions = array_merge(['parse_mode' => 'HTML'], $options);
+
+    return [
+        'type' => 'sendMessage',
+        'chat_id' => $chatId,
+        'text' => $text,
+        'options' => $actionOptions,
+    ];
+}
+
+function internalTelegramFormatCode(string $code): string
+{
+    $safe = htmlspecialchars($code, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+
+    return '<code>' . $safe . '</code>';
+}
+
+function internalTelegramNormalisePhone(string $phone): string
+{
+    $normalized = internalTelegramExtractPhoneFromText($phone);
+
+    return $normalized ?? $phone;
+}
+
+function internalTelegramExtractPhoneFromText(string $text): ?string
+{
+    $digits = preg_replace('/\D+/', '', $text);
+    if ($digits === null || $digits === '' || strlen($digits) < 5) {
+        return null;
+    }
+
+    if (strlen($digits) === 11 && str_starts_with($digits, '8')) {
+        $digits = '7' . substr($digits, 1);
+    }
+
+    if (strlen($digits) === 10 && str_starts_with($digits, '9')) {
+        $digits = '7' . $digits;
+    }
+
+    return '+' . $digits;
+}
+
+function internalTelegramReadCache(string $fileName): array
+{
+    $path = internalTelegramDataFilePath($fileName);
+    if (!file_exists($path)) {
+        return [];
+    }
+
+    $decoded = json_decode((string) file_get_contents($path), true);
+    return is_array($decoded) ? $decoded : [];
+}
+
+function internalTelegramWriteCache(string $fileName, array $cache): void
+{
+    $path = internalTelegramDataFilePath($fileName);
+    @file_put_contents($path, json_encode($cache, JSON_UNESCAPED_UNICODE), LOCK_EX);
+}
+
+function internalTelegramGcCache(array &$cache, int $now, int $ttl): void
+{
+    foreach ($cache as $key => $createdAt) {
+        if (!is_numeric($createdAt) || ((int) $createdAt + $ttl) < $now) {
+            unset($cache[$key]);
+        }
+    }
+}
+
+function internalTelegramDataFilePath(string $fileName): string
+{
+    $dir = __DIR__ . '/../bot/data';
+    if (!is_dir($dir)) {
+        @mkdir($dir, 0755, true);
+    }
+
+    return rtrim($dir, '/') . '/' . ltrim($fileName, '/');
 }
