@@ -83,7 +83,7 @@ if ($userId) {
 }
 ?>
 
-<nav class="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 backdrop-blur">
+<nav class="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 backdrop-blur" data-layout-nav>
     <div class="mx-auto grid w-full max-w-6xl <?php echo $navColumnsClass; ?> gap-2 px-3 pt-2 pb-[calc(0.65rem+env(safe-area-inset-bottom))] text-xs font-semibold text-slate-500">
         <?php foreach ($navItems as $item): ?>
             <?php $isActive = $currentPage === $item['id']; ?>
