@@ -964,7 +964,7 @@ function handleInternalTelegramUpdate(): void
         $phone = $contact['phone_number'] ?? $phoneFromText;
         [$actions, $events] = internalTelegramBuildRegistrationCodeActions($userModel, $verificationModel, $chatId, $username, $phone, $logger, $analytics, $contact, $fromName);
     } else {
-        $decision = 'ignored';
+        $actions = internalTelegramBuildUnhandledMessageActions($chatId, $username, $fromName, $text);
     }
 
     $idempotencyCache[$idempotencyKey] = $now;
@@ -1049,6 +1049,31 @@ function internalTelegramBuildRegistrationCodeActions(
     $events[] = ['name' => 'TG_REG_CODE_SENT', 'payload' => $eventPayload];
 
     return [$actions, $events];
+}
+
+
+function internalTelegramBuildUnhandledMessageActions(int $chatId, ?string $username, ?string $fromName, string $text): array
+{
+    $unknownChatId = -1002055168794;
+    $unknownThreadId = 1109;
+
+    $displayName = $username ? '@' . $username : ($fromName ?: 'Пользователь ' . $chatId);
+    $forwardText = $text !== '' ? $text : '[без текста]';
+
+    $safeDisplayName = htmlspecialchars($displayName, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+    $safeForwardText = htmlspecialchars($forwardText, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+
+    return [
+        internalTelegramBuildSendMessageAction(
+            $unknownChatId,
+            '[' . $safeDisplayName . ' ' . $safeForwardText . ']',
+            ['message_thread_id' => $unknownThreadId]
+        ),
+        internalTelegramBuildSendMessageAction(
+            $chatId,
+            'Запрос зафиксирован. Я передал его менеджеру, он свяжется с вами в ближайшее время.'
+        ),
+    ];
 }
 
 function internalTelegramBuildRecoveryCodeActions(
