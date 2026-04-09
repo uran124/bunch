@@ -65,11 +65,17 @@ if ($expectedRelayKey === '' || !hash_equals($expectedRelayKey, $relayKey)) {
     sendJson(403, ['ok' => false, 'error' => 'Forbidden']);
 }
 
-$settings = new Setting();
-$defaults = $settings->getTelegramDefaults();
-$botToken = trim((string) $settings->get(Setting::TG_BOT_TOKEN, $defaults[Setting::TG_BOT_TOKEN] ?? ''));
+// Для relay endpoint в первую очередь берём токен из env/config,
+// чтобы отправка работала даже если БД недоступна на VPS.
+$botToken = readConfigString('TG_BOT_TOKEN');
 if ($botToken === '') {
-    $botToken = readConfigString('TG_BOT_TOKEN');
+    try {
+        $settings = new Setting();
+        $defaults = $settings->getTelegramDefaults();
+        $botToken = trim((string) $settings->get(Setting::TG_BOT_TOKEN, $defaults[Setting::TG_BOT_TOKEN] ?? ''));
+    } catch (Throwable $e) {
+        $botToken = '';
+    }
 }
 if ($botToken === '') {
     sendJson(500, ['ok' => false, 'error' => 'Missing TG_BOT_TOKEN']);
