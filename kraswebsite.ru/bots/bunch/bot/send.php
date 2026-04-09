@@ -5,21 +5,6 @@ require_once __DIR__ . '/../config.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
-spl_autoload_register(function (string $class): void {
-    $paths = [
-        __DIR__ . '/../app/core/' . $class . '.php',
-        __DIR__ . '/../app/controllers/' . $class . '.php',
-        __DIR__ . '/../app/models/' . $class . '.php',
-    ];
-
-    foreach ($paths as $path) {
-        if (file_exists($path)) {
-            require_once $path;
-            return;
-        }
-    }
-});
-
 function sendJson(int $status, array $payload): void
 {
     http_response_code($status);
@@ -34,19 +19,39 @@ function readRelayHeader(string $name): ?string
     return is_string($value) ? trim($value) : null;
 }
 
+function readConfigString(string $key): string
+{
+    if (defined($key)) {
+        return trim((string) constant($key));
+    }
+
+    if (function_exists('cfg')) {
+        $value = cfg($key, '');
+        if (is_string($value)) {
+            return trim($value);
+        }
+    }
+
+    $value = getenv($key);
+    if ($value === false) {
+        return '';
+    }
+
+    return trim((string) $value);
+}
+
 if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
     sendJson(405, ['ok' => false, 'error' => 'Method not allowed']);
 }
 
 $relayKey = readRelayHeader('X-Relay-Key') ?? '';
-$expectedRelayKey = defined('TG_OUTBOUND_RELAY_KEY') ? (string) TG_OUTBOUND_RELAY_KEY : '';
+$expectedRelayKey = readConfigString('TG_OUTBOUND_RELAY_KEY');
 if ($expectedRelayKey === '' || !hash_equals($expectedRelayKey, $relayKey)) {
     sendJson(403, ['ok' => false, 'error' => 'Forbidden']);
 }
 
-$settings = new Setting();
-$defaults = $settings->getTelegramDefaults();
-$botToken = (string) $settings->get(Setting::TG_BOT_TOKEN, $defaults[Setting::TG_BOT_TOKEN] ?? '');
+// На VPS нет моделей приложения/БД — читаем токен только из env/.env или constants.
+$botToken = readConfigString('TG_BOT_TOKEN');
 if ($botToken === '') {
     sendJson(500, ['ok' => false, 'error' => 'Missing TG_BOT_TOKEN']);
 }
