@@ -26,12 +26,6 @@
         </div>
     </header>
 
-    <?php if (($status ?? '') === 'saved') : ?>
-        <div class="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
-            Настройки телеграм-бота сохранены.
-        </div>
-    <?php endif; ?>
-
     <section class="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
         <form method="post" action="/admin-services-telegram" class="space-y-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <div>
