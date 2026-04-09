@@ -13,3 +13,8 @@ define('APP_TIMEZONE', 'Asia/Krasnoyarsk');
 
 define('DADATA_API_KEY', '');
 define('DADATA_SECRET_KEY', '');
+
+// Internal Telegram relay API (VPS -> old hosting)
+define('TG_INTERNAL_API_KEY_ID', 'bunch-bot-v1');
+define('TG_INTERNAL_API_SECRET', 'replace-with-strong-shared-secret');
+define('TG_INTERNAL_API_MAX_SKEW_SECONDS', 300);
