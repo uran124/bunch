@@ -4358,6 +4358,36 @@ function initSupportChat() {
     });
 }
 
+function initMobileContentViewport() {
+    const main = document.querySelector('[data-layout-main]');
+    const header = document.querySelector('[data-layout-header]');
+    const nav = document.querySelector('[data-layout-nav]');
+    const mobileQuery = window.matchMedia('(max-width: 639px)');
+
+    if (!main || !header || !nav) {
+        return;
+    }
+
+    const applyViewportHeight = () => {
+        if (!mobileQuery.matches) {
+            main.style.minHeight = '';
+            return;
+        }
+
+        const viewportHeight = window.visualViewport?.height || window.innerHeight;
+        const headerHeight = header.getBoundingClientRect().height;
+        const navHeight = nav.getBoundingClientRect().height;
+        const contentHeight = Math.max(0, viewportHeight - headerHeight - navHeight);
+
+        main.style.minHeight = `${Math.round(contentHeight)}px`;
+    };
+
+    applyViewportHeight();
+    window.addEventListener('resize', applyViewportHeight);
+    window.visualViewport?.addEventListener('resize', applyViewportHeight);
+}
+
 initCookieConsent();
 initInfoPanel();
 initSupportChat();
+initMobileContentViewport();
