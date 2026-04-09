@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 /**
  * Telegram relay diagnostic script.
+ * IMPORTANT: run from CLI on VPS. Do not execute via browser on shared hosting.
  *
  * Usage example:
  * php bot/telegram_relay_diagnostic.php \
@@ -42,7 +43,14 @@ Optional:
   --timeout            cURL total timeout sec (default: 12)
 TXT;
 
-    fwrite(STDERR, $msg . PHP_EOL);
+    $stderr = @fopen('php://stderr', 'wb');
+    if ($stderr !== false) {
+        fwrite($stderr, $msg . PHP_EOL);
+        fclose($stderr);
+        return;
+    }
+
+    echo $msg . PHP_EOL;
 }
 
 function asInt(mixed $value, int $default = 0): int
@@ -141,6 +149,16 @@ $opts = getopt('', [
     'connect-timeout::',
     'timeout::',
 ]);
+
+$sapi = PHP_SAPI;
+if ($sapi !== 'cli') {
+    http_response_code(400);
+    header('Content-Type: text/plain; charset=utf-8');
+    echo "This script is CLI-only.\n";
+    echo "Run it on VPS server shell:\n";
+    echo "php bot/telegram_relay_diagnostic.php --old-site-url=... --key-id=... --secret=... --chat-id=...\n";
+    exit(1);
+}
 
 $oldSiteUrl = asString($opts['old-site-url'] ?? '');
 $keyId = asString($opts['key-id'] ?? '');
@@ -278,4 +296,3 @@ foreach ($actions as $index => $action) {
     }
     echo "[{$index}] body={$sendResp['body']}" . PHP_EOL;
 }
-
