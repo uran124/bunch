@@ -37,3 +37,8 @@ date_default_timezone_set(APP_TIMEZONE);
 // DaData credentials
 $defineIfMissing('DADATA_API_KEY', $readEnv('DADATA_API_KEY') ?? '');
 $defineIfMissing('DADATA_SECRET_KEY', $readEnv('DADATA_SECRET_KEY') ?? '');
+
+// Internal Telegram relay API (VPS -> old hosting)
+$defineIfMissing('TG_INTERNAL_API_KEY_ID', $readEnv('TG_INTERNAL_API_KEY_ID') ?? 'bunch-bot-v1');
+$defineIfMissing('TG_INTERNAL_API_SECRET', $readEnv('TG_INTERNAL_API_SECRET') ?? '');
+$defineIfMissing('TG_INTERNAL_API_MAX_SKEW_SECONDS', (int) ($readEnv('TG_INTERNAL_API_MAX_SKEW_SECONDS') ?? 300));
