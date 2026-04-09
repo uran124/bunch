@@ -18,3 +18,7 @@ define('DADATA_SECRET_KEY', '');
 define('TG_INTERNAL_API_KEY_ID', 'bunch-bot-v1');
 define('TG_INTERNAL_API_SECRET', 'replace-with-strong-shared-secret');
 define('TG_INTERNAL_API_MAX_SKEW_SECONDS', 300);
+
+// Outbound Telegram relay (old hosting -> VPS)
+define('TG_OUTBOUND_RELAY_URL', 'https://kraswebsite.ru/bots/bunch/bot/send.php');
+define('TG_OUTBOUND_RELAY_KEY', 'replace-with-strong-relay-key');
