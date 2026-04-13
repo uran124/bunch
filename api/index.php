@@ -931,9 +931,53 @@ function handleInternalTelegramUpdate(): void
     }
 
     $chatId = (int) ($message['chat']['id'] ?? 0);
-    if ($chatId <= 0) {
+    if ($chatId === 0) {
         http_response_code(422);
         echo json_encode(['ok' => false, 'decision' => 'error', 'actions' => [], 'errors' => ['message.chat.id is required']], JSON_UNESCAPED_UNICODE);
+        return;
+    }
+
+    $messageThreadId = isset($message['message_thread_id']) ? (int) $message['message_thread_id'] : null;
+    $supportChatId = -1002055168794;
+    $supportThreadId = 1155;
+
+    if ($chatId === $supportChatId) {
+        $text = trim((string) ($message['text'] ?? ''));
+        $replyTo = is_array($message['reply_to_message'] ?? null) ? $message['reply_to_message'] : null;
+        $replyToId = (int) ($replyTo['message_id'] ?? 0);
+
+        if (($messageThreadId === null || $messageThreadId === $supportThreadId) && $replyToId > 0 && $text !== '') {
+            $supportChat = new SupportChat();
+            $resolvedChatId = $supportChat->getChatIdForTelegramMessage($replyToId);
+            if ($resolvedChatId === null) {
+                $resolvedChatId = internalTelegramExtractSupportChatIdFromMessage($replyTo);
+            }
+
+            if ($resolvedChatId) {
+                $supportChat->appendMessage($resolvedChatId, 'support', $text, [
+                    'telegram' => [
+                        'message_id' => (int) ($message['message_id'] ?? 0),
+                    ],
+                ]);
+
+                $currentMessageId = (int) ($message['message_id'] ?? 0);
+                if ($currentMessageId > 0) {
+                    $supportChat->mapTelegramMessage($currentMessageId, $resolvedChatId);
+                }
+            }
+        }
+
+        $idempotencyCache[$idempotencyKey] = $now;
+        internalTelegramWriteCache('telegram_api_idempotency_cache.json', $idempotencyCache);
+
+        echo json_encode([
+            'ok' => true,
+            'decision' => 'handled',
+            'idempotency_key' => $idempotencyKey,
+            'actions' => [],
+            'events' => [],
+            'errors' => [],
+        ], JSON_UNESCAPED_UNICODE);
         return;
     }
 
@@ -1151,6 +1195,24 @@ function internalTelegramExtractPhoneFromText(string $text): ?string
     return '+' . $digits;
 }
 
+function internalTelegramExtractSupportChatIdFromMessage(?array $message): ?string
+{
+    if (!$message) {
+        return null;
+    }
+
+    $text = trim((string) ($message['text'] ?? ''));
+    if ($text === '') {
+        return null;
+    }
+
+    if (preg_match('/#chat:([a-z0-9_-]+)/i', $text, $matches) === 1) {
+        return strtolower((string) $matches[1]);
+    }
+
+    return null;
+}
+
 function internalTelegramReadCache(string $fileName): array
 {
     $path = internalTelegramDataFilePath($fileName);
@@ -1179,7 +1241,7 @@ function internalTelegramGcCache(array &$cache, int $now, int $ttl): void
 
 function internalTelegramDataFilePath(string $fileName): string
 {
-    $dir = __DIR__ . '/../bot/data';
+    $dir = __DIR__ . '/../kraswebsite.ru/bots/bunch/data';
     if (!is_dir($dir)) {
         @mkdir($dir, 0755, true);
     }
