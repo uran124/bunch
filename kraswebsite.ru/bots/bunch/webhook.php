@@ -114,6 +114,24 @@ function sendTelegramMessage(string $token, int $chatId, string $text, array $op
     ];
 }
 
+function extractSupportChatIdFromTelegramMessage(?array $message): ?string
+{
+    if (!is_array($message)) {
+        return null;
+    }
+
+    $text = trim((string) ($message['text'] ?? ''));
+    if ($text === '') {
+        return null;
+    }
+
+    if (preg_match('/#chat:([a-z0-9_-]+)/i', $text, $matches) === 1) {
+        return strtolower((string) $matches[1]);
+    }
+
+    return null;
+}
+
 // 1) Метод
 if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
     jsonResponse(405, ['ok' => false, 'error' => 'Method not allowed']);
@@ -140,6 +158,46 @@ if (!is_string($rawUpdate) || $rawUpdate === '') {
 $update = json_decode($rawUpdate, true);
 if (!is_array($update)) {
     jsonResponse(422, ['ok' => false, 'error' => 'Invalid JSON']);
+}
+
+$message = is_array($update['message'] ?? null) ? $update['message'] : null;
+$supportChatId = -1002055168794;
+$supportThreadId = 1155;
+
+if ($message) {
+    $chatId = (int) ($message['chat']['id'] ?? 0);
+    $threadId = isset($message['message_thread_id']) ? (int) $message['message_thread_id'] : null;
+    $text = trim((string) ($message['text'] ?? ''));
+    $replyTo = is_array($message['reply_to_message'] ?? null) ? $message['reply_to_message'] : null;
+    $replyToId = (int) ($replyTo['message_id'] ?? 0);
+
+    if ($chatId === $supportChatId
+        && ($threadId === null || $threadId === $supportThreadId)
+        && $replyToId > 0
+        && $text !== '') {
+        require_once __DIR__ . '/../../../app/models/SupportChat.php';
+        $supportChat = new SupportChat();
+
+        $resolvedChatId = $supportChat->getChatIdForTelegramMessage($replyToId);
+        if ($resolvedChatId === null) {
+            $resolvedChatId = extractSupportChatIdFromTelegramMessage($replyTo);
+        }
+
+        if ($resolvedChatId) {
+            $supportChat->appendMessage($resolvedChatId, 'support', $text, [
+                'telegram' => [
+                    'message_id' => (int) ($message['message_id'] ?? 0),
+                ],
+            ]);
+
+            $currentMessageId = (int) ($message['message_id'] ?? 0);
+            if ($currentMessageId > 0) {
+                $supportChat->mapTelegramMessage($currentMessageId, $resolvedChatId);
+            }
+        }
+
+        jsonResponse(200, ['ok' => true, 'decision' => 'handled_local_support']);
+    }
 }
 
 // 4) Собираем payload в old site
