@@ -49,10 +49,9 @@ class SupportController extends Controller
 
         $chatId = $identity['chatId'];
         $label = $identity['label'];
-        $prefix = $label . ' ';
 
         $entry = $this->supportChat->appendMessage($chatId, 'user', $message);
-        $telegramMessageId = $this->sendToSupportChat($prefix . $message);
+        $telegramMessageId = $this->sendToSupportChat($this->formatSupportTelegramMessage($label, $chatId, $message));
         if ($telegramMessageId) {
             $this->supportChat->mapTelegramMessage($telegramMessageId, $chatId);
         }
@@ -128,5 +127,10 @@ class SupportController extends Controller
         ]);
 
         return isset($response['result']['message_id']) ? (int) $response['result']['message_id'] : null;
+    }
+
+    private function formatSupportTelegramMessage(string $label, string $chatId, string $message): string
+    {
+        return $label . "\n" . '#chat:' . $chatId . "\n\n" . $message;
     }
 }

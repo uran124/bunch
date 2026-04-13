@@ -86,13 +86,22 @@ if ((int) $chatId === $supportChatId) {
     $replyTo = $message['reply_to_message'] ?? null;
     $replyToId = $replyTo['message_id'] ?? null;
     if ($replyToId && $text !== '') {
-        $chatId = $supportChat->getChatIdForTelegramMessage((int) $replyToId);
-        if ($chatId) {
-            $supportChat->appendMessage($chatId, 'support', $text, [
+        $resolvedChatId = $supportChat->getChatIdForTelegramMessage((int) $replyToId);
+        if ($resolvedChatId === null) {
+            $resolvedChatId = extractSupportChatIdFromTelegramMessage($replyTo);
+        }
+
+        if ($resolvedChatId) {
+            $supportChat->appendMessage($resolvedChatId, 'support', $text, [
                 'telegram' => [
                     'message_id' => (int) ($message['message_id'] ?? 0),
                 ],
             ]);
+
+            $currentMessageId = (int) ($message['message_id'] ?? 0);
+            if ($currentMessageId > 0) {
+                $supportChat->mapTelegramMessage($currentMessageId, $resolvedChatId);
+            }
         }
     }
     exit;
@@ -197,6 +206,24 @@ function getRequestIp(): ?string
     }
 
     return $_SERVER['REMOTE_ADDR'] ?? null;
+}
+
+function extractSupportChatIdFromTelegramMessage(?array $message): ?string
+{
+    if (!$message) {
+        return null;
+    }
+
+    $text = trim((string) ($message['text'] ?? ''));
+    if ($text === '') {
+        return null;
+    }
+
+    if (preg_match('/#chat:([a-z0-9_-]+)/i', $text, $matches) === 1) {
+        return strtolower((string) $matches[1]);
+    }
+
+    return null;
 }
 
 function requestPhone(Telegram $telegram, int $chatId): void
