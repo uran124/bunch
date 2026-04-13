@@ -1241,7 +1241,7 @@ function internalTelegramGcCache(array &$cache, int $now, int $ttl): void
 
 function internalTelegramDataFilePath(string $fileName): string
 {
-    $dir = __DIR__ . '/../kraswebsite.ru/bots/bunch/data';
+    $dir = __DIR__ . '/../bot/data';
     if (!is_dir($dir)) {
         @mkdir($dir, 0755, true);
     }
