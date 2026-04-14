@@ -209,6 +209,7 @@ class CartController extends Controller
         if (!in_array($paymentMethod, $allowedPaymentMethods, true)) {
             $paymentMethod = 'cash';
         }
+        $tulipSpend = max(0, (int) floor((float) ($payload['tulip_spend'] ?? 0)));
         if ($paymentMethod === 'online' && !$this->isOnlinePaymentEnabled()) {
             $paymentMethod = 'sbp';
         }
@@ -354,6 +355,7 @@ class CartController extends Controller
                 'recipient_phone' => $recipientPhone ?: null,
                 'comment' => $comment,
                 'payment_method' => $paymentMethod,
+                'tulip_spend' => $tulipSpend,
             ]);
 
             $cart->clear();

@@ -1320,6 +1320,7 @@ function initOrderFlow() {
             time: timeInput?.value || '',
             comment: commentInput?.value || '',
             payment_method: activePayment?.dataset.paymentMethod || 'cash',
+            tulip_spend: getTulipDeduction(),
         };
 
         if (currentMode === 'delivery') {

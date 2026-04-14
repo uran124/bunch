@@ -365,6 +365,7 @@ class Order extends Model
         $recipientName = trim((string) ($payload['recipient_name'] ?? ''));
         $recipientPhone = trim((string) ($payload['recipient_phone'] ?? ''));
         $comment = trim((string) ($payload['comment'] ?? ''));
+        $requestedTulipSpend = max(0, (int) floor((float) ($payload['tulip_spend'] ?? 0)));
 
         $totalAmount = 0;
         foreach ($cartItems as $item) {
@@ -375,10 +376,18 @@ class Order extends Model
             $totalAmount += $deliveryPrice;
         }
 
-
         $this->db->beginTransaction();
 
         try {
+            [$appliedTulipSpend, $earnedTulips] = $this->applyCashbackForOrderDraft(
+                $userId,
+                $cartItems,
+                $requestedTulipSpend
+            );
+            if ($appliedTulipSpend > 0) {
+                $totalAmount = max(0, $totalAmount - $appliedTulipSpend);
+            }
+
             $orderStmt = $this->db->prepare(
                 'INSERT INTO orders (user_id, address_id, total_amount, status, delivery_type, delivery_price, zone_id, delivery_pricing_version, scheduled_date, scheduled_time, address_text, recipient_name, recipient_phone, comment) VALUES (:user_id, :address_id, :total_amount, :status, :delivery_type, :delivery_price, :zone_id, :delivery_pricing_version, :scheduled_date, :scheduled_time, :address_text, :recipient_name, :recipient_phone, :comment)'            );
 
@@ -430,6 +439,16 @@ class Order extends Model
                 }
             }
 
+            if ($earnedTulips > 0) {
+                $earnStmt = $this->db->prepare(
+                    'UPDATE users SET tulip_balance = tulip_balance + :earned, updated_at = NOW() WHERE id = :id'
+                );
+                $earnStmt->execute([
+                    'id' => $userId,
+                    'earned' => $earnedTulips,
+                ]);
+            }
+
             $this->db->commit();
 
             $customer = $this->getUserContact($userId);
@@ -468,6 +487,96 @@ class Order extends Model
             $this->db->rollBack();
             throw $e;
         }
+    }
+
+    private function applyCashbackForOrderDraft(int $userId, array $cartItems, int $requestedTulipSpend): array
+    {
+        if ($userId <= 0) {
+            return [0, 0];
+        }
+
+        $productIds = [];
+        foreach ($cartItems as $item) {
+            $id = (int) ($item['product_id'] ?? 0);
+            if ($id > 0) {
+                $productIds[$id] = $id;
+            }
+        }
+
+        if ($productIds === []) {
+            return [0, 0];
+        }
+
+        $placeholders = implode(',', array_fill(0, count($productIds), '?'));
+        $productStmt = $this->db->prepare(
+            "SELECT id, product_type, allow_tulip_spend, allow_tulip_earn FROM products WHERE id IN ($placeholders)"
+        );
+        $productStmt->execute(array_values($productIds));
+        $rows = $productStmt->fetchAll();
+
+        $productMeta = [];
+        foreach ($rows as $row) {
+            $productMeta[(int) $row['id']] = [
+                'product_type' => (string) ($row['product_type'] ?? 'regular'),
+                'allow_spend' => (int) ($row['allow_tulip_spend'] ?? 1) === 1,
+                'allow_earn' => (int) ($row['allow_tulip_earn'] ?? 1) === 1,
+            ];
+        }
+
+        $eligibleSpendTotal = 0;
+        foreach ($cartItems as $item) {
+            $productId = (int) ($item['product_id'] ?? 0);
+            $lineTotal = (int) floor((float) ($item['line_total'] ?? 0));
+            $meta = $productMeta[$productId] ?? null;
+            if (!$meta || !$meta['allow_spend']) {
+                continue;
+            }
+            $eligibleSpendTotal += max(0, $lineTotal);
+        }
+
+        $userStmt = $this->db->prepare('SELECT tulip_balance FROM users WHERE id = :id FOR UPDATE');
+        $userStmt->execute(['id' => $userId]);
+        $userBalance = (int) $userStmt->fetchColumn();
+
+        $appliedSpend = min($requestedTulipSpend, $userBalance, $eligibleSpendTotal);
+        if ($appliedSpend > 0) {
+            $spendStmt = $this->db->prepare(
+                'UPDATE users SET tulip_balance = GREATEST(tulip_balance - :spend, 0), updated_at = NOW() WHERE id = :id'
+            );
+            $spendStmt->execute([
+                'id' => $userId,
+                'spend' => $appliedSpend,
+            ]);
+        }
+
+        $levelStmt = $this->db->query(
+            'SELECT percent_single, percent_pack, percent_box, percent_promo FROM cashback_levels ORDER BY sort_order ASC, id ASC LIMIT 1'
+        );
+        $level = $levelStmt->fetch() ?: [];
+
+        $earnedTulips = 0;
+        foreach ($cartItems as $item) {
+            $productId = (int) ($item['product_id'] ?? 0);
+            $lineTotal = max(0, (int) floor((float) ($item['line_total'] ?? 0)));
+            $meta = $productMeta[$productId] ?? null;
+            if (!$meta || !$meta['allow_earn'] || $lineTotal <= 0) {
+                continue;
+            }
+
+            $percent = match ($meta['product_type']) {
+                'small_wholesale' => (float) ($level['percent_pack'] ?? 0),
+                'wholesale_box' => (float) ($level['percent_box'] ?? 0),
+                'promo' => (float) ($level['percent_promo'] ?? 0),
+                default => (float) ($level['percent_single'] ?? 0),
+            };
+
+            if ($percent <= 0) {
+                continue;
+            }
+            $earnedTulips += (int) floor($lineTotal * $percent / 100);
+        }
+
+        return [$appliedSpend, $earnedTulips];
     }
 
     private function normalizeDate(?string $value): ?string
