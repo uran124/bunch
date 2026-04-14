@@ -37,6 +37,8 @@ class AccountController extends Controller
             'phone' => $userRow['phone'],
             'email' => $userRow['email'],
             'tulip_balance' => (int) ($userRow['tulip_balance'] ?? 0),
+            'telegram_chat_id' => $userRow['telegram_chat_id'] ?? null,
+            'telegram_username' => $userRow['telegram_username'] ?? null,
         ];
 
         $addresses = $this->addressModel->getByUserId($userId);
@@ -112,6 +114,9 @@ class AccountController extends Controller
         $deliveryPricingVersion = $deliveryZoneModel->getPricingVersion();
         $testAddresses = $deliveryZoneModel->getTestAddresses();
         $dadataConfig = $this->getDadataSettings();
+        $settings = new Setting();
+        $telegramDefaults = $settings->getTelegramDefaults();
+        $telegramBotUsername = ltrim((string) $settings->get(Setting::TG_BOT_USERNAME, $telegramDefaults[Setting::TG_BOT_USERNAME] ?? ''), '@');
 
         $this->render('account', compact(
             'user',
@@ -133,7 +138,8 @@ class AccountController extends Controller
             'auctionParticipationActive',
             'auctionParticipationHistory',
             'lotteryParticipationActive',
-            'lotteryParticipationHistory'
+            'lotteryParticipationHistory',
+            'telegramBotUsername'
         ));
     }
 
