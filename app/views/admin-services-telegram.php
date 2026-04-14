@@ -28,16 +28,16 @@
 
     <?php if (($status ?? '') === 'saved') : ?>
         <div class="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
-            Настройки телеграм-бота сохранены.
+            Настройки Telegram и SMTP сохранены.
         </div>
     <?php endif; ?>
 
     <section class="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
         <form method="post" action="/admin-services-telegram" class="space-y-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <div>
-                <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Telegram bot</p>
-                <h2 class="text-xl font-semibold text-slate-900">Доступы и webhook</h2>
-                <p class="text-sm text-slate-500">Заполните токен, username и секрет для проверки запросов.</p>
+                <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Telegram bot + SMTP</p>
+                <h2 class="text-xl font-semibold text-slate-900">Доступы и отправка писем</h2>
+                <p class="text-sm text-slate-500">Заполните параметры Telegram и почтового сервера для e-mail кодов регистрации.</p>
             </div>
 
             <div class="grid gap-3 text-sm">
@@ -70,6 +70,46 @@
                         placeholder="secret"
                         class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-rose-500/30"
                     >
+                </label>
+            </div>
+
+            <div class="pt-1">
+                <p class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">SMTP</p>
+            </div>
+
+            <div class="grid gap-3 text-sm md:grid-cols-2">
+                <label class="space-y-1 md:col-span-2">
+                    <span class="text-xs uppercase tracking-[0.14em] text-slate-500">SMTP host</span>
+                    <input type="text" name="smtp_host" value="<?php echo htmlspecialchars($settings['smtpHost'] ?? '', ENT_QUOTES, 'UTF-8'); ?>" placeholder="smtp.example.com" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-rose-500/30">
+                </label>
+                <label class="space-y-1">
+                    <span class="text-xs uppercase tracking-[0.14em] text-slate-500">SMTP port</span>
+                    <input type="number" name="smtp_port" value="<?php echo htmlspecialchars((string) ($settings['smtpPort'] ?? '587'), ENT_QUOTES, 'UTF-8'); ?>" placeholder="587" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-rose-500/30">
+                </label>
+                <label class="space-y-1">
+                    <span class="text-xs uppercase tracking-[0.14em] text-slate-500">Шифрование</span>
+                    <select name="smtp_encryption" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-rose-500/30">
+                        <?php $encryption = strtolower((string) ($settings['smtpEncryption'] ?? 'tls')); ?>
+                        <option value="tls" <?php echo $encryption === 'tls' ? 'selected' : ''; ?>>TLS</option>
+                        <option value="ssl" <?php echo $encryption === 'ssl' ? 'selected' : ''; ?>>SSL</option>
+                        <option value="none" <?php echo $encryption === 'none' ? 'selected' : ''; ?>>Без шифрования</option>
+                    </select>
+                </label>
+                <label class="space-y-1">
+                    <span class="text-xs uppercase tracking-[0.14em] text-slate-500">SMTP user</span>
+                    <input type="text" name="smtp_username" value="<?php echo htmlspecialchars($settings['smtpUsername'] ?? '', ENT_QUOTES, 'UTF-8'); ?>" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-rose-500/30">
+                </label>
+                <label class="space-y-1">
+                    <span class="text-xs uppercase tracking-[0.14em] text-slate-500">SMTP password</span>
+                    <input type="password" name="smtp_password" value="<?php echo htmlspecialchars($settings['smtpPassword'] ?? '', ENT_QUOTES, 'UTF-8'); ?>" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-rose-500/30">
+                </label>
+                <label class="space-y-1">
+                    <span class="text-xs uppercase tracking-[0.14em] text-slate-500">From e-mail</span>
+                    <input type="email" name="smtp_from_email" value="<?php echo htmlspecialchars($settings['smtpFromEmail'] ?? '', ENT_QUOTES, 'UTF-8'); ?>" placeholder="no-reply@bunchflowers.ru" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-rose-500/30">
+                </label>
+                <label class="space-y-1">
+                    <span class="text-xs uppercase tracking-[0.14em] text-slate-500">From name</span>
+                    <input type="text" name="smtp_from_name" value="<?php echo htmlspecialchars($settings['smtpFromName'] ?? '', ENT_QUOTES, 'UTF-8'); ?>" placeholder="Bunch flowers" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-rose-500/30">
                 </label>
             </div>
 

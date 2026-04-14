@@ -2453,15 +2453,16 @@ class AdminController extends Controller
     public function serviceTelegram(): void
     {
         $pageMeta = [
-            'title' => 'Настройка сервисов · Telegram бот — админ-панель Bunch',
-            'description' => 'Храним токен бота, username и секрет для вебхука в базе данных.',
-            'h1' => 'Телеграм бот',
+            'title' => 'Настройка сервисов · Telegram и e-mail — админ-панель Bunch',
+            'description' => 'Храним токен бота и SMTP-параметры в базе данных.',
+            'h1' => 'Telegram и e-mail',
             'headerTitle' => 'Bunch Admin',
-            'headerSubtitle' => 'Сервисы · Телеграм бот',
+            'headerSubtitle' => 'Сервисы · Telegram и e-mail',
         ];
 
         $settings = new Setting();
         $defaults = $settings->getTelegramDefaults();
+        $mailDefaults = $settings->getMailDefaults();
 
         $this->render('admin-services-telegram', [
             'pageMeta' => $pageMeta,
@@ -2470,6 +2471,13 @@ class AdminController extends Controller
                 'botToken' => $settings->get(Setting::TG_BOT_TOKEN, $defaults[Setting::TG_BOT_TOKEN] ?? ''),
                 'botUsername' => $settings->get(Setting::TG_BOT_USERNAME, $defaults[Setting::TG_BOT_USERNAME] ?? ''),
                 'webhookSecret' => $settings->get(Setting::TG_WEBHOOK_SECRET, $defaults[Setting::TG_WEBHOOK_SECRET] ?? ''),
+                'smtpHost' => $settings->get(Setting::SMTP_HOST, $mailDefaults[Setting::SMTP_HOST] ?? ''),
+                'smtpPort' => $settings->get(Setting::SMTP_PORT, $mailDefaults[Setting::SMTP_PORT] ?? '587'),
+                'smtpEncryption' => $settings->get(Setting::SMTP_ENCRYPTION, $mailDefaults[Setting::SMTP_ENCRYPTION] ?? 'tls'),
+                'smtpUsername' => $settings->get(Setting::SMTP_USERNAME, $mailDefaults[Setting::SMTP_USERNAME] ?? ''),
+                'smtpPassword' => $settings->get(Setting::SMTP_PASSWORD, $mailDefaults[Setting::SMTP_PASSWORD] ?? ''),
+                'smtpFromEmail' => $settings->get(Setting::SMTP_FROM_EMAIL, $mailDefaults[Setting::SMTP_FROM_EMAIL] ?? ''),
+                'smtpFromName' => $settings->get(Setting::SMTP_FROM_NAME, $mailDefaults[Setting::SMTP_FROM_NAME] ?? ''),
             ],
         ]);
     }
@@ -2626,6 +2634,13 @@ class AdminController extends Controller
         $settings->set(Setting::TG_BOT_TOKEN, $botToken);
         $settings->set(Setting::TG_BOT_USERNAME, $botUsername);
         $settings->set(Setting::TG_WEBHOOK_SECRET, $webhookSecret);
+        $settings->set(Setting::SMTP_HOST, trim((string) ($_POST['smtp_host'] ?? '')));
+        $settings->set(Setting::SMTP_PORT, trim((string) ($_POST['smtp_port'] ?? '587')));
+        $settings->set(Setting::SMTP_ENCRYPTION, trim((string) ($_POST['smtp_encryption'] ?? 'tls')));
+        $settings->set(Setting::SMTP_USERNAME, trim((string) ($_POST['smtp_username'] ?? '')));
+        $settings->set(Setting::SMTP_PASSWORD, trim((string) ($_POST['smtp_password'] ?? '')));
+        $settings->set(Setting::SMTP_FROM_EMAIL, trim((string) ($_POST['smtp_from_email'] ?? '')));
+        $settings->set(Setting::SMTP_FROM_NAME, trim((string) ($_POST['smtp_from_name'] ?? 'Bunch flowers')));
 
         header('Location: /admin-services-telegram?status=saved');
         exit;

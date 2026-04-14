@@ -6,6 +6,13 @@ class Setting extends Model
     public const TG_BOT_TOKEN = 'telegram_bot_token';
     public const TG_BOT_USERNAME = 'telegram_bot_username';
     public const TG_WEBHOOK_SECRET = 'telegram_webhook_secret';
+    public const SMTP_HOST = 'smtp_host';
+    public const SMTP_PORT = 'smtp_port';
+    public const SMTP_ENCRYPTION = 'smtp_encryption';
+    public const SMTP_USERNAME = 'smtp_username';
+    public const SMTP_PASSWORD = 'smtp_password';
+    public const SMTP_FROM_EMAIL = 'smtp_from_email';
+    public const SMTP_FROM_NAME = 'smtp_from_name';
     public const LOTTERY_FREE_MONTHLY_LIMIT = 'lottery_free_monthly_limit';
     public const ONLINE_PAYMENT_ENABLED = 'online_payment_enabled';
     public const ONLINE_PAYMENT_GATEWAY = 'online_payment_gateway';
@@ -54,6 +61,19 @@ class Setting extends Model
             self::TG_BOT_TOKEN => getenv('TG_BOT_TOKEN') ?: '',
             self::TG_BOT_USERNAME => getenv('TG_BOT_USERNAME') ?: '@bunchflowersBot',
             self::TG_WEBHOOK_SECRET => getenv('TG_WEBHOOK_SECRET') ?: 'bfb',
+        ];
+    }
+
+    public function getMailDefaults(): array
+    {
+        return [
+            self::SMTP_HOST => getenv('SMTP_HOST') ?: '',
+            self::SMTP_PORT => getenv('SMTP_PORT') ?: '587',
+            self::SMTP_ENCRYPTION => getenv('SMTP_ENCRYPTION') ?: 'tls',
+            self::SMTP_USERNAME => getenv('SMTP_USERNAME') ?: '',
+            self::SMTP_PASSWORD => getenv('SMTP_PASSWORD') ?: '',
+            self::SMTP_FROM_EMAIL => getenv('SMTP_FROM_EMAIL') ?: 'no-reply@bunchflowers.ru',
+            self::SMTP_FROM_NAME => getenv('SMTP_FROM_NAME') ?: 'Bunch flowers',
         ];
     }
 

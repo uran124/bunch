@@ -36,66 +36,60 @@
         <?php endif; ?>
 
         <?php if (($stage ?? 'code') === 'code'): ?>
-            <div class="rounded-2xl border border-rose-100 bg-white/90 backdrop-blur-sm p-4 shadow-sm">
-                <div class="space-y-3 lg:flex lg:items-start lg:justify-between lg:gap-0 lg:space-y-0">
-                    <div class="space-y-3">
-                        <div class="flex items-center gap-2 text-sm font-semibold text-slate-900">
-                            <span class="material-symbols-rounded text-base text-rose-600">info</span>
-                            <span>Введите одноразовый код</span>
-                        </div>
-                        <ol class="space-y-1.5 pl-4 text-xs text-slate-700 list-decimal marker:text-rose-600 marker:font-semibold">
-                            <li>Откройте телеграм бота по ссылке</li>
-                            <li>Отправьте команду /start</li>
-                            <li>Введите код ниже</li>
-                        </ol>
-                        <a
-                            href="https://t.me/<?php echo htmlspecialchars($botUsername ?? '', ENT_QUOTES, 'UTF-8'); ?>?start=register"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            class="group relative overflow-hidden rounded-xl bg-gradient-to-r from-rose-600 to-rose-700 px-4 py-2.5 text-center text-xs font-semibold text-white shadow-lg shadow-rose-500/25 transition hover:shadow-xl hover:shadow-rose-500/40 hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-1.5 lg:hidden"
-                        >
-                            <div class="absolute inset-0 bg-gradient-to-r from-rose-700 to-rose-800 opacity-0 group-hover:opacity-100 transition"></div>
-                            <span class="relative flex items-center gap-1.5">
-                                <span class="material-symbols-rounded text-sm">send</span>
-                                Получить код
-                            </span>
-                        </a>
+            <div class="grid gap-3">
+                <div class="rounded-2xl border border-rose-100 bg-white/90 backdrop-blur-sm p-4 shadow-sm">
+                    <div class="flex items-center gap-2 text-sm font-semibold text-slate-900">
+                        <span class="material-symbols-rounded text-base text-rose-600">alternate_email</span>
+                        <span>Альтернативная регистрация через e-mail</span>
                     </div>
-                    <a
-                        href="https://t.me/<?php echo htmlspecialchars($botUsername ?? '', ENT_QUOTES, 'UTF-8'); ?>?start=register"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="hidden shrink-0 lg:flex items-center justify-center"
-                        aria-label="Открыть телеграм бота и получить код"
-                    >
-                        <img
-                            src="/assets/images/bfb_qr.svg"
-                            alt="bunch flowers bot telegram"
-                            class="h-36 w-36 rounded-2xl border border-rose-100 bg-white p-2 shadow-md"
+                    <form method="POST" action="/register" class="mt-3 grid gap-2">
+                        <input type="hidden" name="step" value="request_email_code">
+                        <input
+                            type="email"
+                            name="email"
+                            value="<?php echo htmlspecialchars($prefillEmail ?? '', ENT_QUOTES, 'UTF-8'); ?>"
+                            placeholder="name@example.com"
+                            class="w-full rounded-xl border border-rose-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-rose-500/30"
+                            required
                         >
-                    </a>
+                        <button type="submit" class="rounded-xl bg-rose-600 px-4 py-2 text-xs font-semibold text-white">Отправить код на почту</button>
+                    </form>
+                    <form method="POST" action="/register" class="mt-2 grid gap-2 sm:grid-cols-[1fr_auto]">
+                        <input type="hidden" name="step" value="verify_email_code">
+                        <input type="email" name="email" value="<?php echo htmlspecialchars($prefillEmail ?? '', ENT_QUOTES, 'UTF-8'); ?>" placeholder="Ваш e-mail" class="rounded-xl border border-rose-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-rose-500/30" required>
+                        <input type="text" name="code" maxlength="5" pattern="\d{5}" placeholder="Код" class="rounded-xl border border-rose-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-rose-500/30" required inputmode="numeric">
+                        <button type="submit" class="sm:col-span-2 rounded-xl border border-rose-200 bg-white px-4 py-2 text-xs font-semibold text-rose-700">Подтвердить e-mail код</button>
+                    </form>
+                </div>
 
+                <div class="rounded-2xl border border-rose-100 bg-white/90 backdrop-blur-sm p-4 shadow-sm">
+                    <div class="space-y-2">
+                        <div class="flex items-center gap-2 text-sm font-semibold text-slate-900">
+                            <span class="material-symbols-rounded text-base text-rose-600">telegram</span>
+                            <span>Регистрация через Telegram</span>
+                        </div>
+                        <p class="text-xs text-slate-600">Откройте бота, отправьте /start и введите код:</p>
+                        <a href="https://t.me/<?php echo htmlspecialchars($botUsername ?? '', ENT_QUOTES, 'UTF-8'); ?>?start=register" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2 text-xs font-semibold text-white">
+                            <span class="material-symbols-rounded text-sm">send</span> Открыть бота
+                        </a>
+                        <form id="telegram-code-form" method="POST" action="/register" class="mt-2">
+                            <input type="hidden" name="step" value="verify_code">
+                            <input
+                                type="text"
+                                id="code"
+                                name="code"
+                                maxlength="5"
+                                pattern="\d{5}"
+                                class="w-full rounded-xl border border-rose-200 bg-white px-3 py-2.5 text-center text-lg font-bold tracking-[0.25em] text-slate-900 outline-none transition focus:border-rose-600"
+                                placeholder="• • • • •"
+                                required
+                                inputmode="numeric"
+                                autocomplete="one-time-code"
+                            >
+                        </form>
+                    </div>
                 </div>
             </div>
-
-            <form id="code-form" method="POST" action="/register" class="grid gap-5">
-                <input type="hidden" name="step" value="verify_code">
-                <div class="flex justify-center">
-                    <input
-                        type="text"
-                        id="code"
-                        name="code"
-                        maxlength="5"
-                        pattern="\d{5}"
-                        class="w-44 rounded-2xl border border-rose-200 bg-white/90 backdrop-blur-sm px-3 py-3 text-center text-2xl font-bold tracking-[0.35em] text-slate-900 outline-none transition focus:border-rose-600 focus:shadow-lg focus:shadow-rose-500/20 focus:scale-105"
-                        placeholder="• • • • •"
-                        required
-                        inputmode="numeric"
-                        autocomplete="one-time-code"
-                        autofocus
-                    >
-                </div>
-            </form>
 
             <div class="flex justify-center">
                 <div class="grid grid-cols-2 gap-2.5 w-full max-w-xs">
@@ -254,7 +248,7 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', () => {
-        const codeForm = document.querySelector('form[action="/register"][method="POST"]');
+        const codeForm = document.getElementById('telegram-code-form');
         const codeInput = document.getElementById('code');
         const phoneInput = document.getElementById('phone');
         let codeSubmitted = false;
