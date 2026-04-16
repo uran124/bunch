@@ -162,6 +162,12 @@ $adminNavigation = [
                 'page' => 'admin-services-telegram',
                 'icon' => 'send',
             ],
+            [
+                'label' => 'SMTP',
+                'href' => '/admin-services-telegram',
+                'page' => 'admin-services-telegram',
+                'icon' => 'alternate_email',
+            ],
         ],
     ],
     [
