@@ -92,7 +92,9 @@ return [
         $router->post('admin-attribute-value-delete', [AdminController::class, 'deleteAttributeValue'], $adminOnly);
         $router->post('admin-product-save', [AdminController::class, 'saveProduct'], $adminOnly);
         $router->post('admin-product-delete', [AdminController::class, 'deleteProduct'], $adminOnly);
-        $router->post('admin-product-toggle', [AdminController::class, 'toggleProductActive'], $adminOnly);
+        $router->post('admin-product-toggle', [AdminController::class, 'toggleProductActive'], ['role:admin,manager']);
+        $router->get('admin-product-quick-data', [AdminController::class, 'quickProductData'], ['role:admin,manager']);
+        $router->post('admin-product-quick-save', [AdminController::class, 'quickUpdateProduct'], ['role:admin,manager']);
         $router->post('admin-services-payment', [AdminController::class, 'saveServicePayment'], $adminOnly);
         $router->post('admin-services-telegram', [AdminController::class, 'saveServiceTelegram'], $adminOnly);
         $router->post('admin-services-frontpad', [AdminController::class, 'saveServiceFrontpad'], $adminOnly);

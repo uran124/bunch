@@ -9,7 +9,8 @@ class HomeController extends Controller
         $attributeModel = new AttributeModel();
 
         $isWholesaleUser = $this->isWholesaleUser();
-        $products = $productModel->getMainCatalog($isWholesaleUser);
+        $canModerateCatalog = $this->hasAnyRole('admin', 'manager');
+        $products = $productModel->getMainCatalog($isWholesaleUser, $canModerateCatalog);
         $attributes = $attributeModel->getAllWithValues();
 
         $attributesById = [];
@@ -40,6 +41,7 @@ class HomeController extends Controller
         $this->render('home', [
             'products' => $products,
             'isWholesaleUser' => $isWholesaleUser,
+            'canModerateCatalog' => $canModerateCatalog,
             'pageMeta' => [
                 'title' => 'Bunch flowers — витрина',
                 'description' => 'Выбирайте стебли и оформление на главной странице.',

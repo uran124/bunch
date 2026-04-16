@@ -552,6 +552,16 @@ class Order extends Model
                 }
             }
 
+            if ($earnedTulips > 0) {
+                $earnStmt = $this->db->prepare(
+                    'UPDATE users SET tulip_balance = tulip_balance + :earned, updated_at = NOW() WHERE id = :id'
+                );
+                $earnStmt->execute([
+                    'id' => $userId,
+                    'earned' => $earnedTulips,
+                ]);
+            }
+
             $this->db->commit();
 
             $customer = $this->getUserContact($userId);

@@ -64,6 +64,31 @@
             </div>
 
             <div class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+                <div class="flex items-start justify-between gap-3">
+                    <div class="space-y-2">
+                        <p class="text-xs font-semibold uppercase tracking-[0.06em] text-slate-500">Telegram</p>
+                        <h3 class="text-base font-semibold text-slate-900 sm:text-lg">Подключение Telegram-аккаунта</h3>
+                        <?php if (!empty($user['telegram_chat_id'])): ?>
+                            <p class="text-sm text-emerald-700">
+                                Аккаунт подключён<?php echo !empty($user['telegram_username']) ? ': @' . htmlspecialchars((string) $user['telegram_username'], ENT_QUOTES, 'UTF-8') : ''; ?>.
+                            </p>
+                        <?php else: ?>
+                            <p class="text-sm text-slate-600">Чтобы подключить Telegram, откройте бота и отправьте свой контакт (номер телефона).</p>
+                        <?php endif; ?>
+                    </div>
+                    <a
+                        href="https://t.me/<?php echo htmlspecialchars($telegramBotUsername ?? '', ENT_QUOTES, 'UTF-8'); ?>?start=register"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-rose-200 hover:text-rose-700 sm:text-sm"
+                    >
+                        <span class="material-symbols-rounded text-base">send</span>
+                        Открыть бота
+                    </a>
+                </div>
+            </div>
+
+            <div class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
                 <div class="flex items-center justify-between gap-3">
                     <div>
                         <p class="text-xs font-semibold uppercase tracking-[0.06em] text-slate-500">Кешбек</p>

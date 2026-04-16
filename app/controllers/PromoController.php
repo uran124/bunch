@@ -15,9 +15,10 @@ class PromoController extends Controller
         $promoItemModel = new PromoItem();
         $promoCategoryModel = new PromoCategory();
         $promoCategories = $promoCategoryModel->getMap();
+        $canModerateCatalog = $this->hasAnyRole('admin', 'manager');
 
         $showPromoItems = (bool) ($promoCategories['promo']['is_active'] ?? true);
-        $promoItems = $showPromoItems ? $promoItemModel->getActiveList() : [];
+        $promoItems = $showPromoItems ? $promoItemModel->getActiveList($canModerateCatalog) : [];
         $oneTimeItems = array_map(function (array $item): array {
             $quantity = $item['quantity'] !== null ? (int) $item['quantity'] : null;
             $remainingQty = $item['remaining_qty'] !== null ? (int) $item['remaining_qty'] : null;
@@ -43,6 +44,7 @@ class PromoController extends Controller
                 'period' => $periodText,
                 'label' => $item['label'] ?: 'Разовая акция',
                 'photo' => $item['photo_url'],
+                'is_active' => (int) ($item['product_is_active'] ?? 1) === 1,
             ];
         }, $promoItems);
 
@@ -72,6 +74,7 @@ class PromoController extends Controller
             'isAuthenticated' => $isAuthenticated,
             'botConnected' => $botConnected,
             'botUsername' => $botUsername,
+            'canModerateCatalog' => $canModerateCatalog,
         ]);
     }
 }

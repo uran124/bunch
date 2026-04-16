@@ -92,6 +92,7 @@ class AuthController extends Controller
         $errors = [];
         $successMessage = '';
         $stage = 'code';
+        $codeMethod = 'telegram';
         $prefillName = '';
         $prefillPhone = '';
         $prefillEmail = '';
@@ -107,7 +108,63 @@ class AuthController extends Controller
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $step = $_POST['step'] ?? 'verify_code';
 
-            if ($step === 'verify_code') {
+            if ($step === 'request_email_code') {
+                $email = trim((string) ($_POST['email'] ?? ''));
+                $codeMethod = 'email';
+                $prefillEmail = $email;
+
+                if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                    $errors[] = 'Укажите корректный e-mail.';
+                } else {
+                    $emailCode = str_pad((string) random_int(0, 99999), 5, '0', STR_PAD_LEFT);
+                    Session::set('register_email_code', [
+                        'email' => mb_strtolower($email),
+                        'code_hash' => password_hash($emailCode, PASSWORD_DEFAULT),
+                        'expires_at' => time() + 15 * 60,
+                    ]);
+
+                    if ($this->sendRegistrationEmailCode($email, $emailCode)) {
+                        $successMessage = 'Код отправлен на e-mail. Введите его ниже.';
+                    } else {
+                        $errors[] = 'Не удалось отправить код на почту. Проверьте SMTP настройки в админке.';
+                    }
+                }
+            } elseif ($step === 'verify_email_code') {
+                $codeMethod = 'email';
+                $email = trim((string) ($_POST['email'] ?? ''));
+                $code = trim($_POST['code'] ?? '');
+                $prefillEmail = $email;
+
+                if (!preg_match('/^\d{5}$/', $code)) {
+                    $errors[] = 'Введите 5-значный код из e-mail.';
+                } else {
+                    $emailVerification = Session::get('register_email_code');
+                    $isExpired = !$emailVerification || time() > (int) ($emailVerification['expires_at'] ?? 0);
+                    $emailMatches = $emailVerification && mb_strtolower($email) === (string) ($emailVerification['email'] ?? '');
+                    $codeMatches = $emailVerification && password_verify($code, (string) ($emailVerification['code_hash'] ?? ''));
+
+                    if ($isExpired || !$emailMatches || !$codeMatches) {
+                        $errors[] = 'Код не найден или устарел. Запросите новый код по e-mail.';
+                    } else {
+                        $data = [
+                            'chat_id' => null,
+                            'username' => null,
+                            'user_id' => null,
+                            'phone' => '',
+                            'name' => '',
+                            'email' => $email,
+                            'method' => 'email',
+                        ];
+                        Session::set('register_verification', $data);
+                        Session::remove('register_email_code');
+                        $sessionVerification = $data;
+                        $stage = 'details';
+                        [$prefillName, $prefillPhone, $prefillEmail] = $this->getPrefillData($sessionVerification);
+                        $successMessage = 'Код подтверждён. Заполните данные профиля.';
+                    }
+                }
+            } elseif ($step === 'verify_code') {
+                $codeMethod = 'telegram';
                 $code = trim($_POST['code'] ?? '');
 
                 if (!preg_match('/^\d{5}$/', $code)) {
@@ -137,6 +194,8 @@ class AuthController extends Controller
                             'user_id' => $verification['user_id'] ? (int) $verification['user_id'] : null,
                             'phone' => $verification['phone'] ?? '',
                             'name' => $verification['name'] ?? '',
+                            'email' => '',
+                            'method' => 'telegram',
                         ];
                         Session::set('register_verification', $data);
                         $sessionVerification = $data;
@@ -149,7 +208,7 @@ class AuthController extends Controller
                 $verification = Session::get('register_verification');
 
                 if (!$verification) {
-                    $errors[] = 'Сначала подтвердите код из Telegram.';
+                    $errors[] = 'Сначала подтвердите код из Telegram или e-mail.';
                     $stage = 'code';
                 } else {
                     $name = trim($_POST['name'] ?? '');
@@ -182,7 +241,7 @@ class AuthController extends Controller
                     if (empty($errors)) {
                         $normalizedPhone = $this->normalisePhone($phone);
                         $pinHash = password_hash($pin, PASSWORD_DEFAULT);
-                        $chatId = (int) $verification['chat_id'];
+                        $chatId = isset($verification['chat_id']) ? (int) $verification['chat_id'] : null;
                         $username = $verification['username'] ?? null;
                         $userId = $verification['user_id'] ?? null;
 
@@ -207,6 +266,7 @@ class AuthController extends Controller
                         $this->userModel->resetFailedAttempts($userId);
                         $this->analytics->track('registration_complete', ['user_id' => $userId]);
                         Session::remove('register_verification');
+                        Session::remove('register_email_code');
 
                         Auth::login($userId, (string) ($existingUser['role'] ?? 'customer'));
                         $this->redirectAfterAuth('/account');
@@ -225,6 +285,7 @@ class AuthController extends Controller
             'successMessage' => $successMessage,
             'botUsername' => $this->botUsername,
             'stage' => $stage,
+            'codeMethod' => $codeMethod,
             'prefillName' => $prefillName,
             'prefillPhone' => $prefillPhone,
             'prefillEmail' => $prefillEmail,
@@ -411,7 +472,7 @@ class AuthController extends Controller
     {
         $prefillName = trim($verification['name'] ?? '');
         $prefillPhone = trim($verification['phone'] ?? '');
-        $prefillEmail = '';
+        $prefillEmail = trim($verification['email'] ?? '');
 
         if (!empty($verification['user_id'])) {
             $user = $this->userModel->findById((int) $verification['user_id']);
@@ -424,6 +485,41 @@ class AuthController extends Controller
         }
 
         return [$prefillName, $prefillPhone, $prefillEmail];
+    }
+
+    private function sendRegistrationEmailCode(string $email, string $code): bool
+    {
+        $mailConfig = $this->buildMailConfig();
+        $mailer = new Mailer($mailConfig);
+        $subject = 'Код регистрации Bunch flowers';
+        $body = "Ваш код для регистрации: {$code}\nКод действует 15 минут.\nЕсли вы не запрашивали код — просто проигнорируйте письмо.";
+        $sent = $mailer->send($email, $subject, $body);
+        if ($sent) {
+            $user = $this->userModel->findByEmail($email);
+            if ($user) {
+                $notificationLog = new NotificationLog();
+                $notificationLog->appendForUser((int) $user['id'], 'На e-mail отправлен код подтверждения регистрации.', [
+                    'source' => 'email',
+                ]);
+            }
+        }
+
+        return $sent;
+    }
+
+    private function buildMailConfig(): array
+    {
+        $defaults = $this->settings->getMailDefaults();
+
+        return [
+            'host' => $this->settings->get(Setting::SMTP_HOST, $defaults[Setting::SMTP_HOST] ?? ''),
+            'port' => $this->settings->get(Setting::SMTP_PORT, $defaults[Setting::SMTP_PORT] ?? '587'),
+            'encryption' => $this->settings->get(Setting::SMTP_ENCRYPTION, $defaults[Setting::SMTP_ENCRYPTION] ?? 'tls'),
+            'username' => $this->settings->get(Setting::SMTP_USERNAME, $defaults[Setting::SMTP_USERNAME] ?? ''),
+            'password' => $this->settings->get(Setting::SMTP_PASSWORD, $defaults[Setting::SMTP_PASSWORD] ?? ''),
+            'from_email' => $this->settings->get(Setting::SMTP_FROM_EMAIL, $defaults[Setting::SMTP_FROM_EMAIL] ?? ''),
+            'from_name' => $this->settings->get(Setting::SMTP_FROM_NAME, $defaults[Setting::SMTP_FROM_NAME] ?? 'Bunch flowers'),
+        ];
     }
 
     private function collectPin(array $payload): string

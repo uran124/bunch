@@ -1022,9 +1022,12 @@ class AdminController extends Controller
     public function toggleProductActive(): void
     {
         $productId = (int) ($_POST['product_id'] ?? 0);
+        $fallbackRedirect = '/admin-products';
+        $referer = isset($_SERVER['HTTP_REFERER']) ? (string) $_SERVER['HTTP_REFERER'] : '';
+        $redirectTo = $referer !== '' ? $referer : $fallbackRedirect;
 
         if ($productId <= 0) {
-            header('Location: /admin-products?status=error');
+            header('Location: ' . $fallbackRedirect . '?status=error');
             return;
         }
 
@@ -1037,7 +1040,139 @@ class AdminController extends Controller
             $this->syncSupplyCardStatus((int) $product['supply_id'], $product['product_type'] ?? 'regular', $active);
         }
 
-        header('Location: /admin-products');
+        header('Location: ' . $redirectTo);
+    }
+
+    public function quickProductData(): void
+    {
+        header('Content-Type: application/json; charset=utf-8');
+
+        $productId = (int) ($_GET['product_id'] ?? 0);
+        if ($productId <= 0) {
+            http_response_code(422);
+            echo json_encode(['ok' => false, 'error' => 'Некорректный товар'], JSON_UNESCAPED_UNICODE);
+            return;
+        }
+
+        $productModel = new Product();
+        $product = $productModel->getById($productId);
+        if (!$product) {
+            http_response_code(404);
+            echo json_encode(['ok' => false, 'error' => 'Товар не найден'], JSON_UNESCAPED_UNICODE);
+            return;
+        }
+
+        echo json_encode([
+            'ok' => true,
+            'product' => [
+                'id' => (int) $product['id'],
+                'name' => (string) ($product['name'] ?? ''),
+                'description' => (string) ($product['description'] ?? ''),
+                'base_price' => (int) floor((float) ($product['price'] ?? 0)),
+                'photo_url' => (string) ($product['photo_url'] ?? ''),
+                'photo_url_secondary' => (string) ($product['photo_url_secondary'] ?? ''),
+                'photo_url_tertiary' => (string) ($product['photo_url_tertiary'] ?? ''),
+                'price_tiers' => $productModel->getPriceTiers($productId),
+            ],
+        ], JSON_UNESCAPED_UNICODE);
+    }
+
+    public function quickUpdateProduct(): void
+    {
+        header('Content-Type: application/json; charset=utf-8');
+
+        $productId = (int) ($_POST['product_id'] ?? 0);
+        if ($productId <= 0) {
+            http_response_code(422);
+            echo json_encode(['ok' => false, 'error' => 'Некорректный товар'], JSON_UNESCAPED_UNICODE);
+            return;
+        }
+
+        $productModel = new Product();
+        $existing = $productModel->getById($productId);
+        if (!$existing) {
+            http_response_code(404);
+            echo json_encode(['ok' => false, 'error' => 'Товар не найден'], JSON_UNESCAPED_UNICODE);
+            return;
+        }
+
+        $name = trim((string) ($_POST['name'] ?? ''));
+        if ($name === '') {
+            http_response_code(422);
+            echo json_encode(['ok' => false, 'error' => 'Название обязательно'], JSON_UNESCAPED_UNICODE);
+            return;
+        }
+
+        $description = trim((string) ($_POST['description'] ?? ''));
+        $basePrice = max(0, (int) floor((float) ($_POST['base_price'] ?? 0)));
+        $priceTiersRaw = (string) ($_POST['price_tiers'] ?? '[]');
+        $priceTiersDecoded = json_decode($priceTiersRaw, true);
+        $priceTiers = [];
+        $minQtyMap = [];
+
+        if (is_array($priceTiersDecoded)) {
+            foreach ($priceTiersDecoded as $tier) {
+                if (!is_array($tier)) {
+                    continue;
+                }
+                $minQty = max(2, (int) ($tier['min_qty'] ?? 0));
+                $tierPrice = max(0, (int) floor((float) ($tier['price'] ?? 0)));
+                if ($minQty < 2 || isset($minQtyMap[$minQty])) {
+                    continue;
+                }
+                $minQtyMap[$minQty] = true;
+                $priceTiers[] = [
+                    'min_qty' => $minQty,
+                    'price' => $tierPrice,
+                ];
+            }
+        }
+
+        usort($priceTiers, static function (array $left, array $right): int {
+            return $left['min_qty'] <=> $right['min_qty'];
+        });
+
+        $primaryPhoto = $existing['photo_url'] ?? '';
+        $secondaryPhoto = $existing['photo_url_secondary'] ?? null;
+        $tertiaryPhoto = $existing['photo_url_tertiary'] ?? null;
+
+        $uploadedPrimary = $this->handlePhotoUpload('photo_primary', 'product-quick-primary');
+        $uploadedSecondary = $this->handlePhotoUpload('photo_secondary', 'product-quick-secondary');
+        $uploadedTertiary = $this->handlePhotoUpload('photo_tertiary', 'product-quick-tertiary');
+
+        if ($uploadedPrimary) {
+            $primaryPhoto = $uploadedPrimary;
+        }
+        if ($uploadedSecondary) {
+            $secondaryPhoto = $uploadedSecondary;
+        }
+        if ($uploadedTertiary) {
+            $tertiaryPhoto = $uploadedTertiary;
+        }
+
+        $productModel->updateQuickEditable($productId, [
+            'name' => $name,
+            'description' => $description,
+            'price' => $basePrice,
+            'photo_url' => $primaryPhoto,
+            'photo_url_secondary' => $secondaryPhoto,
+            'photo_url_tertiary' => $tertiaryPhoto,
+        ]);
+        $productModel->setPriceTiers($productId, $priceTiers);
+
+        echo json_encode([
+            'ok' => true,
+            'product' => [
+                'id' => $productId,
+                'name' => $name,
+                'description' => $description,
+                'base_price' => $basePrice,
+                'photo_url' => $primaryPhoto,
+                'photo_url_secondary' => $secondaryPhoto,
+                'photo_url_tertiary' => $tertiaryPhoto,
+                'price_tiers' => $priceTiers,
+            ],
+        ], JSON_UNESCAPED_UNICODE);
     }
 
     public function catalogPromos(): void
@@ -2453,15 +2588,16 @@ class AdminController extends Controller
     public function serviceTelegram(): void
     {
         $pageMeta = [
-            'title' => 'Настройка сервисов · Telegram бот — админ-панель Bunch',
-            'description' => 'Храним токен бота, username и секрет для вебхука в базе данных.',
-            'h1' => 'Телеграм бот',
+            'title' => 'Настройка сервисов · Telegram и e-mail — админ-панель Bunch',
+            'description' => 'Храним токен бота и SMTP-параметры в базе данных.',
+            'h1' => 'Telegram и e-mail',
             'headerTitle' => 'Bunch Admin',
-            'headerSubtitle' => 'Сервисы · Телеграм бот',
+            'headerSubtitle' => 'Сервисы · Telegram и e-mail',
         ];
 
         $settings = new Setting();
         $defaults = $settings->getTelegramDefaults();
+        $mailDefaults = $settings->getMailDefaults();
 
         $this->render('admin-services-telegram', [
             'pageMeta' => $pageMeta,
@@ -2470,6 +2606,13 @@ class AdminController extends Controller
                 'botToken' => $settings->get(Setting::TG_BOT_TOKEN, $defaults[Setting::TG_BOT_TOKEN] ?? ''),
                 'botUsername' => $settings->get(Setting::TG_BOT_USERNAME, $defaults[Setting::TG_BOT_USERNAME] ?? ''),
                 'webhookSecret' => $settings->get(Setting::TG_WEBHOOK_SECRET, $defaults[Setting::TG_WEBHOOK_SECRET] ?? ''),
+                'smtpHost' => $settings->get(Setting::SMTP_HOST, $mailDefaults[Setting::SMTP_HOST] ?? ''),
+                'smtpPort' => $settings->get(Setting::SMTP_PORT, $mailDefaults[Setting::SMTP_PORT] ?? '587'),
+                'smtpEncryption' => $settings->get(Setting::SMTP_ENCRYPTION, $mailDefaults[Setting::SMTP_ENCRYPTION] ?? 'tls'),
+                'smtpUsername' => $settings->get(Setting::SMTP_USERNAME, $mailDefaults[Setting::SMTP_USERNAME] ?? ''),
+                'smtpPassword' => $settings->get(Setting::SMTP_PASSWORD, $mailDefaults[Setting::SMTP_PASSWORD] ?? ''),
+                'smtpFromEmail' => $settings->get(Setting::SMTP_FROM_EMAIL, $mailDefaults[Setting::SMTP_FROM_EMAIL] ?? ''),
+                'smtpFromName' => $settings->get(Setting::SMTP_FROM_NAME, $mailDefaults[Setting::SMTP_FROM_NAME] ?? ''),
             ],
         ]);
     }
@@ -2626,6 +2769,13 @@ class AdminController extends Controller
         $settings->set(Setting::TG_BOT_TOKEN, $botToken);
         $settings->set(Setting::TG_BOT_USERNAME, $botUsername);
         $settings->set(Setting::TG_WEBHOOK_SECRET, $webhookSecret);
+        $settings->set(Setting::SMTP_HOST, trim((string) ($_POST['smtp_host'] ?? '')));
+        $settings->set(Setting::SMTP_PORT, trim((string) ($_POST['smtp_port'] ?? '587')));
+        $settings->set(Setting::SMTP_ENCRYPTION, trim((string) ($_POST['smtp_encryption'] ?? 'tls')));
+        $settings->set(Setting::SMTP_USERNAME, trim((string) ($_POST['smtp_username'] ?? '')));
+        $settings->set(Setting::SMTP_PASSWORD, trim((string) ($_POST['smtp_password'] ?? '')));
+        $settings->set(Setting::SMTP_FROM_EMAIL, trim((string) ($_POST['smtp_from_email'] ?? '')));
+        $settings->set(Setting::SMTP_FROM_NAME, trim((string) ($_POST['smtp_from_name'] ?? 'Bunch flowers')));
 
         header('Location: /admin-services-telegram?status=saved');
         exit;

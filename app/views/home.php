@@ -2,6 +2,7 @@
 /** @var array $products */
 /** @var array $pageMeta */
 /** @var bool $isWholesaleUser */
+/** @var bool $canModerateCatalog */
 ?>
 
 <div class="space-y-0 sm:space-y-8">
@@ -78,6 +79,7 @@
                     $displayName = $alternateName !== ''
                         ? $alternateName
                         : ($titleParts ? implode(' ', $titleParts) : $product['name']);
+                    $productIsActive = (int) ($product['is_active'] ?? 1) === 1;
                     ?>
                     <article
                         id="<?php echo $cardId; ?>"
@@ -98,20 +100,38 @@
                         class="snap-center shrink-0 w-[82%] max-w-xl rounded-3xl border border-slate-200 bg-white shadow-xl shadow-slate-200/70 transition md:w-[360px] lg:w-[340px] xl:w-[320px]"
                     >
                         <div class="relative">
+                            <?php if (!empty($canModerateCatalog)): ?>
+                                <div class="absolute right-3 top-3 z-10 flex items-center gap-2">
+                                    <button type="button" class="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white/90 text-slate-700 shadow-sm transition hover:border-rose-200 hover:text-rose-600" data-product-edit-open aria-label="Редактировать товар">
+                                        <span class="material-symbols-rounded text-base">edit</span>
+                                    </button>
+                                    <form action="/admin-product-toggle" method="post">
+                                        <input type="hidden" name="product_id" value="<?php echo (int) $product['id']; ?>">
+                                        <label class="relative inline-flex h-8 w-14 cursor-pointer items-center" aria-label="Активность товара">
+                                            <input type="checkbox" name="is_active" class="peer sr-only" onchange="this.form.submit()" <?php echo $productIsActive ? 'checked' : ''; ?>>
+                                            <span class="absolute inset-0 rounded-full bg-white/70 transition peer-checked:bg-emerald-500"></span>
+                                            <span class="absolute left-1 top-1 h-6 w-6 rounded-full bg-white shadow-sm transition peer-checked:translate-x-6 peer-checked:shadow-md"></span>
+                                        </label>
+                                    </form>
+                                </div>
+                            <?php endif; ?>
                             <?php if (!empty($product['photo_url'])): ?>
                                 <button type="button" class="block w-full" data-product-modal-trigger>
                                     <img
                                         src="<?php echo htmlspecialchars($product['photo_url'], ENT_QUOTES, 'UTF-8'); ?>"
                                         alt="<?php echo htmlspecialchars($product['name'], ENT_QUOTES, 'UTF-8'); ?>"
-                                        class="aspect-square w-full rounded-t-3xl object-cover"
+                                        class="aspect-square w-full rounded-t-3xl object-cover <?php echo !$productIsActive ? 'blur-sm grayscale' : ''; ?>"
                                     >
                                 </button>
                             <?php else: ?>
                                 <button type="button" class="flex w-full items-center justify-center" data-product-modal-trigger>
-                                    <div class="flex aspect-square w-full items-center justify-center rounded-t-3xl bg-slate-100 text-slate-400">
+                                    <div class="flex aspect-square w-full items-center justify-center rounded-t-3xl bg-slate-100 text-slate-400 <?php echo !$productIsActive ? 'blur-sm grayscale' : ''; ?>">
                                         <span class="material-symbols-rounded text-4xl">image</span>
                                     </div>
                                 </button>
+                            <?php endif; ?>
+                            <?php if (!$productIsActive): ?>
+                                <span class="pointer-events-none absolute bottom-3 left-3 rounded-full bg-slate-900/70 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white">Неактивен</span>
                             <?php endif; ?>
                         </div>
 
@@ -203,7 +223,7 @@
 
                             <div class="flex items-center justify-between gap-2 rounded-2xl bg-white px-2.5 py-1.5 shadow-sm md:hidden">
                                 <span class="text-base font-bold text-rose-600" data-actual-price>—</span>
-                                <button type="button" data-add-to-cart class="inline-flex items-center justify-center gap-2 rounded-xl bg-rose-600 px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-white shadow-md shadow-rose-200 transition hover:-translate-y-0.5 hover:bg-rose-700">
+                                <button type="button" data-add-to-cart class="inline-flex items-center justify-center gap-2 rounded-xl bg-rose-600 px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-white shadow-md shadow-rose-200 transition hover:-translate-y-0.5 hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-60" <?php echo !$productIsActive ? 'disabled' : ''; ?>>
                                     <span class="material-symbols-rounded text-base">shopping_cart</span>
                                     В корзину
                                 </button>
@@ -212,7 +232,7 @@
                             <div class="hidden flex-wrap items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-inner shadow-rose-100/60 md:flex lg:p-3">
                                 <span class="text-sm font-semibold text-slate-400 line-through" data-base-price-total>—</span>
                                 <span class="flex-1 text-center text-2xl font-bold text-rose-600 lg:text-xl" data-actual-price>—</span>
-                                <button type="button" data-add-to-cart class="inline-flex items-center justify-center gap-2 rounded-2xl bg-rose-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-rose-200 transition hover:-translate-y-0.5 hover:bg-rose-700 lg:px-3.5 lg:py-2.5 lg:text-xs">
+                                <button type="button" data-add-to-cart class="inline-flex items-center justify-center gap-2 rounded-2xl bg-rose-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-rose-200 transition hover:-translate-y-0.5 hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-60 lg:px-3.5 lg:py-2.5 lg:text-xs" <?php echo !$productIsActive ? 'disabled' : ''; ?>>
                                     <span class="material-symbols-rounded text-base">shopping_cart</span>
                                     <span class="hidden sm:inline">В корзину</span>
                                 </button>
@@ -258,6 +278,60 @@
 <div class="fixed inset-0 z-[60] hidden items-center justify-center bg-black/90 p-4" data-product-viewer>
     <img class="max-h-[90vh] max-w-[90vw] rounded-2xl object-contain shadow-2xl" src="" alt="" data-product-viewer-image>
 </div>
+
+<?php if (!empty($canModerateCatalog)): ?>
+<div class="fixed inset-0 z-[70] hidden items-center justify-center bg-slate-900/40 p-4 backdrop-blur" data-product-edit-modal>
+    <div class="w-full max-w-3xl space-y-4 rounded-3xl bg-white p-4 shadow-2xl shadow-slate-500/30 sm:p-6">
+        <div class="flex items-center justify-between">
+            <p class="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Редактирование товара</p>
+            <button type="button" class="rounded-full border border-slate-200 bg-white p-2 text-slate-500 transition hover:border-rose-200 hover:text-rose-600" data-product-edit-cancel>
+                <span class="material-symbols-rounded text-base">close</span>
+            </button>
+        </div>
+        <form class="space-y-4" data-product-edit-form>
+            <input type="hidden" name="product_id" value="">
+            <div class="grid grid-cols-3 gap-2">
+                <?php for ($i = 0; $i < 3; $i++): ?>
+                    <button type="button" class="relative overflow-hidden rounded-2xl border border-slate-100 bg-slate-50" data-edit-photo-trigger data-photo-index="<?php echo $i; ?>">
+                        <img class="aspect-square w-full object-cover" src="/assets/images/products/bouquet.svg" alt="">
+                        <span class="pointer-events-none absolute inset-0 flex items-center justify-center bg-slate-900/15 text-white">
+                            <span class="material-symbols-rounded text-2xl">photo_camera</span>
+                        </span>
+                    </button>
+                <?php endfor; ?>
+                <input type="file" name="photo_primary" accept="image/*" class="hidden" data-edit-photo-input data-photo-index="0">
+                <input type="file" name="photo_secondary" accept="image/*" class="hidden" data-edit-photo-input data-photo-index="1">
+                <input type="file" name="photo_tertiary" accept="image/*" class="hidden" data-edit-photo-input data-photo-index="2">
+            </div>
+            <div class="grid gap-3 sm:grid-cols-2">
+                <label class="flex flex-col gap-1 text-sm font-medium text-slate-700">
+                    Название
+                    <input type="text" name="name" class="rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-900" required>
+                </label>
+                <label class="flex flex-col gap-1 text-sm font-medium text-slate-700">
+                    Основная цена, ₽
+                    <input type="number" name="base_price" min="0" step="1" class="rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-900" required>
+                </label>
+            </div>
+            <label class="flex flex-col gap-1 text-sm font-medium text-slate-700">
+                Описание
+                <textarea name="description" rows="3" class="rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-900"></textarea>
+            </label>
+            <div class="space-y-2 rounded-2xl border border-slate-100 bg-slate-50 p-3">
+                <div class="flex items-center justify-between">
+                    <p class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">Цена от количества</p>
+                    <button type="button" class="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700" data-price-tier-add>+ Добавить</button>
+                </div>
+                <div class="space-y-2" data-price-tiers></div>
+            </div>
+            <div class="flex items-center justify-end gap-2 border-t border-slate-100 pt-4">
+                <button type="button" class="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700" data-product-edit-cancel>Отмена</button>
+                <button type="submit" class="rounded-xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white shadow-md shadow-rose-200">Сохранить</button>
+            </div>
+        </form>
+    </div>
+</div>
+<?php endif; ?>
 
 <style>
     .range-slider::-webkit-slider-thumb {
@@ -647,4 +721,118 @@
             shiftViewer(delta < 0 ? 1 : -1);
         }
     });
+
+    <?php if (!empty($canModerateCatalog)): ?>
+    const editModal = document.querySelector('[data-product-edit-modal]');
+    const editForm = editModal?.querySelector('[data-product-edit-form]');
+    const editTierWrap = editModal?.querySelector('[data-price-tiers]');
+    const editPhotoButtons = editModal ? Array.from(editModal.querySelectorAll('[data-edit-photo-trigger]')) : [];
+    const editPhotoInputs = editModal ? Array.from(editModal.querySelectorAll('[data-edit-photo-input]')) : [];
+
+    const createTierRow = (tier = { min_qty: 2, price: 0 }) => {
+        const row = document.createElement('div');
+        row.className = 'grid grid-cols-[1fr_1fr_auto] items-center gap-2';
+        row.innerHTML = `
+            <input type="number" min="2" step="1" value="${Number(tier.min_qty || 2)}" class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm" data-tier-min placeholder="От количества">
+            <input type="number" min="0" step="1" value="${Number(tier.price || 0)}" class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm" data-tier-price placeholder="Цена, ₽">
+            <button type="button" class="rounded-lg border border-slate-200 bg-white px-2 py-2 text-slate-500" data-tier-remove>
+                <span class="material-symbols-rounded text-base">delete</span>
+            </button>
+        `;
+        row.querySelector('[data-tier-remove]')?.addEventListener('click', () => row.remove());
+        return row;
+    };
+
+    const closeEditModal = () => {
+        if (!editModal) return;
+        editModal.classList.add('hidden');
+        editModal.classList.remove('flex');
+        document.body.style.overflow = '';
+    };
+
+    const openEditModal = async (card) => {
+        if (!editModal || !editForm || !card) return;
+        const productId = Number(card.dataset.productId || 0);
+        if (!productId) return;
+        const response = await fetch(`/admin-product-quick-data?product_id=${productId}`, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+        const payload = await response.json();
+        if (!response.ok || !payload?.ok || !payload.product) {
+            alert(payload?.error || 'Не удалось загрузить карточку товара');
+            return;
+        }
+        const product = payload.product;
+        editForm.elements.product_id.value = String(product.id || productId);
+        editForm.elements.name.value = product.name || '';
+        editForm.elements.description.value = product.description || '';
+        editForm.elements.base_price.value = String(Number(product.base_price || 0));
+        const photos = [product.photo_url, product.photo_url_secondary, product.photo_url_tertiary];
+        editPhotoButtons.forEach((button, index) => {
+            const img = button.querySelector('img');
+            if (img) img.src = photos[index] || '/assets/images/products/bouquet.svg';
+        });
+        if (editTierWrap) {
+            editTierWrap.innerHTML = '';
+            const tiers = Array.isArray(product.price_tiers) ? product.price_tiers : [];
+            (tiers.length ? tiers : [{ min_qty: 2, price: Number(product.base_price || 0) }]).forEach((tier) => {
+                editTierWrap.appendChild(createTierRow(tier));
+            });
+        }
+        editModal.classList.remove('hidden');
+        editModal.classList.add('flex');
+        document.body.style.overflow = 'hidden';
+    };
+
+    editModal?.querySelectorAll('[data-product-edit-cancel]').forEach((button) => {
+        button.addEventListener('click', closeEditModal);
+    });
+    editModal?.addEventListener('click', (event) => {
+        if (event.target === editModal) closeEditModal();
+    });
+    editModal?.querySelector('[data-price-tier-add]')?.addEventListener('click', () => {
+        editTierWrap?.appendChild(createTierRow());
+    });
+    editPhotoButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+            const index = Number(button.dataset.photoIndex || 0);
+            editPhotoInputs.find((input) => Number(input.dataset.photoIndex || 0) === index)?.click();
+        });
+    });
+    editPhotoInputs.forEach((input) => {
+        input.addEventListener('change', () => {
+            const file = input.files?.[0];
+            if (!file) return;
+            const index = Number(input.dataset.photoIndex || 0);
+            const button = editPhotoButtons.find((item) => Number(item.dataset.photoIndex || 0) === index);
+            const img = button?.querySelector('img');
+            if (img) img.src = URL.createObjectURL(file);
+        });
+    });
+    document.querySelectorAll('[data-product-edit-open]').forEach((button) => {
+        button.addEventListener('click', async () => {
+            const card = button.closest('[data-product-card]');
+            await openEditModal(card);
+        });
+    });
+    editForm?.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const formData = new FormData(editForm);
+        const tiers = Array.from(editTierWrap?.querySelectorAll('div') || []).map((row) => ({
+            min_qty: Number(row.querySelector('[data-tier-min]')?.value || 0),
+            price: Number(row.querySelector('[data-tier-price]')?.value || 0),
+        })).filter((tier) => tier.min_qty >= 2);
+        formData.set('price_tiers', JSON.stringify(tiers));
+
+        const response = await fetch('/admin-product-quick-save', {
+            method: 'POST',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            body: formData,
+        });
+        const payload = await response.json();
+        if (!response.ok || !payload?.ok || !payload.product) {
+            alert(payload?.error || 'Не удалось сохранить товар');
+            return;
+        }
+        window.location.reload();
+    });
+    <?php endif; ?>
 </script>
