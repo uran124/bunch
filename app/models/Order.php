@@ -308,6 +308,9 @@ class Order extends Model
         $scheduledDate = $this->normalizeDate($data['scheduled_date'] ?? null);
         $scheduledTime = $this->normalizeTime($data['scheduled_time'] ?? null);
 
+        $orderBefore = $this->findById($orderId);
+        $previousStatus = (string) ($orderBefore['status'] ?? '');
+
         $stmt = $this->db->prepare(
             'UPDATE orders SET status = :status, delivery_type = :delivery_type, scheduled_date = :scheduled_date, scheduled_time = :scheduled_time, address_text = :address_text, recipient_name = :recipient_name, recipient_phone = :recipient_phone, comment = :comment, updated_at = NOW() WHERE id = :id'
         );
@@ -323,14 +326,124 @@ class Order extends Model
             'recipient_phone' => $this->emptyToNull($data['recipient_phone'] ?? null),
             'comment' => $this->emptyToNull($data['comment'] ?? null),
         ]);
+
+        if (!$orderBefore) {
+            return;
+        }
+
+        if ($previousStatus !== 'delivered' && $status === 'delivered') {
+            $this->awardCashbackForDeliveredOrder($orderId, (int) ($orderBefore['user_id'] ?? 0));
+        }
+
+        if ($previousStatus === 'delivered' && $status !== 'delivered') {
+            $this->rollbackCashbackForOrder($orderId);
+        }
     }
 
     public function deleteAdminOrder(int $orderId): bool
     {
+        $this->rollbackCashbackForOrder($orderId);
+
         $stmt = $this->db->prepare('DELETE FROM orders WHERE id = :id');
         $stmt->execute(['id' => $orderId]);
 
         return $stmt->rowCount() > 0;
+    }
+
+    private function awardCashbackForDeliveredOrder(int $orderId, int $userId): void
+    {
+        if ($orderId <= 0 || $userId <= 0) {
+            return;
+        }
+
+        $transactionModel = new CashbackTransaction();
+        if ($transactionModel->hasEarnForOrder($orderId)) {
+            return;
+        }
+
+        $earned = $this->calculateOrderCashback($orderId);
+        if ($earned <= 0) {
+            return;
+        }
+
+        $this->db->beginTransaction();
+        try {
+            $updateStmt = $this->db->prepare(
+                'UPDATE users SET tulip_balance = tulip_balance + :earned, updated_at = NOW() WHERE id = :id'
+            );
+            $updateStmt->execute([
+                'earned' => $earned,
+                'id' => $userId,
+            ]);
+
+            $transactionModel->add(
+                $userId,
+                $orderId,
+                'earn',
+                $earned,
+                'Спасибо за заказ! Начислены Лепесточки.'
+            );
+
+            $this->db->commit();
+        } catch (Throwable $e) {
+            $this->db->rollBack();
+            throw $e;
+        }
+
+        $this->notifyCashbackAccrued($orderId, $userId, $earned);
+    }
+
+    private function rollbackCashbackForOrder(int $orderId): void
+    {
+        if ($orderId <= 0) {
+            return;
+        }
+        $transactionModel = new CashbackTransaction();
+        $transactionModel->rollbackOrderEarn($orderId);
+    }
+
+    private function calculateOrderCashback(int $orderId): int
+    {
+        $levelStmt = $this->db->query(
+            'SELECT percent_single, percent_pack, percent_box, percent_promo FROM cashback_levels ORDER BY sort_order ASC, id ASC LIMIT 1'
+        );
+        $level = $levelStmt->fetch() ?: [];
+
+        $itemStmt = $this->db->prepare(
+            'SELECT oi.qty, oi.price, p.product_type, p.allow_tulip_earn
+             FROM order_items oi
+             LEFT JOIN products p ON p.id = oi.product_id
+             WHERE oi.order_id = :order_id'
+        );
+        $itemStmt->execute(['order_id' => $orderId]);
+        $rows = $itemStmt->fetchAll();
+
+        $earned = 0;
+        foreach ($rows as $row) {
+            if ((int) ($row['allow_tulip_earn'] ?? 1) !== 1) {
+                continue;
+            }
+            $qty = max(0, (int) ($row['qty'] ?? 0));
+            $price = max(0, (int) floor((float) ($row['price'] ?? 0)));
+            $lineTotal = $qty * $price;
+            if ($lineTotal <= 0) {
+                continue;
+            }
+
+            $percent = match ((string) ($row['product_type'] ?? 'regular')) {
+                'small_wholesale' => (float) ($level['percent_pack'] ?? 0),
+                'wholesale_box' => (float) ($level['percent_box'] ?? 0),
+                'promo' => (float) ($level['percent_promo'] ?? 0),
+                default => (float) ($level['percent_single'] ?? 0),
+            };
+
+            if ($percent <= 0) {
+                continue;
+            }
+            $earned += (int) floor($lineTotal * $percent / 100);
+        }
+
+        return $earned;
     }
 
     private function getItems(int $orderId): array
@@ -365,6 +478,7 @@ class Order extends Model
         $recipientName = trim((string) ($payload['recipient_name'] ?? ''));
         $recipientPhone = trim((string) ($payload['recipient_phone'] ?? ''));
         $comment = trim((string) ($payload['comment'] ?? ''));
+        $requestedTulipSpend = max(0, (int) floor((float) ($payload['tulip_spend'] ?? 0)));
 
         $totalAmount = 0;
         foreach ($cartItems as $item) {
@@ -375,10 +489,18 @@ class Order extends Model
             $totalAmount += $deliveryPrice;
         }
 
-
         $this->db->beginTransaction();
 
         try {
+            [$appliedTulipSpend] = $this->applyCashbackForOrderDraft(
+                $userId,
+                $cartItems,
+                $requestedTulipSpend
+            );
+            if ($appliedTulipSpend > 0) {
+                $totalAmount = max(0, $totalAmount - $appliedTulipSpend);
+            }
+
             $orderStmt = $this->db->prepare(
                 'INSERT INTO orders (user_id, address_id, total_amount, status, delivery_type, delivery_price, zone_id, delivery_pricing_version, scheduled_date, scheduled_time, address_text, recipient_name, recipient_phone, comment) VALUES (:user_id, :address_id, :total_amount, :status, :delivery_type, :delivery_price, :zone_id, :delivery_pricing_version, :scheduled_date, :scheduled_time, :address_text, :recipient_name, :recipient_phone, :comment)'            );
 
@@ -468,6 +590,74 @@ class Order extends Model
             $this->db->rollBack();
             throw $e;
         }
+    }
+
+    private function applyCashbackForOrderDraft(int $userId, array $cartItems, int $requestedTulipSpend): array
+    {
+        if ($userId <= 0) {
+            return [0, 0];
+        }
+
+        $productIds = [];
+        foreach ($cartItems as $item) {
+            $id = (int) ($item['product_id'] ?? 0);
+            if ($id > 0) {
+                $productIds[$id] = $id;
+            }
+        }
+
+        if ($productIds === []) {
+            return [0, 0];
+        }
+
+        $placeholders = implode(',', array_fill(0, count($productIds), '?'));
+        $productStmt = $this->db->prepare(
+            "SELECT id, product_type, allow_tulip_spend, allow_tulip_earn FROM products WHERE id IN ($placeholders)"
+        );
+        $productStmt->execute(array_values($productIds));
+        $rows = $productStmt->fetchAll();
+
+        $productMeta = [];
+        foreach ($rows as $row) {
+            $productMeta[(int) $row['id']] = [
+                'product_type' => (string) ($row['product_type'] ?? 'regular'),
+                'allow_spend' => (int) ($row['allow_tulip_spend'] ?? 1) === 1,
+                'allow_earn' => (int) ($row['allow_tulip_earn'] ?? 1) === 1,
+            ];
+        }
+
+        $eligibleSpendTotal = 0;
+        foreach ($cartItems as $item) {
+            $productId = (int) ($item['product_id'] ?? 0);
+            $lineTotal = (int) floor((float) ($item['line_total'] ?? 0));
+            $meta = $productMeta[$productId] ?? null;
+            if (!$meta || !$meta['allow_spend']) {
+                continue;
+            }
+            $eligibleSpendTotal += max(0, $lineTotal);
+        }
+
+        $userStmt = $this->db->prepare('SELECT tulip_balance FROM users WHERE id = :id FOR UPDATE');
+        $userStmt->execute(['id' => $userId]);
+        $userBalance = (int) $userStmt->fetchColumn();
+
+        $appliedSpend = min($requestedTulipSpend, $userBalance, $eligibleSpendTotal);
+        if ($appliedSpend > 0) {
+            $spendStmt = $this->db->prepare(
+                'UPDATE users SET tulip_balance = GREATEST(tulip_balance - :spend, 0), updated_at = NOW() WHERE id = :id'
+            );
+            $spendStmt->execute([
+                'id' => $userId,
+                'spend' => $appliedSpend,
+            ]);
+        }
+
+        if ($appliedSpend > 0) {
+            $txModel = new CashbackTransaction();
+            $txModel->add($userId, null, 'spend', $appliedSpend, 'Списание Лепесточков при оформлении заказа');
+        }
+
+        return [$appliedSpend, 0];
     }
 
     private function normalizeDate(?string $value): ?string
@@ -769,6 +959,46 @@ class Order extends Model
         }
 
         $this->sendTelegramMessage($chatId, $message);
+    }
+
+    private function notifyCashbackAccrued(int $orderId, int $userId, int $amount): void
+    {
+        if ($amount <= 0) {
+            return;
+        }
+
+        $number = $this->formatOrderNumber($orderId);
+        $message = sprintf(
+            "Спасибо за заказ %s! Вам начислены Лепесточки: %d.\nИми можно воспользоваться в следующем заказе 💐",
+            $number,
+            $amount
+        );
+
+        $chatId = $this->getUserTelegramChatId($userId);
+        if ($chatId) {
+            $this->sendTelegramMessage($chatId, $message);
+        }
+
+        $this->sendCashbackEmail($userId, $message);
+    }
+
+    private function sendCashbackEmail(int $userId, string $message): void
+    {
+        $stmt = $this->db->prepare('SELECT email FROM users WHERE id = :id LIMIT 1');
+        $stmt->execute(['id' => $userId]);
+        $email = trim((string) $stmt->fetchColumn());
+        if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return;
+        }
+
+        $subject = 'Спасибо за заказ — начислен кешбек';
+        $headers = [
+            'MIME-Version: 1.0',
+            'Content-Type: text/plain; charset=UTF-8',
+            'From: Bunch flowers <no-reply@bunch.local>',
+        ];
+
+        @mail($email, '=?UTF-8?B?' . base64_encode($subject) . '?=', $message, implode("\r\n", $headers));
     }
 
     private function emptyToNull(?string $value): ?string

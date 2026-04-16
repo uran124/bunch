@@ -8,7 +8,7 @@
         <div class="space-y-2">
             <p class="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">Кешбек</p>
             <h1 class="text-3xl font-semibold text-slate-900"><?php echo htmlspecialchars($pageMeta['h1'] ?? 'Кешбек', ENT_QUOTES, 'UTF-8'); ?></h1>
-            <p class="text-sm text-slate-500">Тюльпанчики, уровни начисления и правила списания по товарам.</p>
+            <p class="text-sm text-slate-500">Лепесточки, уровни начисления и правила списания по товарам.</p>
         </div>
         <div class="flex flex-wrap items-center gap-3">
             <a
@@ -142,7 +142,7 @@
                         <div class="flex flex-wrap items-center gap-4">
                             <label class="flex items-center gap-2 text-xs font-semibold text-slate-600">
                                 <span>Тратить</span>
-                                <span class="relative inline-flex h-7 w-12 cursor-pointer items-center" aria-label="Можно тратить тюльпанчики">
+                                <span class="relative inline-flex h-7 w-12 cursor-pointer items-center" aria-label="Можно тратить Лепесточки">
                                     <input
                                         type="checkbox"
                                         class="peer sr-only"
@@ -157,7 +157,7 @@
                             </label>
                             <label class="flex items-center gap-2 text-xs font-semibold text-slate-600">
                                 <span>Зарабатывать</span>
-                                <span class="relative inline-flex h-7 w-12 cursor-pointer items-center" aria-label="Начислять тюльпанчики">
+                                <span class="relative inline-flex h-7 w-12 cursor-pointer items-center" aria-label="Начислять Лепесточки">
                                     <input
                                         type="checkbox"
                                         class="peer sr-only"
@@ -180,7 +180,7 @@
     <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
         <div class="mb-4">
             <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Акционные товары</p>
-            <h2 class="text-lg font-semibold text-slate-900">Правила тюльпанчиков в акциях</h2>
+            <h2 class="text-lg font-semibold text-slate-900">Правила Лепесточков в акциях</h2>
         </div>
         <div class="space-y-3">
             <?php if (empty($promoItems)): ?>
@@ -195,7 +195,7 @@
                         <div class="flex flex-wrap items-center gap-4">
                             <label class="flex items-center gap-2 text-xs font-semibold text-slate-600">
                                 <span>Тратить</span>
-                                <span class="relative inline-flex h-7 w-12 cursor-pointer items-center" aria-label="Можно тратить тюльпанчики">
+                                <span class="relative inline-flex h-7 w-12 cursor-pointer items-center" aria-label="Можно тратить Лепесточки">
                                     <input
                                         type="checkbox"
                                         class="peer sr-only"
@@ -210,7 +210,7 @@
                             </label>
                             <label class="flex items-center gap-2 text-xs font-semibold text-slate-600">
                                 <span>Зарабатывать</span>
-                                <span class="relative inline-flex h-7 w-12 cursor-pointer items-center" aria-label="Начислять тюльпанчики">
+                                <span class="relative inline-flex h-7 w-12 cursor-pointer items-center" aria-label="Начислять Лепесточки">
                                     <input
                                         type="checkbox"
                                         class="peer sr-only"

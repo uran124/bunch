@@ -407,7 +407,7 @@ $primaryPaymentLabel = $onlinePaymentEnabled ? 'Оплата онлайн' : 'П
                         <div class="flex items-center justify-between" data-tulip-balance="<?php echo $tulipBalance; ?>">
                             <span class="inline-flex items-center gap-2">
                                 <img class="h-4 w-4" src="/assets/images/tulip.svg" alt="">
-                                Автосписание тюльпанчиков
+                                Автосписание Лепесточков
                             </span>
                             <span data-tulip-deduction data-amount="<?php echo $autoTulipSpend; ?>">
                                 <?php echo $autoTulipSpend > 0 ? '-' . number_format($autoTulipSpend, 0, '.', ' ') . ' ₽' : '0 ₽'; ?>
