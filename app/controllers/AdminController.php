@@ -1043,6 +1043,138 @@ class AdminController extends Controller
         header('Location: ' . $redirectTo);
     }
 
+    public function quickProductData(): void
+    {
+        header('Content-Type: application/json; charset=utf-8');
+
+        $productId = (int) ($_GET['product_id'] ?? 0);
+        if ($productId <= 0) {
+            http_response_code(422);
+            echo json_encode(['ok' => false, 'error' => 'Некорректный товар'], JSON_UNESCAPED_UNICODE);
+            return;
+        }
+
+        $productModel = new Product();
+        $product = $productModel->getById($productId);
+        if (!$product) {
+            http_response_code(404);
+            echo json_encode(['ok' => false, 'error' => 'Товар не найден'], JSON_UNESCAPED_UNICODE);
+            return;
+        }
+
+        echo json_encode([
+            'ok' => true,
+            'product' => [
+                'id' => (int) $product['id'],
+                'name' => (string) ($product['name'] ?? ''),
+                'description' => (string) ($product['description'] ?? ''),
+                'base_price' => (int) floor((float) ($product['price'] ?? 0)),
+                'photo_url' => (string) ($product['photo_url'] ?? ''),
+                'photo_url_secondary' => (string) ($product['photo_url_secondary'] ?? ''),
+                'photo_url_tertiary' => (string) ($product['photo_url_tertiary'] ?? ''),
+                'price_tiers' => $productModel->getPriceTiers($productId),
+            ],
+        ], JSON_UNESCAPED_UNICODE);
+    }
+
+    public function quickUpdateProduct(): void
+    {
+        header('Content-Type: application/json; charset=utf-8');
+
+        $productId = (int) ($_POST['product_id'] ?? 0);
+        if ($productId <= 0) {
+            http_response_code(422);
+            echo json_encode(['ok' => false, 'error' => 'Некорректный товар'], JSON_UNESCAPED_UNICODE);
+            return;
+        }
+
+        $productModel = new Product();
+        $existing = $productModel->getById($productId);
+        if (!$existing) {
+            http_response_code(404);
+            echo json_encode(['ok' => false, 'error' => 'Товар не найден'], JSON_UNESCAPED_UNICODE);
+            return;
+        }
+
+        $name = trim((string) ($_POST['name'] ?? ''));
+        if ($name === '') {
+            http_response_code(422);
+            echo json_encode(['ok' => false, 'error' => 'Название обязательно'], JSON_UNESCAPED_UNICODE);
+            return;
+        }
+
+        $description = trim((string) ($_POST['description'] ?? ''));
+        $basePrice = max(0, (int) floor((float) ($_POST['base_price'] ?? 0)));
+        $priceTiersRaw = (string) ($_POST['price_tiers'] ?? '[]');
+        $priceTiersDecoded = json_decode($priceTiersRaw, true);
+        $priceTiers = [];
+        $minQtyMap = [];
+
+        if (is_array($priceTiersDecoded)) {
+            foreach ($priceTiersDecoded as $tier) {
+                if (!is_array($tier)) {
+                    continue;
+                }
+                $minQty = max(2, (int) ($tier['min_qty'] ?? 0));
+                $tierPrice = max(0, (int) floor((float) ($tier['price'] ?? 0)));
+                if ($minQty < 2 || isset($minQtyMap[$minQty])) {
+                    continue;
+                }
+                $minQtyMap[$minQty] = true;
+                $priceTiers[] = [
+                    'min_qty' => $minQty,
+                    'price' => $tierPrice,
+                ];
+            }
+        }
+
+        usort($priceTiers, static function (array $left, array $right): int {
+            return $left['min_qty'] <=> $right['min_qty'];
+        });
+
+        $primaryPhoto = $existing['photo_url'] ?? '';
+        $secondaryPhoto = $existing['photo_url_secondary'] ?? null;
+        $tertiaryPhoto = $existing['photo_url_tertiary'] ?? null;
+
+        $uploadedPrimary = $this->handlePhotoUpload('photo_primary', 'product-quick-primary');
+        $uploadedSecondary = $this->handlePhotoUpload('photo_secondary', 'product-quick-secondary');
+        $uploadedTertiary = $this->handlePhotoUpload('photo_tertiary', 'product-quick-tertiary');
+
+        if ($uploadedPrimary) {
+            $primaryPhoto = $uploadedPrimary;
+        }
+        if ($uploadedSecondary) {
+            $secondaryPhoto = $uploadedSecondary;
+        }
+        if ($uploadedTertiary) {
+            $tertiaryPhoto = $uploadedTertiary;
+        }
+
+        $productModel->updateQuickEditable($productId, [
+            'name' => $name,
+            'description' => $description,
+            'price' => $basePrice,
+            'photo_url' => $primaryPhoto,
+            'photo_url_secondary' => $secondaryPhoto,
+            'photo_url_tertiary' => $tertiaryPhoto,
+        ]);
+        $productModel->setPriceTiers($productId, $priceTiers);
+
+        echo json_encode([
+            'ok' => true,
+            'product' => [
+                'id' => $productId,
+                'name' => $name,
+                'description' => $description,
+                'base_price' => $basePrice,
+                'photo_url' => $primaryPhoto,
+                'photo_url_secondary' => $secondaryPhoto,
+                'photo_url_tertiary' => $tertiaryPhoto,
+                'price_tiers' => $priceTiers,
+            ],
+        ], JSON_UNESCAPED_UNICODE);
+    }
+
     public function catalogPromos(): void
     {
         $pageMeta = [
