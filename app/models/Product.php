@@ -271,6 +271,30 @@ class Product extends Model
         ]);
     }
 
+    public function updateQuickEditable(int $id, array $payload): void
+    {
+        $stmt = $this->db->prepare(
+            "UPDATE {$this->table}
+            SET name = :name,
+                description = :description,
+                price = :price,
+                photo_url = :photo_url,
+                photo_url_secondary = :photo_url_secondary,
+                photo_url_tertiary = :photo_url_tertiary
+            WHERE id = :id"
+        );
+
+        $stmt->execute([
+            'id' => $id,
+            'name' => $payload['name'],
+            'description' => $payload['description'],
+            'price' => $payload['price'],
+            'photo_url' => $payload['photo_url'],
+            'photo_url_secondary' => $payload['photo_url_secondary'],
+            'photo_url_tertiary' => $payload['photo_url_tertiary'],
+        ]);
+    }
+
     public function markDeleted(int $id): void
     {
         $stmt = $this->db->prepare("UPDATE {$this->table} SET status = 'deleted', is_active = 0 WHERE id = :id");
