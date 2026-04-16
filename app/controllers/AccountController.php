@@ -40,6 +40,17 @@ class AccountController extends Controller
             'telegram_chat_id' => $userRow['telegram_chat_id'] ?? null,
             'telegram_username' => $userRow['telegram_username'] ?? null,
         ];
+        $cashbackTransactionsRaw = (new CashbackTransaction())->getEarnedForUser((int) $userId);
+        $cashbackTransactions = array_map(function (array $row): array {
+            $createdAt = $this->formatDateTime($row['created_at'] ?? null);
+            return [
+                'id' => (int) ($row['id'] ?? 0),
+                'order_id' => (int) ($row['order_id'] ?? 0),
+                'amount' => (int) ($row['amount'] ?? 0),
+                'description' => (string) ($row['description'] ?? ''),
+                'created_at' => $createdAt ?: '—',
+            ];
+        }, $cashbackTransactionsRaw);
 
         $addresses = $this->addressModel->getByUserId($userId);
         $deliveryZoneModel = new DeliveryZone();
@@ -139,8 +150,38 @@ class AccountController extends Controller
             'auctionParticipationHistory',
             'lotteryParticipationActive',
             'lotteryParticipationHistory',
-            'telegramBotUsername'
+            'cashbackTransactions'
         ));
+    }
+
+    public function deleteCashbackAccrual(): void
+    {
+        if (!Auth::check()) {
+            header('Location: /login');
+            return;
+        }
+
+        $userId = (int) Auth::userId();
+        $transactionId = (int) ($_POST['transaction_id'] ?? 0);
+
+        if ($transactionId <= 0) {
+            header('Location: /account?cashback=error');
+            return;
+        }
+
+        try {
+            $deleted = (new CashbackTransaction())->deleteEarnForUser($userId, $transactionId);
+            header('Location: /account?cashback=' . ($deleted ? 'deleted' : 'error'));
+            return;
+        } catch (Throwable $e) {
+            $this->logger->logEvent('ACCOUNT_CASHBACK_DELETE_ERROR', [
+                'user_id' => $userId,
+                'transaction_id' => $transactionId,
+                'error' => $e->getMessage(),
+            ]);
+            header('Location: /account?cashback=error');
+            return;
+        }
     }
 
     public function updateNotifications(): void

@@ -42,7 +42,7 @@ class AdminController extends Controller
                 'items' => [
                     [
                         'label' => 'Кешбек',
-                        'description' => 'Уровни тюльпанчиков и правила начисления',
+                        'description' => 'Уровни Лепесточков и правила начисления',
                         'href' => '/admin-cashback',
                     ],
                 ],
@@ -212,10 +212,10 @@ class AdminController extends Controller
     {
         $pageMeta = [
             'title' => 'Кешбек — админ-панель Bunch',
-            'description' => 'Настройка уровней кешбека и правил начисления тюльпанчиков.',
+            'description' => 'Настройка уровней кешбека и правил начисления Лепесточков.',
             'h1' => 'Кешбек',
             'headerTitle' => 'Bunch Admin',
-            'headerSubtitle' => 'Тюльпанчики и правила',
+            'headerSubtitle' => 'Лепесточки и правила',
         ];
 
         $cashbackLevelModel = new CashbackLevel();

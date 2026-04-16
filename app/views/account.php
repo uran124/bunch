@@ -46,7 +46,7 @@
                                 </span>
                                 <span class="inline-flex items-center gap-2 rounded-xl bg-rose-50 px-3 py-2 text-rose-700">
                                     <img class="h-4 w-4" src="/assets/images/tulip.svg" alt="">
-                                    <span>Тюльпанчики: <?php echo (int) ($user['tulip_balance'] ?? 0); ?></span>
+                                    <span>Лепесточки: <?php echo (int) ($user['tulip_balance'] ?? 0); ?></span>
                                 </span>
                             </div>
                             <p class="hidden text-xs font-semibold text-emerald-700" data-account-name-status>Имя обновлено.</p>
@@ -85,6 +85,47 @@
                         <span class="material-symbols-rounded text-base">send</span>
                         Открыть бота
                     </a>
+                </div>
+            </div>
+
+            <div class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+                <div class="flex items-center justify-between gap-3">
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-[0.06em] text-slate-500">Кешбек</p>
+                        <h3 class="text-base font-semibold text-slate-900 sm:text-lg">Начисленные Лепесточки</h3>
+                    </div>
+                </div>
+                <?php $cashbackResult = $_GET['cashback'] ?? null; ?>
+                <?php if ($cashbackResult === 'deleted'): ?>
+                    <p class="mt-3 rounded-xl bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700">Начисление удалено.</p>
+                <?php elseif ($cashbackResult === 'error'): ?>
+                    <p class="mt-3 rounded-xl bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700">Не удалось удалить начисление (возможно, часть уже потрачена).</p>
+                <?php endif; ?>
+
+                <div class="mt-4 space-y-2">
+                    <?php if (empty($cashbackTransactions ?? [])): ?>
+                        <p class="text-sm text-slate-500">Пока нет начислений кешбека.</p>
+                    <?php else: ?>
+                        <?php foreach (($cashbackTransactions ?? []) as $tx): ?>
+                            <div class="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2.5">
+                                <div class="space-y-0.5 text-xs sm:text-sm">
+                                    <p class="font-semibold text-slate-900">
+                                        +<?php echo (int) ($tx['amount'] ?? 0); ?> Лепесточков
+                                        <?php if (!empty($tx['order_id'])): ?>
+                                            · заказ #<?php echo (int) $tx['order_id']; ?>
+                                        <?php endif; ?>
+                                    </p>
+                                    <p class="text-slate-500"><?php echo htmlspecialchars((string) ($tx['created_at'] ?? ''), ENT_QUOTES, 'UTF-8'); ?></p>
+                                </div>
+                                <form method="post" action="/account-cashback-delete" onsubmit="return confirm('Удалить начисление кешбека?');">
+                                    <input type="hidden" name="transaction_id" value="<?php echo (int) ($tx['id'] ?? 0); ?>">
+                                    <button type="submit" class="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white text-rose-600 shadow-sm ring-1 ring-rose-100 transition hover:bg-rose-50">
+                                        <span class="material-symbols-rounded text-base">delete</span>
+                                    </button>
+                                </form>
+                            </div>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
                 </div>
             </div>
 

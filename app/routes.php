@@ -119,6 +119,7 @@ return [
         $router->post('order-edit', [OrdersController::class, 'update'], $authOnly);
         $router->post('order-payment', [OrdersController::class, 'pay'], $authOnly);
         $router->post('account-notifications', [AccountController::class, 'updateNotifications'], $authOnly);
+        $router->post('account-cashback-delete', [AccountController::class, 'deleteCashbackAccrual'], $authOnly);
         $router->post('account-pin', [AccountController::class, 'updatePin'], $authOnly);
         $router->get('support-messages', [SupportController::class, 'listMessages']);
         $router->post('support-message', [SupportController::class, 'sendMessage']);
