@@ -121,6 +121,12 @@ class AdminController extends Controller
                         'cta' => 'Настроить',
                         'href' => '/admin-services-telegram',
                     ],
+                    [
+                        'label' => 'SMTP',
+                        'description' => 'SMTP-сервер, авторизация и адрес отправителя',
+                        'cta' => 'Настроить',
+                        'href' => '/admin-services-telegram',
+                    ],
                 ],
             ],
             [
