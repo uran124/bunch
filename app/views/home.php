@@ -2,6 +2,7 @@
 /** @var array $products */
 /** @var array $pageMeta */
 /** @var bool $isWholesaleUser */
+/** @var bool $canModerateCatalog */
 ?>
 
 <div class="space-y-0 sm:space-y-8">
@@ -78,6 +79,7 @@
                     $displayName = $alternateName !== ''
                         ? $alternateName
                         : ($titleParts ? implode(' ', $titleParts) : $product['name']);
+                    $productIsActive = (int) ($product['is_active'] ?? 1) === 1;
                     ?>
                     <article
                         id="<?php echo $cardId; ?>"
@@ -98,20 +100,33 @@
                         class="snap-center shrink-0 w-[82%] max-w-xl rounded-3xl border border-slate-200 bg-white shadow-xl shadow-slate-200/70 transition md:w-[360px] lg:w-[340px] xl:w-[320px]"
                     >
                         <div class="relative">
+                            <?php if (!empty($canModerateCatalog)): ?>
+                                <form action="/admin-product-toggle" method="post" class="absolute right-3 top-3 z-10">
+                                    <input type="hidden" name="product_id" value="<?php echo (int) $product['id']; ?>">
+                                    <label class="relative inline-flex h-8 w-14 cursor-pointer items-center" aria-label="Активность товара">
+                                        <input type="checkbox" name="is_active" class="peer sr-only" onchange="this.form.submit()" <?php echo $productIsActive ? 'checked' : ''; ?>>
+                                        <span class="absolute inset-0 rounded-full bg-white/70 transition peer-checked:bg-emerald-500"></span>
+                                        <span class="absolute left-1 top-1 h-6 w-6 rounded-full bg-white shadow-sm transition peer-checked:translate-x-6 peer-checked:shadow-md"></span>
+                                    </label>
+                                </form>
+                            <?php endif; ?>
                             <?php if (!empty($product['photo_url'])): ?>
                                 <button type="button" class="block w-full" data-product-modal-trigger>
                                     <img
                                         src="<?php echo htmlspecialchars($product['photo_url'], ENT_QUOTES, 'UTF-8'); ?>"
                                         alt="<?php echo htmlspecialchars($product['name'], ENT_QUOTES, 'UTF-8'); ?>"
-                                        class="aspect-square w-full rounded-t-3xl object-cover"
+                                        class="aspect-square w-full rounded-t-3xl object-cover <?php echo !$productIsActive ? 'blur-sm grayscale' : ''; ?>"
                                     >
                                 </button>
                             <?php else: ?>
                                 <button type="button" class="flex w-full items-center justify-center" data-product-modal-trigger>
-                                    <div class="flex aspect-square w-full items-center justify-center rounded-t-3xl bg-slate-100 text-slate-400">
+                                    <div class="flex aspect-square w-full items-center justify-center rounded-t-3xl bg-slate-100 text-slate-400 <?php echo !$productIsActive ? 'blur-sm grayscale' : ''; ?>">
                                         <span class="material-symbols-rounded text-4xl">image</span>
                                     </div>
                                 </button>
+                            <?php endif; ?>
+                            <?php if (!$productIsActive): ?>
+                                <span class="pointer-events-none absolute bottom-3 left-3 rounded-full bg-slate-900/70 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white">Неактивен</span>
                             <?php endif; ?>
                         </div>
 
@@ -203,7 +218,7 @@
 
                             <div class="flex items-center justify-between gap-2 rounded-2xl bg-white px-2.5 py-1.5 shadow-sm md:hidden">
                                 <span class="text-base font-bold text-rose-600" data-actual-price>—</span>
-                                <button type="button" data-add-to-cart class="inline-flex items-center justify-center gap-2 rounded-xl bg-rose-600 px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-white shadow-md shadow-rose-200 transition hover:-translate-y-0.5 hover:bg-rose-700">
+                                <button type="button" data-add-to-cart class="inline-flex items-center justify-center gap-2 rounded-xl bg-rose-600 px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-white shadow-md shadow-rose-200 transition hover:-translate-y-0.5 hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-60" <?php echo !$productIsActive ? 'disabled' : ''; ?>>
                                     <span class="material-symbols-rounded text-base">shopping_cart</span>
                                     В корзину
                                 </button>
@@ -212,7 +227,7 @@
                             <div class="hidden flex-wrap items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-inner shadow-rose-100/60 md:flex lg:p-3">
                                 <span class="text-sm font-semibold text-slate-400 line-through" data-base-price-total>—</span>
                                 <span class="flex-1 text-center text-2xl font-bold text-rose-600 lg:text-xl" data-actual-price>—</span>
-                                <button type="button" data-add-to-cart class="inline-flex items-center justify-center gap-2 rounded-2xl bg-rose-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-rose-200 transition hover:-translate-y-0.5 hover:bg-rose-700 lg:px-3.5 lg:py-2.5 lg:text-xs">
+                                <button type="button" data-add-to-cart class="inline-flex items-center justify-center gap-2 rounded-2xl bg-rose-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-rose-200 transition hover:-translate-y-0.5 hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-60 lg:px-3.5 lg:py-2.5 lg:text-xs" <?php echo !$productIsActive ? 'disabled' : ''; ?>>
                                     <span class="material-symbols-rounded text-base">shopping_cart</span>
                                     <span class="hidden sm:inline">В корзину</span>
                                 </button>

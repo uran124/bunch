@@ -1022,9 +1022,12 @@ class AdminController extends Controller
     public function toggleProductActive(): void
     {
         $productId = (int) ($_POST['product_id'] ?? 0);
+        $fallbackRedirect = '/admin-products';
+        $referer = isset($_SERVER['HTTP_REFERER']) ? (string) $_SERVER['HTTP_REFERER'] : '';
+        $redirectTo = $referer !== '' ? $referer : $fallbackRedirect;
 
         if ($productId <= 0) {
-            header('Location: /admin-products?status=error');
+            header('Location: ' . $fallbackRedirect . '?status=error');
             return;
         }
 
@@ -1037,7 +1040,7 @@ class AdminController extends Controller
             $this->syncSupplyCardStatus((int) $product['supply_id'], $product['product_type'] ?? 'regular', $active);
         }
 
-        header('Location: /admin-products');
+        header('Location: ' . $redirectTo);
     }
 
     public function catalogPromos(): void

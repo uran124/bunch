@@ -4,6 +4,7 @@
 /** @var array $auctionLots */
 /** @var array $lotteries */
 /** @var array $promoCategories */
+/** @var bool $canModerateCatalog */
 $hasPromos = !empty($oneTimeItems);
 $hasAuctions = !empty($auctionLots);
 $hasLotteries = !empty($lotteries);
@@ -171,17 +172,44 @@ foreach ($lotteries as $lottery) {
                     $item = $entry['data'];
                     $productId = (int) ($item['product_id'] ?? 0);
                     $endsAtIso = $item['ends_at_iso'] ?? null;
+                    $productIsActive = !empty($item['is_active']);
                     ?>
                     <article class="flex snap-center shrink-0 w-[82%] max-w-sm flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm md:w-[360px]" data-promo-item data-promo-type="promo" data-product-card data-product-id="<?php echo $productId; ?>">
                         <?php if (!empty($item['photo'])): ?>
                             <div class="relative">
-                                <img src="<?php echo htmlspecialchars($item['photo'], ENT_QUOTES, 'UTF-8'); ?>" alt="<?php echo htmlspecialchars($item['title'], ENT_QUOTES, 'UTF-8'); ?>" class="aspect-square w-full object-cover">
-                                <span class="absolute right-3 top-3 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-700 shadow">Спецпредложение</span>
+                                <?php if (!empty($canModerateCatalog) && $productId > 0): ?>
+                                    <form action="/admin-product-toggle" method="post" class="absolute right-3 top-3 z-10">
+                                        <input type="hidden" name="product_id" value="<?php echo $productId; ?>">
+                                        <label class="relative inline-flex h-8 w-14 cursor-pointer items-center" aria-label="Активность товара">
+                                            <input type="checkbox" name="is_active" class="peer sr-only" onchange="this.form.submit()" <?php echo $productIsActive ? 'checked' : ''; ?>>
+                                            <span class="absolute inset-0 rounded-full bg-white/70 transition peer-checked:bg-emerald-500"></span>
+                                            <span class="absolute left-1 top-1 h-6 w-6 rounded-full bg-white shadow-sm transition peer-checked:translate-x-6 peer-checked:shadow-md"></span>
+                                        </label>
+                                    </form>
+                                <?php endif; ?>
+                                <img src="<?php echo htmlspecialchars($item['photo'], ENT_QUOTES, 'UTF-8'); ?>" alt="<?php echo htmlspecialchars($item['title'], ENT_QUOTES, 'UTF-8'); ?>" class="aspect-square w-full object-cover <?php echo !$productIsActive ? 'blur-sm grayscale' : ''; ?>">
+                                <span class="absolute left-3 top-3 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-700 shadow">Спецпредложение</span>
+                                <?php if (!$productIsActive): ?>
+                                    <span class="pointer-events-none absolute bottom-3 left-3 rounded-full bg-slate-900/70 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white">Неактивен</span>
+                                <?php endif; ?>
                             </div>
                         <?php else: ?>
                             <div class="relative flex aspect-square w-full items-center justify-center bg-slate-100 text-slate-400">
+                                <?php if (!empty($canModerateCatalog) && $productId > 0): ?>
+                                    <form action="/admin-product-toggle" method="post" class="absolute right-3 top-3 z-10">
+                                        <input type="hidden" name="product_id" value="<?php echo $productId; ?>">
+                                        <label class="relative inline-flex h-8 w-14 cursor-pointer items-center" aria-label="Активность товара">
+                                            <input type="checkbox" name="is_active" class="peer sr-only" onchange="this.form.submit()" <?php echo $productIsActive ? 'checked' : ''; ?>>
+                                            <span class="absolute inset-0 rounded-full bg-white/70 transition peer-checked:bg-emerald-500"></span>
+                                            <span class="absolute left-1 top-1 h-6 w-6 rounded-full bg-white shadow-sm transition peer-checked:translate-x-6 peer-checked:shadow-md"></span>
+                                        </label>
+                                    </form>
+                                <?php endif; ?>
                                 <span class="material-symbols-rounded text-3xl">image</span>
-                                <span class="absolute right-3 top-3 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-700 shadow">Спецпредложение</span>
+                                <span class="absolute left-3 top-3 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-700 shadow">Спецпредложение</span>
+                                <?php if (!$productIsActive): ?>
+                                    <span class="pointer-events-none absolute bottom-3 left-3 rounded-full bg-slate-900/70 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white">Неактивен</span>
+                                <?php endif; ?>
                             </div>
                         <?php endif; ?>
                         <div class="flex flex-1 flex-col gap-2 p-4">
@@ -199,7 +227,7 @@ foreach ($lotteries as $lottery) {
                                 <span class="text-sm text-slate-400 line-through"><?php echo number_format((int) floor((float) $item['base_price']), 0, '.', ' '); ?> ₽</span>
                                 <span class="text-base font-semibold text-rose-700"><?php echo number_format((int) floor((float) $item['price']), 0, '.', ' '); ?> ₽</span>
                             </div>
-                            <button type="button" data-add-to-cart data-requires-bot class="mt-auto inline-flex items-center justify-center gap-2 rounded-2xl bg-rose-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-rose-200 transition hover:-translate-y-0.5 hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-60">
+                            <button type="button" data-add-to-cart data-requires-bot class="mt-auto inline-flex items-center justify-center gap-2 rounded-2xl bg-rose-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-rose-200 transition hover:-translate-y-0.5 hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-60" <?php echo !$productIsActive ? 'disabled' : ''; ?>>
                                 <span class="material-symbols-rounded text-base">shopping_cart</span>
                                 <span class="hidden sm:inline">В корзину</span>
                             </button>
