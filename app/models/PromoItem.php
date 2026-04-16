@@ -39,10 +39,12 @@ class PromoItem extends Model
         ]);
     }
 
-    public function getActiveList(): array
+    public function getActiveList(bool $includeInactiveProducts = false): array
     {
+        $productActivityCondition = $includeInactiveProducts ? '' : 'AND p.is_active = 1';
         $stmt = $this->db->prepare(
             "SELECT pi.*,
+                p.is_active AS product_is_active,
                 COALESCE((
                     SELECT SUM(oi.qty)
                     FROM order_items oi
@@ -51,7 +53,10 @@ class PromoItem extends Model
                       AND o.status IN ('confirmed', 'assembled', 'delivering', 'delivered')
                 ), 0) AS accepted_qty
             FROM {$this->table} pi
+            LEFT JOIN products p ON p.id = pi.product_id
             WHERE pi.is_active = 1
+              AND p.status = 'active'
+              {$productActivityCondition}
               AND (pi.ends_at IS NULL OR pi.ends_at > NOW())
               AND (pi.quantity IS NULL OR pi.quantity > 0)
             ORDER BY pi.created_at DESC"
