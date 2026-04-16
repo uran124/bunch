@@ -10,6 +10,7 @@ class Mailer
     private string $password;
     private string $fromEmail;
     private string $fromName;
+    private bool $allowSelfSigned;
 
     public function __construct(array $config)
     {
@@ -20,6 +21,7 @@ class Mailer
         $this->password = (string) ($config['password'] ?? '');
         $this->fromEmail = trim((string) ($config['from_email'] ?? ''));
         $this->fromName = trim((string) ($config['from_name'] ?? 'Bunch flowers'));
+        $this->allowSelfSigned = filter_var($config['allow_self_signed'] ?? false, FILTER_VALIDATE_BOOLEAN);
     }
 
     public function send(string $toEmail, string $subject, string $body): bool
@@ -34,7 +36,24 @@ class Mailer
         }
 
         $transportHost = $this->encryption === 'ssl' ? 'ssl://' . $this->host : $this->host;
-        $socket = @stream_socket_client($transportHost . ':' . $this->port, $errno, $errstr, 10, STREAM_CLIENT_CONNECT);
+        $socketContext = stream_context_create([
+            'ssl' => [
+                'verify_peer' => !$this->allowSelfSigned,
+                'verify_peer_name' => !$this->allowSelfSigned,
+                'allow_self_signed' => $this->allowSelfSigned,
+                'SNI_enabled' => true,
+                'peer_name' => $this->host,
+            ],
+        ]);
+
+        $socket = @stream_socket_client(
+            $transportHost . ':' . $this->port,
+            $errno,
+            $errstr,
+            10,
+            STREAM_CLIENT_CONNECT,
+            $socketContext
+        );
         if (!$socket) {
             (new Logger('mail_errors.log'))->logRaw(date('c') . ' smtp_connect_error ' . $errno . ' ' . $errstr);
             return false;
@@ -58,7 +77,14 @@ class Mailer
                 return false;
             }
 
-            if (!stream_socket_enable_crypto($socket, true, STREAM_CRYPTO_METHOD_TLS_CLIENT)) {
+            if (!@stream_socket_enable_crypto($socket, true, STREAM_CRYPTO_METHOD_TLS_CLIENT)) {
+                $opensslErrors = [];
+                while ($error = openssl_error_string()) {
+                    $opensslErrors[] = $error;
+                }
+                (new Logger('mail_errors.log'))->logRaw(
+                    date('c') . ' smtp_starttls_failed ' . ($opensslErrors ? implode(' | ', $opensslErrors) : 'unknown_error')
+                );
                 fclose($socket);
                 return false;
             }
