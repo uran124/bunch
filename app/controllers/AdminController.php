@@ -2619,6 +2619,7 @@ class AdminController extends Controller
                 'smtpPassword' => $settings->get(Setting::SMTP_PASSWORD, $mailDefaults[Setting::SMTP_PASSWORD] ?? ''),
                 'smtpFromEmail' => $settings->get(Setting::SMTP_FROM_EMAIL, $mailDefaults[Setting::SMTP_FROM_EMAIL] ?? ''),
                 'smtpFromName' => $settings->get(Setting::SMTP_FROM_NAME, $mailDefaults[Setting::SMTP_FROM_NAME] ?? ''),
+                'smtpAllowSelfSigned' => $settings->get(Setting::SMTP_ALLOW_SELF_SIGNED, $mailDefaults[Setting::SMTP_ALLOW_SELF_SIGNED] ?? '0'),
             ],
         ]);
     }
@@ -2782,6 +2783,7 @@ class AdminController extends Controller
         $settings->set(Setting::SMTP_PASSWORD, trim((string) ($_POST['smtp_password'] ?? '')));
         $settings->set(Setting::SMTP_FROM_EMAIL, trim((string) ($_POST['smtp_from_email'] ?? '')));
         $settings->set(Setting::SMTP_FROM_NAME, trim((string) ($_POST['smtp_from_name'] ?? 'Bunch flowers')));
+        $settings->set(Setting::SMTP_ALLOW_SELF_SIGNED, (string) (($_POST['smtp_allow_self_signed'] ?? '0') === '1' ? '1' : '0'));
 
         header('Location: /admin-services-telegram?status=saved');
         exit;

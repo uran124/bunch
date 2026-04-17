@@ -10,6 +10,8 @@ class Mailer
     private string $password;
     private string $fromEmail;
     private string $fromName;
+    private bool $allowSelfSigned;
+    private string $tlsPeerName;
 
     public function __construct(array $config)
     {
@@ -20,6 +22,22 @@ class Mailer
         $this->password = (string) ($config['password'] ?? '');
         $this->fromEmail = trim((string) ($config['from_email'] ?? ''));
         $this->fromName = trim((string) ($config['from_name'] ?? 'Bunch flowers'));
+        $this->allowSelfSigned = filter_var($config['allow_self_signed'] ?? false, FILTER_VALIDATE_BOOLEAN);
+        $this->tlsPeerName = $this->resolveTlsPeerName();
+
+        if ($this->username === '' && $this->fromEmail !== '') {
+            $this->username = $this->fromEmail;
+        }
+
+        $emailDomain = $this->extractDomain($this->fromEmail);
+        if (
+            $this->username !== ''
+            && strpos($this->username, '@') === false
+            && $emailDomain !== null
+            && mb_strtolower($this->username) === $emailDomain
+        ) {
+            $this->username = $this->fromEmail;
+        }
     }
 
     public function send(string $toEmail, string $subject, string $body): bool
@@ -33,10 +51,41 @@ class Mailer
             return false;
         }
 
-        $transportHost = $this->encryption === 'ssl' ? 'ssl://' . $this->host : $this->host;
-        $socket = @stream_socket_client($transportHost . ':' . $this->port, $errno, $errstr, 10, STREAM_CLIENT_CONNECT);
+        $effectiveEncryption = $this->resolveEffectiveEncryption();
+        $transportHost = $effectiveEncryption === 'ssl' ? 'ssl://' . $this->host : $this->host;
+        $socketContext = stream_context_create([
+            'ssl' => [
+                'verify_peer' => !$this->allowSelfSigned,
+                'verify_peer_name' => !$this->allowSelfSigned,
+                'allow_self_signed' => $this->allowSelfSigned,
+                'SNI_enabled' => true,
+                'peer_name' => $this->tlsPeerName,
+            ],
+        ]);
+
+        $socket = @stream_socket_client(
+            $transportHost . ':' . $this->port,
+            $errno,
+            $errstr,
+            10,
+            STREAM_CLIENT_CONNECT,
+            $socketContext
+        );
         if (!$socket) {
-            (new Logger('mail_errors.log'))->logRaw(date('c') . ' smtp_connect_error ' . $errno . ' ' . $errstr);
+            $detail = trim((string) $errstr);
+            $lastError = error_get_last();
+            if (is_array($lastError) && !empty($lastError['message'])) {
+                $detail .= ($detail === '' ? '' : ' | ') . trim((string) $lastError['message']);
+            }
+
+            $opensslErrors = $this->collectOpenSslErrors();
+            if ($opensslErrors !== '') {
+                $detail .= ($detail === '' ? '' : ' | ') . $opensslErrors;
+            }
+
+            (new Logger('mail_errors.log'))->logRaw(
+                date('c') . ' smtp_connect_error ' . $errno . ' ' . ($detail !== '' ? $detail : 'unknown_error')
+            );
             return false;
         }
 
@@ -52,13 +101,20 @@ class Mailer
             return false;
         }
 
-        if ($this->encryption === 'tls') {
+        if ($effectiveEncryption === 'tls') {
             if (!$this->command($socket, 'STARTTLS', [220])) {
                 fclose($socket);
                 return false;
             }
 
-            if (!stream_socket_enable_crypto($socket, true, STREAM_CRYPTO_METHOD_TLS_CLIENT)) {
+            if (!@stream_socket_enable_crypto($socket, true, STREAM_CRYPTO_METHOD_TLS_CLIENT)) {
+                $opensslErrors = [];
+                while ($error = openssl_error_string()) {
+                    $opensslErrors[] = $error;
+                }
+                (new Logger('mail_errors.log'))->logRaw(
+                    date('c') . ' smtp_starttls_failed ' . ($opensslErrors ? implode(' | ', $opensslErrors) : 'unknown_error')
+                );
                 fclose($socket);
                 return false;
             }
@@ -97,14 +153,22 @@ class Mailer
             return false;
         }
 
+        $fromDomain = $this->extractDomain($this->fromEmail) ?? 'localhost';
+        $messageId = sprintf('<%s.%s@%s>', bin2hex(random_bytes(8)), dechex(time()), $fromDomain);
+
         $headers = [
             'Date: ' . date(DATE_RFC2822),
+            'Message-ID: ' . $messageId,
             'From: ' . $this->encodeHeader($this->fromName) . ' <' . $this->fromEmail . '>',
+            'Reply-To: <' . $this->fromEmail . '>',
+            'Return-Path: <' . $this->fromEmail . '>',
             'To: <' . $toEmail . '>',
             'Subject: ' . $this->encodeHeader($subject),
             'MIME-Version: 1.0',
             'Content-Type: text/plain; charset=UTF-8',
             'Content-Transfer-Encoding: 8bit',
+            'X-Mailer: Bunch Mailer',
+            'Auto-Submitted: auto-generated',
         ];
 
         $payload = implode("\r\n", $headers) . "\r\n\r\n" . str_replace("\n", "\r\n", $body) . "\r\n.\r\n";
@@ -163,5 +227,53 @@ class Mailer
         }
 
         return '=?UTF-8?B?' . base64_encode($text) . '?=';
+    }
+
+    private function resolveEffectiveEncryption(): string
+    {
+        if ($this->encryption === 'ssl' && $this->port === 587) {
+            (new Logger('mail_errors.log'))->logRaw(date('c') . ' smtp_encryption_autoswitch ssl_to_tls port_587');
+            return 'tls';
+        }
+
+        if ($this->encryption === 'tls' && $this->port === 465) {
+            (new Logger('mail_errors.log'))->logRaw(date('c') . ' smtp_encryption_autoswitch tls_to_ssl port_465');
+            return 'ssl';
+        }
+
+        return $this->encryption;
+    }
+
+    private function resolveTlsPeerName(): string
+    {
+        if (filter_var($this->host, FILTER_VALIDATE_IP)) {
+            $emailDomain = $this->extractDomain($this->fromEmail);
+            if ($emailDomain !== null) {
+                return $emailDomain;
+            }
+        }
+
+        return $this->host;
+    }
+
+    private function extractDomain(string $email): ?string
+    {
+        $email = trim($email);
+        $parts = explode('@', $email);
+        if (count($parts) !== 2 || trim($parts[1]) === '') {
+            return null;
+        }
+
+        return mb_strtolower(trim($parts[1]));
+    }
+
+    private function collectOpenSslErrors(): string
+    {
+        $errors = [];
+        while ($error = openssl_error_string()) {
+            $errors[] = $error;
+        }
+
+        return implode(' | ', $errors);
     }
 }

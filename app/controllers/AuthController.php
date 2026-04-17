@@ -491,8 +491,20 @@ class AuthController extends Controller
     {
         $mailConfig = $this->buildMailConfig();
         $mailer = new Mailer($mailConfig);
-        $subject = 'Код регистрации Bunch flowers';
-        $body = "Ваш код для регистрации: {$code}\nКод действует 15 минут.\nЕсли вы не запрашивали код — просто проигнорируйте письмо.";
+        $subject = 'Код подтверждения регистрации · Bunch flowers';
+        $body = implode("\n", [
+            'Здравствуйте!',
+            '',
+            "Ваш код подтверждения: {$code}",
+            'Код действует 15 минут.',
+            '',
+            'Вы получили это письмо, потому что запросили регистрацию в Bunch flowers.',
+            'Если это были не вы — просто проигнорируйте письмо.',
+            '',
+            'С уважением,',
+            'Bunch flowers',
+            'https://bunchflowers.ru',
+        ]);
         $sent = $mailer->send($email, $subject, $body);
         if ($sent) {
             $user = $this->userModel->findByEmail($email);
@@ -519,6 +531,7 @@ class AuthController extends Controller
             'password' => $this->settings->get(Setting::SMTP_PASSWORD, $defaults[Setting::SMTP_PASSWORD] ?? ''),
             'from_email' => $this->settings->get(Setting::SMTP_FROM_EMAIL, $defaults[Setting::SMTP_FROM_EMAIL] ?? ''),
             'from_name' => $this->settings->get(Setting::SMTP_FROM_NAME, $defaults[Setting::SMTP_FROM_NAME] ?? 'Bunch flowers'),
+            'allow_self_signed' => $this->settings->get(Setting::SMTP_ALLOW_SELF_SIGNED, $defaults[Setting::SMTP_ALLOW_SELF_SIGNED] ?? '0'),
         ];
     }
 
