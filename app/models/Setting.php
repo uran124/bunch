@@ -13,6 +13,7 @@ class Setting extends Model
     public const SMTP_PASSWORD = 'smtp_password';
     public const SMTP_FROM_EMAIL = 'smtp_from_email';
     public const SMTP_FROM_NAME = 'smtp_from_name';
+    public const SMTP_ALLOW_SELF_SIGNED = 'smtp_allow_self_signed';
     public const LOTTERY_FREE_MONTHLY_LIMIT = 'lottery_free_monthly_limit';
     public const ONLINE_PAYMENT_ENABLED = 'online_payment_enabled';
     public const ONLINE_PAYMENT_GATEWAY = 'online_payment_gateway';
@@ -74,6 +75,7 @@ class Setting extends Model
             self::SMTP_PASSWORD => getenv('SMTP_PASSWORD') ?: '',
             self::SMTP_FROM_EMAIL => getenv('SMTP_FROM_EMAIL') ?: 'no-reply@bunchflowers.ru',
             self::SMTP_FROM_NAME => getenv('SMTP_FROM_NAME') ?: 'Bunch flowers',
+            self::SMTP_ALLOW_SELF_SIGNED => getenv('SMTP_ALLOW_SELF_SIGNED') ?: '0',
         ];
     }
 
