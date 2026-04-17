@@ -28,7 +28,7 @@
         </div>
     <?php else: ?>
         <div class="relative flex min-h-[calc(100svh-6rem)] items-center sm:min-h-0">
-            <div class="flex snap-x gap-4 overflow-x-auto px-0 pb-6 pt-1 sm:pb-20 md:px-1" aria-label="Лента товаров">
+            <div class="flex snap-x gap-4 overflow-x-auto px-0 pb-6 pt-1 sm:pb-20 md:px-1" aria-label="Лента товаров" data-home-products-track>
                 <?php foreach ($products as $product): ?>
                     <?php
                     $cardId = 'product-card-' . $product['id'];
@@ -613,6 +613,109 @@
         viewerIndex = nextIndex;
         renderViewer();
     }
+
+    function initDesktopProductsTrack() {
+        const track = document.querySelector('[data-home-products-track]');
+        if (!track) return;
+
+        const desktopMedia = window.matchMedia('(min-width: 1024px)');
+        const interactiveSelector = 'button, a, input, textarea, select, label, [data-product-modal-trigger], [data-add-to-cart], [data-attr-option], [data-qty], [data-qty-value]';
+
+        let isDragging = false;
+        let startX = 0;
+        let startScrollLeft = 0;
+        let wheelBound = false;
+        let dragBound = false;
+
+        const shouldHandle = () => desktopMedia.matches;
+        const isInteractiveTarget = (target) => target instanceof Element && Boolean(target.closest(interactiveSelector));
+
+        const onWheel = (event) => {
+            if (!shouldHandle()) return;
+            if (Math.abs(event.deltaY) < Math.abs(event.deltaX)) return;
+            event.preventDefault();
+            track.scrollLeft += event.deltaY;
+        };
+
+        const onPointerDown = (event) => {
+            if (!shouldHandle()) return;
+            if (event.button !== 0) return;
+            if (isInteractiveTarget(event.target)) return;
+            if (track.scrollWidth <= track.clientWidth) return;
+
+            isDragging = true;
+            startX = event.clientX;
+            startScrollLeft = track.scrollLeft;
+            track.classList.add('cursor-grabbing', 'select-none');
+            if (track.setPointerCapture) {
+                track.setPointerCapture(event.pointerId);
+            }
+            event.preventDefault();
+        };
+
+        const onPointerMove = (event) => {
+            if (!isDragging) return;
+            const delta = event.clientX - startX;
+            track.scrollLeft = startScrollLeft - delta;
+            event.preventDefault();
+        };
+
+        const stopDrag = () => {
+            if (!isDragging) return;
+            isDragging = false;
+            track.classList.remove('cursor-grabbing', 'select-none');
+        };
+
+        const bindDesktopInteractions = () => {
+            if (!wheelBound) {
+                track.addEventListener('wheel', onWheel, { passive: false });
+                wheelBound = true;
+            }
+            if (!dragBound) {
+                track.addEventListener('pointerdown', onPointerDown);
+                track.addEventListener('pointermove', onPointerMove);
+                track.addEventListener('pointerup', stopDrag);
+                track.addEventListener('pointercancel', stopDrag);
+                track.addEventListener('pointerleave', stopDrag);
+                dragBound = true;
+            }
+            track.classList.add('cursor-grab');
+        };
+
+        const unbindDesktopInteractions = () => {
+            stopDrag();
+            if (wheelBound) {
+                track.removeEventListener('wheel', onWheel);
+                wheelBound = false;
+            }
+            if (dragBound) {
+                track.removeEventListener('pointerdown', onPointerDown);
+                track.removeEventListener('pointermove', onPointerMove);
+                track.removeEventListener('pointerup', stopDrag);
+                track.removeEventListener('pointercancel', stopDrag);
+                track.removeEventListener('pointerleave', stopDrag);
+                dragBound = false;
+            }
+            track.classList.remove('cursor-grab');
+        };
+
+        const syncByViewport = () => {
+            if (shouldHandle()) {
+                bindDesktopInteractions();
+            } else {
+                unbindDesktopInteractions();
+            }
+        };
+
+        syncByViewport();
+        if (typeof desktopMedia.addEventListener === 'function') {
+            desktopMedia.addEventListener('change', syncByViewport);
+        } else if (typeof desktopMedia.addListener === 'function') {
+            desktopMedia.addListener(syncByViewport);
+        }
+    }
+
+    initDesktopProductsTrack();
 
     document.querySelectorAll('[data-product-card]').forEach((card) => {
         selectDefaultAttributes(card);
