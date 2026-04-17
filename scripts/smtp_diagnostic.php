@@ -3,9 +3,9 @@ declare(strict_types=1);
 
 /**
  * SMTP diagnostic script.
- * CLI-only helper to debug SMTP connection/auth/send issues.
+ * Works from CLI and browser.
  *
- * Example:
+ * CLI example:
  * php scripts/smtp_diagnostic.php \
  *   --host=mail.bunchflowers.ru \
  *   --port=465 \
@@ -14,7 +14,12 @@ declare(strict_types=1);
  *   --password='secret' \
  *   --from=hello@bunchflowers.ru \
  *   --to=hello@bunchflowers.ru
+ *
+ * Browser:
+ * /scripts/smtp_diagnostic.php?host=mail.bunchflowers.ru&port=465&encryption=ssl&username=hello@bunchflowers.ru&password=secret&from=hello@bunchflowers.ru&to=hello@bunchflowers.ru
  */
+
+$isCli = PHP_SAPI === 'cli';
 
 function usage(): void
 {
@@ -37,12 +42,25 @@ Optional:
   --timeout            Timeout seconds (default: 12)
 TXT;
 
-    echo $msg . PHP_EOL;
+    global $isCli;
+    if ($isCli) {
+        echo $msg . PHP_EOL;
+        return;
+    }
+
+    header('Content-Type: text/html; charset=utf-8');
+    echo '<pre>' . htmlspecialchars($msg, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . "</pre>\n";
 }
 
 function out(string $line): void
 {
-    echo $line . PHP_EOL;
+    global $isCli;
+    if ($isCli) {
+        echo $line . PHP_EOL;
+        return;
+    }
+
+    echo htmlspecialchars($line, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . "<br>\n";
 }
 
 function readResponse($socket): array
@@ -66,9 +84,9 @@ function readResponse($socket): array
     return [$code, trim($response)];
 }
 
-function smtpCommand($socket, string $command, array $expectedCodes): bool
+function smtpCommand($socket, string $command, array $expectedCodes, ?string $displayCommand = null): bool
 {
-    out('> ' . $command);
+    out('> ' . ($displayCommand ?? $command));
     fwrite($socket, $command . "\r\n");
     [$code, $response] = readResponse($socket);
     out('< ' . $response);
@@ -87,24 +105,33 @@ function extractDomain(string $email): ?string
     return strtolower(trim($parts[1]));
 }
 
-$opts = getopt('', [
-    'host:',
-    'port:',
-    'encryption:',
-    'username::',
-    'password::',
-    'from:',
-    'to:',
-    'allow-self-signed::',
-    'helo::',
-    'timeout::',
-]);
-
-if (PHP_SAPI !== 'cli') {
-    http_response_code(400);
-    header('Content-Type: text/plain; charset=utf-8');
-    echo "This script is CLI-only.\n";
-    exit(1);
+$opts = [];
+if ($isCli) {
+    $opts = getopt('', [
+        'host:',
+        'port:',
+        'encryption:',
+        'username::',
+        'password::',
+        'from:',
+        'to:',
+        'allow-self-signed::',
+        'helo::',
+        'timeout::',
+    ]);
+} else {
+    $opts = [
+        'host' => $_REQUEST['host'] ?? null,
+        'port' => $_REQUEST['port'] ?? null,
+        'encryption' => $_REQUEST['encryption'] ?? null,
+        'username' => $_REQUEST['username'] ?? null,
+        'password' => $_REQUEST['password'] ?? null,
+        'from' => $_REQUEST['from'] ?? null,
+        'to' => $_REQUEST['to'] ?? null,
+        'allow-self-signed' => $_REQUEST['allow_self_signed'] ?? '0',
+        'helo' => $_REQUEST['helo'] ?? null,
+        'timeout' => $_REQUEST['timeout'] ?? null,
+    ];
 }
 
 $host = trim((string) ($opts['host'] ?? ''));
@@ -119,6 +146,21 @@ $helo = trim((string) ($opts['helo'] ?? 'bunchflowers.ru'));
 $timeout = (int) ($opts['timeout'] ?? 12);
 
 if ($host === '' || $port <= 0 || !in_array($encryption, ['tls', 'ssl', 'none'], true) || $from === '' || $to === '') {
+    if (!$isCli) {
+        header('Content-Type: text/html; charset=utf-8');
+        echo "<h2>SMTP Diagnostic</h2>\n";
+        echo "<form method=\"get\" style=\"display:grid;gap:8px;max-width:620px;font-family:Arial,sans-serif\">\n";
+        echo "<label>Host <input name=\"host\" value=\"mail.bunchflowers.ru\"></label>\n";
+        echo "<label>Port <input name=\"port\" value=\"465\"></label>\n";
+        echo "<label>Encryption <select name=\"encryption\"><option value=\"ssl\">ssl</option><option value=\"tls\">tls</option><option value=\"none\">none</option></select></label>\n";
+        echo "<label>Username <input name=\"username\" value=\"hello@bunchflowers.ru\"></label>\n";
+        echo "<label>Password <input type=\"password\" name=\"password\"></label>\n";
+        echo "<label>From <input name=\"from\" value=\"hello@bunchflowers.ru\"></label>\n";
+        echo "<label>To <input name=\"to\" value=\"hello@bunchflowers.ru\"></label>\n";
+        echo "<label>Allow self-signed <select name=\"allow_self_signed\"><option value=\"0\">0</option><option value=\"1\">1</option></select></label>\n";
+        echo "<button type=\"submit\">Run diagnostic</button>\n";
+        echo "</form><hr>\n";
+    }
     usage();
     exit(2);
 }
@@ -221,12 +263,12 @@ if ($username !== '') {
         fclose($socket);
         exit(9);
     }
-    if (!smtpCommand($socket, base64_encode($username), [334])) {
+    if (!smtpCommand($socket, base64_encode($username), [334], '[base64 username hidden]')) {
         out('ERROR: SMTP username rejected.');
         fclose($socket);
         exit(10);
     }
-    if (!smtpCommand($socket, base64_encode($password), [235])) {
+    if (!smtpCommand($socket, base64_encode($password), [235], '[base64 password hidden]')) {
         out('ERROR: SMTP password rejected.');
         fclose($socket);
         exit(11);
