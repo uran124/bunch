@@ -519,6 +519,7 @@ class AuthController extends Controller
             'password' => $this->settings->get(Setting::SMTP_PASSWORD, $defaults[Setting::SMTP_PASSWORD] ?? ''),
             'from_email' => $this->settings->get(Setting::SMTP_FROM_EMAIL, $defaults[Setting::SMTP_FROM_EMAIL] ?? ''),
             'from_name' => $this->settings->get(Setting::SMTP_FROM_NAME, $defaults[Setting::SMTP_FROM_NAME] ?? 'Bunch flowers'),
+            'allow_self_signed' => $this->settings->get(Setting::SMTP_ALLOW_SELF_SIGNED, $defaults[Setting::SMTP_ALLOW_SELF_SIGNED] ?? '0'),
         ];
     }
 
