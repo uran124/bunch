@@ -111,6 +111,15 @@
                     <span class="text-xs uppercase tracking-[0.14em] text-slate-500">From name</span>
                     <input type="text" name="smtp_from_name" value="<?php echo htmlspecialchars($settings['smtpFromName'] ?? '', ENT_QUOTES, 'UTF-8'); ?>" placeholder="Bunch flowers" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-rose-500/30">
                 </label>
+                <label class="space-y-1 md:col-span-2">
+                    <span class="text-xs uppercase tracking-[0.14em] text-slate-500">Allow self-signed TLS certificate</span>
+                    <?php $allowSelfSigned = (string) ($settings['smtpAllowSelfSigned'] ?? '0'); ?>
+                    <select name="smtp_allow_self_signed" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-rose-500/30">
+                        <option value="0" <?php echo $allowSelfSigned === '0' ? 'selected' : ''; ?>>0 — строгая проверка сертификата (рекомендуется)</option>
+                        <option value="1" <?php echo $allowSelfSigned === '1' ? 'selected' : ''; ?>>1 — разрешить self-signed / неполную цепочку</option>
+                    </select>
+                    <p class="text-xs text-slate-500">Если с параметром 0 SMTP не подключается, а с 1 работает, значит у провайдера проблемы с TLS-цепочкой.</p>
+                </label>
             </div>
 
             <button
