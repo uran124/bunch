@@ -105,6 +105,16 @@ function extractDomain(string $email): ?string
     return strtolower(trim($parts[1]));
 }
 
+function collectOpenSslErrors(): string
+{
+    $errors = [];
+    while ($error = openssl_error_string()) {
+        $errors[] = $error;
+    }
+
+    return implode(' | ', $errors);
+}
+
 $opts = [];
 if ($isCli) {
     $opts = getopt('', [
@@ -214,7 +224,22 @@ $socket = @stream_socket_client(
 );
 
 if (!$socket) {
-    out("ERROR: connect failed [{$errno}] {$errstr}");
+    $detail = trim((string) $errstr);
+    $lastError = error_get_last();
+    if (is_array($lastError) && !empty($lastError['message'])) {
+        $detail .= ($detail === '' ? '' : ' | ') . trim((string) $lastError['message']);
+    }
+
+    $opensslDetail = collectOpenSslErrors();
+    if ($opensslDetail !== '') {
+        $detail .= ($detail === '' ? '' : ' | ') . $opensslDetail;
+    }
+
+    out("ERROR: connect failed [{$errno}] " . ($detail !== '' ? $detail : 'unknown_error'));
+    if (!$allowSelfSigned) {
+        out('HINT: certificate verification is ON (allow_self_signed=0).');
+        out('HINT: if your SMTP provider uses self-signed or incomplete certificate chain, try allow_self_signed=1 for diagnostics.');
+    }
     exit(3);
 }
 

@@ -72,7 +72,20 @@ class Mailer
             $socketContext
         );
         if (!$socket) {
-            (new Logger('mail_errors.log'))->logRaw(date('c') . ' smtp_connect_error ' . $errno . ' ' . $errstr);
+            $detail = trim((string) $errstr);
+            $lastError = error_get_last();
+            if (is_array($lastError) && !empty($lastError['message'])) {
+                $detail .= ($detail === '' ? '' : ' | ') . trim((string) $lastError['message']);
+            }
+
+            $opensslErrors = $this->collectOpenSslErrors();
+            if ($opensslErrors !== '') {
+                $detail .= ($detail === '' ? '' : ' | ') . $opensslErrors;
+            }
+
+            (new Logger('mail_errors.log'))->logRaw(
+                date('c') . ' smtp_connect_error ' . $errno . ' ' . ($detail !== '' ? $detail : 'unknown_error')
+            );
             return false;
         }
 
@@ -244,5 +257,15 @@ class Mailer
         }
 
         return mb_strtolower(trim($parts[1]));
+    }
+
+    private function collectOpenSslErrors(): string
+    {
+        $errors = [];
+        while ($error = openssl_error_string()) {
+            $errors[] = $error;
+        }
+
+        return implode(' | ', $errors);
     }
 }
