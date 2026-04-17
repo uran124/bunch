@@ -153,14 +153,22 @@ class Mailer
             return false;
         }
 
+        $fromDomain = $this->extractDomain($this->fromEmail) ?? 'localhost';
+        $messageId = sprintf('<%s.%s@%s>', bin2hex(random_bytes(8)), dechex(time()), $fromDomain);
+
         $headers = [
             'Date: ' . date(DATE_RFC2822),
+            'Message-ID: ' . $messageId,
             'From: ' . $this->encodeHeader($this->fromName) . ' <' . $this->fromEmail . '>',
+            'Reply-To: <' . $this->fromEmail . '>',
+            'Return-Path: <' . $this->fromEmail . '>',
             'To: <' . $toEmail . '>',
             'Subject: ' . $this->encodeHeader($subject),
             'MIME-Version: 1.0',
             'Content-Type: text/plain; charset=UTF-8',
             'Content-Transfer-Encoding: 8bit',
+            'X-Mailer: Bunch Mailer',
+            'Auto-Submitted: auto-generated',
         ];
 
         $payload = implode("\r\n", $headers) . "\r\n\r\n" . str_replace("\n", "\r\n", $body) . "\r\n.\r\n";

@@ -491,8 +491,20 @@ class AuthController extends Controller
     {
         $mailConfig = $this->buildMailConfig();
         $mailer = new Mailer($mailConfig);
-        $subject = 'Код регистрации Bunch flowers';
-        $body = "Ваш код для регистрации: {$code}\nКод действует 15 минут.\nЕсли вы не запрашивали код — просто проигнорируйте письмо.";
+        $subject = 'Код подтверждения регистрации · Bunch flowers';
+        $body = implode("\n", [
+            'Здравствуйте!',
+            '',
+            "Ваш код подтверждения: {$code}",
+            'Код действует 15 минут.',
+            '',
+            'Вы получили это письмо, потому что запросили регистрацию в Bunch flowers.',
+            'Если это были не вы — просто проигнорируйте письмо.',
+            '',
+            'С уважением,',
+            'Bunch flowers',
+            'https://bunchflowers.ru',
+        ]);
         $sent = $mailer->send($email, $subject, $body);
         if ($sent) {
             $user = $this->userModel->findByEmail($email);
