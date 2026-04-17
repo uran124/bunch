@@ -11,6 +11,7 @@ class Mailer
     private string $fromEmail;
     private string $fromName;
     private bool $allowSelfSigned;
+    private string $tlsPeerName;
 
     public function __construct(array $config)
     {
@@ -22,6 +23,21 @@ class Mailer
         $this->fromEmail = trim((string) ($config['from_email'] ?? ''));
         $this->fromName = trim((string) ($config['from_name'] ?? 'Bunch flowers'));
         $this->allowSelfSigned = filter_var($config['allow_self_signed'] ?? false, FILTER_VALIDATE_BOOLEAN);
+        $this->tlsPeerName = $this->resolveTlsPeerName();
+
+        if ($this->username === '' && $this->fromEmail !== '') {
+            $this->username = $this->fromEmail;
+        }
+
+        $emailDomain = $this->extractDomain($this->fromEmail);
+        if (
+            $this->username !== ''
+            && strpos($this->username, '@') === false
+            && $emailDomain !== null
+            && mb_strtolower($this->username) === $emailDomain
+        ) {
+            $this->username = $this->fromEmail;
+        }
     }
 
     public function send(string $toEmail, string $subject, string $body): bool
@@ -35,14 +51,15 @@ class Mailer
             return false;
         }
 
-        $transportHost = $this->encryption === 'ssl' ? 'ssl://' . $this->host : $this->host;
+        $effectiveEncryption = $this->resolveEffectiveEncryption();
+        $transportHost = $effectiveEncryption === 'ssl' ? 'ssl://' . $this->host : $this->host;
         $socketContext = stream_context_create([
             'ssl' => [
                 'verify_peer' => !$this->allowSelfSigned,
                 'verify_peer_name' => !$this->allowSelfSigned,
                 'allow_self_signed' => $this->allowSelfSigned,
                 'SNI_enabled' => true,
-                'peer_name' => $this->host,
+                'peer_name' => $this->tlsPeerName,
             ],
         ]);
 
@@ -71,7 +88,7 @@ class Mailer
             return false;
         }
 
-        if ($this->encryption === 'tls') {
+        if ($effectiveEncryption === 'tls') {
             if (!$this->command($socket, 'STARTTLS', [220])) {
                 fclose($socket);
                 return false;
@@ -189,5 +206,43 @@ class Mailer
         }
 
         return '=?UTF-8?B?' . base64_encode($text) . '?=';
+    }
+
+    private function resolveEffectiveEncryption(): string
+    {
+        if ($this->encryption === 'ssl' && $this->port === 587) {
+            (new Logger('mail_errors.log'))->logRaw(date('c') . ' smtp_encryption_autoswitch ssl_to_tls port_587');
+            return 'tls';
+        }
+
+        if ($this->encryption === 'tls' && $this->port === 465) {
+            (new Logger('mail_errors.log'))->logRaw(date('c') . ' smtp_encryption_autoswitch tls_to_ssl port_465');
+            return 'ssl';
+        }
+
+        return $this->encryption;
+    }
+
+    private function resolveTlsPeerName(): string
+    {
+        if (filter_var($this->host, FILTER_VALIDATE_IP)) {
+            $emailDomain = $this->extractDomain($this->fromEmail);
+            if ($emailDomain !== null) {
+                return $emailDomain;
+            }
+        }
+
+        return $this->host;
+    }
+
+    private function extractDomain(string $email): ?string
+    {
+        $email = trim($email);
+        $parts = explode('@', $email);
+        if (count($parts) !== 2 || trim($parts[1]) === '') {
+            return null;
+        }
+
+        return mb_strtolower(trim($parts[1]));
     }
 }
