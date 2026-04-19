@@ -484,6 +484,34 @@ function handleAccountCalendar(string $resource): void
 
 function handleAccountProfile(): void
 {
+    if ($_SERVER['REQUEST_METHOD'] === 'GET' && !empty($_GET['verify_email_token'])) {
+        $token = trim((string) ($_GET['verify_email_token'] ?? ''));
+        $verificationData = parseEmailVerificationToken($token);
+        if (!$verificationData) {
+            header('Location: /account?email_confirmation=invalid');
+            return;
+        }
+
+        $userModel = new User();
+        $userId = (int) ($verificationData['user_id'] ?? 0);
+        $email = trim((string) ($verificationData['email'] ?? ''));
+        $user = $userId > 0 ? $userModel->findById($userId) : null;
+        if (!$user || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            header('Location: /account?email_confirmation=invalid');
+            return;
+        }
+
+        $existingByEmail = $userModel->findByEmail($email);
+        if ($existingByEmail && (int) ($existingByEmail['id'] ?? 0) !== $userId) {
+            header('Location: /account?email_confirmation=taken');
+            return;
+        }
+
+        $updated = $userModel->updateEmail($userId, $email);
+        header('Location: /account?email_confirmation=' . ($updated ? 'success' : 'invalid'));
+        return;
+    }
+
     if (!Auth::check()) {
         http_response_code(401);
         echo json_encode(['error' => 'Требуется авторизация']);
@@ -497,6 +525,57 @@ function handleAccountProfile(): void
     }
 
     $payload = json_decode(file_get_contents('php://input'), true) ?: $_POST;
+    $action = trim((string) ($payload['action'] ?? ''));
+    $userId = (int) Auth::userId();
+    $userModel = new User();
+
+    if ($action === 'request_email_link') {
+        $email = mb_strtolower(trim((string) ($payload['email'] ?? '')));
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            http_response_code(422);
+            echo json_encode(['error' => 'Укажите корректный e-mail']);
+            return;
+        }
+
+        $user = $userModel->findById($userId);
+        if (!$user) {
+            http_response_code(404);
+            echo json_encode(['error' => 'Пользователь не найден']);
+            return;
+        }
+
+        if (!empty($user['email'])) {
+            http_response_code(422);
+            echo json_encode(['error' => 'E-mail уже добавлен в вашем профиле']);
+            return;
+        }
+
+        if (empty($user['telegram_chat_id'])) {
+            http_response_code(422);
+            echo json_encode(['error' => 'Добавление e-mail доступно для аккаунтов Telegram']);
+            return;
+        }
+
+        $existingByEmail = $userModel->findByEmail($email);
+        if ($existingByEmail && (int) ($existingByEmail['id'] ?? 0) !== $userId) {
+            http_response_code(422);
+            echo json_encode(['error' => 'Этот e-mail уже используется']);
+            return;
+        }
+
+        $token = buildEmailVerificationToken($userId, $email);
+        $verificationLink = buildAppBaseUrl() . '/api/account/profile?verify_email_token=' . urlencode($token);
+        $sent = sendEmailVerificationLink($email, $verificationLink);
+        if (!$sent) {
+            http_response_code(500);
+            echo json_encode(['error' => 'Не удалось отправить письмо. Проверьте SMTP настройки']);
+            return;
+        }
+
+        echo json_encode(['ok' => true, 'message' => 'Ссылка для подтверждения отправлена на e-mail'], JSON_UNESCAPED_UNICODE);
+        return;
+    }
+
     $name = trim((string) ($payload['name'] ?? ''));
 
     if ($name === '') {
@@ -505,8 +584,6 @@ function handleAccountProfile(): void
         return;
     }
 
-    $userId = (int) Auth::userId();
-    $userModel = new User();
     $updated = $userModel->updateName($userId, $name);
 
     if (!$updated) {
@@ -516,6 +593,100 @@ function handleAccountProfile(): void
     }
 
     echo json_encode(['ok' => true, 'name' => $name], JSON_UNESCAPED_UNICODE);
+}
+
+function buildEmailVerificationToken(int $userId, string $email): string
+{
+    $payload = json_encode([
+        'user_id' => $userId,
+        'email' => mb_strtolower($email),
+        'exp' => time() + 86400,
+    ], JSON_UNESCAPED_UNICODE);
+    $payloadEncoded = rtrim(strtr(base64_encode((string) $payload), '+/', '-_'), '=');
+    $signature = hash_hmac('sha256', $payloadEncoded, getEmailVerificationSecret());
+
+    return $payloadEncoded . '.' . $signature;
+}
+
+function parseEmailVerificationToken(string $token): ?array
+{
+    if ($token === '' || strpos($token, '.') === false) {
+        return null;
+    }
+
+    [$payloadEncoded, $signature] = explode('.', $token, 2);
+    $expectedSignature = hash_hmac('sha256', $payloadEncoded, getEmailVerificationSecret());
+    if (!hash_equals($expectedSignature, (string) $signature)) {
+        return null;
+    }
+
+    $normalized = strtr($payloadEncoded, '-_', '+/');
+    $padding = strlen($normalized) % 4;
+    if ($padding > 0) {
+        $normalized .= str_repeat('=', 4 - $padding);
+    }
+
+    $payloadRaw = base64_decode($normalized, true);
+    $payload = $payloadRaw ? json_decode($payloadRaw, true) : null;
+    if (!is_array($payload)) {
+        return null;
+    }
+
+    $expiresAt = (int) ($payload['exp'] ?? 0);
+    if ($expiresAt <= time()) {
+        return null;
+    }
+
+    return $payload;
+}
+
+function getEmailVerificationSecret(): string
+{
+    $base = (string) (defined('TG_INTERNAL_API_SECRET') ? TG_INTERNAL_API_SECRET : 'bunch-email-secret');
+    if ($base === '') {
+        $base = 'bunch-email-secret';
+    }
+
+    return hash('sha256', $base . '|email-verify');
+}
+
+function buildAppBaseUrl(): string
+{
+    $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+        || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https');
+    $scheme = $isHttps ? 'https' : 'http';
+    $host = trim((string) ($_SERVER['HTTP_HOST'] ?? ''));
+    if ($host === '') {
+        $host = 'localhost';
+    }
+
+    return $scheme . '://' . $host;
+}
+
+function sendEmailVerificationLink(string $email, string $link): bool
+{
+    $settings = new Setting();
+    $defaults = $settings->getMailDefaults();
+    $mailConfig = [
+        'host' => $settings->get(Setting::SMTP_HOST, $defaults[Setting::SMTP_HOST] ?? ''),
+        'port' => $settings->get(Setting::SMTP_PORT, $defaults[Setting::SMTP_PORT] ?? '587'),
+        'encryption' => $settings->get(Setting::SMTP_ENCRYPTION, $defaults[Setting::SMTP_ENCRYPTION] ?? 'tls'),
+        'username' => $settings->get(Setting::SMTP_USERNAME, $defaults[Setting::SMTP_USERNAME] ?? ''),
+        'password' => $settings->get(Setting::SMTP_PASSWORD, $defaults[Setting::SMTP_PASSWORD] ?? ''),
+        'from_email' => $settings->get(Setting::SMTP_FROM_EMAIL, $defaults[Setting::SMTP_FROM_EMAIL] ?? ''),
+        'from_name' => $settings->get(Setting::SMTP_FROM_NAME, $defaults[Setting::SMTP_FROM_NAME] ?? 'Bunch flowers'),
+        'allow_self_signed' => $settings->get(Setting::SMTP_ALLOW_SELF_SIGNED, $defaults[Setting::SMTP_ALLOW_SELF_SIGNED] ?? '0'),
+    ];
+    $mailer = new Mailer($mailConfig);
+
+    $subject = 'Подтверждение e-mail для аккаунта Bunch flowers';
+    $body = "Здравствуйте!\n\n";
+    $body .= "Чтобы подтвердить e-mail, перейдите по ссылке:\n" . $link . "\n\n";
+    $body .= "Ссылка действует 24 часа.\n";
+    $body .= "Если вы не запрашивали подтверждение, просто игнорируйте это письмо.\n\n";
+    $body .= "Bunch flowers";
+
+    return $mailer->send($email, $subject, $body);
 }
 
 function buildAddressText(string $settlement, string $street, string $house, string $apartment = ''): string
