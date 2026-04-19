@@ -22,7 +22,7 @@
             <div class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
                 <div class="flex items-start justify-between gap-3">
                     <div class="flex-1 space-y-3">
-                        <p class="text-xs font-semibold uppercase tracking-[0.06em] text-slate-500">Профиль</p>
+                        <h3 class="text-base font-semibold text-slate-900 sm:text-lg">Профиль</h3>
                         <div class="space-y-2">
                             <input
                                 class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-base font-semibold text-slate-900 focus:border-rose-300 focus:bg-white focus:outline-none sm:max-w-sm"
@@ -41,14 +41,51 @@
                                     <?php if (!empty($user['email'])): ?>
                                         <span><?php echo htmlspecialchars($user['email'], ENT_QUOTES, 'UTF-8'); ?></span>
                                     <?php else: ?>
-                                        <span class="text-slate-500">+ e-mail</span>
+                                        <span class="text-slate-500">E-mail не добавлен</span>
                                     <?php endif; ?>
                                 </span>
-                                <span class="inline-flex items-center gap-2 rounded-xl bg-rose-50 px-3 py-2 text-rose-700">
-                                    <img class="h-4 w-4" src="/assets/images/tulip.svg" alt="">
-                                    <span>Лепесточки: <?php echo (int) ($user['tulip_balance'] ?? 0); ?></span>
+                                <span class="inline-flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-2">
+                                    <span class="material-symbols-rounded text-base text-rose-500">badge</span>
+                                    <span>
+                                        Аккаунт:
+                                        <?php if (!empty($user['email'])): ?>
+                                            E-mail
+                                        <?php elseif (!empty($user['telegram_chat_id'])): ?>
+                                            Telegram
+                                        <?php else: ?>
+                                            Телефон
+                                        <?php endif; ?>
+                                    </span>
+                                </span>
+                                <span class="inline-flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-2">
+                                    <span class="material-symbols-rounded text-base text-rose-500">send</span>
+                                    <?php if (!empty($user['telegram_chat_id'])): ?>
+                                        <span>
+                                            Telegram подключён<?php echo !empty($user['telegram_username']) ? ': @' . htmlspecialchars((string) $user['telegram_username'], ENT_QUOTES, 'UTF-8') : ''; ?>
+                                        </span>
+                                    <?php else: ?>
+                                        <span class="text-slate-500">Telegram не подключён</span>
+                                    <?php endif; ?>
                                 </span>
                             </div>
+                            <?php if (empty($user['telegram_chat_id'])): ?>
+                                <p class="text-xs text-slate-600">
+                                    Регистрировались через e-mail? Подключите Telegram через бота с проверкой контакта.
+                                </p>
+                                <a
+                                    href="https://t.me/<?php echo htmlspecialchars($telegramBotUsername ?? '', ENT_QUOTES, 'UTF-8'); ?>?start=register"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-rose-200 hover:text-rose-700 sm:text-sm"
+                                >
+                                    <span class="material-symbols-rounded text-base">send</span>
+                                    Подключить Telegram через бота
+                                </a>
+                            <?php elseif (empty($user['email'])): ?>
+                                <p class="text-xs text-slate-600">
+                                    Регистрировались через Telegram? E-mail можно добавить после проверки кода подтверждения.
+                                </p>
+                            <?php endif; ?>
                             <p class="hidden text-xs font-semibold text-emerald-700" data-account-name-status>Имя обновлено.</p>
                         </div>
                     </div>
@@ -64,76 +101,9 @@
             </div>
 
             <div class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
-                <div class="flex items-start justify-between gap-3">
-                    <div class="space-y-2">
-                        <p class="text-xs font-semibold uppercase tracking-[0.06em] text-slate-500">Telegram</p>
-                        <h3 class="text-base font-semibold text-slate-900 sm:text-lg">Подключение Telegram-аккаунта</h3>
-                        <?php if (!empty($user['telegram_chat_id'])): ?>
-                            <p class="text-sm text-emerald-700">
-                                Аккаунт подключён<?php echo !empty($user['telegram_username']) ? ': @' . htmlspecialchars((string) $user['telegram_username'], ENT_QUOTES, 'UTF-8') : ''; ?>.
-                            </p>
-                        <?php else: ?>
-                            <p class="text-sm text-slate-600">Чтобы подключить Telegram, откройте бота и отправьте свой контакт (номер телефона).</p>
-                        <?php endif; ?>
-                    </div>
-                    <a
-                        href="https://t.me/<?php echo htmlspecialchars($telegramBotUsername ?? '', ENT_QUOTES, 'UTF-8'); ?>?start=register"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-rose-200 hover:text-rose-700 sm:text-sm"
-                    >
-                        <span class="material-symbols-rounded text-base">send</span>
-                        Открыть бота
-                    </a>
-                </div>
-            </div>
-
-            <div class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
                 <div class="flex items-center justify-between gap-3">
                     <div>
-                        <p class="text-xs font-semibold uppercase tracking-[0.06em] text-slate-500">Кешбек</p>
-                        <h3 class="text-base font-semibold text-slate-900 sm:text-lg">Начисленные Лепесточки</h3>
-                    </div>
-                </div>
-                <?php $cashbackResult = $_GET['cashback'] ?? null; ?>
-                <?php if ($cashbackResult === 'deleted'): ?>
-                    <p class="mt-3 rounded-xl bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700">Начисление удалено.</p>
-                <?php elseif ($cashbackResult === 'error'): ?>
-                    <p class="mt-3 rounded-xl bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700">Не удалось удалить начисление (возможно, часть уже потрачена).</p>
-                <?php endif; ?>
-
-                <div class="mt-4 space-y-2">
-                    <?php if (empty($cashbackTransactions ?? [])): ?>
-                        <p class="text-sm text-slate-500">Пока нет начислений кешбека.</p>
-                    <?php else: ?>
-                        <?php foreach (($cashbackTransactions ?? []) as $tx): ?>
-                            <div class="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2.5">
-                                <div class="space-y-0.5 text-xs sm:text-sm">
-                                    <p class="font-semibold text-slate-900">
-                                        +<?php echo (int) ($tx['amount'] ?? 0); ?> Лепесточков
-                                        <?php if (!empty($tx['order_id'])): ?>
-                                            · заказ #<?php echo (int) $tx['order_id']; ?>
-                                        <?php endif; ?>
-                                    </p>
-                                    <p class="text-slate-500"><?php echo htmlspecialchars((string) ($tx['created_at'] ?? ''), ENT_QUOTES, 'UTF-8'); ?></p>
-                                </div>
-                                <form method="post" action="/account-cashback-delete" onsubmit="return confirm('Удалить начисление кешбека?');">
-                                    <input type="hidden" name="transaction_id" value="<?php echo (int) ($tx['id'] ?? 0); ?>">
-                                    <button type="submit" class="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white text-rose-600 shadow-sm ring-1 ring-rose-100 transition hover:bg-rose-50">
-                                        <span class="material-symbols-rounded text-base">delete</span>
-                                    </button>
-                                </form>
-                            </div>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
-                </div>
-            </div>
-
-            <div class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
-                <div class="flex items-center justify-between gap-3">
-                    <div>
-                        <p class="text-xs font-semibold uppercase tracking-[0.06em] text-slate-500">Адрес доставки</p>
-                        <h3 class="text-base font-semibold text-slate-900 sm:text-lg">Управление адресами</h3>
+                        <h3 class="text-base font-semibold text-slate-900 sm:text-lg">Адрес доставки</h3>
                     </div>
                     <button
                         class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-rose-200 hover:text-rose-700 sm:text-sm"
@@ -218,8 +188,7 @@
                 <div class="rounded-3xl border border-amber-200 bg-amber-50 p-4 shadow-sm sm:p-6">
                     <div class="flex flex-wrap items-center justify-between gap-3">
                         <div class="space-y-1">
-                            <p class="text-xs font-semibold uppercase tracking-[0.06em] text-amber-700">Активный заказ</p>
-                            <h3 class="text-base font-semibold text-slate-900 sm:text-lg">Ближайшая доставка</h3>
+                            <h3 class="text-base font-semibold text-slate-900 sm:text-lg">Активный заказ</h3>
                         </div>
                         <div class="flex flex-wrap items-center gap-2">
                             <span class="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-xs font-semibold text-amber-700 shadow-sm ring-1 ring-amber-100">
@@ -272,8 +241,7 @@
                 <div class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-xs font-semibold uppercase tracking-[0.06em] text-slate-500">Активные заказы</p>
-                            <h3 class="text-base font-semibold text-slate-900 sm:text-lg">В обработке: <?php echo count($activeOrders); ?></h3>
+                            <h3 class="text-base font-semibold text-slate-900 sm:text-lg">Активные заказы · В обработке: <?php echo count($activeOrders); ?></h3>
                         </div>
                         <a href="<?php echo htmlspecialchars($ordersLink, ENT_QUOTES, 'UTF-8'); ?>" class="inline-flex items-center gap-1 rounded-xl bg-slate-900 px-3 py-2 text-xs font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
                             <span class="material-symbols-rounded text-base">receipt_long</span>
@@ -309,7 +277,6 @@
                 <div class="rounded-3xl border border-emerald-200 bg-emerald-50 p-5 shadow-sm sm:p-6">
                     <div class="flex items-center justify-between gap-3">
                         <div class="space-y-1">
-                            <p class="text-xs font-semibold uppercase tracking-[0.06em] text-emerald-700">Подписка</p>
                             <h3 class="text-lg font-semibold text-slate-900">Активная подписка</h3>
                         </div>
                         <span class="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-xs font-semibold text-emerald-700 shadow-sm ring-1 ring-emerald-100">
@@ -339,8 +306,7 @@
                 <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-xs font-semibold uppercase tracking-[0.06em] text-slate-500">Подписки</p>
-                            <h3 class="text-lg font-semibold text-slate-900">Активных: <?php echo count($activeSubscriptions); ?></h3>
+                            <h3 class="text-lg font-semibold text-slate-900">Подписки · Активных: <?php echo count($activeSubscriptions); ?></h3>
                         </div>
                         <a href="/subscription" class="inline-flex items-center gap-1 rounded-xl bg-emerald-600 px-3 py-2 text-xs font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
                             <span class="material-symbols-rounded text-base">event_repeat</span>
@@ -369,8 +335,7 @@
             <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
                 <div class="flex items-center justify-between gap-3">
                     <div class="space-y-1">
-                        <p class="text-xs font-semibold uppercase tracking-[0.06em] text-slate-500">Участие в акциях</p>
-                        <h3 class="text-base font-semibold text-slate-900 sm:text-lg">Лотереи и аукционы</h3>
+                        <h3 class="text-base font-semibold text-slate-900 sm:text-lg">Участие в акциях</h3>
                     </div>
                     <span class="inline-flex items-center gap-1 rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold text-white shadow-sm">
                         <span class="material-symbols-rounded text-base">celebration</span>
@@ -476,7 +441,7 @@
             <div class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
                 <div class="flex items-start justify-between gap-3">
                     <div class="space-y-1">
-                        <p class="text-xs font-semibold uppercase tracking-[0.06em] text-slate-500">Мои заказы</p>
+                        <h3 class="text-base font-semibold text-slate-900 sm:text-lg">Мои заказы</h3>
                     </div>
                     <span class="inline-flex items-center gap-1 rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold text-white shadow-sm">
                         <span class="material-symbols-rounded text-base">rocket_launch</span>
@@ -520,7 +485,6 @@
             <div class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
                 <div class="flex items-center justify-between gap-3">
                     <div class="space-y-1">
-                        <p class="text-xs font-semibold uppercase tracking-[0.06em] text-slate-500">Настройка уведомлений</p>
                         <h3 class="text-base font-semibold text-slate-900 sm:text-lg">Настройка уведомлений</h3>
                     </div>
                     <span class="inline-flex items-center gap-1 rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold text-white shadow-sm">
@@ -576,7 +540,7 @@
 
             <div class="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
                 <div class="space-y-3">
-                    <p class="text-xs font-semibold uppercase tracking-[0.06em] text-slate-500">Безопасность</p>
+                    <h3 class="text-base font-semibold text-slate-900 sm:text-lg">Безопасность</h3>
                     <div class="grid gap-2 text-xs text-slate-700 sm:text-sm">
                         <div class="flex items-center justify-between rounded-2xl bg-slate-50 px-3 py-2.5 sm:px-4 sm:py-3">
                             <span class="inline-flex items-center gap-2 font-semibold text-slate-800">
