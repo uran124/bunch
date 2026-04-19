@@ -964,11 +964,11 @@ class Order extends Model
         }
 
         $chatId = $this->getUserTelegramChatId($userId);
-        if (!$chatId) {
-            return;
+        if ($chatId) {
+            $this->sendTelegramMessage($chatId, $message);
         }
 
-        $this->sendTelegramMessage($chatId, $message);
+        $this->sendOrderStatusEmail($userId, $orderId, $status, $message);
     }
 
     private function notifyCashbackAccrued(int $orderId, int $userId, int $amount): void
@@ -1009,6 +1009,43 @@ class Order extends Model
         ];
 
         @mail($email, '=?UTF-8?B?' . base64_encode($subject) . '?=', $message, implode("\r\n", $headers));
+    }
+
+    private function sendOrderStatusEmail(int $userId, int $orderId, string $status, string $message): void
+    {
+        $stmt = $this->db->prepare('SELECT email FROM users WHERE id = :id LIMIT 1');
+        $stmt->execute(['id' => $userId]);
+        $email = trim((string) $stmt->fetchColumn());
+        if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return;
+        }
+
+        $subject = sprintf(
+            'Статус заказа %s: %s',
+            $this->formatOrderNumber($orderId),
+            $this->mapOrderStatus($status)
+        );
+
+        $mailConfig = $this->buildMailConfig();
+        $mailer = new Mailer($mailConfig);
+        $mailer->send($email, $subject, $message);
+    }
+
+    private function buildMailConfig(): array
+    {
+        $settings = new Setting();
+        $defaults = $settings->getMailDefaults();
+
+        return [
+            'host' => $settings->get(Setting::SMTP_HOST, $defaults[Setting::SMTP_HOST] ?? ''),
+            'port' => $settings->get(Setting::SMTP_PORT, $defaults[Setting::SMTP_PORT] ?? '587'),
+            'encryption' => $settings->get(Setting::SMTP_ENCRYPTION, $defaults[Setting::SMTP_ENCRYPTION] ?? 'tls'),
+            'username' => $settings->get(Setting::SMTP_USERNAME, $defaults[Setting::SMTP_USERNAME] ?? ''),
+            'password' => $settings->get(Setting::SMTP_PASSWORD, $defaults[Setting::SMTP_PASSWORD] ?? ''),
+            'from_email' => $settings->get(Setting::SMTP_FROM_EMAIL, $defaults[Setting::SMTP_FROM_EMAIL] ?? ''),
+            'from_name' => $settings->get(Setting::SMTP_FROM_NAME, $defaults[Setting::SMTP_FROM_NAME] ?? 'Bunch flowers'),
+            'allow_self_signed' => $settings->get(Setting::SMTP_ALLOW_SELF_SIGNED, $defaults[Setting::SMTP_ALLOW_SELF_SIGNED] ?? '0'),
+        ];
     }
 
     private function emptyToNull(?string $value): ?string

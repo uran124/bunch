@@ -27,28 +27,37 @@ class BroadcastMessage extends Model
         $settings = new Setting();
         $defaults = $settings->getTelegramDefaults();
         $botToken = $settings->get(Setting::TG_BOT_TOKEN, $defaults[Setting::TG_BOT_TOKEN] ?? '');
-
-        if ($botToken === '') {
-            (new Logger('telegram_errors.log'))->logRaw(date('c') . ' missing TG_BOT_TOKEN for broadcast ' . $messageId);
-
-            return;
-        }
-
         $chatIds = $this->collectRecipientChatIds($groupIds);
+        $emails = $this->collectRecipientEmails($groupIds);
 
-        if (empty($chatIds)) {
+        if (empty($chatIds) && empty($emails)) {
             (new Logger('telegram_errors.log'))->logRaw(date('c') . ' no recipients for broadcast ' . $messageId);
 
             return;
         }
 
-        $telegram = new Telegram($botToken);
-
-        foreach ($chatIds as $chatId) {
-            $telegram->sendMessage($chatId, $body);
+        if ($botToken === '' && !empty($chatIds)) {
+            (new Logger('telegram_errors.log'))->logRaw(date('c') . ' missing TG_BOT_TOKEN for broadcast ' . $messageId);
         }
 
-        $this->markAsSent($messageId);
+        if ($botToken !== '') {
+            $telegram = new Telegram($botToken);
+
+            foreach ($chatIds as $chatId) {
+                $telegram->sendMessage($chatId, $body);
+            }
+        }
+
+        if (!empty($emails)) {
+            $mailer = new Mailer($this->buildMailConfig());
+            foreach ($emails as $email) {
+                $mailer->send($email, 'Bunch flowers — уведомление', $body);
+            }
+        }
+
+        if ($botToken !== '' || !empty($emails)) {
+            $this->markAsSent($messageId);
+        }
     }
 
     public function paginate(int $page, int $perPage): array
@@ -212,5 +221,59 @@ class BroadcastMessage extends Model
         $stmt->execute($groupIds);
 
         return (int) $stmt->fetchColumn() > 0;
+    }
+
+    private function collectRecipientEmails(array $groupIds): array
+    {
+        $groupIds = array_values(array_unique(array_map('intval', $groupIds)));
+
+        if (empty($groupIds)) {
+            return [];
+        }
+
+        if ($this->hasSystemGroup($groupIds)) {
+            $stmt = $this->db->query('SELECT email FROM users WHERE is_active = 1 AND email IS NOT NULL AND email <> ""');
+            $emails = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+            return $this->normalizeEmails($emails);
+        }
+
+        $placeholders = implode(',', array_fill(0, count($groupIds), '?'));
+        $sql = 'SELECT DISTINCT u.email FROM users u INNER JOIN broadcast_group_users bgu ON bgu.user_id = u.id WHERE u.is_active = 1 AND u.email IS NOT NULL AND u.email <> "" AND bgu.group_id IN (' . $placeholders . ')';
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($groupIds);
+
+        return $this->normalizeEmails($stmt->fetchAll(PDO::FETCH_COLUMN));
+    }
+
+    private function normalizeEmails(array $values): array
+    {
+        $normalized = [];
+        foreach ($values as $value) {
+            $email = trim((string) $value);
+            if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                continue;
+            }
+            $normalized[] = mb_strtolower($email);
+        }
+
+        return array_values(array_unique($normalized));
+    }
+
+    private function buildMailConfig(): array
+    {
+        $settings = new Setting();
+        $defaults = $settings->getMailDefaults();
+
+        return [
+            'host' => $settings->get(Setting::SMTP_HOST, $defaults[Setting::SMTP_HOST] ?? ''),
+            'port' => $settings->get(Setting::SMTP_PORT, $defaults[Setting::SMTP_PORT] ?? '587'),
+            'encryption' => $settings->get(Setting::SMTP_ENCRYPTION, $defaults[Setting::SMTP_ENCRYPTION] ?? 'tls'),
+            'username' => $settings->get(Setting::SMTP_USERNAME, $defaults[Setting::SMTP_USERNAME] ?? ''),
+            'password' => $settings->get(Setting::SMTP_PASSWORD, $defaults[Setting::SMTP_PASSWORD] ?? ''),
+            'from_email' => $settings->get(Setting::SMTP_FROM_EMAIL, $defaults[Setting::SMTP_FROM_EMAIL] ?? ''),
+            'from_name' => $settings->get(Setting::SMTP_FROM_NAME, $defaults[Setting::SMTP_FROM_NAME] ?? 'Bunch flowers'),
+            'allow_self_signed' => $settings->get(Setting::SMTP_ALLOW_SELF_SIGNED, $defaults[Setting::SMTP_ALLOW_SELF_SIGNED] ?? '0'),
+        ];
     }
 }
