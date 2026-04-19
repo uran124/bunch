@@ -28,7 +28,7 @@
         </div>
     <?php else: ?>
         <div class="relative flex min-h-[calc(100svh-6rem)] items-center sm:min-h-0 lg:block lg:min-h-0">
-            <div class="flex snap-x gap-4 overflow-x-auto px-0 pb-6 pt-1 sm:pb-20 md:px-1 lg:grid lg:grid-cols-3 lg:gap-5 lg:overflow-visible lg:pb-0 lg:pt-0 xl:grid-cols-4" aria-label="Лента товаров">
+            <div class="flex snap-x gap-4 overflow-x-auto px-0 pb-6 pt-1 sm:pb-20 md:px-1 lg:grid lg:grid-cols-[repeat(auto-fit,minmax(350px,1fr))] lg:gap-5 lg:overflow-visible lg:pb-0 lg:pt-0" aria-label="Лента товаров">
                 <?php foreach ($products as $product): ?>
                     <?php
                     $cardId = 'product-card-' . $product['id'];
@@ -97,7 +97,7 @@
                         data-price-tiers='<?php echo $priceTiersJson; ?>'
                         data-max-qty="<?php echo $maxQty; ?>"
                         data-available-qty="<?php echo $availableQty; ?>"
-                        class="snap-center shrink-0 flex w-[82%] max-w-xl flex-col rounded-3xl border border-slate-200 bg-white shadow-xl shadow-slate-200/70 transition md:w-[360px] lg:w-full lg:max-w-none lg:shrink xl:w-full"
+                        class="snap-center shrink-0 flex w-[82%] max-w-xl flex-col rounded-3xl border border-slate-200 bg-white shadow-xl shadow-slate-200/70 transition md:w-[360px] lg:min-w-[350px] lg:w-full lg:max-w-none lg:shrink xl:w-full"
                     >
                         <div class="relative">
                             <?php if (!empty($canModerateCatalog)): ?>
