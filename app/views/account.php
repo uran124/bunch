@@ -24,6 +24,14 @@
                     <div class="flex-1 space-y-3">
                         <h3 class="text-base font-semibold text-slate-900 sm:text-lg">Профиль</h3>
                         <div class="space-y-2">
+                            <?php $emailConfirmation = $_GET['email_confirmation'] ?? ''; ?>
+                            <?php if ($emailConfirmation === 'success'): ?>
+                                <p class="rounded-xl bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700">Почта подтверждена и добавлена в профиль.</p>
+                            <?php elseif ($emailConfirmation === 'taken'): ?>
+                                <p class="rounded-xl bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700">Этот e-mail уже используется в другом аккаунте.</p>
+                            <?php elseif ($emailConfirmation === 'invalid'): ?>
+                                <p class="rounded-xl bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700">Ссылка подтверждения недействительна или устарела.</p>
+                            <?php endif; ?>
                             <input
                                 class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-base font-semibold text-slate-900 focus:border-rose-300 focus:bg-white focus:outline-none sm:max-w-sm"
                                 type="text"
@@ -43,19 +51,6 @@
                                     <?php else: ?>
                                         <span class="text-slate-500">E-mail не добавлен</span>
                                     <?php endif; ?>
-                                </span>
-                                <span class="inline-flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-2">
-                                    <span class="material-symbols-rounded text-base text-rose-500">badge</span>
-                                    <span>
-                                        Аккаунт:
-                                        <?php if (!empty($user['email'])): ?>
-                                            E-mail
-                                        <?php elseif (!empty($user['telegram_chat_id'])): ?>
-                                            Telegram
-                                        <?php else: ?>
-                                            Телефон
-                                        <?php endif; ?>
-                                    </span>
                                 </span>
                                 <span class="inline-flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-2">
                                     <span class="material-symbols-rounded text-base text-rose-500">send</span>
@@ -85,7 +80,16 @@
                                 <p class="text-xs text-slate-600">
                                     Регистрировались через Telegram? E-mail можно добавить после проверки кода подтверждения.
                                 </p>
+                                <button
+                                    type="button"
+                                    class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-rose-200 hover:text-rose-700 sm:text-sm"
+                                    data-email-add-open
+                                >
+                                    <span class="material-symbols-rounded text-base">mail</span>
+                                    Добавить e-mail
+                                </button>
                             <?php endif; ?>
+                            <p class="hidden text-xs font-semibold text-emerald-700" data-email-link-status></p>
                             <p class="hidden text-xs font-semibold text-emerald-700" data-account-name-status>Имя обновлено.</p>
                         </div>
                     </div>
@@ -629,6 +633,33 @@
                     <button type="submit" class="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-rose-500">
                         <span class="material-symbols-rounded text-base">save</span>
                         Сохранить
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/40 p-4 backdrop-blur" data-email-modal>
+        <div class="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-6 shadow-xl">
+            <div class="flex items-start justify-between gap-3">
+                <div>
+                    <h3 class="text-xl font-semibold text-slate-900">Добавить e-mail</h3>
+                    <p class="text-sm text-slate-600">Мы отправим ссылку подтверждения. После перехода по ней почта подтвердится автоматически.</p>
+                </div>
+                <button type="button" class="rounded-full p-1 text-slate-500 hover:bg-slate-100" data-email-modal-close>
+                    <span class="material-symbols-rounded text-xl">close</span>
+                </button>
+            </div>
+            <form class="mt-5 space-y-4" data-email-modal-form>
+                <div class="space-y-2">
+                    <label class="text-xs font-semibold uppercase tracking-[0.06em] text-slate-500" for="account-email-add">E-mail</label>
+                    <input id="account-email-add" type="email" class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900 focus:border-rose-300 focus:bg-white focus:outline-none" placeholder="name@example.com" data-email-modal-input required>
+                </div>
+                <p class="hidden text-sm font-semibold" data-email-modal-status></p>
+                <div class="flex justify-end">
+                    <button type="submit" class="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-rose-500">
+                        <span class="material-symbols-rounded text-base">mail</span>
+                        Отправить ссылку
                     </button>
                 </div>
             </form>

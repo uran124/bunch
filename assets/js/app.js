@@ -2343,6 +2343,7 @@ function initAccountPage() {
     initNotificationToggles();
     initPinModal();
     initAccountProfile();
+    initAccountEmailModal();
     initAccountAddresses();
 }
 
@@ -3020,6 +3021,79 @@ function initAccountProfile() {
         if (event.key === 'Enter') {
             event.preventDefault();
             nameInput.blur();
+        }
+    });
+}
+
+function initAccountEmailModal() {
+    const modal = document.querySelector('[data-email-modal]');
+    const openButton = document.querySelector('[data-email-add-open]');
+    const closeButtons = document.querySelectorAll('[data-email-modal-close]');
+    const form = modal?.querySelector('[data-email-modal-form]');
+    const input = modal?.querySelector('[data-email-modal-input]');
+    const modalStatus = modal?.querySelector('[data-email-modal-status]');
+    const profileStatus = document.querySelector('[data-email-link-status]');
+
+    if (!modal || !openButton || !form || !input) return;
+
+    const setStatus = (message, isError = false) => {
+        if (modalStatus) {
+            modalStatus.textContent = message;
+            modalStatus.classList.remove('hidden', 'text-emerald-700', 'text-rose-700');
+            modalStatus.classList.add(isError ? 'text-rose-700' : 'text-emerald-700');
+        }
+    };
+
+    const showProfileStatus = (message, isError = false) => {
+        if (!profileStatus) return;
+        profileStatus.textContent = message;
+        profileStatus.classList.remove('hidden', 'text-emerald-700', 'text-rose-700');
+        profileStatus.classList.add(isError ? 'text-rose-700' : 'text-emerald-700');
+        setTimeout(() => profileStatus.classList.add('hidden'), 3500);
+    };
+
+    const open = () => {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        input.focus();
+    };
+
+    const close = () => {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        form.reset();
+        if (modalStatus) {
+            modalStatus.classList.add('hidden');
+            modalStatus.textContent = '';
+        }
+    };
+
+    openButton.addEventListener('click', open);
+    closeButtons.forEach((button) => button.addEventListener('click', close));
+    modal.addEventListener('click', (event) => {
+        if (event.target === modal) close();
+    });
+
+    form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const email = input.value.trim();
+        if (!email) {
+            setStatus('Введите e-mail.', true);
+            return;
+        }
+
+        try {
+            const data = await fetchJson('/api/account/profile', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'request_email_link', email }),
+            });
+            const message = data.message || 'Ссылка отправлена на e-mail.';
+            setStatus(message, false);
+            showProfileStatus(message, false);
+            setTimeout(close, 900);
+        } catch (error) {
+            setStatus(error.message || 'Не удалось отправить ссылку.', true);
         }
     });
 }
