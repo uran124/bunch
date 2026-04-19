@@ -97,7 +97,7 @@
                         data-price-tiers='<?php echo $priceTiersJson; ?>'
                         data-max-qty="<?php echo $maxQty; ?>"
                         data-available-qty="<?php echo $availableQty; ?>"
-                        class="snap-center shrink-0 w-[82%] max-w-xl rounded-3xl border border-slate-200 bg-white shadow-xl shadow-slate-200/70 transition md:w-[360px] lg:w-[340px] xl:w-[320px]"
+                        class="snap-center shrink-0 flex w-[82%] max-w-xl flex-col rounded-3xl border border-slate-200 bg-white shadow-xl shadow-slate-200/70 transition md:w-[360px] lg:w-[340px] xl:w-[320px]"
                     >
                         <div class="relative">
                             <?php if (!empty($canModerateCatalog)): ?>
@@ -135,7 +135,7 @@
                             <?php endif; ?>
                         </div>
 
-                        <div class="space-y-0 px-2 pb-4 pt-2 md:space-y-6 md:px-5 md:pt-5 lg:px-4 lg:pt-4">
+                        <div class="flex flex-1 flex-col space-y-0 px-2 pb-4 pt-2 md:space-y-6 md:px-5 md:pt-5 lg:px-4 lg:pt-4">
                             <div class="space-y-1 md:space-y-2 lg:space-y-1.5">
                                 <button type="button" class="text-left" data-product-modal-trigger>
                                     <h2 class="text-base font-semibold leading-snug text-slate-900 md:text-2xl lg:text-xl"><?php echo htmlspecialchars($displayName, ENT_QUOTES, 'UTF-8'); ?></h2>
@@ -143,12 +143,17 @@
                                 <p class="text-[11px] font-semibold text-slate-500 md:text-xs lg:text-[11px]"><?php echo htmlspecialchars($salesComment, ENT_QUOTES, 'UTF-8'); ?></p>
                             </div>
 
-                            <div class="space-y-2 rounded-2xl bg-slate-50 p-2 md:space-y-3 md:p-4">
+                            <div class="space-y-2 md:space-y-3">
                                 <div class="flex items-center justify-between text-[11px] font-semibold text-slate-700 md:text-sm lg:text-xs">
-                                    <span class="inline-flex items-center gap-2">
-                                        <span class="material-symbols-rounded text-base">stacked_bar_chart</span>
-                                        <?php echo htmlspecialchars($qtyLabel, ENT_QUOTES, 'UTF-8'); ?>
-                                    </span>
+                                    <input
+                                        type="range"
+                                        min="1"
+                                        max="<?php echo $maxQty; ?>"
+                                        step="1"
+                                        value="1"
+                                        data-qty
+                                        class="range-slider mr-3 h-1.5 w-full appearance-none rounded-full bg-slate-200 accent-rose-500"
+                                    >
                                     <input
                                         type="number"
                                         min="1"
@@ -160,15 +165,6 @@
                                         class="w-16 rounded-lg bg-white px-2 py-1.5 text-base font-bold text-slate-900 shadow-inner shadow-rose-100/60 text-center md:text-xl lg:text-lg"
                                     >
                                 </div>
-                                <input
-                                    type="range"
-                                    min="1"
-                                    max="<?php echo $maxQty; ?>"
-                                    step="1"
-                                    value="1"
-                                    data-qty
-                                    class="range-slider h-1.5 w-full appearance-none rounded-full bg-slate-200 accent-rose-500"
-                                >
                                 <div class="hidden justify-between text-[11px] font-semibold uppercase tracking-wide text-slate-400 md:flex">
                                     <span>1</span>
                                     <span><?php echo $midQty; ?></span>
@@ -177,10 +173,10 @@
                             </div>
 
                             <?php if (!empty($product['attributes'])): ?>
-                                <div class="space-y-3">
+                                <div class="space-y-2 rounded-2xl bg-slate-50 p-2 md:space-y-3 md:p-3">
                                     <?php foreach ($product['attributes'] as $attribute): ?>
                                         <div
-                                            class="space-y-2 rounded-2xl border border-slate-100 bg-slate-50 p-2 md:p-3"
+                                            class="space-y-2"
                                             data-attribute-group
                                             data-attribute-id="<?php echo (int) $attribute['id']; ?>"
                                             data-applies-to="<?php echo htmlspecialchars($attribute['applies_to'] ?? 'stem', ENT_QUOTES, 'UTF-8'); ?>"
@@ -192,9 +188,6 @@
                                                     <?php echo htmlspecialchars($attribute['name'], ENT_QUOTES, 'UTF-8'); ?>
                                                 </span>
                                             </div>
-                                            <?php if (!empty($attribute['description'])): ?>
-                                                <p class="text-xs text-slate-500"><?php echo htmlspecialchars($attribute['description'], ENT_QUOTES, 'UTF-8'); ?></p>
-                                            <?php endif; ?>
                                             <div class="no-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1" data-desktop-drag-scroll>
                                                 <?php foreach ($attribute['values'] as $value): ?>
                                                     <?php
@@ -221,20 +214,20 @@
                                 </div>
                             <?php endif; ?>
 
-                            <div class="flex items-center justify-between gap-2 rounded-2xl bg-white px-2.5 py-1.5 shadow-sm md:hidden">
+                            <div class="mt-auto flex items-center justify-between gap-2 rounded-2xl bg-white px-2.5 py-1.5 shadow-sm md:hidden">
                                 <span class="text-base font-bold text-rose-600" data-actual-price>—</span>
                                 <button type="button" data-add-to-cart class="inline-flex items-center justify-center gap-2 rounded-xl bg-rose-600 px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-white shadow-md shadow-rose-200 transition hover:-translate-y-0.5 hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-60" <?php echo !$productIsActive ? 'disabled' : ''; ?>>
+                                    <span class="text-base leading-none">+</span>
                                     <span class="material-symbols-rounded text-base">shopping_cart</span>
-                                    В корзину
                                 </button>
                             </div>
 
-                            <div class="hidden flex-wrap items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-inner shadow-rose-100/60 md:flex lg:p-3">
+                            <div class="mt-auto hidden flex-wrap items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-inner shadow-rose-100/60 md:flex lg:p-3">
                                 <span class="text-sm font-semibold text-slate-400 line-through" data-base-price-total>—</span>
                                 <span class="flex-1 text-center text-2xl font-bold text-rose-600 lg:text-xl" data-actual-price>—</span>
                                 <button type="button" data-add-to-cart class="inline-flex items-center justify-center gap-2 rounded-2xl bg-rose-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-rose-200 transition hover:-translate-y-0.5 hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-60 lg:px-3.5 lg:py-2.5 lg:text-xs" <?php echo !$productIsActive ? 'disabled' : ''; ?>>
+                                    <span class="text-base leading-none">+</span>
                                     <span class="material-symbols-rounded text-base">shopping_cart</span>
-                                    <span class="hidden sm:inline">В корзину</span>
                                 </button>
                             </div>
                         </div>
