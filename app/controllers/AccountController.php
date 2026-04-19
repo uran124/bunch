@@ -40,18 +40,6 @@ class AccountController extends Controller
             'telegram_chat_id' => $userRow['telegram_chat_id'] ?? null,
             'telegram_username' => $userRow['telegram_username'] ?? null,
         ];
-        $cashbackTransactionsRaw = (new CashbackTransaction())->getEarnedForUser((int) $userId);
-        $cashbackTransactions = array_map(function (array $row): array {
-            $createdAt = $this->formatDateTime($row['created_at'] ?? null);
-            return [
-                'id' => (int) ($row['id'] ?? 0),
-                'order_id' => (int) ($row['order_id'] ?? 0),
-                'amount' => (int) ($row['amount'] ?? 0),
-                'description' => (string) ($row['description'] ?? ''),
-                'created_at' => $createdAt ?: '—',
-            ];
-        }, $cashbackTransactionsRaw);
-
         $addresses = $this->addressModel->getByUserId($userId);
         $deliveryZoneModel = new DeliveryZone();
 
@@ -146,11 +134,11 @@ class AccountController extends Controller
             'deliveryPricingVersion',
             'dadataConfig',
             'testAddresses',
+            'telegramBotUsername',
             'auctionParticipationActive',
             'auctionParticipationHistory',
             'lotteryParticipationActive',
-            'lotteryParticipationHistory',
-            'cashbackTransactions'
+            'lotteryParticipationHistory'
         ));
     }
 
