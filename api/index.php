@@ -666,7 +666,7 @@ function buildAppBaseUrl(): string
 function sendEmailVerificationLink(string $email, string $link): bool
 {
     $settings = new Setting();
-    $defaults = $settings->getSmtpDefaults();
+    $defaults = $settings->getMailDefaults();
     $mailConfig = [
         'host' => $settings->get(Setting::SMTP_HOST, $defaults[Setting::SMTP_HOST] ?? ''),
         'port' => $settings->get(Setting::SMTP_PORT, $defaults[Setting::SMTP_PORT] ?? '587'),
