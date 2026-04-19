@@ -615,13 +615,25 @@
             let isDragging = false;
             let activePointerId = null;
             let startX = 0;
+            let lastX = 0;
             let startScrollLeft = 0;
             let movedDistance = 0;
+            let dragActivated = false;
             let dragBound = false;
             let isSnapTrack = false;
             let lastMoveTs = 0;
             let velocityX = 0;
             let momentumFrame = null;
+            const dragStartThreshold = 6;
+
+            const isInteractiveTarget = (target) => {
+                if (!(target instanceof Element)) return false;
+                return Boolean(
+                    target.closest(
+                        'button, a, input, textarea, select, label, [contenteditable="true"], [data-product-modal-trigger], [data-add-to-cart], [data-attr-option], [data-qty], [data-qty-value], [data-no-drag-scroll]'
+                    )
+                );
+            };
 
             const stopMomentum = () => {
                 if (!momentumFrame) return;
@@ -648,24 +660,19 @@
                 if (!shouldHandle()) return;
                 if (event.button !== 0) return;
                 if (track.scrollWidth <= track.clientWidth) return;
+                if (isInteractiveTarget(event.target)) return;
 
                 stopMomentum();
                 isDragging = true;
                 activePointerId = event.pointerId;
                 startX = event.clientX;
+                lastX = event.clientX;
                 startScrollLeft = track.scrollLeft;
                 movedDistance = 0;
+                dragActivated = false;
                 velocityX = 0;
                 lastMoveTs = event.timeStamp;
                 isSnapTrack = track.classList.contains('snap-x') || track.hasAttribute('data-home-products-track');
-                if (isSnapTrack) {
-                    track.classList.add('snap-none');
-                }
-                track.classList.add('cursor-grabbing', 'select-none');
-                if (track.setPointerCapture) {
-                    track.setPointerCapture(event.pointerId);
-                }
-                event.preventDefault();
             };
 
             const onPointerMove = (event) => {
@@ -673,10 +680,27 @@
                 if (activePointerId !== null && event.pointerId !== activePointerId) return;
                 const delta = event.clientX - startX;
                 movedDistance = Math.max(movedDistance, Math.abs(delta));
+
+                if (!dragActivated && movedDistance < dragStartThreshold) {
+                    return;
+                }
+
+                if (!dragActivated) {
+                    dragActivated = true;
+                    if (isSnapTrack) {
+                        track.classList.add('snap-none');
+                    }
+                    track.classList.add('cursor-grabbing', 'select-none');
+                    if (track.setPointerCapture) {
+                        track.setPointerCapture(event.pointerId);
+                    }
+                }
+
                 track.scrollLeft = startScrollLeft - delta;
 
                 const timeDelta = Math.max(1, event.timeStamp - lastMoveTs);
-                velocityX = (event.movementX || 0) / timeDelta;
+                velocityX = (event.clientX - lastX) / timeDelta;
+                lastX = event.clientX;
                 lastMoveTs = event.timeStamp;
                 event.preventDefault();
             };
@@ -685,15 +709,21 @@
                 if (!isDragging) return;
                 isDragging = false;
                 activePointerId = null;
+                const shouldContinueMomentum = dragActivated && movedDistance >= dragStartThreshold;
+                dragActivated = false;
                 track.classList.remove('cursor-grabbing', 'select-none');
                 if (isSnapTrack) {
                     track.classList.remove('snap-none');
                 }
-                runMomentum();
+                if (shouldContinueMomentum) {
+                    runMomentum();
+                } else {
+                    velocityX = 0;
+                }
             };
 
             const preventClickAfterDrag = (event) => {
-                if (movedDistance < 6) return;
+                if (movedDistance < dragStartThreshold) return;
                 event.preventDefault();
                 event.stopPropagation();
                 movedDistance = 0;
