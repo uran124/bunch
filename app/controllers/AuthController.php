@@ -96,6 +96,7 @@ class AuthController extends Controller
         $prefillName = '';
         $prefillPhone = '';
         $prefillEmail = '';
+        $emailCodeRequested = false;
         $consentPersonalChecked = false;
         $consentMarketingChecked = false;
 
@@ -103,6 +104,10 @@ class AuthController extends Controller
         if ($sessionVerification) {
             $stage = 'details';
             [$prefillName, $prefillPhone, $prefillEmail] = $this->getPrefillData($sessionVerification);
+        }
+
+        if (isset($_GET['resetEmailCode']) && $_GET['resetEmailCode'] === '1') {
+            Session::remove('register_email_code');
         }
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -125,6 +130,7 @@ class AuthController extends Controller
 
                     if ($this->sendRegistrationEmailCode($email, $emailCode)) {
                         $successMessage = 'Код отправлен на e-mail. Введите его ниже.';
+                        $emailCodeRequested = true;
                     } else {
                         $errors[] = 'Не удалось отправить код на почту. Проверьте SMTP настройки в админке.';
                     }
@@ -145,6 +151,7 @@ class AuthController extends Controller
 
                     if ($isExpired || !$emailMatches || !$codeMatches) {
                         $errors[] = 'Код не найден или устарел. Запросите новый код по e-mail.';
+                        $emailCodeRequested = true;
                     } else {
                         $data = [
                             'chat_id' => null,
@@ -280,6 +287,14 @@ class AuthController extends Controller
             }
         }
 
+        if ($stage === 'code' && !$emailCodeRequested) {
+            $emailVerification = Session::get('register_email_code');
+            if ($emailVerification && time() <= (int) ($emailVerification['expires_at'] ?? 0)) {
+                $prefillEmail = $prefillEmail !== '' ? $prefillEmail : (string) ($emailVerification['email'] ?? '');
+                $emailCodeRequested = true;
+            }
+        }
+
         $this->render('register', [
             'errors' => $errors,
             'successMessage' => $successMessage,
@@ -289,6 +304,7 @@ class AuthController extends Controller
             'prefillName' => $prefillName,
             'prefillPhone' => $prefillPhone,
             'prefillEmail' => $prefillEmail,
+            'emailCodeRequested' => $emailCodeRequested,
             'consentPersonalChecked' => $consentPersonalChecked,
             'consentMarketingChecked' => $consentMarketingChecked,
         ]);
