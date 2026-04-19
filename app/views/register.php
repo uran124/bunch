@@ -83,7 +83,7 @@
                                 <span>Регистрация через Telegram</span>
                             </div>
                             <p class="text-xs text-slate-600">Откройте бота, отправьте /start и введите код:</p>
-                            <a id="telegram-open-bot-link" href="https://t.me/<?php echo htmlspecialchars($botUsername ?? '', ENT_QUOTES, 'UTF-8'); ?>?start=register" target="_blank" rel="noopener noreferrer" class="hidden inline-flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2 text-xs font-semibold text-white">
+                            <a id="telegram-open-bot-link" href="https://t.me/<?php echo htmlspecialchars($botUsername ?? '', ENT_QUOTES, 'UTF-8'); ?>?start=register" target="_blank" rel="noopener noreferrer" class="hidden items-center gap-2 rounded-xl bg-rose-600 px-4 py-2 text-xs font-semibold text-white lg:hidden">
                                 <span class="material-symbols-rounded text-sm">send</span> Открыть бота
                             </a>
                             <form id="telegram-code-form" method="POST" action="/register" class="mt-2">
@@ -324,6 +324,7 @@
         if (telegramOpenBotLink && telegramQrLink) {
             const isSmartphone = window.matchMedia('(max-width: 767px), (pointer: coarse)').matches;
             telegramOpenBotLink.classList.toggle('hidden', !isSmartphone);
+            telegramOpenBotLink.classList.toggle('inline-flex', isSmartphone);
             telegramQrLink.classList.toggle('hidden', isSmartphone);
         }
 
