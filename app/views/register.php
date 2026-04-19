@@ -40,7 +40,7 @@
                 <div class="rounded-2xl border border-rose-100 bg-white/90 backdrop-blur-sm p-4 shadow-sm">
                     <div class="flex items-center gap-2 text-sm font-semibold text-slate-900">
                         <span class="material-symbols-rounded text-base text-rose-600">alternate_email</span>
-                        <span>Альтернативная регистрация через e-mail</span>
+                        <span>Регистрация через e-mail</span>
                     </div>
                     <form method="POST" action="/register" class="mt-3 grid gap-2" id="email-code-request-form">
                         <input type="hidden" name="step" value="request_email_code">
@@ -72,37 +72,41 @@
                 </div>
 
                 <div class="rounded-2xl border border-rose-100 bg-white/90 backdrop-blur-sm p-4 shadow-sm">
-                    <div class="space-y-2">
-                        <div class="flex items-center gap-2 text-sm font-semibold text-slate-900">
-                            <span class="inline-flex h-5 w-5 items-center justify-center rounded-full bg-[#24A1DE]">
-                                <svg viewBox="0 0 24 24" class="h-3.5 w-3.5 fill-white" aria-hidden="true">
-                                    <path d="M21.6 4.8a1 1 0 0 0-1-.14L3.2 11.6a1 1 0 0 0 .08 1.88l3.9 1.3 1.42 4.43a1 1 0 0 0 1.73.31l2.17-2.65 3.72 2.74a1 1 0 0 0 1.56-.62l3.1-13.13a1 1 0 0 0-.3-1.12ZM8.5 14.04l8.08-5.25-6.14 6.7-.2 2.5-1.74-3.95Z"></path>
-                                </svg>
-                            </span>
-                            <span>Регистрация через Telegram</span>
+                    <div class="grid gap-3 lg:grid-cols-[1fr_auto] lg:items-start">
+                        <div class="space-y-2">
+                            <div class="flex items-center gap-2 text-sm font-semibold text-slate-900">
+                                <span class="inline-flex h-5 w-5 items-center justify-center rounded-full bg-[#24A1DE]">
+                                    <svg viewBox="0 0 24 24" class="h-3.5 w-3.5 fill-white" aria-hidden="true">
+                                        <path d="M21.6 4.8a1 1 0 0 0-1-.14L3.2 11.6a1 1 0 0 0 .08 1.88l3.9 1.3 1.42 4.43a1 1 0 0 0 1.73.31l2.17-2.65 3.72 2.74a1 1 0 0 0 1.56-.62l3.1-13.13a1 1 0 0 0-.3-1.12ZM8.5 14.04l8.08-5.25-6.14 6.7-.2 2.5-1.74-3.95Z"></path>
+                                    </svg>
+                                </span>
+                                <span>Регистрация через Telegram</span>
+                            </div>
+                            <p class="text-xs text-slate-600">Откройте бота, отправьте /start и введите код:</p>
+                            <a id="telegram-open-bot-link" href="https://t.me/<?php echo htmlspecialchars($botUsername ?? '', ENT_QUOTES, 'UTF-8'); ?>?start=register" target="_blank" rel="noopener noreferrer" class="hidden inline-flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2 text-xs font-semibold text-white">
+                                <span class="material-symbols-rounded text-sm">send</span> Открыть бота
+                            </a>
+                            <form id="telegram-code-form" method="POST" action="/register" class="mt-2">
+                                <input type="hidden" name="step" value="verify_code">
+                                <input
+                                    type="text"
+                                    id="code"
+                                    name="code"
+                                    maxlength="5"
+                                    pattern="\d{5}"
+                                    class="w-full rounded-xl border border-rose-200 bg-white px-3 py-2.5 text-center text-lg font-bold tracking-[0.25em] text-slate-900 outline-none transition focus:border-rose-600"
+                                    placeholder="• • • • •"
+                                    required
+                                    inputmode="numeric"
+                                    autocomplete="one-time-code"
+                                >
+                            </form>
                         </div>
-                        <p class="text-xs text-slate-600">Откройте бота, отправьте /start и введите код:</p>
-                        <a id="telegram-open-bot-link" href="https://t.me/<?php echo htmlspecialchars($botUsername ?? '', ENT_QUOTES, 'UTF-8'); ?>?start=register" target="_blank" rel="noopener noreferrer" class="hidden inline-flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2 text-xs font-semibold text-white">
-                            <span class="material-symbols-rounded text-sm">send</span> Открыть бота
-                        </a>
-                        <a id="telegram-qr-link" href="https://t.me/<?php echo htmlspecialchars($botUsername ?? '', ENT_QUOTES, 'UTF-8'); ?>?start=register" target="_blank" rel="noopener noreferrer" class="hidden w-fit rounded-xl border border-rose-200 bg-white p-2">
-                            <img src="/assets/images/bfb_qr.svg" alt="QR-код для открытия Telegram бота" class="h-28 w-28">
-                        </a>
-                        <form id="telegram-code-form" method="POST" action="/register" class="mt-2">
-                            <input type="hidden" name="step" value="verify_code">
-                            <input
-                                type="text"
-                                id="code"
-                                name="code"
-                                maxlength="5"
-                                pattern="\d{5}"
-                                class="w-full rounded-xl border border-rose-200 bg-white px-3 py-2.5 text-center text-lg font-bold tracking-[0.25em] text-slate-900 outline-none transition focus:border-rose-600"
-                                placeholder="• • • • •"
-                                required
-                                inputmode="numeric"
-                                autocomplete="one-time-code"
-                            >
-                        </form>
+                        <div class="flex justify-center lg:justify-end">
+                            <a id="telegram-qr-link" href="https://t.me/<?php echo htmlspecialchars($botUsername ?? '', ENT_QUOTES, 'UTF-8'); ?>?start=register" target="_blank" rel="noopener noreferrer" class="hidden w-fit rounded-xl border border-rose-200 bg-white p-2">
+                                <img src="/assets/images/bfb_qr.svg" alt="QR-код для открытия Telegram бота" class="h-28 w-28 lg:h-36 lg:w-36">
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
