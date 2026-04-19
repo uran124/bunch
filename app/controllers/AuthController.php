@@ -232,6 +232,10 @@ class AuthController extends Controller
                     if ($phone === '') {
                         $errors[] = 'Укажите номер телефона.';
                     }
+                    $phoneDigits = preg_replace('/\D+/', '', $phone);
+                    if ($phone !== '' && (empty($phoneDigits) || strlen($phoneDigits) < 10)) {
+                        $errors[] = 'Укажите корректный номер телефона.';
+                    }
 
                     if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
                         $errors[] = 'Укажите корректный email или оставьте поле пустым.';
