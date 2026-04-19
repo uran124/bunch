@@ -615,33 +615,45 @@
     }
 
     function initDesktopDragScroll() {
-        const desktopMedia = window.matchMedia('(min-width: 1024px)');
-        const shouldHandle = () => desktopMedia.matches;
+        const finePointerMedia = window.matchMedia('(hover: hover) and (pointer: fine)');
+        const shouldHandle = () => finePointerMedia.matches;
 
         document.querySelectorAll('[data-desktop-drag-scroll]').forEach((track) => {
             let isDragging = false;
+            let activePointerId = null;
             let startX = 0;
             let startScrollLeft = 0;
             let movedDistance = 0;
             let wheelBound = false;
             let dragBound = false;
+            let isSnapTrack = false;
 
             const onWheel = (event) => {
                 if (!shouldHandle()) return;
-                if (Math.abs(event.deltaY) < Math.abs(event.deltaX)) return;
+                if (track.scrollWidth <= track.clientWidth) return;
+                const horizontalDelta = Math.abs(event.deltaX) > Math.abs(event.deltaY)
+                    ? event.deltaX
+                    : event.deltaY;
+                if (Math.abs(horizontalDelta) < 0.5) return;
                 event.preventDefault();
-                track.scrollLeft += event.deltaY;
+                track.scrollLeft += horizontalDelta * 0.9;
             };
 
             const onPointerDown = (event) => {
                 if (!shouldHandle()) return;
                 if (event.button !== 0) return;
+                if (event.pointerType && event.pointerType !== 'mouse') return;
                 if (track.scrollWidth <= track.clientWidth) return;
 
                 isDragging = true;
+                activePointerId = event.pointerId;
                 startX = event.clientX;
                 startScrollLeft = track.scrollLeft;
                 movedDistance = 0;
+                isSnapTrack = track.classList.contains('snap-x');
+                if (isSnapTrack) {
+                    track.classList.add('snap-none');
+                }
                 track.classList.add('cursor-grabbing', 'select-none');
                 if (track.setPointerCapture) {
                     track.setPointerCapture(event.pointerId);
@@ -651,6 +663,7 @@
 
             const onPointerMove = (event) => {
                 if (!isDragging) return;
+                if (activePointerId !== null && event.pointerId !== activePointerId) return;
                 const delta = event.clientX - startX;
                 movedDistance = Math.max(movedDistance, Math.abs(delta));
                 track.scrollLeft = startScrollLeft - delta;
@@ -660,7 +673,11 @@
             const stopDrag = () => {
                 if (!isDragging) return;
                 isDragging = false;
+                activePointerId = null;
                 track.classList.remove('cursor-grabbing', 'select-none');
+                if (isSnapTrack) {
+                    track.classList.remove('snap-none');
+                }
             };
 
             const preventClickAfterDrag = (event) => {
@@ -678,9 +695,8 @@
                 if (!dragBound) {
                     track.addEventListener('pointerdown', onPointerDown);
                     track.addEventListener('pointermove', onPointerMove);
-                    track.addEventListener('pointerup', stopDrag);
-                    track.addEventListener('pointercancel', stopDrag);
-                    track.addEventListener('pointerleave', stopDrag);
+                    window.addEventListener('pointerup', stopDrag);
+                    window.addEventListener('pointercancel', stopDrag);
                     track.addEventListener('click', preventClickAfterDrag, true);
                     dragBound = true;
                 }
@@ -696,9 +712,8 @@
                 if (dragBound) {
                     track.removeEventListener('pointerdown', onPointerDown);
                     track.removeEventListener('pointermove', onPointerMove);
-                    track.removeEventListener('pointerup', stopDrag);
-                    track.removeEventListener('pointercancel', stopDrag);
-                    track.removeEventListener('pointerleave', stopDrag);
+                    window.removeEventListener('pointerup', stopDrag);
+                    window.removeEventListener('pointercancel', stopDrag);
                     track.removeEventListener('click', preventClickAfterDrag, true);
                     dragBound = false;
                 }
@@ -714,10 +729,10 @@
             };
 
             syncByViewport();
-            if (typeof desktopMedia.addEventListener === 'function') {
-                desktopMedia.addEventListener('change', syncByViewport);
-            } else if (typeof desktopMedia.addListener === 'function') {
-                desktopMedia.addListener(syncByViewport);
+            if (typeof finePointerMedia.addEventListener === 'function') {
+                finePointerMedia.addEventListener('change', syncByViewport);
+            } else if (typeof finePointerMedia.addListener === 'function') {
+                finePointerMedia.addListener(syncByViewport);
             }
         });
     }
