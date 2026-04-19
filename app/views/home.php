@@ -145,10 +145,15 @@
 
                             <div class="space-y-2 md:space-y-3">
                                 <div class="flex items-center justify-between text-[11px] font-semibold text-slate-700 md:text-sm lg:text-xs">
-                                    <span class="inline-flex items-center gap-2">
-                                        <span class="material-symbols-rounded text-base">stacked_bar_chart</span>
-                                        <?php echo htmlspecialchars($qtyLabel, ENT_QUOTES, 'UTF-8'); ?>
-                                    </span>
+                                    <input
+                                        type="range"
+                                        min="1"
+                                        max="<?php echo $maxQty; ?>"
+                                        step="1"
+                                        value="1"
+                                        data-qty
+                                        class="range-slider mr-3 h-1.5 w-full appearance-none rounded-full bg-slate-200 accent-rose-500"
+                                    >
                                     <input
                                         type="number"
                                         min="1"
@@ -160,15 +165,6 @@
                                         class="w-16 rounded-lg bg-white px-2 py-1.5 text-base font-bold text-slate-900 shadow-inner shadow-rose-100/60 text-center md:text-xl lg:text-lg"
                                     >
                                 </div>
-                                <input
-                                    type="range"
-                                    min="1"
-                                    max="<?php echo $maxQty; ?>"
-                                    step="1"
-                                    value="1"
-                                    data-qty
-                                    class="range-slider h-1.5 w-full appearance-none rounded-full bg-slate-200 accent-rose-500"
-                                >
                                 <div class="hidden justify-between text-[11px] font-semibold uppercase tracking-wide text-slate-400 md:flex">
                                     <span>1</span>
                                     <span><?php echo $midQty; ?></span>
