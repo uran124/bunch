@@ -624,33 +624,47 @@
             let startX = 0;
             let startScrollLeft = 0;
             let movedDistance = 0;
-            let wheelBound = false;
             let dragBound = false;
             let isSnapTrack = false;
+            let lastMoveTs = 0;
+            let velocityX = 0;
+            let momentumFrame = null;
 
-            const onWheel = (event) => {
-                if (!shouldHandle()) return;
-                if (track.scrollWidth <= track.clientWidth) return;
-                const horizontalDelta = Math.abs(event.deltaX) > Math.abs(event.deltaY)
-                    ? event.deltaX
-                    : event.deltaY;
-                if (Math.abs(horizontalDelta) < 0.5) return;
-                event.preventDefault();
-                track.scrollLeft += horizontalDelta * 0.9;
+            const stopMomentum = () => {
+                if (!momentumFrame) return;
+                cancelAnimationFrame(momentumFrame);
+                momentumFrame = null;
+            };
+
+            const runMomentum = () => {
+                stopMomentum();
+                const minVelocity = 0.08;
+                const step = () => {
+                    if (Math.abs(velocityX) < minVelocity) {
+                        momentumFrame = null;
+                        return;
+                    }
+                    track.scrollLeft -= velocityX * 16;
+                    velocityX *= 0.92;
+                    momentumFrame = requestAnimationFrame(step);
+                };
+                momentumFrame = requestAnimationFrame(step);
             };
 
             const onPointerDown = (event) => {
                 if (!shouldHandle()) return;
                 if (event.button !== 0) return;
-                if (event.pointerType && event.pointerType !== 'mouse') return;
                 if (track.scrollWidth <= track.clientWidth) return;
 
+                stopMomentum();
                 isDragging = true;
                 activePointerId = event.pointerId;
                 startX = event.clientX;
                 startScrollLeft = track.scrollLeft;
                 movedDistance = 0;
-                isSnapTrack = track.classList.contains('snap-x');
+                velocityX = 0;
+                lastMoveTs = event.timeStamp;
+                isSnapTrack = track.classList.contains('snap-x') || track.hasAttribute('data-home-products-track');
                 if (isSnapTrack) {
                     track.classList.add('snap-none');
                 }
@@ -667,6 +681,10 @@
                 const delta = event.clientX - startX;
                 movedDistance = Math.max(movedDistance, Math.abs(delta));
                 track.scrollLeft = startScrollLeft - delta;
+
+                const timeDelta = Math.max(1, event.timeStamp - lastMoveTs);
+                velocityX = (event.movementX || 0) / timeDelta;
+                lastMoveTs = event.timeStamp;
                 event.preventDefault();
             };
 
@@ -678,6 +696,7 @@
                 if (isSnapTrack) {
                     track.classList.remove('snap-none');
                 }
+                runMomentum();
             };
 
             const preventClickAfterDrag = (event) => {
@@ -688,10 +707,6 @@
             };
 
             const bindDesktopInteractions = () => {
-                if (!wheelBound) {
-                    track.addEventListener('wheel', onWheel, { passive: false });
-                    wheelBound = true;
-                }
                 if (!dragBound) {
                     track.addEventListener('pointerdown', onPointerDown);
                     track.addEventListener('pointermove', onPointerMove);
@@ -705,10 +720,7 @@
 
             const unbindDesktopInteractions = () => {
                 stopDrag();
-                if (wheelBound) {
-                    track.removeEventListener('wheel', onWheel);
-                    wheelBound = false;
-                }
+                stopMomentum();
                 if (dragBound) {
                     track.removeEventListener('pointerdown', onPointerDown);
                     track.removeEventListener('pointermove', onPointerMove);
