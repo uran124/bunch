@@ -337,8 +337,6 @@ class AuthController extends Controller
                         $errors[] = 'Пользователь с таким номером не найден.';
                     } elseif (empty($user['telegram_chat_id'])) {
                         $errors[] = 'Для этого номера нет привязки к Telegram. Напишите боту, чтобы связать аккаунт.';
-                    } elseif (!$this->telegram) {
-                        $errors[] = 'Отправка кода временно недоступна.';
                     } else {
                         $chatId = (int) $user['telegram_chat_id'];
                         $username = $user['telegram_username'] ?? null;
@@ -361,12 +359,30 @@ class AuthController extends Controller
                         $this->analytics->track('tg_code_sent', ['purpose' => 'recover', 'user_id' => $user['id']]);
 
                         $safeCode = $this->formatTelegramCode($code);
-                        $this->telegram->sendMessage($chatId, "Код для смены PIN: {$safeCode}\nВведите его на странице восстановления на сайте.", [
-                            'parse_mode' => 'HTML',
-                            'skip_log' => true,
-                        ]);
+                        $sentToTelegram = false;
+                        if ($this->telegram) {
+                            $this->telegram->sendMessage($chatId, "Код для смены PIN: {$safeCode}\nВведите его на странице восстановления на сайте.", [
+                                'parse_mode' => 'HTML',
+                                'skip_log' => true,
+                            ]);
+                            $sentToTelegram = true;
+                        }
 
-                        $successMessage = 'Одноразовый код отправлен в Telegram.';
+                        $sentToEmail = false;
+                        $email = trim((string) ($user['email'] ?? ''));
+                        if ($email !== '' && filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                            $sentToEmail = $this->sendRecoveryEmailCode($email, $code);
+                        }
+
+                        if ($sentToTelegram && $sentToEmail) {
+                            $successMessage = 'Одноразовый код отправлен в Telegram и на e-mail.';
+                        } elseif ($sentToTelegram) {
+                            $successMessage = 'Одноразовый код отправлен в Telegram.';
+                        } elseif ($sentToEmail) {
+                            $successMessage = 'Одноразовый код отправлен на e-mail.';
+                        } else {
+                            $errors[] = 'Отправка кода временно недоступна.';
+                        }
                     }
                 }
 
@@ -533,6 +549,40 @@ class AuthController extends Controller
         }
 
         return $sent;
+    }
+
+    private function sendRecoveryEmailCode(string $email, string $code): bool
+    {
+        $mailConfig = $this->buildMailConfig();
+        $mailer = new Mailer($mailConfig);
+        $subject = 'Код восстановления PIN · Bunch flowers';
+        $body = implode("\n", [
+            'Здравствуйте!',
+            '',
+            "Ваш код для восстановления PIN: {$code}",
+            'Код действует 15 минут.',
+            '',
+            'Если вы не запрашивали восстановление, просто проигнорируйте письмо.',
+            '',
+            'С уважением,',
+            'Bunch flowers',
+            'https://bunchflowers.ru',
+        ]);
+
+        $sent = $mailer->send($email, $subject, $body);
+        if (!$sent) {
+            return false;
+        }
+
+        $user = $this->userModel->findByEmail($email);
+        if ($user) {
+            $notificationLog = new NotificationLog();
+            $notificationLog->appendForUser((int) $user['id'], 'На e-mail отправлен код восстановления PIN.', [
+                'source' => 'email',
+            ]);
+        }
+
+        return true;
     }
 
     private function buildMailConfig(): array
