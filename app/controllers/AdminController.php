@@ -932,6 +932,7 @@ class AdminController extends Controller
         $tierQty = $_POST['tier_min_qty'] ?? [];
         $tierPrice = $_POST['tier_price'] ?? [];
         $attributeIds = array_filter(array_map('intval', $_POST['attribute_ids'] ?? []));
+        $attributeValueIds = array_filter(array_map('intval', $_POST['attribute_value_ids'] ?? []));
 
         $supplyModel = new Supply();
         $supply = $supplyModel->findById($supplyId);
@@ -976,6 +977,7 @@ class AdminController extends Controller
         ];
 
         $productModel = new Product();
+        $attributeValueIds = $productModel->filterStemAttributeValueIds($attributeIds, $attributeValueIds);
 
         if ($productId > 0) {
             $productModel->updateProduct($productId, $payload);
@@ -995,6 +997,7 @@ class AdminController extends Controller
 
         $productModel->setPriceTiers($productId, $tiers);
         $productModel->setAttributes($productId, $attributeIds);
+        $productModel->setAttributeValueIds($productId, $attributeValueIds);
         $this->syncSupplyCardStatus($supplyId, $productType, $active);
 
         header('Location: /admin-product-form?status=saved&edit_id=' . $productId);
@@ -1062,6 +1065,7 @@ class AdminController extends Controller
 
         $productModel = new Product();
         $product = $productModel->getById($productId);
+        $attributeModel = new AttributeModel();
         if (!$product) {
             http_response_code(404);
             echo json_encode(['ok' => false, 'error' => 'Товар не найден'], JSON_UNESCAPED_UNICODE);
@@ -1079,6 +1083,16 @@ class AdminController extends Controller
                 'photo_url_secondary' => (string) ($product['photo_url_secondary'] ?? ''),
                 'photo_url_tertiary' => (string) ($product['photo_url_tertiary'] ?? ''),
                 'price_tiers' => $productModel->getPriceTiers($productId),
+                'attribute_ids' => $productModel->getAttributeIds($productId),
+                'attribute_value_ids' => $productModel->getAttributeValueIds($productId),
+                'stem_attributes' => array_values(array_map(static function (array $attribute): array {
+                    $attribute['values'] = array_values(array_filter($attribute['values'] ?? [], static function (array $value): bool {
+                        return (int) ($value['is_active'] ?? 0) === 1;
+                    }));
+                    return $attribute;
+                }, array_filter($attributeModel->getAllWithValues(), static function (array $attribute): bool {
+                    return (int) ($attribute['is_active'] ?? 0) === 1 && ($attribute['applies_to'] ?? 'stem') === 'stem';
+                }))),
             ],
         ], JSON_UNESCAPED_UNICODE);
     }
@@ -1112,6 +1126,19 @@ class AdminController extends Controller
         $description = trim((string) ($_POST['description'] ?? ''));
         $basePrice = max(0, (int) floor((float) ($_POST['base_price'] ?? 0)));
         $priceTiersRaw = (string) ($_POST['price_tiers'] ?? '[]');
+        $attributeIds = array_filter(array_map('intval', $_POST['attribute_ids'] ?? []));
+        $attributeValueIds = array_filter(array_map('intval', $_POST['attribute_value_ids'] ?? []));
+        $attributeModel = new AttributeModel();
+        $existingNonStemAttributeIds = [];
+        foreach ($productModel->getAttributeIds($productId) as $existingAttributeId) {
+            $attribute = $attributeModel->getById((int) $existingAttributeId);
+            if ($attribute && ($attribute['applies_to'] ?? 'stem') !== 'stem') {
+                $existingNonStemAttributeIds[] = (int) $existingAttributeId;
+            }
+        }
+
+        $attributeIds = array_values(array_unique(array_merge($attributeIds, $existingNonStemAttributeIds)));
+        $attributeValueIds = $productModel->filterStemAttributeValueIds($attributeIds, $attributeValueIds);
         $priceTiersDecoded = json_decode($priceTiersRaw, true);
         $priceTiers = [];
         $minQtyMap = [];
@@ -1165,6 +1192,8 @@ class AdminController extends Controller
             'photo_url_tertiary' => $tertiaryPhoto,
         ]);
         $productModel->setPriceTiers($productId, $priceTiers);
+        $productModel->setAttributes($productId, $attributeIds);
+        $productModel->setAttributeValueIds($productId, $attributeValueIds);
 
         echo json_encode([
             'ok' => true,
@@ -1177,6 +1206,8 @@ class AdminController extends Controller
                 'photo_url_secondary' => $secondaryPhoto,
                 'photo_url_tertiary' => $tertiaryPhoto,
                 'price_tiers' => $priceTiers,
+                'attribute_ids' => $attributeIds,
+                'attribute_value_ids' => array_values($attributeValueIds),
             ],
         ], JSON_UNESCAPED_UNICODE);
     }

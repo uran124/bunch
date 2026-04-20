@@ -22,6 +22,7 @@ DROP TABLE IF EXISTS orders;
 DROP TABLE IF EXISTS cart_items;
 DROP TABLE IF EXISTS carts;
 DROP TABLE IF EXISTS product_price_tiers;
+DROP TABLE IF EXISTS product_attribute_values;
 DROP TABLE IF EXISTS product_attributes;
 DROP TABLE IF EXISTS attribute_values;
 DROP TABLE IF EXISTS attributes;
@@ -964,6 +965,22 @@ CREATE TABLE product_attributes (
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE product_attribute_values (
+  product_id INT UNSIGNED NOT NULL,
+  CONSTRAINT fk_product_attribute_values_product
+    FOREIGN KEY (product_id) REFERENCES products(id)
+    ON DELETE CASCADE,
+
+  attribute_value_id INT UNSIGNED NOT NULL,
+  CONSTRAINT fk_product_attribute_values_value
+    FOREIGN KEY (attribute_value_id) REFERENCES attribute_values(id)
+    ON DELETE CASCADE,
+
+  PRIMARY KEY (product_id, attribute_value_id)
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE product_price_tiers (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
@@ -1024,6 +1041,10 @@ INSERT INTO product_attributes (product_id, attribute_id) VALUES
   (1, 1),
   (1, 2),
   (2, 2);
+
+INSERT INTO product_attribute_values (product_id, attribute_value_id) VALUES
+  (1, 1),
+  (1, 2);
 
 INSERT INTO product_price_tiers (product_id, min_qty, price) VALUES
   (1, 15, 82),

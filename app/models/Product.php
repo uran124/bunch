@@ -79,6 +79,7 @@ class Product extends Model
         foreach ($products as &$product) {
             $product['price_tiers'] = $this->getPriceTiers((int) $product['id']);
             $product['attribute_ids'] = $this->getAttributeIds((int) $product['id']);
+            $product['attribute_value_ids'] = $this->getAttributeValueIds((int) $product['id']);
             $product['supply_next_delivery'] = $this->calculateNextDeliveryDate($product);
         }
 
@@ -125,6 +126,7 @@ class Product extends Model
 
         $row['price_tiers'] = $this->getPriceTiers($id);
         $row['attribute_ids'] = $this->getAttributeIds($id);
+        $row['attribute_value_ids'] = $this->getAttributeValueIds($id);
 
         return $row;
     }
@@ -449,6 +451,43 @@ class Product extends Model
         }
     }
 
+    public function setAttributeValueIds(int $productId, array $valueIds): void
+    {
+        $this->db->prepare('DELETE FROM product_attribute_values WHERE product_id = :product_id')->execute(['product_id' => $productId]);
+
+        if (!$valueIds) {
+            return;
+        }
+
+        $stmt = $this->db->prepare('INSERT INTO product_attribute_values (product_id, attribute_value_id) VALUES (:product_id, :attribute_value_id)');
+        foreach ($valueIds as $valueId) {
+            $stmt->execute([
+                'product_id' => $productId,
+                'attribute_value_id' => $valueId,
+            ]);
+        }
+    }
+
+    public function filterStemAttributeValueIds(array $attributeIds, array $valueIds): array
+    {
+        $attributeIds = array_values(array_unique(array_map('intval', $attributeIds)));
+        $valueIds = array_values(array_unique(array_map('intval', $valueIds)));
+        if (!$attributeIds || !$valueIds) {
+            return [];
+        }
+
+        $attributePlaceholders = implode(',', array_fill(0, count($attributeIds), '?'));
+        $valuePlaceholders = implode(',', array_fill(0, count($valueIds), '?'));
+        $sql = "SELECT av.id
+            FROM attribute_values av
+            INNER JOIN attributes a ON a.id = av.attribute_id
+            WHERE av.id IN ($valuePlaceholders) AND av.attribute_id IN ($attributePlaceholders) AND a.applies_to = 'stem'";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute(array_merge($valueIds, $attributeIds));
+
+        return array_map('intval', array_column($stmt->fetchAll(), 'id'));
+    }
+
     public function setPriceTiers(int $productId, array $tiers): void
     {
         $this->db->prepare('DELETE FROM product_price_tiers WHERE product_id = :product_id')->execute(['product_id' => $productId]);
@@ -500,6 +539,19 @@ class Product extends Model
         }
     }
 
+    public function getAttributeValueIds(int $productId): array
+    {
+        try {
+            $stmt = $this->db->prepare('SELECT attribute_value_id FROM product_attribute_values WHERE product_id = :product_id');
+            $stmt->execute(['product_id' => $productId]);
+
+            return array_map('intval', array_column($stmt->fetchAll(), 'attribute_value_id'));
+        } catch (\PDOException $exception) {
+            error_log('Failed to load product attribute value ids: ' . $exception->getMessage());
+            return [];
+        }
+    }
+
     public function getAttributesWithValues(int $productId): array
     {
         $sql = 'SELECT a.* FROM attributes a JOIN product_attributes pa ON pa.attribute_id = a.id WHERE pa.product_id = :product_id AND a.is_active = 1 ORDER BY a.name ASC';
@@ -519,16 +571,61 @@ class Product extends Model
         $valuesStmt->execute($attributeIds);
         $values = $valuesStmt->fetchAll();
 
+        $allowedStemValueMap = $this->getAllowedStemValueMap($productId);
         $grouped = [];
         foreach ($values as $value) {
             $grouped[$value['attribute_id']][] = $value;
         }
 
         foreach ($attributes as &$attribute) {
-            $attribute['values'] = $grouped[$attribute['id']] ?? [];
+            $attributeValues = $grouped[$attribute['id']] ?? [];
+            if (($attribute['applies_to'] ?? 'stem') === 'stem' && isset($allowedStemValueMap[(int) $attribute['id']])) {
+                $allowedValues = $allowedStemValueMap[(int) $attribute['id']];
+                $attributeValues = array_values(array_filter($attributeValues, static function (array $value) use ($allowedValues): bool {
+                    return isset($allowedValues[(int) ($value['id'] ?? 0)]);
+                }));
+            }
+            $attribute['values'] = $attributeValues;
         }
 
-        return $attributes;
+        return array_values(array_filter($attributes, static function (array $attribute): bool {
+            return !empty($attribute['values']);
+        }));
+    }
+
+    private function getAllowedStemValueMap(int $productId): array
+    {
+        try {
+            $stmt = $this->db->prepare(
+                'SELECT av.attribute_id, pav.attribute_value_id
+                FROM product_attribute_values pav
+                INNER JOIN attribute_values av ON av.id = pav.attribute_value_id
+                INNER JOIN attributes a ON a.id = av.attribute_id
+                WHERE pav.product_id = :product_id AND a.applies_to = :applies_to'
+            );
+            $stmt->execute([
+                'product_id' => $productId,
+                'applies_to' => 'stem',
+            ]);
+
+            $map = [];
+            foreach ($stmt->fetchAll() as $row) {
+                $attributeId = (int) ($row['attribute_id'] ?? 0);
+                $valueId = (int) ($row['attribute_value_id'] ?? 0);
+                if ($attributeId <= 0 || $valueId <= 0) {
+                    continue;
+                }
+                if (!isset($map[$attributeId])) {
+                    $map[$attributeId] = [];
+                }
+                $map[$attributeId][$valueId] = true;
+            }
+
+            return $map;
+        } catch (\PDOException $exception) {
+            error_log('Failed to load product allowed stem attribute values: ' . $exception->getMessage());
+            return [];
+        }
     }
 
 }

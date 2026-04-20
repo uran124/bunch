@@ -221,15 +221,37 @@
                     <p class="text-sm font-semibold text-slate-800">Атрибуты для товара</p>
                     <div class="grid gap-2 md:grid-cols-2">
                         <?php foreach ($attributes as $attribute): ?>
-                            <label class="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700">
-                                <span><?php echo htmlspecialchars($attribute['name'], ENT_QUOTES, 'UTF-8'); ?></span>
-                                <span class="relative inline-flex items-center">
-                                    <input type="checkbox" name="attribute_ids[]" value="<?php echo (int) $attribute['id']; ?>" class="peer sr-only" <?php echo $editingProduct && in_array((int) $attribute['id'], $editingProduct['attribute_ids'] ?? [], true) ? 'checked' : ''; ?>>
-                                    <span class="inline-flex h-6 w-11 items-center rounded-full border border-slate-200 bg-slate-100 transition peer-checked:border-emerald-500 peer-checked:bg-emerald-500">
-                                        <span class="inline-block h-5 w-5 translate-x-0.5 rounded-full bg-white shadow transition peer-checked:translate-x-5"></span>
+                            <?php $isStemAttribute = ($attribute['applies_to'] ?? 'stem') === 'stem'; ?>
+                            <div class="rounded-lg border border-slate-200 bg-white px-3 py-2" data-attribute-card>
+                                <label class="flex items-center justify-between gap-3 text-sm font-semibold text-slate-700">
+                                    <span><?php echo htmlspecialchars($attribute['name'], ENT_QUOTES, 'UTF-8'); ?></span>
+                                    <span class="relative inline-flex items-center">
+                                        <input type="checkbox" name="attribute_ids[]" value="<?php echo (int) $attribute['id']; ?>" class="peer sr-only" data-attribute-toggle <?php echo $editingProduct && in_array((int) $attribute['id'], $editingProduct['attribute_ids'] ?? [], true) ? 'checked' : ''; ?>>
+                                        <span class="inline-flex h-6 w-11 items-center rounded-full border border-slate-200 bg-slate-100 transition peer-checked:border-emerald-500 peer-checked:bg-emerald-500">
+                                            <span class="inline-block h-5 w-5 translate-x-0.5 rounded-full bg-white shadow transition peer-checked:translate-x-5"></span>
+                                        </span>
                                     </span>
-                                </span>
-                            </label>
+                                </label>
+                                <?php if ($isStemAttribute && !empty($attribute['values'])): ?>
+                                    <div class="mt-2 space-y-1.5" data-attribute-values>
+                                        <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">Доступные значения</p>
+                                        <div class="flex flex-wrap gap-1.5">
+                                            <?php foreach ($attribute['values'] as $value): ?>
+                                                <label class="inline-flex items-center gap-1.5 rounded-full border border-slate-200 px-2.5 py-1 text-xs font-semibold text-slate-600">
+                                                    <input
+                                                        type="checkbox"
+                                                        name="attribute_value_ids[]"
+                                                        value="<?php echo (int) $value['id']; ?>"
+                                                        class="h-3.5 w-3.5 rounded border-slate-300 text-emerald-600"
+                                                        <?php echo $editingProduct && in_array((int) $value['id'], $editingProduct['attribute_value_ids'] ?? [], true) ? 'checked' : ''; ?>
+                                                    >
+                                                    <?php echo htmlspecialchars($value['value'], ENT_QUOTES, 'UTF-8'); ?>
+                                                </label>
+                                            <?php endforeach; ?>
+                                        </div>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
                         <?php endforeach; ?>
                     </div>
                 </div>
@@ -315,6 +337,7 @@
     (function() {
         const addTierBtn = document.getElementById('add-tier');
         const tierContainer = document.getElementById('tier-fields');
+        const attributeCards = document.querySelectorAll('[data-attribute-card]');
 
         const photoSlots = document.querySelectorAll('[data-photo-slot]');
         if (photoSlots.length > 0) {
@@ -366,6 +389,33 @@
                     }
                     updateState('');
                 });
+            });
+        }
+
+        if (!addTierBtn || !tierContainer) {
+            // keep attribute behavior even without tier block
+        }
+
+        if (attributeCards.length > 0) {
+            const syncAttributeValueState = (card) => {
+                const toggle = card.querySelector('[data-attribute-toggle]');
+                const valueCheckboxes = card.querySelectorAll('[name="attribute_value_ids[]"]');
+                if (!toggle || valueCheckboxes.length === 0) {
+                    return;
+                }
+
+                valueCheckboxes.forEach((checkbox) => {
+                    checkbox.disabled = !toggle.checked;
+                    if (!toggle.checked) {
+                        checkbox.checked = false;
+                    }
+                });
+            };
+
+            attributeCards.forEach((card) => {
+                const toggle = card.querySelector('[data-attribute-toggle]');
+                toggle?.addEventListener('change', () => syncAttributeValueState(card));
+                syncAttributeValueState(card);
             });
         }
 

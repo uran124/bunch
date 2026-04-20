@@ -92,6 +92,16 @@ class Cart
             throw new RuntimeException('Товар не найден или недоступен');
         }
 
+        $allowedValueIds = [];
+        foreach ($productModel->getAttributesWithValues($productId) as $attribute) {
+            foreach ($attribute['values'] ?? [] as $value) {
+                $allowedValueIds[(int) ($value['id'] ?? 0)] = true;
+            }
+        }
+        $attributeValueIds = array_values(array_filter($attributeValueIds, static function (int $valueId) use ($allowedValueIds): bool {
+            return isset($allowedValueIds[$valueId]);
+        }));
+
         $attributeDetails = $this->getAttributeDetails($attributeValueIds);
 
         $pricePerStem = (int) floor((float) $product['price']);
@@ -106,8 +116,6 @@ class Cart
         foreach ($attributeDetails as $attr) {
             if (($attr['applies_to'] ?? 'stem') === 'bouquet') {
                 $bouquetDelta += (int) floor((float) $attr['price_delta']);
-            } else {
-                $pricePerStem += (int) floor((float) $attr['price_delta']);
             }
         }
 
