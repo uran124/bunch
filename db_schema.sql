@@ -1037,10 +1037,20 @@ VALUES
   (1, 'Роза Rhodos', 'roza-rhodos', 'Классическая роза из стендинга, идеально для срезки.', 89, 'RHD-001', 'https://cdn.bunch.test/rhodos-card.jpg', 50, 45, 'Эквадор', 'main', 0, 1, 10),
   (2, 'Эвкалипт Cinerea', 'evkalipt-cinerea', 'Ароматный эвкалипт для букетов и декора.', 55, 'EVC-010', 'https://cdn.bunch.test/eucalyptus-card.jpg', 40, 28, 'Россия', 'main', 0, 1, 20);
 
-INSERT INTO product_attributes (product_id, attribute_id) VALUES
-  (1, 1),
-  (1, 2),
-  (2, 2);
+INSERT INTO product_attributes (product_id, attribute_id)
+SELECT p.id, a.id
+FROM products p
+INNER JOIN attributes a
+WHERE
+  (p.slug = 'roza-rhodos' AND a.name IN ('Высота стебля', 'Вид оформления'))
+  OR (p.slug = 'evkalipt-cinerea' AND a.name = 'Вид оформления');
+
+INSERT INTO product_attribute_values (product_id, attribute_value_id)
+SELECT p.id, av.id
+FROM products p
+INNER JOIN attributes a ON a.name = 'Высота стебля'
+INNER JOIN attribute_values av ON av.attribute_id = a.id
+WHERE p.slug = 'roza-rhodos' AND av.value IN ('40 см', '50 см');
 
 INSERT INTO product_attribute_values (product_id, attribute_value_id) VALUES
   (1, 1),
