@@ -192,6 +192,8 @@
                                                 <?php foreach ($attribute['values'] as $value): ?>
                                                     <?php
                                                     $priceDelta = (int) floor((float) $value['price_delta']);
+                                                    $appliesTo = $attribute['applies_to'] ?? 'stem';
+                                                    $showPriceDelta = $priceDelta !== 0 && $appliesTo === 'bouquet';
                                                     ?>
                                             <button
                                                         type="button"
@@ -203,7 +205,7 @@
                                                     aria-label="<?php echo htmlspecialchars($attribute['name'] . ': ' . $value['value'], ENT_QUOTES, 'UTF-8'); ?>"
                                                 >
                                                         <span class="text-xs font-semibold text-slate-800 md:text-sm lg:text-xs"><?php echo htmlspecialchars($value['value'], ENT_QUOTES, 'UTF-8'); ?></span>
-                                                        <?php if ($priceDelta !== 0): ?>
+                                                        <?php if ($showPriceDelta): ?>
                                                             <span class="text-xs font-semibold text-rose-600">+<?php echo $priceDelta; ?> ₽</span>
                                                         <?php endif; ?>
                                                     </button>
@@ -316,6 +318,14 @@
                     <button type="button" class="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700" data-price-tier-add>+ Добавить</button>
                 </div>
                 <div class="space-y-2" data-price-tiers></div>
+            </div>
+            <div class="space-y-2 rounded-2xl border border-slate-100 bg-slate-50 p-3" data-edit-stem-attributes>
+                <div class="flex items-center justify-between">
+                    <p class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">Ростовки по товару</p>
+                </div>
+                <div class="space-y-2 text-sm text-slate-700" data-edit-stem-attributes-body>
+                    <p class="text-xs text-slate-500">Атрибуты стебля не найдены.</p>
+                </div>
             </div>
             <div class="flex items-center justify-end gap-2 border-t border-slate-100 pt-4">
                 <button type="button" class="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700" data-product-edit-cancel>Отмена</button>
@@ -454,22 +464,17 @@
         const quantity = clampQuantity(Number(qtyValue?.value || qtyInput?.value || minQty), minQty, maxQty);
         const unitPrice = getUnitPrice(basePrice, tiers, quantity);
 
-        const deltas = Array.from(card.querySelectorAll('[data-attribute-group]')).reduce(
-            (acc, group) => {
-                const scope = group.dataset.appliesTo === 'bouquet' ? 'bouquet' : 'stem';
-                const delta = Math.floor(Number(group.dataset.selectedDelta || 0));
-                if (scope === 'bouquet') {
-                    acc.bouquet += delta;
-                } else {
-                    acc.stem += delta;
-                }
-                return acc;
-            },
-            { stem: 0, bouquet: 0 }
-        );
+        const deltas = Array.from(card.querySelectorAll('[data-attribute-group]')).reduce((acc, group) => {
+            const scope = group.dataset.appliesTo === 'bouquet' ? 'bouquet' : 'stem';
+            const delta = Math.floor(Number(group.dataset.selectedDelta || 0));
+            if (scope === 'bouquet') {
+                acc += delta;
+            }
+            return acc;
+        }, 0);
 
         const baseTotal = Math.floor(basePrice * quantity);
-        const actualTotal = Math.floor((unitPrice + deltas.stem) * quantity + deltas.bouquet);
+        const actualTotal = Math.floor((unitPrice * quantity) + deltas);
 
         if (qtyInput) qtyInput.value = quantity.toString();
         if (qtyValue) qtyValue.value = quantity.toString();
@@ -886,6 +891,7 @@
     const editModal = document.querySelector('[data-product-edit-modal]');
     const editForm = editModal?.querySelector('[data-product-edit-form]');
     const editTierWrap = editModal?.querySelector('[data-price-tiers]');
+    const editStemAttributesBody = editModal?.querySelector('[data-edit-stem-attributes-body]');
     const editPhotoButtons = editModal ? Array.from(editModal.querySelectorAll('[data-edit-photo-trigger]')) : [];
     const editPhotoInputs = editModal ? Array.from(editModal.querySelectorAll('[data-edit-photo-input]')) : [];
 
@@ -908,6 +914,59 @@
         editModal.classList.add('hidden');
         editModal.classList.remove('flex');
         document.body.style.overflow = '';
+    };
+
+    const renderStemAttributes = (product) => {
+        if (!editStemAttributesBody) return;
+        const selectedAttributeIds = new Set((product.attribute_ids || []).map((id) => Number(id)));
+        const selectedValueIds = new Set((product.attribute_value_ids || []).map((id) => Number(id)));
+        const stemAttributes = Array.isArray(product.stem_attributes) ? product.stem_attributes : [];
+
+        if (!stemAttributes.length) {
+            editStemAttributesBody.innerHTML = '<p class="text-xs text-slate-500">Атрибуты стебля не найдены.</p>';
+            return;
+        }
+
+        editStemAttributesBody.innerHTML = stemAttributes.map((attribute) => {
+            const attributeId = Number(attribute.id || 0);
+            const checked = selectedAttributeIds.has(attributeId) ? 'checked' : '';
+            const values = Array.isArray(attribute.values) ? attribute.values : [];
+            const valuesHtml = values.map((value) => {
+                const valueId = Number(value.id || 0);
+                const valueChecked = selectedValueIds.has(valueId) ? 'checked' : '';
+                return `
+                    <label class="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700">
+                        <input type="checkbox" value="${valueId}" data-edit-stem-value-id="${valueId}" data-parent-attribute-id="${attributeId}" class="h-3.5 w-3.5 rounded border-slate-300 text-rose-600" ${valueChecked}>
+                        ${String(value.value || '')}
+                    </label>
+                `;
+            }).join('');
+
+            return `
+                <div class="rounded-xl border border-slate-200 bg-white p-2.5" data-edit-stem-attribute-card data-attribute-id="${attributeId}">
+                    <label class="flex items-center justify-between gap-2 text-xs font-semibold text-slate-700">
+                        <span>${String(attribute.name || '')}</span>
+                        <input type="checkbox" value="${attributeId}" data-edit-stem-attribute-id="${attributeId}" class="h-4 w-4 rounded border-slate-300 text-rose-600" ${checked}>
+                    </label>
+                    <div class="mt-2 flex flex-wrap gap-1.5">${valuesHtml || '<span class="text-xs text-slate-500">Нет активных значений</span>'}</div>
+                </div>
+            `;
+        }).join('');
+
+        editStemAttributesBody.querySelectorAll('[data-edit-stem-attribute-card]').forEach((card) => {
+            const toggle = card.querySelector('[data-edit-stem-attribute-id]');
+            const values = card.querySelectorAll('[data-edit-stem-value-id]');
+            const sync = () => {
+                values.forEach((value) => {
+                    value.disabled = !toggle?.checked;
+                    if (!toggle?.checked) {
+                        value.checked = false;
+                    }
+                });
+            };
+            toggle?.addEventListener('change', sync);
+            sync();
+        });
     };
 
     const openEditModal = async (card) => {
@@ -937,6 +996,7 @@
                 editTierWrap.appendChild(createTierRow(tier));
             });
         }
+        renderStemAttributes(product);
         editModal.classList.remove('hidden');
         editModal.classList.add('flex');
         document.body.style.overflow = 'hidden';
@@ -981,6 +1041,13 @@
             price: Number(row.querySelector('[data-tier-price]')?.value || 0),
         })).filter((tier) => tier.min_qty >= 2);
         formData.set('price_tiers', JSON.stringify(tiers));
+
+        const selectedStemAttributeIds = Array.from(editModal?.querySelectorAll('[data-edit-stem-attribute-id]:checked') || []).map((input) => Number(input.value));
+        const selectedStemValueIds = Array.from(editModal?.querySelectorAll('[data-edit-stem-value-id]:checked') || []).map((input) => Number(input.value));
+        formData.delete('attribute_ids[]');
+        formData.delete('attribute_value_ids[]');
+        selectedStemAttributeIds.forEach((id) => formData.append('attribute_ids[]', String(id)));
+        selectedStemValueIds.forEach((id) => formData.append('attribute_value_ids[]', String(id)));
 
         const response = await fetch('/admin-product-quick-save', {
             method: 'POST',

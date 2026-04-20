@@ -6,35 +6,14 @@ class HomeController extends Controller
     public function index()
     {
         $productModel = new Product();
-        $attributeModel = new AttributeModel();
 
         $isWholesaleUser = $this->isWholesaleUser();
         $canModerateCatalog = $this->hasAnyRole('admin', 'manager');
         $products = $productModel->getMainCatalog($isWholesaleUser, $canModerateCatalog);
-        $attributes = $attributeModel->getAllWithValues();
-
-        $attributesById = [];
-        foreach ($attributes as $attribute) {
-            $attribute['values'] = array_values(array_filter(
-                $attribute['values'],
-                static fn ($value) => (int) ($value['is_active'] ?? 0) === 1
-            ));
-
-            if ((int) ($attribute['is_active'] ?? 0) === 1) {
-                $attributesById[$attribute['id']] = $attribute;
-            }
-        }
 
         foreach ($products as &$product) {
             $product['price_tiers'] = $productModel->getPriceTiers((int) $product['id']);
-            $attributeIds = $productModel->getAttributeIds((int) $product['id']);
-
-            $product['attributes'] = [];
-            foreach ($attributeIds as $attributeId) {
-                if (isset($attributesById[$attributeId])) {
-                    $product['attributes'][] = $attributesById[$attributeId];
-                }
-            }
+            $product['attributes'] = $productModel->getAttributesWithValues((int) $product['id']);
         }
         unset($product);
 
