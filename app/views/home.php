@@ -199,7 +199,7 @@
                                                         data-attr-id="<?php echo (int) $attribute['id']; ?>"
                                                         data-value-id="<?php echo (int) $value['id']; ?>"
                                                         data-price-delta="<?php echo $priceDelta; ?>"
-                                                        class="inline-flex items-center gap-2 whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600 md:text-sm lg:text-xs"
+                                                        class="inline-flex items-center gap-2 whitespace-nowrap rounded-xl bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-rose-50 hover:text-rose-600 hover:shadow-lg hover:shadow-rose-200/70 md:text-sm lg:text-xs"
                                                     aria-label="<?php echo htmlspecialchars($attribute['name'] . ': ' . $value['value'], ENT_QUOTES, 'UTF-8'); ?>"
                                                 >
                                                         <span class="text-xs font-semibold text-slate-800 md:text-sm lg:text-xs"><?php echo htmlspecialchars($value['value'], ENT_QUOTES, 'UTF-8'); ?></span>
@@ -429,12 +429,12 @@
         if (!group) return;
 
         group.querySelectorAll('[data-attr-option]').forEach((option) => {
-            option.classList.remove('border-rose-200', 'bg-rose-50', 'text-rose-700', 'shadow-md', 'attr-active');
-            option.classList.add('border-slate-200', 'bg-white', 'text-slate-700');
+            option.classList.remove('bg-rose-50', 'text-rose-700', 'shadow-md', 'attr-active');
+            option.classList.add('bg-white', 'text-slate-700');
         });
 
-        button.classList.remove('border-slate-200', 'bg-white', 'text-slate-700');
-        button.classList.add('border-rose-200', 'bg-rose-50', 'text-rose-700', 'shadow-md', 'attr-active');
+        button.classList.remove('bg-white', 'text-slate-700');
+        button.classList.add('bg-rose-50', 'text-rose-700', 'shadow-md', 'attr-active');
 
         group.dataset.selectedDelta = button.dataset.priceDelta || '0';
         group.dataset.selectedValue = button.dataset.valueId || '';
