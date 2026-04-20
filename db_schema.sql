@@ -22,6 +22,7 @@ DROP TABLE IF EXISTS orders;
 DROP TABLE IF EXISTS cart_items;
 DROP TABLE IF EXISTS carts;
 DROP TABLE IF EXISTS product_price_tiers;
+DROP TABLE IF EXISTS product_attribute_values;
 DROP TABLE IF EXISTS product_attributes;
 DROP TABLE IF EXISTS attribute_values;
 DROP TABLE IF EXISTS attributes;
@@ -964,6 +965,22 @@ CREATE TABLE product_attributes (
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE product_attribute_values (
+  product_id INT UNSIGNED NOT NULL,
+  CONSTRAINT fk_product_attribute_values_product
+    FOREIGN KEY (product_id) REFERENCES products(id)
+    ON DELETE CASCADE,
+
+  attribute_value_id INT UNSIGNED NOT NULL,
+  CONSTRAINT fk_product_attribute_values_value
+    FOREIGN KEY (attribute_value_id) REFERENCES attribute_values(id)
+    ON DELETE CASCADE,
+
+  PRIMARY KEY (product_id, attribute_value_id)
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE product_price_tiers (
   id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
@@ -1020,10 +1037,20 @@ VALUES
   (1, 'Роза Rhodos', 'roza-rhodos', 'Классическая роза из стендинга, идеально для срезки.', 89, 'RHD-001', 'https://cdn.bunch.test/rhodos-card.jpg', 50, 45, 'Эквадор', 'main', 0, 1, 10),
   (2, 'Эвкалипт Cinerea', 'evkalipt-cinerea', 'Ароматный эвкалипт для букетов и декора.', 55, 'EVC-010', 'https://cdn.bunch.test/eucalyptus-card.jpg', 40, 28, 'Россия', 'main', 0, 1, 20);
 
-INSERT INTO product_attributes (product_id, attribute_id) VALUES
-  (1, 1),
-  (1, 2),
-  (2, 2);
+INSERT INTO product_attributes (product_id, attribute_id)
+SELECT p.id, a.id
+FROM products p
+INNER JOIN attributes a
+WHERE
+  (p.slug = 'roza-rhodos' AND a.name IN ('Высота стебля', 'Вид оформления'))
+  OR (p.slug = 'evkalipt-cinerea' AND a.name = 'Вид оформления');
+
+INSERT INTO product_attribute_values (product_id, attribute_value_id)
+SELECT p.id, av.id
+FROM products p
+INNER JOIN attributes a ON a.name = 'Высота стебля'
+INNER JOIN attribute_values av ON av.attribute_id = a.id
+WHERE p.slug = 'roza-rhodos' AND av.value IN ('40 см', '50 см');
 
 INSERT INTO product_price_tiers (product_id, min_qty, price) VALUES
   (1, 15, 82),
