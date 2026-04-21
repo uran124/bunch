@@ -882,6 +882,8 @@ CREATE TABLE supplies (
   stems_per_pack INT UNSIGNED NOT NULL,
   stem_height_cm INT UNSIGNED NULL,
   stem_weight_g INT UNSIGNED NULL,
+  export_stem_height_attribute TINYINT(1) NOT NULL DEFAULT 0,
+  export_stem_weight_attribute TINYINT(1) NOT NULL DEFAULT 0,
   bud_size_cm INT UNSIGNED NULL,
   description TEXT NULL,
 
@@ -1003,18 +1005,18 @@ CREATE TABLE product_price_tiers (
 
 INSERT INTO supplies (
   is_standing, photo_url, flower_name, variety, country,
-  boxes_total, packs_per_box, packs_total, packs_reserved, stems_per_pack, stem_height_cm, stem_weight_g, bud_size_cm, description,
+  boxes_total, packs_per_box, packs_total, packs_reserved, stems_per_pack, stem_height_cm, stem_weight_g, export_stem_height_attribute, export_stem_weight_attribute, bud_size_cm, description,
   periodicity, first_delivery_date, planned_delivery_date, actual_delivery_date,
   allow_small_wholesale, allow_box_order, skip_date, has_product_card, has_wholesale_card, has_box_card
 ) VALUES
   (1, 'https://cdn.bunch.test/rhodos.jpg', 'Роза', 'Rhodos', 'Эквадор',
-   12, 5, 60, 10, 25, 50, 45, 6, 'Классический крупный бутон с плотными лепестками.', 'weekly', '2024-12-05', '2024-12-05', NULL,
+   12, 5, 60, 10, 25, 50, 45, 1, 0, 6, 'Классический крупный бутон с плотными лепестками.', 'weekly', '2024-12-05', '2024-12-05', NULL,
    1, 1, NULL, 1, 1, 1),
   (1, 'https://cdn.bunch.test/eucalyptus.jpg', 'Эвкалипт', 'Cinerea', 'Россия',
-   16, 5, 80, 14, 15, 40, 28, NULL, 'Ароматный эвкалипт для оформления букетов.', 'biweekly', '2024-12-10', '2024-12-10', '2024-12-24',
+   16, 5, 80, 14, 15, 40, 28, 0, 1, NULL, 'Ароматный эвкалипт для оформления букетов.', 'biweekly', '2024-12-10', '2024-12-10', '2024-12-24',
    1, 0, '2024-12-31', 0, 1, 0),
   (0, 'https://cdn.bunch.test/chrysanthemum.jpg', 'Хризантема', 'Altaj', 'Колумбия',
-   8, 4, 32, 4, 10, 32, 18, 5, 'Плотный бутон, ровная окраска.', 'single', '2024-12-09', '2024-12-09', NULL,
+   8, 4, 32, 4, 10, 32, 18, 0, 0, 5, 'Плотный бутон, ровная окраска.', 'single', '2024-12-09', '2024-12-09', NULL,
    1, 0, NULL, 0, 0, 0);
 
 INSERT INTO attributes (name, description, type, applies_to, is_active) VALUES

@@ -112,11 +112,15 @@ class Cart
             }
         }
 
+        $stemDeltaPerItem = 0;
         $bouquetDelta = 0;
         foreach ($attributeDetails as $attr) {
             if (($attr['applies_to'] ?? 'stem') === 'bouquet') {
                 $bouquetDelta += (int) floor((float) $attr['price_delta']);
+                continue;
             }
+
+            $stemDeltaPerItem += (int) floor((float) $attr['price_delta']);
         }
 
         return [
@@ -124,11 +128,12 @@ class Cart
             'name' => $product['name'],
             'qty' => $qty,
             'price_per_stem' => $pricePerStem,
+            'stem_delta_per_item' => $stemDeltaPerItem,
             'bouquet_delta' => $bouquetDelta,
             'photo_url' => $product['photo_url'] ?? null,
             'stem_height_cm' => $product['stem_height_cm'] ?? null,
             'attributes' => $attributeDetails,
-            'line_total' => ($pricePerStem * $qty) + $bouquetDelta,
+            'line_total' => (($pricePerStem + $stemDeltaPerItem) * $qty) + $bouquetDelta,
         ];
     }
 

@@ -74,10 +74,18 @@
             <label class="flex flex-col gap-2 text-sm font-semibold text-slate-700">
                 Высота стебля (см)
                 <input name="stem_height_cm" type="number" min="0" class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-sm focus:border-rose-300 focus:outline-none focus:ring-2 focus:ring-rose-200" placeholder="40">
+                <span class="inline-flex items-center gap-2 text-xs font-medium text-slate-600">
+                    <input name="export_stem_height_attribute" type="checkbox" class="h-3.5 w-3.5 rounded border-slate-300 text-rose-600 focus:ring-rose-500">
+                    Вынести в атрибуты товара
+                </span>
             </label>
             <label class="flex flex-col gap-2 text-sm font-semibold text-slate-700">
                 Вес стебля (гр)
                 <input name="stem_weight_g" type="number" min="0" class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-sm focus:border-rose-300 focus:outline-none focus:ring-2 focus:ring-rose-200" placeholder="32">
+                <span class="inline-flex items-center gap-2 text-xs font-medium text-slate-600">
+                    <input name="export_stem_weight_attribute" type="checkbox" class="h-3.5 w-3.5 rounded border-slate-300 text-rose-600 focus:ring-rose-500">
+                    Вынести в атрибуты товара
+                </span>
             </label>
             <label class="flex flex-col gap-2 text-sm font-semibold text-slate-700">
                 Размер бутона (см)
