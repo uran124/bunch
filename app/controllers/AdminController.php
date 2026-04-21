@@ -2003,6 +2003,8 @@ class AdminController extends Controller
             'stems_per_pack' => (int) ($_POST['stems_per_pack'] ?? 0),
             'stem_height_cm' => (int) ($_POST['stem_height_cm'] ?? 0),
             'stem_weight_g' => (int) ($_POST['stem_weight_g'] ?? 0),
+            'export_stem_height_attribute' => isset($_POST['export_stem_height_attribute']) ? 1 : 0,
+            'export_stem_weight_attribute' => isset($_POST['export_stem_weight_attribute']) ? 1 : 0,
             'bud_size_cm' => $budSize > 0 ? $budSize : null,
             'description' => $description !== '' ? $description : null,
             'periodicity' => $_POST['periodicity'] === 'biweekly' ? 'biweekly' : 'weekly',
@@ -2028,6 +2030,10 @@ class AdminController extends Controller
         $supplyModel = new Supply();
         $supplyId = $supplyModel->createStanding($payload);
         $this->createSupplyProducts($supplyId);
+        $createdSupply = $supplyModel->findById($supplyId);
+        if ($createdSupply) {
+            $this->syncSupplyAttributeExports($supplyId, $createdSupply);
+        }
 
         header('Location: /admin-supplies?status=created');
     }
@@ -2053,6 +2059,8 @@ class AdminController extends Controller
             'stems_per_pack' => (int) ($_POST['stems_per_pack'] ?? 0),
             'stem_height_cm' => (int) ($_POST['stem_height_cm'] ?? 0),
             'stem_weight_g' => (int) ($_POST['stem_weight_g'] ?? 0),
+            'export_stem_height_attribute' => isset($_POST['export_stem_height_attribute']) ? 1 : 0,
+            'export_stem_weight_attribute' => isset($_POST['export_stem_weight_attribute']) ? 1 : 0,
             'bud_size_cm' => $budSize > 0 ? $budSize : null,
             'description' => $description !== '' ? $description : null,
             'planned_delivery_date' => $plannedDelivery !== '' ? $plannedDelivery : null,
@@ -2075,6 +2083,10 @@ class AdminController extends Controller
         $supplyModel = new Supply();
         $supplyId = $supplyModel->createOneTime($payload);
         $this->createSupplyProducts($supplyId);
+        $createdSupply = $supplyModel->findById($supplyId);
+        if ($createdSupply) {
+            $this->syncSupplyAttributeExports($supplyId, $createdSupply);
+        }
 
         header('Location: /admin-supplies?status=created');
     }
@@ -2114,6 +2126,8 @@ class AdminController extends Controller
             'stems_per_pack' => (int) ($_POST['stems_per_pack'] ?? 0),
             'stem_height_cm' => (int) ($_POST['stem_height_cm'] ?? 0),
             'stem_weight_g' => (int) ($_POST['stem_weight_g'] ?? 0),
+            'export_stem_height_attribute' => isset($_POST['export_stem_height_attribute']) ? 1 : 0,
+            'export_stem_weight_attribute' => isset($_POST['export_stem_weight_attribute']) ? 1 : 0,
             'bud_size_cm' => $budSize > 0 ? $budSize : null,
             'description' => $description !== '' ? $description : null,
             'allow_small_wholesale' => isset($_POST['allow_small_wholesale']) ? 1 : 0,
@@ -2155,6 +2169,11 @@ class AdminController extends Controller
             }
 
             $supplyModel->updateOneTime($supplyId, $payload);
+        }
+
+        $updatedSupply = $supplyModel->findById($supplyId);
+        if ($updatedSupply) {
+            $this->syncSupplyAttributeExports($supplyId, $updatedSupply);
         }
 
         header('Location: /admin-supply-edit?id=' . $supplyId . '&status=saved');
@@ -2247,6 +2266,108 @@ class AdminController extends Controller
                 continue;
             }
             $productModel->createFromSupply($basePayload + $definition);
+        }
+    }
+
+    private function syncSupplyAttributeExports(int $supplyId, array $supply): void
+    {
+        $db = Database::getInstance();
+        $mapping = [
+            [
+                'enabled' => !empty($supply['export_stem_height_attribute']),
+                'attribute_name' => 'Высота стебля',
+                'raw_value' => (int) ($supply['stem_height_cm'] ?? 0),
+                'suffix' => 'см',
+            ],
+            [
+                'enabled' => !empty($supply['export_stem_weight_attribute']),
+                'attribute_name' => 'Вес стебля',
+                'raw_value' => (int) ($supply['stem_weight_g'] ?? 0),
+                'suffix' => 'г',
+            ],
+        ];
+
+        $managedAttributeIds = [];
+        $selectedAttributeValueIds = [];
+
+        foreach ($mapping as $entry) {
+            $attributeStmt = $db->prepare(
+                "SELECT id FROM attributes WHERE name = :name AND applies_to = 'stem' LIMIT 1"
+            );
+            $attributeStmt->execute(['name' => $entry['attribute_name']]);
+            $attributeId = (int) $attributeStmt->fetchColumn();
+
+            if ($attributeId <= 0) {
+                continue;
+            }
+
+            $managedAttributeIds[] = $attributeId;
+
+            if (!$entry['enabled'] || $entry['raw_value'] <= 0) {
+                continue;
+            }
+
+            $valueLabel = $entry['raw_value'] . ' ' . $entry['suffix'];
+
+            $valueStmt = $db->prepare(
+                'SELECT id FROM attribute_values WHERE attribute_id = :attribute_id AND value = :value LIMIT 1'
+            );
+            $valueStmt->execute([
+                'attribute_id' => $attributeId,
+                'value' => $valueLabel,
+            ]);
+            $valueId = (int) $valueStmt->fetchColumn();
+
+            if ($valueId <= 0) {
+                $insertValueStmt = $db->prepare(
+                    'INSERT INTO attribute_values (attribute_id, value, price_delta, photo_url, is_active, sort_order, created_at, updated_at)
+                     VALUES (:attribute_id, :value, 0, NULL, 1, 0, NOW(), NOW())'
+                );
+                $insertValueStmt->execute([
+                    'attribute_id' => $attributeId,
+                    'value' => $valueLabel,
+                ]);
+                $valueId = (int) $db->lastInsertId();
+            }
+
+            if ($valueId > 0) {
+                $selectedAttributeValueIds[] = $valueId;
+            }
+        }
+
+        $managedAttributeIds = array_values(array_unique(array_filter(array_map('intval', $managedAttributeIds))));
+        $selectedAttributeValueIds = array_values(array_unique(array_filter(array_map('intval', $selectedAttributeValueIds))));
+
+        $productStmt = $db->prepare('SELECT id FROM products WHERE supply_id = :supply_id');
+        $productStmt->execute(['supply_id' => $supplyId]);
+        $productIds = array_map('intval', array_column($productStmt->fetchAll(), 'id'));
+        if (!$productIds) {
+            return;
+        }
+
+        $productModel = new Product();
+        foreach ($productIds as $productId) {
+            $existingAttributeIds = $productModel->getAttributeIds($productId);
+            $existingValueIds = $productModel->getAttributeValueIds($productId);
+
+            $finalAttributeIds = array_values(array_diff($existingAttributeIds, $managedAttributeIds));
+            $finalAttributeIds = array_values(array_unique(array_merge($finalAttributeIds, $managedAttributeIds)));
+
+            $valuesToRemove = [];
+            if ($managedAttributeIds) {
+                $placeholders = implode(',', array_fill(0, count($managedAttributeIds), '?'));
+                $valueQuery = $db->prepare(
+                    "SELECT id FROM attribute_values WHERE attribute_id IN ($placeholders)"
+                );
+                $valueQuery->execute($managedAttributeIds);
+                $valuesToRemove = array_map('intval', array_column($valueQuery->fetchAll(), 'id'));
+            }
+
+            $finalValueIds = array_values(array_diff($existingValueIds, $valuesToRemove));
+            $finalValueIds = array_values(array_unique(array_merge($finalValueIds, $selectedAttributeValueIds)));
+
+            $productModel->setAttributes($productId, $finalAttributeIds);
+            $productModel->setAttributeValueIds($productId, $finalValueIds);
         }
     }
 

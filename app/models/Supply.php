@@ -82,7 +82,7 @@ class Supply extends Model
 
     public function createStanding(array $data): int
     {
-        $sql = "INSERT INTO {$this->table} (is_standing, photo_url, flower_name, variety, country, boxes_total, packs_per_box, packs_total, stems_per_pack, stem_height_cm, stem_weight_g, bud_size_cm, description, periodicity, first_delivery_date, planned_delivery_date, actual_delivery_date, allow_small_wholesale, allow_box_order, skip_date, packs_reserved) VALUES (:is_standing, :photo_url, :flower_name, :variety, :country, :boxes_total, :packs_per_box, :packs_total, :stems_per_pack, :stem_height_cm, :stem_weight_g, :bud_size_cm, :description, :periodicity, :first_delivery_date, :planned_delivery_date, :actual_delivery_date, :allow_small_wholesale, :allow_box_order, :skip_date, :packs_reserved)";
+        $sql = "INSERT INTO {$this->table} (is_standing, photo_url, flower_name, variety, country, boxes_total, packs_per_box, packs_total, stems_per_pack, stem_height_cm, stem_weight_g, export_stem_height_attribute, export_stem_weight_attribute, bud_size_cm, description, periodicity, first_delivery_date, planned_delivery_date, actual_delivery_date, allow_small_wholesale, allow_box_order, skip_date, packs_reserved) VALUES (:is_standing, :photo_url, :flower_name, :variety, :country, :boxes_total, :packs_per_box, :packs_total, :stems_per_pack, :stem_height_cm, :stem_weight_g, :export_stem_height_attribute, :export_stem_weight_attribute, :bud_size_cm, :description, :periodicity, :first_delivery_date, :planned_delivery_date, :actual_delivery_date, :allow_small_wholesale, :allow_box_order, :skip_date, :packs_reserved)";
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute([
@@ -97,6 +97,8 @@ class Supply extends Model
             'stems_per_pack' => $data['stems_per_pack'],
             'stem_height_cm' => $data['stem_height_cm'],
             'stem_weight_g' => $data['stem_weight_g'],
+            'export_stem_height_attribute' => (int) ($data['export_stem_height_attribute'] ?? 0),
+            'export_stem_weight_attribute' => (int) ($data['export_stem_weight_attribute'] ?? 0),
             'bud_size_cm' => $data['bud_size_cm'],
             'description' => $data['description'],
             'periodicity' => $data['periodicity'],
@@ -114,7 +116,7 @@ class Supply extends Model
 
     public function createOneTime(array $data): int
     {
-        $sql = "INSERT INTO {$this->table} (is_standing, photo_url, flower_name, variety, country, boxes_total, packs_per_box, packs_total, stems_per_pack, stem_height_cm, stem_weight_g, bud_size_cm, description, periodicity, first_delivery_date, planned_delivery_date, actual_delivery_date, allow_small_wholesale, allow_box_order, packs_reserved) VALUES (:is_standing, :photo_url, :flower_name, :variety, :country, :boxes_total, :packs_per_box, :packs_total, :stems_per_pack, :stem_height_cm, :stem_weight_g, :bud_size_cm, :description, :periodicity, :first_delivery_date, :planned_delivery_date, :actual_delivery_date, :allow_small_wholesale, :allow_box_order, :packs_reserved)";
+        $sql = "INSERT INTO {$this->table} (is_standing, photo_url, flower_name, variety, country, boxes_total, packs_per_box, packs_total, stems_per_pack, stem_height_cm, stem_weight_g, export_stem_height_attribute, export_stem_weight_attribute, bud_size_cm, description, periodicity, first_delivery_date, planned_delivery_date, actual_delivery_date, allow_small_wholesale, allow_box_order, packs_reserved) VALUES (:is_standing, :photo_url, :flower_name, :variety, :country, :boxes_total, :packs_per_box, :packs_total, :stems_per_pack, :stem_height_cm, :stem_weight_g, :export_stem_height_attribute, :export_stem_weight_attribute, :bud_size_cm, :description, :periodicity, :first_delivery_date, :planned_delivery_date, :actual_delivery_date, :allow_small_wholesale, :allow_box_order, :packs_reserved)";
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute([
@@ -129,6 +131,8 @@ class Supply extends Model
             'stems_per_pack' => $data['stems_per_pack'],
             'stem_height_cm' => $data['stem_height_cm'],
             'stem_weight_g' => $data['stem_weight_g'],
+            'export_stem_height_attribute' => (int) ($data['export_stem_height_attribute'] ?? 0),
+            'export_stem_weight_attribute' => (int) ($data['export_stem_weight_attribute'] ?? 0),
             'bud_size_cm' => $data['bud_size_cm'],
             'description' => $data['description'],
             'periodicity' => 'single',
@@ -145,7 +149,7 @@ class Supply extends Model
 
     public function updateStanding(int $id, array $data): void
     {
-        $sql = "UPDATE {$this->table} SET photo_url = :photo_url, flower_name = :flower_name, variety = :variety, country = :country, boxes_total = :boxes_total, packs_per_box = :packs_per_box, packs_total = :packs_total, stems_per_pack = :stems_per_pack, stem_height_cm = :stem_height_cm, stem_weight_g = :stem_weight_g, bud_size_cm = :bud_size_cm, description = :description, periodicity = :periodicity, first_delivery_date = :first_delivery_date, planned_delivery_date = :planned_delivery_date, actual_delivery_date = :actual_delivery_date, allow_small_wholesale = :allow_small_wholesale, allow_box_order = :allow_box_order, skip_date = :skip_date WHERE id = :id";
+        $sql = "UPDATE {$this->table} SET photo_url = :photo_url, flower_name = :flower_name, variety = :variety, country = :country, boxes_total = :boxes_total, packs_per_box = :packs_per_box, packs_total = :packs_total, stems_per_pack = :stems_per_pack, stem_height_cm = :stem_height_cm, stem_weight_g = :stem_weight_g, export_stem_height_attribute = :export_stem_height_attribute, export_stem_weight_attribute = :export_stem_weight_attribute, bud_size_cm = :bud_size_cm, description = :description, periodicity = :periodicity, first_delivery_date = :first_delivery_date, planned_delivery_date = :planned_delivery_date, actual_delivery_date = :actual_delivery_date, allow_small_wholesale = :allow_small_wholesale, allow_box_order = :allow_box_order, skip_date = :skip_date WHERE id = :id";
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute([
@@ -159,6 +163,8 @@ class Supply extends Model
             'stems_per_pack' => $data['stems_per_pack'],
             'stem_height_cm' => $data['stem_height_cm'],
             'stem_weight_g' => $data['stem_weight_g'],
+            'export_stem_height_attribute' => (int) ($data['export_stem_height_attribute'] ?? 0),
+            'export_stem_weight_attribute' => (int) ($data['export_stem_weight_attribute'] ?? 0),
             'bud_size_cm' => $data['bud_size_cm'],
             'description' => $data['description'],
             'periodicity' => $data['periodicity'],
@@ -174,7 +180,7 @@ class Supply extends Model
 
     public function updateOneTime(int $id, array $data): void
     {
-        $sql = "UPDATE {$this->table} SET photo_url = :photo_url, flower_name = :flower_name, variety = :variety, country = :country, boxes_total = :boxes_total, packs_per_box = :packs_per_box, packs_total = :packs_total, stems_per_pack = :stems_per_pack, stem_height_cm = :stem_height_cm, stem_weight_g = :stem_weight_g, bud_size_cm = :bud_size_cm, description = :description, first_delivery_date = :first_delivery_date, planned_delivery_date = :planned_delivery_date, actual_delivery_date = :actual_delivery_date, allow_small_wholesale = :allow_small_wholesale, allow_box_order = :allow_box_order WHERE id = :id";
+        $sql = "UPDATE {$this->table} SET photo_url = :photo_url, flower_name = :flower_name, variety = :variety, country = :country, boxes_total = :boxes_total, packs_per_box = :packs_per_box, packs_total = :packs_total, stems_per_pack = :stems_per_pack, stem_height_cm = :stem_height_cm, stem_weight_g = :stem_weight_g, export_stem_height_attribute = :export_stem_height_attribute, export_stem_weight_attribute = :export_stem_weight_attribute, bud_size_cm = :bud_size_cm, description = :description, first_delivery_date = :first_delivery_date, planned_delivery_date = :planned_delivery_date, actual_delivery_date = :actual_delivery_date, allow_small_wholesale = :allow_small_wholesale, allow_box_order = :allow_box_order WHERE id = :id";
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute([
@@ -188,6 +194,8 @@ class Supply extends Model
             'stems_per_pack' => $data['stems_per_pack'],
             'stem_height_cm' => $data['stem_height_cm'],
             'stem_weight_g' => $data['stem_weight_g'],
+            'export_stem_height_attribute' => (int) ($data['export_stem_height_attribute'] ?? 0),
+            'export_stem_weight_attribute' => (int) ($data['export_stem_weight_attribute'] ?? 0),
             'bud_size_cm' => $data['bud_size_cm'],
             'description' => $data['description'],
             'first_delivery_date' => $data['planned_delivery_date'],
