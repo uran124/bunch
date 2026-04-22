@@ -911,17 +911,6 @@
                 row.remove();
                 return;
             }
-            const rows = editTierWrap.querySelectorAll('[data-tier-row]');
-            if (rows.length <= 1) {
-                const minInput = row.querySelector('[data-tier-min]');
-                const priceInput = row.querySelector('[data-tier-price]');
-                if (minInput) minInput.value = '1';
-                if (priceInput) {
-                    const basePrice = Number(editForm?.elements?.base_price?.value || 0);
-                    priceInput.value = String(basePrice > 0 ? basePrice : 1);
-                }
-                return;
-            }
             row.remove();
         });
         return row;
@@ -1055,14 +1044,10 @@
         event.preventDefault();
         try {
             const formData = new FormData(editForm);
-            const basePrice = Number(editForm.elements.base_price?.value || 0);
             const tiers = Array.from(editTierWrap?.querySelectorAll('[data-tier-row]') || []).map((row) => ({
                 min_qty: Number(row.querySelector('[data-tier-min]')?.value || 0),
                 price: Number(row.querySelector('[data-tier-price]')?.value || 0),
             })).filter((tier) => tier.min_qty >= 1 && tier.price > 0);
-            if (!tiers.length && basePrice > 0) {
-                tiers.push({ min_qty: 1, price: basePrice });
-            }
             formData.set('price_tiers', JSON.stringify(tiers));
 
             const selectedStemAttributeIds = Array.from(editModal?.querySelectorAll('[data-edit-stem-attribute-id]:checked') || []).map((input) => Number(input.value));
@@ -1078,14 +1063,20 @@
                 body: formData,
             });
             const raw = await response.text();
-            const payload = JSON.parse(raw);
+            let payload = null;
+            try {
+                payload = JSON.parse(raw);
+            } catch (parseError) {
+                alert(raw || 'Сервер вернул некорректный ответ');
+                return;
+            }
             if (!response.ok || !payload?.ok || !payload.product) {
                 alert(payload?.error || 'Не удалось сохранить товар');
                 return;
             }
             window.location.reload();
         } catch (error) {
-            alert('Ошибка при сохранении товара. Проверьте поле "Цена от количества".');
+            alert(error?.message || 'Ошибка при сохранении товара.');
         }
     });
     <?php endif; ?>
