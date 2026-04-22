@@ -1,7 +1,6 @@
 BEGIN;
 
-ALTER TABLE attributes
-  ADD COLUMN IF NOT EXISTS sort_order INT NOT NULL DEFAULT 0 AFTER is_active;
+ALTER TABLE attributes  ADD COLUMN IF NOT EXISTS sort_order INT NOT NULL DEFAULT 0 AFTER is_active;
 
 ALTER TABLE attribute_values
   ADD COLUMN IF NOT EXISTS is_default TINYINT(1) NOT NULL DEFAULT 0 AFTER is_active;
