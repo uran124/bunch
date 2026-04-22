@@ -125,7 +125,7 @@ class Cart
 
         return [
             'product_id' => $productId,
-            'name' => $product['name'],
+            'name' => $this->buildDisplayName($product, $attributeDetails),
             'qty' => $qty,
             'price_per_stem' => $pricePerStem,
             'stem_delta_per_item' => $stemDeltaPerItem,
@@ -217,5 +217,39 @@ class Cart
         }
 
         return $attributes;
+    }
+
+    private function buildDisplayName(array $product, array $attributeDetails): string
+    {
+        $baseName = trim((string) ($product['alt_name'] ?? ''));
+        if ($baseName === '') {
+            $baseName = trim((string) ($product['name'] ?? 'Товар'));
+        }
+
+        $height = $this->extractHeightAttributeValue($attributeDetails);
+        if ($height === null || $height === '') {
+            $officialHeight = (int) ($product['stem_height_cm'] ?? $product['supply_stem_height_cm'] ?? 0);
+            if ($officialHeight > 0) {
+                $height = $officialHeight . ' см';
+            }
+        }
+
+        if ($height === null || $height === '') {
+            return $baseName;
+        }
+
+        return trim($baseName . ' [' . $height . ']');
+    }
+
+    private function extractHeightAttributeValue(array $attributeDetails): ?string
+    {
+        foreach ($attributeDetails as $attribute) {
+            $label = mb_strtolower((string) ($attribute['label'] ?? ''), 'UTF-8');
+            if (str_contains($label, 'высот')) {
+                return trim((string) ($attribute['value'] ?? ''));
+            }
+        }
+
+        return null;
     }
 }

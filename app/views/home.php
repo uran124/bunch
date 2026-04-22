@@ -179,6 +179,7 @@
                                             class="space-y-2"
                                             data-attribute-group
                                             data-attribute-id="<?php echo (int) $attribute['id']; ?>"
+                                            data-attribute-name="<?php echo htmlspecialchars($attribute['name'] ?? '', ENT_QUOTES, 'UTF-8'); ?>"
                                             data-applies-to="<?php echo htmlspecialchars($attribute['applies_to'] ?? 'stem', ENT_QUOTES, 'UTF-8'); ?>"
                                             data-selected-delta="0"
                                         >
@@ -200,6 +201,7 @@
                                                         data-attr-option
                                                         data-attr-id="<?php echo (int) $attribute['id']; ?>"
                                                         data-value-id="<?php echo (int) $value['id']; ?>"
+                                                        data-value-label="<?php echo htmlspecialchars($value['value'], ENT_QUOTES, 'UTF-8'); ?>"
                                                         data-price-delta="<?php echo $priceDelta; ?>"
                                                         class="inline-flex items-center gap-2 whitespace-nowrap rounded-xl bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-rose-50 hover:text-rose-600 hover:shadow-lg hover:shadow-rose-200/70 md:text-sm lg:text-xs"
                                                     aria-label="<?php echo htmlspecialchars($attribute['name'] . ': ' . $value['value'], ENT_QUOTES, 'UTF-8'); ?>"
@@ -448,6 +450,16 @@
 
         group.dataset.selectedDelta = button.dataset.priceDelta || '0';
         group.dataset.selectedValue = button.dataset.valueId || '';
+        group.dataset.selectedLabel = button.dataset.valueLabel || '';
+
+        const card = group.closest('[data-product-card]');
+        const attributeName = (group.dataset.attributeName || '').toLowerCase();
+        if (card && attributeName.includes('высот')) {
+            const selectedLabel = (button.dataset.valueLabel || '').trim();
+            if (selectedLabel !== '') {
+                card.dataset.productStemHeight = selectedLabel;
+            }
+        }
     }
 
     function updateCardTotals(card) {
