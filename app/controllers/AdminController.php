@@ -1819,7 +1819,8 @@ class AdminController extends Controller
         $description = trim($_POST['description'] ?? '');
         $type = $_POST['type'] ?? 'selector';
         $appliesTo = $_POST['applies_to'] ?? 'stem';
-        $isActive = isset($_POST['is_active']) ? 1 : 0;
+        $isActive = isset($_POST['is_active']) && (string) $_POST['is_active'] !== '0' ? 1 : 0;
+        $sortOrder = (int) ($_POST['sort_order'] ?? 0);
 
         if ($name === '') {
             header('Location: /admin-attributes?status=error');
@@ -1834,6 +1835,7 @@ class AdminController extends Controller
             'type' => $type,
             'applies_to' => $appliesTo === 'bouquet' ? 'bouquet' : 'stem',
             'is_active' => $isActive,
+            'sort_order' => $sortOrder,
         ]);
 
         header('Location: /admin-attributes?status=saved');
@@ -1861,8 +1863,9 @@ class AdminController extends Controller
         $value = trim($_POST['value'] ?? '');
         $priceDelta = (int) floor((float) ($_POST['price_delta'] ?? 0));
         $photoUrl = trim($_POST['photo_url'] ?? '');
-        $isActive = isset($_POST['is_active']) ? 1 : 0;
+        $isActive = isset($_POST['is_active']) && (string) $_POST['is_active'] !== '0' ? 1 : 0;
         $sortOrder = (int) ($_POST['sort_order'] ?? 0);
+        $isDefault = isset($_POST['is_default']) ? 1 : 0;
 
         $uploadedPhoto = $this->handlePhotoUpload('photo_file', 'attribute');
         if ($uploadedPhoto) {
@@ -1883,6 +1886,7 @@ class AdminController extends Controller
             'photo_url' => $photoUrl !== '' ? $photoUrl : null,
             'is_active' => $isActive,
             'sort_order' => $sortOrder,
+            'is_default' => $isDefault,
         ]);
 
         header('Location: /admin-attributes?status=saved#attribute-' . $attributeId);
