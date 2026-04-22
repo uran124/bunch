@@ -1150,7 +1150,7 @@ class AdminController extends Controller
                 }
                 $minQty = max(1, (int) ($tier['min_qty'] ?? 0));
                 $tierPrice = max(0, (int) floor((float) ($tier['price'] ?? 0)));
-                if ($minQty < 1 || isset($minQtyMap[$minQty])) {
+                if ($minQty < 1 || $tierPrice <= 0 || isset($minQtyMap[$minQty])) {
                     continue;
                 }
                 $minQtyMap[$minQty] = true;
@@ -1183,17 +1183,24 @@ class AdminController extends Controller
             $tertiaryPhoto = $uploadedTertiary;
         }
 
-        $productModel->updateQuickEditable($productId, [
-            'name' => $name,
-            'description' => $description,
-            'price' => $basePrice,
-            'photo_url' => $primaryPhoto,
-            'photo_url_secondary' => $secondaryPhoto,
-            'photo_url_tertiary' => $tertiaryPhoto,
-        ]);
-        $productModel->setPriceTiers($productId, $priceTiers);
-        $productModel->setAttributes($productId, $attributeIds);
-        $productModel->setAttributeValueIds($productId, $attributeValueIds);
+        try {
+            $productModel->updateQuickEditable($productId, [
+                'name' => $name,
+                'description' => $description,
+                'price' => $basePrice,
+                'photo_url' => $primaryPhoto,
+                'photo_url_secondary' => $secondaryPhoto,
+                'photo_url_tertiary' => $tertiaryPhoto,
+            ]);
+            $productModel->setPriceTiers($productId, $priceTiers);
+            $productModel->setAttributes($productId, $attributeIds);
+            $productModel->setAttributeValueIds($productId, $attributeValueIds);
+        } catch (Throwable $exception) {
+            error_log('Quick product save failed: ' . $exception->getMessage());
+            http_response_code(500);
+            echo json_encode(['ok' => false, 'error' => 'Не удалось сохранить товар. Проверьте цену от количества.'], JSON_UNESCAPED_UNICODE);
+            return;
+        }
 
         echo json_encode([
             'ok' => true,
