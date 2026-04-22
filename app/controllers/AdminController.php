@@ -1125,6 +1125,11 @@ class AdminController extends Controller
 
         $description = trim((string) ($_POST['description'] ?? ''));
         $basePrice = max(0, (int) floor((float) ($_POST['base_price'] ?? 0)));
+        if ($basePrice <= 0) {
+            http_response_code(422);
+            echo json_encode(['ok' => false, 'error' => 'Базовая цена должна быть больше 0'], JSON_UNESCAPED_UNICODE);
+            return;
+        }
         $priceTiersRaw = (string) ($_POST['price_tiers'] ?? '[]');
         $attributeIds = array_filter(array_map('intval', $_POST['attribute_ids'] ?? []));
         $attributeValueIds = array_filter(array_map('intval', $_POST['attribute_value_ids'] ?? []));
@@ -1150,7 +1155,7 @@ class AdminController extends Controller
                 }
                 $minQty = max(1, (int) ($tier['min_qty'] ?? 0));
                 $tierPrice = max(0, (int) floor((float) ($tier['price'] ?? 0)));
-                if ($minQty < 1 || isset($minQtyMap[$minQty])) {
+                if ($minQty < 1 || $tierPrice <= 0 || isset($minQtyMap[$minQty])) {
                     continue;
                 }
                 $minQtyMap[$minQty] = true;
@@ -1164,6 +1169,13 @@ class AdminController extends Controller
         usort($priceTiers, static function (array $left, array $right): int {
             return $left['min_qty'] <=> $right['min_qty'];
         });
+
+        if (!$priceTiers) {
+            $priceTiers[] = [
+                'min_qty' => 1,
+                'price' => $basePrice,
+            ];
+        }
 
         $primaryPhoto = $existing['photo_url'] ?? '';
         $secondaryPhoto = $existing['photo_url_secondary'] ?? null;
@@ -1183,17 +1195,24 @@ class AdminController extends Controller
             $tertiaryPhoto = $uploadedTertiary;
         }
 
-        $productModel->updateQuickEditable($productId, [
-            'name' => $name,
-            'description' => $description,
-            'price' => $basePrice,
-            'photo_url' => $primaryPhoto,
-            'photo_url_secondary' => $secondaryPhoto,
-            'photo_url_tertiary' => $tertiaryPhoto,
-        ]);
-        $productModel->setPriceTiers($productId, $priceTiers);
-        $productModel->setAttributes($productId, $attributeIds);
-        $productModel->setAttributeValueIds($productId, $attributeValueIds);
+        try {
+            $productModel->updateQuickEditable($productId, [
+                'name' => $name,
+                'description' => $description,
+                'price' => $basePrice,
+                'photo_url' => $primaryPhoto,
+                'photo_url_secondary' => $secondaryPhoto,
+                'photo_url_tertiary' => $tertiaryPhoto,
+            ]);
+            $productModel->setPriceTiers($productId, $priceTiers);
+            $productModel->setAttributes($productId, $attributeIds);
+            $productModel->setAttributeValueIds($productId, $attributeValueIds);
+        } catch (Throwable $exception) {
+            error_log('Quick product save failed: ' . $exception->getMessage());
+            http_response_code(500);
+            echo json_encode(['ok' => false, 'error' => 'Не удалось сохранить товар. Проверьте цену от количества.'], JSON_UNESCAPED_UNICODE);
+            return;
+        }
 
         echo json_encode([
             'ok' => true,
