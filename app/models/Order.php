@@ -469,7 +469,11 @@ class Order extends Model
 
         $deliveryType = ($payload['mode'] ?? '') === 'delivery' ? 'delivery' : 'pickup';
         $scheduledDate = $this->normalizeDate($payload['date'] ?? null);
-        $scheduledTime = $this->normalizeTime($payload['time'] ?? null);
+        $rawScheduledTime = $payload['time'] ?? null;
+        if ($rawScheduledTime === null || trim((string) $rawScheduledTime) === '') {
+            $rawScheduledTime = (new DateTime('now'))->format('H:i');
+        }
+        $scheduledTime = $this->normalizeTime($rawScheduledTime);
         $addressId = isset($payload['address_id']) ? (int) $payload['address_id'] : null;
         $addressText = trim((string) ($payload['address_text'] ?? ''));
         $deliveryPrice = isset($payload['delivery_price']) ? (int) floor((float) $payload['delivery_price']) : null;
@@ -552,16 +556,6 @@ class Order extends Model
                 }
             }
 
-            if ($earnedTulips > 0) {
-                $earnStmt = $this->db->prepare(
-                    'UPDATE users SET tulip_balance = tulip_balance + :earned, updated_at = NOW() WHERE id = :id'
-                );
-                $earnStmt->execute([
-                    'id' => $userId,
-                    'earned' => $earnedTulips,
-                ]);
-            }
-
             $this->db->commit();
 
             $customer = $this->getUserContact($userId);
@@ -597,7 +591,9 @@ class Order extends Model
 
             return $orderId;
         } catch (Throwable $e) {
-            $this->db->rollBack();
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
             throw $e;
         }
     }
