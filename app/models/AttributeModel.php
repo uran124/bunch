@@ -37,6 +37,11 @@ class AttributeModel extends Model
         return $attributes;
     }
 
+
+    public function getById(int $id): ?array
+    {
+        return $this->find($id);
+    }
     public function find(int $id): ?array
     {
         $stmt = $this->db->prepare("SELECT * FROM {$this->attributesTable} WHERE id = :id LIMIT 1");
