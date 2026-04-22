@@ -560,7 +560,7 @@ class Product extends Model
 
     public function getAttributesWithValues(int $productId): array
     {
-        $sql = 'SELECT a.* FROM attributes a JOIN product_attributes pa ON pa.attribute_id = a.id WHERE pa.product_id = :product_id AND a.is_active = 1 ORDER BY a.name ASC';
+        $sql = 'SELECT a.* FROM attributes a JOIN product_attributes pa ON pa.attribute_id = a.id WHERE pa.product_id = :product_id AND a.is_active = 1 ORDER BY a.sort_order ASC, a.name ASC, a.id ASC';
         $stmt = $this->db->prepare($sql);
         $stmt->execute(['product_id' => $productId]);
         $attributes = $stmt->fetchAll();

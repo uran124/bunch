@@ -203,6 +203,7 @@
                                                         data-value-id="<?php echo (int) $value['id']; ?>"
                                                         data-value-label="<?php echo htmlspecialchars($value['value'], ENT_QUOTES, 'UTF-8'); ?>"
                                                         data-price-delta="<?php echo $priceDelta; ?>"
+                                                        data-is-default="<?php echo (int) ($value['is_default'] ?? 0); ?>"
                                                         class="inline-flex items-center gap-2 whitespace-nowrap rounded-xl bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-rose-50 hover:text-rose-600 hover:shadow-lg hover:shadow-rose-200/70 md:text-sm lg:text-xs"
                                                     aria-label="<?php echo htmlspecialchars($attribute['name'] . ': ' . $value['value'], ENT_QUOTES, 'UTF-8'); ?>"
                                                 >
@@ -429,9 +430,10 @@
 
     function selectDefaultAttributes(card) {
         card.querySelectorAll('[data-attribute-group]').forEach((group) => {
-            const firstOption = group.querySelector('[data-attr-option]');
-            if (firstOption) {
-                activateOption(firstOption);
+            const defaultOption = group.querySelector('[data-attr-option][data-is-default="1"]');
+            const fallbackOption = group.querySelector('[data-attr-option]');
+            if (defaultOption || fallbackOption) {
+                activateOption(defaultOption || fallbackOption);
             }
         });
     }
@@ -480,13 +482,15 @@
             const scope = group.dataset.appliesTo === 'bouquet' ? 'bouquet' : 'stem';
             const delta = Math.floor(Number(group.dataset.selectedDelta || 0));
             if (scope === 'bouquet') {
-                acc += delta;
+                acc.bouquet += delta;
+                return acc;
             }
+            acc.stem += delta;
             return acc;
-        }, 0);
+        }, { stem: 0, bouquet: 0 });
 
         const baseTotal = Math.floor(basePrice * quantity);
-        const actualTotal = Math.floor((unitPrice * quantity) + deltas);
+        const actualTotal = Math.floor(((unitPrice + deltas.stem) * quantity) + deltas.bouquet);
 
         if (qtyInput) qtyInput.value = quantity.toString();
         if (qtyValue) qtyValue.value = quantity.toString();
