@@ -911,14 +911,6 @@
                 row.remove();
                 return;
             }
-            const rows = editTierWrap.querySelectorAll('[data-tier-row]');
-            if (rows.length <= 1) {
-                const minInput = row.querySelector('[data-tier-min]');
-                const priceInput = row.querySelector('[data-tier-price]');
-                if (minInput) minInput.value = '1';
-                if (priceInput) priceInput.value = '0';
-                return;
-            }
             row.remove();
         });
         return row;
@@ -1050,31 +1042,42 @@
     });
     editForm?.addEventListener('submit', async (event) => {
         event.preventDefault();
-        const formData = new FormData(editForm);
-        const tiers = Array.from(editTierWrap?.querySelectorAll('[data-tier-row]') || []).map((row) => ({
-            min_qty: Number(row.querySelector('[data-tier-min]')?.value || 0),
-            price: Number(row.querySelector('[data-tier-price]')?.value || 0),
-        })).filter((tier) => tier.min_qty >= 1);
-        formData.set('price_tiers', JSON.stringify(tiers));
+        try {
+            const formData = new FormData(editForm);
+            const tiers = Array.from(editTierWrap?.querySelectorAll('[data-tier-row]') || []).map((row) => ({
+                min_qty: Number(row.querySelector('[data-tier-min]')?.value || 0),
+                price: Number(row.querySelector('[data-tier-price]')?.value || 0),
+            })).filter((tier) => tier.min_qty >= 1 && tier.price > 0);
+            formData.set('price_tiers', JSON.stringify(tiers));
 
-        const selectedStemAttributeIds = Array.from(editModal?.querySelectorAll('[data-edit-stem-attribute-id]:checked') || []).map((input) => Number(input.value));
-        const selectedStemValueIds = Array.from(editModal?.querySelectorAll('[data-edit-stem-value-id]:checked') || []).map((input) => Number(input.value));
-        formData.delete('attribute_ids[]');
-        formData.delete('attribute_value_ids[]');
-        selectedStemAttributeIds.forEach((id) => formData.append('attribute_ids[]', String(id)));
-        selectedStemValueIds.forEach((id) => formData.append('attribute_value_ids[]', String(id)));
+            const selectedStemAttributeIds = Array.from(editModal?.querySelectorAll('[data-edit-stem-attribute-id]:checked') || []).map((input) => Number(input.value));
+            const selectedStemValueIds = Array.from(editModal?.querySelectorAll('[data-edit-stem-value-id]:checked') || []).map((input) => Number(input.value));
+            formData.delete('attribute_ids[]');
+            formData.delete('attribute_value_ids[]');
+            selectedStemAttributeIds.forEach((id) => formData.append('attribute_ids[]', String(id)));
+            selectedStemValueIds.forEach((id) => formData.append('attribute_value_ids[]', String(id)));
 
-        const response = await fetch('/admin-product-quick-save', {
-            method: 'POST',
-            headers: { 'X-Requested-With': 'XMLHttpRequest' },
-            body: formData,
-        });
-        const payload = await response.json();
-        if (!response.ok || !payload?.ok || !payload.product) {
-            alert(payload?.error || 'Не удалось сохранить товар');
-            return;
+            const response = await fetch('/admin-product-quick-save', {
+                method: 'POST',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                body: formData,
+            });
+            const raw = await response.text();
+            let payload = null;
+            try {
+                payload = JSON.parse(raw);
+            } catch (parseError) {
+                alert(raw || 'Сервер вернул некорректный ответ');
+                return;
+            }
+            if (!response.ok || !payload?.ok || !payload.product) {
+                alert(payload?.error || 'Не удалось сохранить товар');
+                return;
+            }
+            window.location.reload();
+        } catch (error) {
+            alert(error?.message || 'Ошибка при сохранении товара.');
         }
-        window.location.reload();
     });
     <?php endif; ?>
 </script>
