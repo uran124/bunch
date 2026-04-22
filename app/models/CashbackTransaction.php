@@ -3,6 +3,8 @@
 
 class CashbackTransaction extends Model
 {
+    private static bool $tableEnsured = false;
+
     public function __construct()
     {
         parent::__construct();
@@ -143,6 +145,10 @@ class CashbackTransaction extends Model
 
     private function ensureTable(): void
     {
+        if (self::$tableEnsured || $this->db->inTransaction()) {
+            return;
+        }
+
         $this->db->exec(
             "CREATE TABLE IF NOT EXISTS cashback_transactions (
                 id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -156,6 +162,8 @@ class CashbackTransaction extends Model
                 INDEX idx_cashback_tx_order (order_id, type)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
         );
+
+        self::$tableEnsured = true;
     }
 }
 
