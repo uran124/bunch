@@ -105,6 +105,12 @@ $returnQuery = [
                             <span class="material-symbols-rounded text-base">payments</span>
                             <?php echo htmlspecialchars($order['sum'], ENT_QUOTES, 'UTF-8'); ?>
                         </span>
+                        <?php if (!empty($order['cashbackSpent']) && $order['cashbackSpent'] !== '0 ₽'): ?>
+                            <span class="inline-flex items-center gap-2 rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700 ring-1 ring-amber-200">
+                                <span class="material-symbols-rounded text-base">savings</span>
+                                Списано: <?php echo htmlspecialchars($order['cashbackSpent'], ENT_QUOTES, 'UTF-8'); ?>
+                            </span>
+                        <?php endif; ?>
                     </div>
                     <div class="flex flex-wrap items-center gap-2">
                         <form method="post" action="/admin-order-update" class="flex flex-wrap items-center gap-2">
@@ -150,7 +156,17 @@ $returnQuery = [
                                     <div class="text-right text-sm font-semibold text-slate-900"><?php echo (int) $item['qty']; ?> шт</div>
                                 </div>
                                 <div class="mt-2 flex items-center justify-between text-sm text-slate-700">
-                                    <span>Полная стоимость</span>
+                                    <span>Цена со стебл. атрибутами × кол-во</span>
+                                    <span class="font-semibold text-slate-900"><?php echo htmlspecialchars($item['stemsTotal'] ?? $item['total'], ENT_QUOTES, 'UTF-8'); ?></span>
+                                </div>
+                                <?php if (!empty($item['bouquetTotal'])): ?>
+                                    <div class="mt-2 flex items-center justify-between text-sm text-slate-700">
+                                        <span>Атрибут к букету</span>
+                                        <span class="font-semibold text-slate-900"><?php echo htmlspecialchars($item['bouquetTotal'], ENT_QUOTES, 'UTF-8'); ?></span>
+                                    </div>
+                                <?php endif; ?>
+                                <div class="mt-2 flex items-center justify-between text-sm text-slate-700">
+                                    <span>Полная стоимость позиции</span>
                                     <span class="font-semibold text-slate-900"><?php echo htmlspecialchars($item['total'], ENT_QUOTES, 'UTF-8'); ?></span>
                                 </div>
                             </div>

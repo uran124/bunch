@@ -90,16 +90,27 @@
                                             <?php echo htmlspecialchars($order['statusLabel'], ENT_QUOTES, 'UTF-8'); ?>
                                         </span>
                                     </div>
-                                    <div class="space-y-1">
-                                        <?php if (!empty($order['item'])): ?>
-                                            <p class="text-sm font-semibold text-slate-900"><?php echo htmlspecialchars($order['item']['title'], ENT_QUOTES, 'UTF-8'); ?> ×<?php echo (int) $order['item']['qty']; ?> · <?php echo htmlspecialchars($order['item']['unit'], ENT_QUOTES, 'UTF-8'); ?></p>
-                                        <?php endif; ?>
+                                    <div class="space-y-2">
+                                        <?php foreach (array_slice($order['items'] ?? [], 0, 2) as $line): ?>
+                                            <p class="text-sm font-semibold text-slate-900">
+                                                <?php echo htmlspecialchars($line['title'], ENT_QUOTES, 'UTF-8'); ?> (<?php echo htmlspecialchars($line['unit'], ENT_QUOTES, 'UTF-8'); ?>) ×<?php echo (int) $line['qty']; ?>
+                                            </p>
+                                            <?php if (!empty($line['bouquetTotal'])): ?>
+                                                <p class="text-[11px] text-slate-500">Атрибут к букету: <?php echo htmlspecialchars($line['bouquetTotal'], ENT_QUOTES, 'UTF-8'); ?></p>
+                                            <?php endif; ?>
+                                        <?php endforeach; ?>
                                         <?php if ($order['deliveryType'] === 'Доставка'): ?>
                                             <div class="flex items-center justify-between text-sm font-semibold text-slate-900">
                                                 <span>Доставка</span>
                                                 <span><?php echo htmlspecialchars($order['deliveryPrice'] ?? '—', ENT_QUOTES, 'UTF-8'); ?></span>
                                             </div>
                                             <p class="text-[10px] text-slate-500"><?php echo htmlspecialchars($order['address'] ?: 'Адрес уточняется', ENT_QUOTES, 'UTF-8'); ?></p>
+                                        <?php endif; ?>
+                                        <?php if (!empty($order['cashbackSpent'])): ?>
+                                            <div class="flex items-center justify-between text-xs text-slate-600">
+                                                <span>Списано кешбека</span>
+                                                <span>- <?php echo htmlspecialchars($order['cashbackSpent'], ENT_QUOTES, 'UTF-8'); ?></span>
+                                            </div>
                                         <?php endif; ?>
                                     </div>
                                     <div class="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-700 sm:text-sm">
@@ -186,9 +197,17 @@
                                         <?php echo htmlspecialchars($order['statusLabel'], ENT_QUOTES, 'UTF-8'); ?>
                                     </span>
                                 </div>
-                                <?php if (!empty($order['item'])): ?>
-                                    <p class="text-sm font-semibold text-slate-900"><?php echo htmlspecialchars($order['item']['title'], ENT_QUOTES, 'UTF-8'); ?> ×<?php echo (int) $order['item']['qty']; ?></p>
-                                    <p class="text-[11px] text-slate-600 sm:text-xs"><?php echo htmlspecialchars($order['item']['price'], ENT_QUOTES, 'UTF-8'); ?></p>
+                                <?php foreach ($order['items'] ?? [] as $line): ?>
+                                    <p class="text-sm font-semibold text-slate-900"><?php echo htmlspecialchars($line['title'], ENT_QUOTES, 'UTF-8'); ?> (<?php echo htmlspecialchars($line['unit'], ENT_QUOTES, 'UTF-8'); ?>) ×<?php echo (int) $line['qty']; ?></p>
+                                    <?php if (!empty($line['bouquetTotal'])): ?>
+                                        <p class="text-[11px] text-slate-600 sm:text-xs">Атрибут к букету: <?php echo htmlspecialchars($line['bouquetTotal'], ENT_QUOTES, 'UTF-8'); ?></p>
+                                    <?php endif; ?>
+                                <?php endforeach; ?>
+                                <?php if (!empty($order['cashbackSpent'])): ?>
+                                    <p class="text-[11px] text-slate-600 sm:text-xs">Списано кешбека: -<?php echo htmlspecialchars($order['cashbackSpent'], ENT_QUOTES, 'UTF-8'); ?></p>
+                                <?php endif; ?>
+                                <?php if (!empty($order['deliveryPrice'])): ?>
+                                    <p class="text-[11px] text-slate-600 sm:text-xs">Доставка: <?php echo htmlspecialchars($order['deliveryPrice'], ENT_QUOTES, 'UTF-8'); ?></p>
                                 <?php endif; ?>
                                 <div class="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-700 sm:text-sm">
                                     <span class="inline-flex items-center gap-1">

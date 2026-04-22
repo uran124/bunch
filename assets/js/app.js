@@ -1664,20 +1664,39 @@ function createHistoryCard(order) {
 
     header.append(headerLeft, badge);
 
-    const titleRow = document.createElement('p');
-    titleRow.className = 'text-sm font-semibold text-slate-900';
-    if (order.item) {
-        titleRow.textContent = `${order.item.title} ×${order.item.qty}`;
+    const titleRow = document.createElement('div');
+    titleRow.className = 'space-y-1';
+    if (Array.isArray(order.items) && order.items.length) {
+        order.items.forEach((item) => {
+            const line = document.createElement('p');
+            line.className = 'text-sm font-semibold text-slate-900';
+            line.textContent = `${item.title} (${item.unit}) ×${item.qty}`;
+            titleRow.appendChild(line);
+            if (item.bouquetTotal) {
+                const bouquet = document.createElement('p');
+                bouquet.className = 'text-xs text-slate-600';
+                bouquet.textContent = `Атрибут к букету: ${item.bouquetTotal}`;
+                titleRow.appendChild(bouquet);
+            }
+        });
     } else {
-        titleRow.textContent = 'Состав уточняется';
+        const line = document.createElement('p');
+        line.className = 'text-sm font-semibold text-slate-900';
+        line.textContent = 'Состав уточняется';
+        titleRow.appendChild(line);
     }
 
-    const priceHint = document.createElement('p');
-    priceHint.className = 'text-xs text-slate-600';
-    if (order.item?.price) {
-        priceHint.textContent = order.item.price;
-    } else {
-        priceHint.textContent = order.total;
+    const priceHint = document.createElement('div');
+    priceHint.className = 'space-y-1 text-xs text-slate-600';
+    if (order.cashbackSpent) {
+        const cashback = document.createElement('p');
+        cashback.textContent = `Списано кешбека: -${order.cashbackSpent}`;
+        priceHint.appendChild(cashback);
+    }
+    if (order.deliveryPrice) {
+        const delivery = document.createElement('p');
+        delivery.textContent = `Доставка: ${order.deliveryPrice}`;
+        priceHint.appendChild(delivery);
     }
 
     const footer = document.createElement('div');
