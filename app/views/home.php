@@ -275,8 +275,8 @@
 </div>
 
 <?php if (!empty($canModerateCatalog)): ?>
-<div class="fixed inset-0 z-[70] hidden items-center justify-center bg-slate-900/40 p-4 backdrop-blur" data-product-edit-modal>
-    <div class="w-full max-w-3xl space-y-4 rounded-3xl bg-white p-4 shadow-2xl shadow-slate-500/30 sm:p-6">
+<div class="fixed inset-0 z-[70] hidden items-center justify-center overflow-y-auto bg-slate-900/40 p-4 backdrop-blur" data-product-edit-modal>
+    <div class="my-auto w-full max-w-3xl space-y-4 rounded-3xl bg-white p-4 shadow-2xl shadow-slate-500/30 sm:p-6">
         <div class="flex items-center justify-between">
             <p class="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Редактирование товара</p>
             <button type="button" class="rounded-full border border-slate-200 bg-white p-2 text-slate-500 transition hover:border-rose-200 hover:text-rose-600" data-product-edit-cancel>
@@ -895,17 +895,32 @@
     const editPhotoButtons = editModal ? Array.from(editModal.querySelectorAll('[data-edit-photo-trigger]')) : [];
     const editPhotoInputs = editModal ? Array.from(editModal.querySelectorAll('[data-edit-photo-input]')) : [];
 
-    const createTierRow = (tier = { min_qty: 2, price: 0 }) => {
+    const createTierRow = (tier = { min_qty: 1, price: 0 }) => {
         const row = document.createElement('div');
-        row.className = 'grid grid-cols-[1fr_1fr_auto] items-center gap-2';
+        row.dataset.tierRow = 'true';
+        row.className = 'grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] sm:items-center';
         row.innerHTML = `
-            <input type="number" min="2" step="1" value="${Number(tier.min_qty || 2)}" class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm" data-tier-min placeholder="От количества">
-            <input type="number" min="0" step="1" value="${Number(tier.price || 0)}" class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm" data-tier-price placeholder="Цена, ₽">
-            <button type="button" class="rounded-lg border border-slate-200 bg-white px-2 py-2 text-slate-500" data-tier-remove>
+            <input type="number" min="1" step="1" value="${Number(tier.min_qty || 1)}" class="min-w-0 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm" data-tier-min placeholder="От количества">
+            <input type="number" min="0" step="1" value="${Number(tier.price || 0)}" class="min-w-0 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm" data-tier-price placeholder="Цена, ₽">
+            <button type="button" class="rounded-lg border border-slate-200 bg-white px-2 py-2 text-slate-500 sm:self-auto" data-tier-remove>
                 <span class="material-symbols-rounded text-base">delete</span>
             </button>
         `;
-        row.querySelector('[data-tier-remove]')?.addEventListener('click', () => row.remove());
+        row.querySelector('[data-tier-remove]')?.addEventListener('click', () => {
+            if (!editTierWrap) {
+                row.remove();
+                return;
+            }
+            const rows = editTierWrap.querySelectorAll('[data-tier-row]');
+            if (rows.length <= 1) {
+                const minInput = row.querySelector('[data-tier-min]');
+                const priceInput = row.querySelector('[data-tier-price]');
+                if (minInput) minInput.value = '1';
+                if (priceInput) priceInput.value = '0';
+                return;
+            }
+            row.remove();
+        });
         return row;
     };
 
@@ -992,7 +1007,7 @@
         if (editTierWrap) {
             editTierWrap.innerHTML = '';
             const tiers = Array.isArray(product.price_tiers) ? product.price_tiers : [];
-            (tiers.length ? tiers : [{ min_qty: 2, price: Number(product.base_price || 0) }]).forEach((tier) => {
+            (tiers.length ? tiers : [{ min_qty: 1, price: Number(product.base_price || 0) }]).forEach((tier) => {
                 editTierWrap.appendChild(createTierRow(tier));
             });
         }
@@ -1036,10 +1051,10 @@
     editForm?.addEventListener('submit', async (event) => {
         event.preventDefault();
         const formData = new FormData(editForm);
-        const tiers = Array.from(editTierWrap?.querySelectorAll('div') || []).map((row) => ({
+        const tiers = Array.from(editTierWrap?.querySelectorAll('[data-tier-row]') || []).map((row) => ({
             min_qty: Number(row.querySelector('[data-tier-min]')?.value || 0),
             price: Number(row.querySelector('[data-tier-price]')?.value || 0),
-        })).filter((tier) => tier.min_qty >= 2);
+        })).filter((tier) => tier.min_qty >= 1);
         formData.set('price_tiers', JSON.stringify(tiers));
 
         const selectedStemAttributeIds = Array.from(editModal?.querySelectorAll('[data-edit-stem-attribute-id]:checked') || []).map((input) => Number(input.value));
