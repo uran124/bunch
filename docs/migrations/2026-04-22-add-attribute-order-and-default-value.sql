@@ -1,9 +1,36 @@
 BEGIN;
 
-ALTER TABLE attributes  ADD COLUMN IF NOT EXISTS sort_order INT NOT NULL DEFAULT 0 AFTER is_active;
+SET @has_attributes_sort_order := (
+  SELECT COUNT(*)
+  FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE()
+    AND TABLE_NAME = 'attributes'
+    AND COLUMN_NAME = 'sort_order'
+);
+SET @sql := IF(
+  @has_attributes_sort_order = 0,
+  'ALTER TABLE attributes ADD COLUMN sort_order INT NOT NULL DEFAULT 0 AFTER is_active',
+  'SELECT 1'
+);
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
 
-ALTER TABLE attribute_values
-  ADD COLUMN IF NOT EXISTS is_default TINYINT(1) NOT NULL DEFAULT 0 AFTER is_active;
+SET @has_attribute_values_is_default := (
+  SELECT COUNT(*)
+  FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE()
+    AND TABLE_NAME = 'attribute_values'
+    AND COLUMN_NAME = 'is_default'
+);
+SET @sql := IF(
+  @has_attribute_values_is_default = 0,
+  'ALTER TABLE attribute_values ADD COLUMN is_default TINYINT(1) NOT NULL DEFAULT 0 AFTER is_active',
+  'SELECT 1'
+);
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
 
 UPDATE attribute_values av
 INNER JOIN (
