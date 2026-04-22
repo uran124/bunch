@@ -119,6 +119,8 @@
                     $supplyTitle = 'Поставка #' . (int) $product['supply_id'];
                 }
                 $isDeleted = ($product['status'] ?? 'active') === 'deleted';
+                $alternateName = trim((string) ($product['alt_name'] ?? ''));
+                $displayName = $alternateName !== '' ? $alternateName : (string) ($product['name'] ?? '');
 
                 $nextDeliveryLabel = '—';
                 if (!empty($product['supply_next_delivery'])) {
@@ -143,8 +145,13 @@
                 <div class="font-semibold text-slate-900"><?php echo htmlspecialchars($articleLabel, ENT_QUOTES, 'UTF-8'); ?></div>
                 <div class="space-y-1">
                     <a href="/admin-product-form?edit_id=<?php echo (int) $product['id']; ?>" class="text-base font-semibold text-slate-900 underline-offset-4 hover:text-rose-600 hover:underline">
-                        <?php echo htmlspecialchars($product['name'], ENT_QUOTES, 'UTF-8'); ?>
+                        <?php echo htmlspecialchars($displayName, ENT_QUOTES, 'UTF-8'); ?>
                     </a>
+                    <?php if ($alternateName !== ''): ?>
+                        <div class="text-xs text-slate-500">
+                            Осн. название: <?php echo htmlspecialchars((string) ($product['name'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>
+                        </div>
+                    <?php endif; ?>
                     <?php if ($isDeleted): ?>
                         <div class="inline-flex items-center gap-1 rounded-full bg-rose-100 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-rose-700">
                             Удалён
