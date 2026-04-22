@@ -1148,9 +1148,9 @@ class AdminController extends Controller
                 if (!is_array($tier)) {
                     continue;
                 }
-                $minQty = max(2, (int) ($tier['min_qty'] ?? 0));
+                $minQty = max(1, (int) ($tier['min_qty'] ?? 0));
                 $tierPrice = max(0, (int) floor((float) ($tier['price'] ?? 0)));
-                if ($minQty < 2 || isset($minQtyMap[$minQty])) {
+                if ($minQty < 1 || isset($minQtyMap[$minQty])) {
                     continue;
                 }
                 $minQtyMap[$minQty] = true;
