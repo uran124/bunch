@@ -897,15 +897,30 @@
 
     const createTierRow = (tier = { min_qty: 1, price: 0 }) => {
         const row = document.createElement('div');
-        row.className = 'grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] items-center gap-2';
+        row.dataset.tierRow = 'true';
+        row.className = 'grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] sm:items-center';
         row.innerHTML = `
             <input type="number" min="1" step="1" value="${Number(tier.min_qty || 1)}" class="min-w-0 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm" data-tier-min placeholder="От количества">
             <input type="number" min="0" step="1" value="${Number(tier.price || 0)}" class="min-w-0 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm" data-tier-price placeholder="Цена, ₽">
-            <button type="button" class="rounded-lg border border-slate-200 bg-white px-2 py-2 text-slate-500" data-tier-remove>
+            <button type="button" class="rounded-lg border border-slate-200 bg-white px-2 py-2 text-slate-500 sm:self-auto" data-tier-remove>
                 <span class="material-symbols-rounded text-base">delete</span>
             </button>
         `;
-        row.querySelector('[data-tier-remove]')?.addEventListener('click', () => row.remove());
+        row.querySelector('[data-tier-remove]')?.addEventListener('click', () => {
+            if (!editTierWrap) {
+                row.remove();
+                return;
+            }
+            const rows = editTierWrap.querySelectorAll('[data-tier-row]');
+            if (rows.length <= 1) {
+                const minInput = row.querySelector('[data-tier-min]');
+                const priceInput = row.querySelector('[data-tier-price]');
+                if (minInput) minInput.value = '1';
+                if (priceInput) priceInput.value = '0';
+                return;
+            }
+            row.remove();
+        });
         return row;
     };
 
@@ -1036,7 +1051,7 @@
     editForm?.addEventListener('submit', async (event) => {
         event.preventDefault();
         const formData = new FormData(editForm);
-        const tiers = Array.from(editTierWrap?.querySelectorAll('div') || []).map((row) => ({
+        const tiers = Array.from(editTierWrap?.querySelectorAll('[data-tier-row]') || []).map((row) => ({
             min_qty: Number(row.querySelector('[data-tier-min]')?.value || 0),
             price: Number(row.querySelector('[data-tier-price]')?.value || 0),
         })).filter((tier) => tier.min_qty >= 1);
