@@ -59,16 +59,35 @@ $primaryPaymentLabel = $onlinePaymentEnabled ? 'Оплата онлайн' : 'П
             <div class="space-y-4">
                 <?php foreach ($items as $item): ?>
                     <?php
+                    $isHeightAttribute = static function (array $attribute): bool {
+                        $label = mb_strtolower((string) ($attribute['label'] ?? $attribute['name'] ?? ''), 'UTF-8');
+                        return str_contains($label, 'высот');
+                    };
                     $selectedAttributeIds = [];
                     foreach ($item['attributes'] as $attr) {
+                        if ($isHeightAttribute($attr)) {
+                            continue;
+                        }
+
                         $selectedAttributeIds[(int) $attr['attribute_id']] = (int) $attr['value_id'];
                     }
                     $availableAttributes = $productAttributes[$item['product_id']] ?? [];
+                    $fixedAttributeIds = array_values(array_map(
+                        static fn (array $attr): int => (int) ($attr['value_id'] ?? 0),
+                        array_values(array_filter($item['attributes'], $isHeightAttribute))
+                    ));
+                    $availableAttributes = array_values(array_filter($availableAttributes, static function (array $attribute): bool {
+                        $label = mb_strtolower((string) ($attribute['name'] ?? ''), 'UTF-8');
+                        return !str_contains($label, 'высот');
+                    }));
                     ?>
                     <?php
                     $priorityAttributes = [1, 3, 8];
                     $previewAttributes = [];
-                    foreach ($item['attributes'] as $attr) {
+                    foreach (array_values(array_filter($item['attributes'], static function (array $attr): bool {
+                        $label = mb_strtolower((string) ($attr['label'] ?? ''), 'UTF-8');
+                        return !str_contains($label, 'высот');
+                    })) as $attr) {
                         if (in_array((int) $attr['attribute_id'], $priorityAttributes, true)) {
                             $previewAttributes[(int) $attr['attribute_id']] = $attr['label'] . ': ' . $attr['value'];
                         }
@@ -101,6 +120,7 @@ $primaryPaymentLabel = $onlinePaymentEnabled ? 'Оплата онлайн' : 'П
                         data-item-key="<?php echo htmlspecialchars($item['key'], ENT_QUOTES, 'UTF-8'); ?>"
                         data-product-id="<?php echo (int) $item['product_id']; ?>"
                         data-selected-attributes="<?php echo htmlspecialchars(json_encode(array_values($selectedAttributeIds), JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8'); ?>"
+                        data-fixed-attributes="<?php echo htmlspecialchars(json_encode($fixedAttributeIds, JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8'); ?>"
                     >
                         <div class="flex flex-col gap-3">
                             <div class="flex items-start gap-3">
@@ -122,9 +142,6 @@ $primaryPaymentLabel = $onlinePaymentEnabled ? 'Оплата онлайн' : 'П
                                 >
                                     <p class="text-sm font-semibold leading-tight text-slate-900 sm:text-base">
                                         <?php echo htmlspecialchars($item['name'], ENT_QUOTES, 'UTF-8'); ?>
-                                        <?php if (!empty($item['stem_height_cm'])): ?>
-                                            <span class="text-xs font-semibold uppercase tracking-wide text-slate-400">· <?php echo (int) $item['stem_height_cm']; ?> см</span>
-                                        <?php endif; ?>
                                     </p>
                                     <div class="flex flex-col gap-0.5 text-xs text-slate-600" data-attribute-preview>
                                         <?php foreach ($previewAttributes as $line): ?>

@@ -47,7 +47,13 @@ class Product extends Model
 
     public function getById(int $id): ?array
     {
-        $stmt = $this->db->prepare("SELECT * FROM {$this->table} WHERE id = :id LIMIT 1");
+        $stmt = $this->db->prepare(
+            "SELECT p.*, s.stem_height_cm AS supply_stem_height_cm
+             FROM {$this->table} p
+             LEFT JOIN supplies s ON s.id = p.supply_id
+             WHERE p.id = :id
+             LIMIT 1"
+        );
         $stmt->execute(['id' => $id]);
         $row = $stmt->fetch();
         return $row ?: null;

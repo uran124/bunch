@@ -274,6 +274,23 @@ function getSelectedAttributesFromItem(itemEl) {
     return fallback;
 }
 
+function getFixedAttributesFromItem(itemEl) {
+    try {
+        const data = JSON.parse(itemEl.dataset.fixedAttributes || '[]');
+        if (Array.isArray(data)) {
+            return data.map((id) => Number(id)).filter(Boolean);
+        }
+    } catch (e) {
+        // ignore
+    }
+
+    return [];
+}
+
+function isHeightAttributeName(label) {
+    return String(label || '').toLowerCase().includes('высот');
+}
+
 function toggleAttributeButton(button, isActive) {
     button.classList.toggle('attribute-selected', isActive);
     button.dataset.selected = isActive ? 'true' : 'false';
@@ -308,7 +325,7 @@ function bindCartItem(itemEl) {
         const priorityLines = [];
         const fallback = [];
 
-        attributes.forEach((attr) => {
+        attributes.filter((attr) => !isHeightAttributeName(attr.label)).forEach((attr) => {
             const line = `${attr.label}: ${attr.value}`;
             if (priority.includes(Number(attr.attribute_id))) {
                 priorityLines.push(line);
@@ -358,8 +375,9 @@ function bindCartItem(itemEl) {
 
     const applyUpdate = async (nextQty, customAttributes) => {
         const safeQty = Math.max(1, Number(nextQty) || 1);
+        const fixedAttributes = getFixedAttributesFromItem(itemEl);
         const attributes = Array.isArray(customAttributes)
-            ? customAttributes
+            ? [...customAttributes, ...fixedAttributes]
             : getSelectedAttributesFromItem(itemEl);
         setLoading(true);
 
@@ -375,6 +393,12 @@ function bindCartItem(itemEl) {
             }
             const selectedIds = extractValueIds(data.item?.attributes || []);
             updateAttributeDataset(selectedIds);
+            itemEl.dataset.fixedAttributes = JSON.stringify(
+                (data.item?.attributes || [])
+                    .filter((attr) => isHeightAttributeName(attr.label))
+                    .map((attr) => Number(attr.value_id || 0))
+                    .filter(Boolean),
+            );
             updatePreview(data.item?.attributes || []);
             if (data.item?.key) {
                 itemEl.dataset.itemKey = data.item.key;
@@ -1465,7 +1489,9 @@ function initAttributeModal() {
     });
 
     const renderRows = (rows) => {
-        activeRows = rows.map((row) => ({ ...row }));
+        activeRows = rows
+            .filter((row) => !isHeightAttributeName(row?.name))
+            .map((row) => ({ ...row }));
         body.innerHTML = '';
         if (!activeRows.length) {
             const empty = document.createElement('p');
