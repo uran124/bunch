@@ -1125,6 +1125,11 @@ class AdminController extends Controller
 
         $description = trim((string) ($_POST['description'] ?? ''));
         $basePrice = max(0, (int) floor((float) ($_POST['base_price'] ?? 0)));
+        if ($basePrice <= 0) {
+            http_response_code(422);
+            echo json_encode(['ok' => false, 'error' => 'Базовая цена должна быть больше 0'], JSON_UNESCAPED_UNICODE);
+            return;
+        }
         $priceTiersRaw = (string) ($_POST['price_tiers'] ?? '[]');
         $attributeIds = array_filter(array_map('intval', $_POST['attribute_ids'] ?? []));
         $attributeValueIds = array_filter(array_map('intval', $_POST['attribute_value_ids'] ?? []));
@@ -1164,6 +1169,13 @@ class AdminController extends Controller
         usort($priceTiers, static function (array $left, array $right): int {
             return $left['min_qty'] <=> $right['min_qty'];
         });
+
+        if (!$priceTiers) {
+            $priceTiers[] = [
+                'min_qty' => 1,
+                'price' => $basePrice,
+            ];
+        }
 
         $primaryPhoto = $existing['photo_url'] ?? '';
         $secondaryPhoto = $existing['photo_url_secondary'] ?? null;
