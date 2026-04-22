@@ -122,7 +122,10 @@
                     <img src="<?php echo htmlspecialchars($item['image'], ENT_QUOTES, 'UTF-8'); ?>" alt="" class="h-12 w-12 rounded-lg object-cover">
                     <div class="flex-1">
                         <p class="font-semibold text-slate-900"><?php echo htmlspecialchars($item['title'], ENT_QUOTES, 'UTF-8'); ?></p>
-                        <p class="text-slate-500"><?php echo (int) $item['qty']; ?> шт · <?php echo htmlspecialchars($item['unit'], ENT_QUOTES, 'UTF-8'); ?></p>
+                        <p class="text-slate-500"><?php echo (int) $item['qty']; ?> шт · <?php echo htmlspecialchars($item['unit'], ENT_QUOTES, 'UTF-8'); ?> (за шт. с атрибутами к стеблю)</p>
+                        <?php if (!empty($item['bouquetTotal'])): ?>
+                            <p class="text-slate-500">Атрибут к букету: <?php echo htmlspecialchars($item['bouquetTotal'], ENT_QUOTES, 'UTF-8'); ?></p>
+                        <?php endif; ?>
                     </div>
                     <div class="font-semibold text-slate-900"><?php echo htmlspecialchars($item['total'], ENT_QUOTES, 'UTF-8'); ?></div>
                 </article>

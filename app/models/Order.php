@@ -556,6 +556,11 @@ class Order extends Model
                 }
             }
 
+            if ($appliedTulipSpend > 0) {
+                $txModel = new CashbackTransaction();
+                $txModel->add($userId, $orderId, 'spend', $appliedTulipSpend, 'Списание Лепесточков при оформлении заказа');
+            }
+
             $this->db->commit();
 
             $customer = $this->getUserContact($userId);
@@ -656,11 +661,6 @@ class Order extends Model
                 'id' => $userId,
                 'spend' => $appliedSpend,
             ]);
-        }
-
-        if ($appliedSpend > 0) {
-            $txModel = new CashbackTransaction();
-            $txModel->add($userId, null, 'spend', $appliedSpend, 'Списание Лепесточков при оформлении заказа');
         }
 
         return [$appliedSpend, 0];
@@ -787,11 +787,14 @@ class Order extends Model
     private function mapAdminOrder(array $order, array $items = []): array
     {
         $scheduled = $this->formatDeliveryWindow($order['scheduled_date'] ?? null, $order['scheduled_time'] ?? null);
-        $items = $items ?: $this->getItems((int) $order['id']);
+        $orderId = (int) $order['id'];
+        $items = $this->decorateItemsWithAttributesAndPricing($items ?: $this->getItems($orderId));
 
         $itemsPayload = array_map(function (array $item): array {
             $qty = (int) $item['qty'];
-            $price = (float) $item['price'];
+            $unitPrice = (float) ($item['stem_unit_price'] ?? $item['price'] ?? 0);
+            $stemsTotal = (float) ($item['stems_total_price'] ?? ($unitPrice * $qty));
+            $bouquetTotal = (float) ($item['bouquet_total_price'] ?? 0);
 
             $title = $item['product_name'] ?? ($item['name'] ?? 'Товар');
             if (($item['product_type'] ?? null) === 'small_wholesale' && !empty($item['stems_per_pack'])) {
@@ -801,18 +804,23 @@ class Order extends Model
             return [
                 'title' => $title,
                 'qty' => $qty,
-                'unit' => $this->formatPrice($price),
-                'total' => $this->formatPrice($price * $qty),
+                'unit' => $this->formatPrice($unitPrice),
+                'total' => $this->formatPrice((float) ($item['line_total_price'] ?? ($stemsTotal + $bouquetTotal))),
+                'stemsTotal' => $this->formatPrice($stemsTotal),
+                'bouquetTotal' => $bouquetTotal > 0 ? $this->formatPrice($bouquetTotal) : null,
+                'bouquetAttributes' => $item['bouquet_attributes'] ?? [],
+                'attributes' => $item['attributes'] ?? '—',
                 'image' => $item['photo_url'] ?? '/assets/images/products/bouquet.svg',
             ];
         }, $items);
 
         return [
-            'id' => (int) $order['id'],
-            'number' => 'B-' . str_pad((string) $order['id'], 4, '0', STR_PAD_LEFT),
+            'id' => $orderId,
+            'number' => 'B-' . str_pad((string) $orderId, 4, '0', STR_PAD_LEFT),
             'customer' => $order['user_name'] ?? $order['recipient_name'] ?? 'Без имени',
             'customerPhone' => $order['user_phone'] ?? $order['recipient_phone'] ?? '',
             'sum' => $this->formatPrice((float) $order['total_amount']),
+            'cashbackSpent' => $this->formatPrice((float) $this->getCashbackSpendForOrder($orderId)),
             'status' => $order['status'],
             'statusLabel' => $this->mapOrderStatus($order['status']),
             'payment' => $this->mapPaymentStatus($order['status']),
@@ -840,17 +848,23 @@ class Order extends Model
     private function mapUserOrder(array $order, array $items = []): array
     {
         $scheduled = $this->formatDeliveryWindow($order['scheduled_date'] ?? null, $order['scheduled_time'] ?? null);
-        $items = $items ?: $this->getItems((int) $order['id']);
+        $orderId = (int) $order['id'];
+        $items = $this->decorateItemsWithAttributesAndPricing($items ?: $this->getItems($orderId));
 
         $itemsPayload = array_map(function (array $item): array {
             $qty = (int) $item['qty'];
-            $price = (float) $item['price'];
+            $unitPrice = (float) ($item['stem_unit_price'] ?? $item['price'] ?? 0);
+            $stemsTotal = (float) ($item['stems_total_price'] ?? ($unitPrice * $qty));
+            $bouquetTotal = (float) ($item['bouquet_total_price'] ?? 0);
 
             return [
                 'title' => $item['product_name'] ?? ($item['name'] ?? 'Товар'),
                 'qty' => $qty,
-                'unit' => $this->formatPrice($price),
-                'total' => $this->formatPrice($price * $qty),
+                'unit' => $this->formatPrice($unitPrice),
+                'total' => $this->formatPrice((float) ($item['line_total_price'] ?? ($stemsTotal + $bouquetTotal))),
+                'stemsTotal' => $this->formatPrice($stemsTotal),
+                'bouquetTotal' => $bouquetTotal > 0 ? $this->formatPrice($bouquetTotal) : null,
+                'bouquetAttributes' => $item['bouquet_attributes'] ?? [],
                 'image' => $item['photo_url'] ?? '/assets/images/products/bouquet.svg',
             ];
         }, $items);
@@ -871,12 +885,13 @@ class Order extends Model
         }
 
         return [
-            'id' => (int) $order['id'],
-            'number' => '№' . str_pad((string) $order['id'], 4, '0', STR_PAD_LEFT),
+            'id' => $orderId,
+            'number' => '№' . str_pad((string) $orderId, 4, '0', STR_PAD_LEFT),
             'status' => $order['status'],
             'statusLabel' => $this->mapOrderStatus($order['status']),
             'createdAt' => $order['created_at'] ?? null,
             'total' => $this->formatPrice((float) $order['total_amount']),
+            'cashbackSpent' => $this->formatPrice((float) $this->getCashbackSpendForOrder($orderId)),
             'deliveryType' => $this->mapDeliveryType($order['delivery_type'] ?? 'pickup'),
             'deliveryTypeValue' => $order['delivery_type'] ?? 'pickup',
             'scheduled' => $scheduled,
@@ -1393,7 +1408,8 @@ class Order extends Model
 
     private function buildOrderPayload(array $order): array
     {
-        $items = $this->getItems((int) $order['id']);
+        $orderId = (int) $order['id'];
+        $items = $this->decorateItemsWithAttributesAndPricing($this->getItems($orderId));
 
         $address = null;
         if (!empty($order['address_id'])) {
@@ -1406,11 +1422,12 @@ class Order extends Model
         }
 
         return [
-            'id' => (int) $order['id'],
+            'id' => $orderId,
             'status' => $order['status'],
             'created_at' => $order['created_at'],
             'total_amount' => (float) $order['total_amount'],
             'delivery_price' => isset($order['delivery_price']) ? (float) $order['delivery_price'] : null,
+            'cashback_spent' => $this->getCashbackSpendForOrder($orderId),
             'delivery_type' => $order['delivery_type'] ?? ($order['address_id'] ? 'delivery' : 'pickup'),
             'scheduled_date' => $order['scheduled_date'] ?? null,
             'scheduled_time' => $order['scheduled_time'] ?? null,
@@ -1421,5 +1438,129 @@ class Order extends Model
             'comment' => $order['comment'] ?? null,
             'items' => $items,
         ];
+    }
+
+    private function decorateItemsWithAttributesAndPricing(array $items): array
+    {
+        if ($items === []) {
+            return [];
+        }
+
+        $itemIds = [];
+        foreach ($items as $item) {
+            $id = (int) ($item['id'] ?? 0);
+            if ($id > 0) {
+                $itemIds[] = $id;
+            }
+        }
+
+        $attributesByItem = $this->getOrderItemAttributes($itemIds);
+
+        return array_map(function (array $item) use ($attributesByItem): array {
+            $itemId = (int) ($item['id'] ?? 0);
+            $qty = max(1, (int) ($item['qty'] ?? 1));
+            $basePrice = (int) floor((float) ($item['price'] ?? 0));
+            $attributes = $attributesByItem[$itemId] ?? [];
+
+            $stemAttributes = [];
+            $bouquetAttributes = [];
+            $stemDelta = 0;
+            $bouquetDelta = 0;
+
+            foreach ($attributes as $attribute) {
+                $delta = (int) ($attribute['price_delta'] ?? 0);
+                if (($attribute['applies_to'] ?? 'stem') === 'bouquet') {
+                    $bouquetAttributes[] = $attribute;
+                    $bouquetDelta += $delta;
+                } else {
+                    $stemAttributes[] = $attribute;
+                    $stemDelta += $delta;
+                }
+            }
+
+            $unitWithStem = $basePrice + $stemDelta;
+            $stemsTotal = $unitWithStem * $qty;
+            $lineTotal = $stemsTotal + $bouquetDelta;
+
+            $item['stem_attributes'] = $stemAttributes;
+            $item['bouquet_attributes'] = $bouquetAttributes;
+            $item['stem_unit_price'] = $unitWithStem;
+            $item['stems_total_price'] = $stemsTotal;
+            $item['bouquet_total_price'] = $bouquetDelta;
+            $item['line_total_price'] = $lineTotal;
+            $item['attributes'] = $this->formatOrderItemAttributesText($attributes);
+
+            return $item;
+        }, $items);
+    }
+
+    private function getOrderItemAttributes(array $orderItemIds): array
+    {
+        if ($orderItemIds === []) {
+            return [];
+        }
+
+        $placeholders = implode(',', array_fill(0, count($orderItemIds), '?'));
+        $stmt = $this->db->prepare(
+            "SELECT oia.order_item_id, oia.applies_to, oia.price_delta, a.name AS attribute_name, av.value AS attribute_value
+             FROM order_item_attributes oia
+             LEFT JOIN attributes a ON a.id = oia.attribute_id
+             LEFT JOIN attribute_values av ON av.id = oia.attribute_value_id
+             WHERE oia.order_item_id IN ($placeholders)
+             ORDER BY oia.id ASC"
+        );
+        $stmt->execute($orderItemIds);
+
+        $rows = $stmt->fetchAll();
+        $result = [];
+
+        foreach ($rows as $row) {
+            $itemId = (int) ($row['order_item_id'] ?? 0);
+            if ($itemId <= 0) {
+                continue;
+            }
+
+            $result[$itemId][] = [
+                'label' => trim((string) ($row['attribute_name'] ?? 'Атрибут')),
+                'value' => trim((string) ($row['attribute_value'] ?? '')),
+                'applies_to' => $row['applies_to'] === 'bouquet' ? 'bouquet' : 'stem',
+                'price_delta' => (int) floor((float) ($row['price_delta'] ?? 0)),
+            ];
+        }
+
+        return $result;
+    }
+
+    private function formatOrderItemAttributesText(array $attributes): string
+    {
+        if ($attributes === []) {
+            return '—';
+        }
+
+        $parts = [];
+        foreach ($attributes as $attribute) {
+            $name = trim((string) ($attribute['label'] ?? 'Атрибут'));
+            $value = trim((string) ($attribute['value'] ?? ''));
+            $delta = (int) ($attribute['price_delta'] ?? 0);
+            $scope = ($attribute['applies_to'] ?? 'stem') === 'bouquet' ? 'к букету' : 'к стеблю';
+            $price = $delta >= 0 ? '+' . $delta : (string) $delta;
+            $parts[] = trim($name . ($value !== '' ? ': ' . $value : '') . " ({$scope}, {$price} ₽)");
+        }
+
+        return implode('; ', $parts);
+    }
+
+    private function getCashbackSpendForOrder(int $orderId): int
+    {
+        if ($orderId <= 0) {
+            return 0;
+        }
+
+        $stmt = $this->db->prepare(
+            "SELECT COALESCE(SUM(amount), 0) FROM cashback_transactions WHERE order_id = :order_id AND type = 'spend'"
+        );
+        $stmt->execute(['order_id' => $orderId]);
+
+        return (int) $stmt->fetchColumn();
     }
 }

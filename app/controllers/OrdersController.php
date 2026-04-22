@@ -206,7 +206,6 @@ class OrdersController extends Controller
     private function mapOrder(array $order): array
     {
         $items = $order['items'] ?? [];
-        $firstItem = $items[0] ?? null;
 
         $scheduledParts = [];
         if (!empty($order['scheduled_date'])) {
@@ -215,6 +214,27 @@ class OrdersController extends Controller
         if (!empty($order['scheduled_time'])) {
             $scheduledParts[] = $order['scheduled_time'];
         }
+
+        $mappedItems = array_map(function (array $item): array {
+            $qty = (int) ($item['qty'] ?? 0);
+            $unitAmount = (float) ($item['stem_unit_price'] ?? $item['price'] ?? 0);
+            $stemTotalAmount = (float) ($item['stems_total_price'] ?? ($unitAmount * $qty));
+            $bouquetTotalAmount = (float) ($item['bouquet_total_price'] ?? 0);
+
+            return [
+                'title' => $item['product_name'] ?? ($item['name'] ?? 'Товар'),
+                'qty' => $qty,
+                'unit' => $this->formatPrice($unitAmount),
+                'stemsTotal' => $this->formatPrice($stemTotalAmount),
+                'bouquetTotal' => $bouquetTotalAmount > 0 ? $this->formatPrice($bouquetTotalAmount) : null,
+                'bouquetAttributes' => $item['bouquet_attributes'] ?? [],
+                'lineTotal' => $this->formatPrice((float) ($item['line_total_price'] ?? ($stemTotalAmount + $bouquetTotalAmount))),
+                'image' => $item['photo_url'] ?? '/assets/images/products/bouquet.svg',
+            ];
+        }, $items);
+
+        $firstItem = $mappedItems[0] ?? null;
+        $cashbackSpentAmount = (int) floor((float) ($order['cashback_spent'] ?? 0));
 
         return [
             'id' => (int) $order['id'],
@@ -227,17 +247,13 @@ class OrdersController extends Controller
             'scheduled' => implode(' · ', $scheduledParts),
             'address' => $order['address'] ?? null,
             'deliveryPrice' => isset($order['delivery_price']) ? $this->formatPrice((float) $order['delivery_price']) : null,
+            'cashbackSpent' => $cashbackSpentAmount > 0 ? $this->formatPrice((float) $cashbackSpentAmount) : null,
             'editLink' => '/order-edit?id=' . (int) $order['id'],
             'paymentLink' => '/order-payment?id=' . (int) $order['id'],
             'canEdit' => $order['status'] === 'new',
             'canPay' => $order['status'] === 'new',
-            'item' => $firstItem ? [
-                'title' => $firstItem['product_name'] ?? ($firstItem['name'] ?? 'Товар'),
-                'qty' => (int) $firstItem['qty'],
-                'price' => $this->formatPrice((float) $firstItem['price'] * (int) $firstItem['qty']),
-                'unit' => $this->formatPrice((float) $firstItem['price']),
-                'image' => $firstItem['photo_url'] ?? '/assets/images/products/bouquet.svg',
-            ] : null,
+            'item' => $firstItem,
+            'items' => $mappedItems,
         ];
     }
 
