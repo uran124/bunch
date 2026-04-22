@@ -59,6 +59,10 @@
                         <option value="bouquet">букету (фиксированная цена)</option>
                     </select>
                 </label>
+                <label class="flex flex-col gap-1 text-sm font-semibold text-slate-700">
+                    Порядок в карточке товара
+                    <input name="sort_order" type="number" value="0" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 shadow-sm">
+                </label>
                 <label class="flex flex-col gap-1 text-sm font-semibold text-slate-700 sm:col-span-2">
                     Описание
                     <textarea name="description" rows="2" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 shadow-sm" placeholder="Пояснение для менеджеров"></textarea>
@@ -96,8 +100,26 @@
                             <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Атрибут #<?php echo $attributeId; ?></p>
                             <h3 class="text-base font-semibold text-slate-900"><?php echo htmlspecialchars($attribute['name'], ENT_QUOTES, 'UTF-8'); ?></h3>
                         </div>
-                        <div class="text-xs text-slate-500">
-                            <?php echo htmlspecialchars($attribute['type'], ENT_QUOTES, 'UTF-8'); ?> · <?php echo $attribute['applies_to'] === 'bouquet' ? 'к букету' : 'к стеблю'; ?>
+                        <div class="space-y-1 text-xs text-slate-500">
+                            <div>
+                                <?php echo htmlspecialchars($attribute['type'], ENT_QUOTES, 'UTF-8'); ?> · <?php echo $attribute['applies_to'] === 'bouquet' ? 'к букету' : 'к стеблю'; ?>
+                            </div>
+                            <form action="/admin-attribute-save" method="post" class="flex items-center gap-2">
+                                <input type="hidden" name="id" value="<?php echo $attributeId; ?>">
+                                <input type="hidden" name="name" value="<?php echo htmlspecialchars($attribute['name'], ENT_QUOTES, 'UTF-8'); ?>">
+                                <input type="hidden" name="description" value="<?php echo htmlspecialchars($attribute['description'] ?? '', ENT_QUOTES, 'UTF-8'); ?>">
+                                <input type="hidden" name="type" value="<?php echo htmlspecialchars($attribute['type'], ENT_QUOTES, 'UTF-8'); ?>">
+                                <input type="hidden" name="applies_to" value="<?php echo htmlspecialchars($attribute['applies_to'] ?? 'stem', ENT_QUOTES, 'UTF-8'); ?>">
+                                <input type="hidden" name="is_active" value="<?php echo (int) ($attribute['is_active'] ?? 0); ?>">
+                                <label class="inline-flex items-center gap-1.5">
+                                    Порядок:
+                                    <input type="number" name="sort_order" value="<?php echo (int) ($attribute['sort_order'] ?? 0); ?>" class="w-16 rounded-md border border-slate-200 px-2 py-1 text-xs text-slate-900">
+                                </label>
+                                <button type="submit" class="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700 hover:border-emerald-200 hover:text-emerald-700">
+                                    <span class="material-symbols-rounded text-sm">save</span>
+                                    Сохранить
+                                </button>
+                            </form>
                         </div>
                     </div>
                     <div class="mt-4 space-y-2">
@@ -106,7 +128,7 @@
                                 <div class="flex flex-wrap items-center justify-between gap-2">
                                     <div>
                                         <p class="font-semibold text-slate-900"><?php echo htmlspecialchars($value['value'], ENT_QUOTES, 'UTF-8'); ?></p>
-                                        <p class="text-xs text-slate-500">Δ <?php echo htmlspecialchars((string) $value['price_delta'], ENT_QUOTES, 'UTF-8'); ?> ₽ · порядок <?php echo (int) $value['sort_order']; ?></p>
+                                        <p class="text-xs text-slate-500">Δ <?php echo htmlspecialchars((string) $value['price_delta'], ENT_QUOTES, 'UTF-8'); ?> ₽ · порядок <?php echo (int) $value['sort_order']; ?><?php echo !empty($value['is_default']) ? ' · по умолчанию' : ''; ?></p>
                                     </div>
                                     <div class="flex flex-wrap gap-2">
                                         <button
@@ -120,6 +142,7 @@
                                             data-photo-url="<?php echo htmlspecialchars($value['photo_url'] ?? '', ENT_QUOTES, 'UTF-8'); ?>"
                                             data-sort-order="<?php echo (int) $value['sort_order']; ?>"
                                             data-is-active="<?php echo (int) ($value['is_active'] ?? 0); ?>"
+                                            data-is-default="<?php echo (int) ($value['is_default'] ?? 0); ?>"
                                         >
                                             <span class="material-symbols-rounded text-base">edit</span>
                                             Редактировать
@@ -158,12 +181,18 @@
                                 </label>
                             </div>
                             <div class="mt-2 flex flex-wrap items-center justify-between gap-2">
-                                <label class="relative inline-flex h-7 w-12 cursor-pointer items-center">
-                                    <input type="checkbox" name="is_active" class="peer sr-only" checked>
-                                    <span class="absolute inset-0 rounded-full bg-slate-200 transition peer-checked:bg-emerald-500"></span>
-                                    <span class="absolute left-1 top-1 h-5 w-5 rounded-full bg-white shadow-sm transition peer-checked:translate-x-5 peer-checked:shadow-md"></span>
-                                    <span class="sr-only">Активен</span>
-                                </label>
+                                <div class="flex flex-wrap items-center gap-4">
+                                    <label class="relative inline-flex h-7 w-12 cursor-pointer items-center">
+                                        <input type="checkbox" name="is_active" class="peer sr-only" checked>
+                                        <span class="absolute inset-0 rounded-full bg-slate-200 transition peer-checked:bg-emerald-500"></span>
+                                        <span class="absolute left-1 top-1 h-5 w-5 rounded-full bg-white shadow-sm transition peer-checked:translate-x-5 peer-checked:shadow-md"></span>
+                                        <span class="sr-only">Активен</span>
+                                    </label>
+                                    <label class="inline-flex items-center gap-2 text-xs font-semibold text-slate-700">
+                                        <input type="checkbox" name="is_default" class="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500">
+                                        Главный (по умолчанию)
+                                    </label>
+                                </div>
                                 <button type="submit" class="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-3 py-2 font-semibold text-white shadow-sm shadow-emerald-200 hover:-translate-y-0.5 hover:shadow-md">
                                     <span class="material-symbols-rounded text-base">add_circle</span>
                                     Добавить новое значение
@@ -215,6 +244,10 @@
                 <input id="modal-is-active" type="checkbox" name="is_active" class="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500">
                 Значение активно
             </label>
+            <label class="inline-flex items-center gap-2 text-sm font-semibold text-slate-700 sm:col-span-2">
+                <input id="modal-is-default" type="checkbox" name="is_default" class="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500">
+                Главный вариант (выбирается по умолчанию)
+            </label>
         </div>
         <div class="flex justify-end gap-2">
             <button type="button" id="attribute-value-modal-cancel" class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700">Отмена</button>
@@ -240,6 +273,7 @@
         const fieldPhotoUrl = document.getElementById('modal-photo-url');
         const fieldSortOrder = document.getElementById('modal-sort-order');
         const fieldIsActive = document.getElementById('modal-is-active');
+        const fieldIsDefault = document.getElementById('modal-is-default');
         const title = document.getElementById('modal-title');
         const closeBtn = document.getElementById('attribute-value-modal-close');
         const cancelBtn = document.getElementById('attribute-value-modal-cancel');
@@ -253,6 +287,7 @@
                 fieldPhotoUrl.value = button.dataset.photoUrl || '';
                 fieldSortOrder.value = button.dataset.sortOrder || '0';
                 fieldIsActive.checked = button.dataset.isActive === '1';
+                fieldIsDefault.checked = button.dataset.isDefault === '1';
                 title.textContent = 'Редактировать: ' + (button.dataset.attributeName || 'значение атрибута');
                 modal.showModal();
             });
