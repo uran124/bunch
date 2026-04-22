@@ -1136,7 +1136,7 @@ class AdminController extends Controller
         $attributeModel = new AttributeModel();
         $existingNonStemAttributeIds = [];
         foreach ($productModel->getAttributeIds($productId) as $existingAttributeId) {
-            $attribute = $attributeModel->getById((int) $existingAttributeId);
+            $attribute = $attributeModel->find((int) $existingAttributeId);
             if ($attribute && ($attribute['applies_to'] ?? 'stem') !== 'stem') {
                 $existingNonStemAttributeIds[] = (int) $existingAttributeId;
             }
