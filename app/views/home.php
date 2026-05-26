@@ -49,6 +49,7 @@
                     $salesComment = $isSmallWholesale
                         ? ($stemsPerPack > 0 ? "продажа пачками по {$stemsPerPack} штук" : 'продажа пачками')
                         : 'продажа поштучно';
+                    $salesCommentClass = $isSmallWholesale ? '' : 'hidden sm:block';
                     $country = $product['country'] ?? $product['supply_country'] ?? null;
                     $budSize = $product['bud_size_cm'] ?? $product['supply_bud_size_cm'] ?? null;
                     $description = trim((string) ($product['description'] ?? ''));
@@ -140,7 +141,7 @@
                                 <button type="button" class="text-left" data-product-modal-trigger>
                                     <h2 class="text-base font-semibold leading-snug text-slate-900 md:text-2xl lg:text-xl"><?php echo htmlspecialchars($displayName, ENT_QUOTES, 'UTF-8'); ?></h2>
                                 </button>
-                                <p class="text-[11px] font-semibold text-slate-500 md:text-xs lg:text-[11px]"><?php echo htmlspecialchars($salesComment, ENT_QUOTES, 'UTF-8'); ?></p>
+                                <p class="<?php echo $salesCommentClass; ?> text-[11px] font-semibold text-slate-500 md:text-xs lg:text-[11px]"><?php echo htmlspecialchars($salesComment, ENT_QUOTES, 'UTF-8'); ?></p>
                             </div>
 
                             <div class="space-y-2 md:space-y-3">
@@ -165,6 +166,7 @@
                                         class="w-16 rounded-lg bg-white px-2 py-1.5 text-base font-bold text-slate-900 shadow-inner shadow-rose-100/60 text-center md:text-xl lg:text-lg"
                                     >
                                 </div>
+                                <p class="-mt-1 text-[9px] font-medium text-slate-400">выберите количество</p>
                                 <div class="hidden justify-between text-[11px] font-semibold uppercase tracking-wide text-slate-400 md:flex">
                                     <span>1</span>
                                     <span><?php echo $midQty; ?></span>
@@ -814,11 +816,38 @@
         }
 
         if (qtyValueInput) {
+            qtyValueInput.addEventListener('focus', () => {
+                qtyValueInput.dataset.previousValue = qtyValueInput.value || qtyInput?.value || '1';
+                qtyValueInput.value = '';
+            });
+
             qtyValueInput.addEventListener('input', () => {
+                const trimmed = qtyValueInput.value.trim();
+                if (trimmed === '') {
+                    return;
+                }
                 const min = Number(qtyValueInput.min || qtyInput?.min || 1);
                 const fallbackMax = Number(qtyValueInput.max || qtyInput?.max || 101);
                 const max = getQuantityMax(card, fallbackMax);
-                const quantity = clampQuantity(Number(qtyValueInput.value || min), min, max);
+                const quantity = clampQuantity(Number(trimmed), min, max);
+                qtyValueInput.value = quantity.toString();
+                if (qtyInput) qtyInput.value = quantity.toString();
+                updateCardTotals(card);
+            });
+
+            qtyValueInput.addEventListener('blur', () => {
+                if (qtyValueInput.value.trim() === '') {
+                    const previousValue = qtyValueInput.dataset.previousValue || qtyInput?.value || '1';
+                    qtyValueInput.value = previousValue;
+                    if (qtyInput) qtyInput.value = previousValue;
+                    updateCardTotals(card);
+                    return;
+                }
+
+                const min = Number(qtyValueInput.min || qtyInput?.min || 1);
+                const fallbackMax = Number(qtyValueInput.max || qtyInput?.max || 101);
+                const max = getQuantityMax(card, fallbackMax);
+                const quantity = clampQuantity(Number(qtyValueInput.value), min, max);
                 qtyValueInput.value = quantity.toString();
                 if (qtyInput) qtyInput.value = quantity.toString();
                 updateCardTotals(card);
