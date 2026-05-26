@@ -49,6 +49,7 @@
                     $salesComment = $isSmallWholesale
                         ? ($stemsPerPack > 0 ? "продажа пачками по {$stemsPerPack} штук" : 'продажа пачками')
                         : 'продажа поштучно';
+                    $salesCommentClass = $isSmallWholesale ? '' : 'hidden sm:block';
                     $country = $product['country'] ?? $product['supply_country'] ?? null;
                     $budSize = $product['bud_size_cm'] ?? $product['supply_bud_size_cm'] ?? null;
                     $description = trim((string) ($product['description'] ?? ''));
@@ -140,7 +141,7 @@
                                 <button type="button" class="text-left" data-product-modal-trigger>
                                     <h2 class="text-base font-semibold leading-snug text-slate-900 md:text-2xl lg:text-xl"><?php echo htmlspecialchars($displayName, ENT_QUOTES, 'UTF-8'); ?></h2>
                                 </button>
-                                <p class="text-[11px] font-semibold text-slate-500 md:text-xs lg:text-[11px]"><?php echo htmlspecialchars($salesComment, ENT_QUOTES, 'UTF-8'); ?></p>
+                                <p class="<?php echo $salesCommentClass; ?> text-[11px] font-semibold text-slate-500 md:text-xs lg:text-[11px]"><?php echo htmlspecialchars($salesComment, ENT_QUOTES, 'UTF-8'); ?></p>
                             </div>
 
                             <div class="space-y-2 md:space-y-3">
