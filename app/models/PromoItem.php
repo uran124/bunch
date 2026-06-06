@@ -50,7 +50,7 @@ class PromoItem extends Model
                     FROM order_items oi
                     JOIN orders o ON o.id = oi.order_id
                     WHERE oi.product_id = pi.product_id
-                      AND o.status IN ('confirmed', 'assembled', 'delivering', 'delivered')
+                      AND o.status IN ('confirmed', 'assembled', 'delivering', 'completed')
                 ), 0) AS accepted_qty
             FROM {$this->table} pi
             LEFT JOIN products p ON p.id = pi.product_id

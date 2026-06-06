@@ -59,6 +59,7 @@ return [
         $router->get('admin-supply-single', [AdminController::class, 'supplySingleForm'], $adminOnly);
         $router->get('admin-supply-edit', [AdminController::class, 'editSupply'], $adminOnly);
         $router->get('admin-orders-one-time', [AdminController::class, 'ordersOneTime'], $adminOnly);
+        $router->get('admin-orders-settings', [AdminController::class, 'orderSettings'], $adminOnly);
         $router->get('admin-order-one-time-edit', [AdminController::class, 'orderOneTimeEdit'], $adminOnly);
         $router->get('admin-orders-subscriptions', [AdminController::class, 'ordersSubscriptions'], $adminOnly);
         $router->get('admin-orders-wholesale', [AdminController::class, 'ordersWholesale'], $adminOnly);
@@ -96,6 +97,7 @@ return [
         $router->get('admin-product-quick-data', [AdminController::class, 'quickProductData'], ['role:admin,manager']);
         $router->post('admin-product-quick-save', [AdminController::class, 'quickUpdateProduct'], ['role:admin,manager']);
         $router->post('admin-services-payment', [AdminController::class, 'saveServicePayment'], $adminOnly);
+        $router->post('admin-orders-settings', [AdminController::class, 'saveOrderSettings'], $adminOnly);
         $router->post('admin-services-telegram', [AdminController::class, 'saveServiceTelegram'], $adminOnly);
         $router->post('admin-services-frontpad', [AdminController::class, 'saveServiceFrontpad'], $adminOnly);
         $router->post('admin-services-delivery', [AdminController::class, 'saveServiceDelivery'], $adminOnly);
