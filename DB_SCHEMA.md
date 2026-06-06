@@ -677,8 +677,10 @@ CREATE TABLE orders (
     ON DELETE SET NULL,
 
   total_amount INT NOT NULL,         -- итоговая сумма заказа
-  status ENUM('new', 'confirmed', 'assembled', 'delivering', 'delivered', 'cancelled')
+  status ENUM('new', 'confirmed', 'assembled', 'delivering', 'completed', 'cancelled', 'returned')
     NOT NULL DEFAULT 'new',
+  payment_status TINYINT UNSIGNED NOT NULL DEFAULT 0, -- 0 не оплачен, 1 наличными при получении, 2 оплачен картой на сайте
+  payment_method ENUM('cash', 'online', 'sbp') NOT NULL DEFAULT 'cash',
 
   delivery_type ENUM('pickup', 'delivery', 'subscription') NOT NULL DEFAULT 'pickup',
   delivery_price INT NULL,

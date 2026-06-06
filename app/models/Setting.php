@@ -29,6 +29,8 @@ class Setting extends Model
     public const FRONTPAD_API_URL = 'frontpad_api_url';
     public const DELIVERY_PRICING_MODE = 'delivery_pricing_mode';
     public const OPENROUTE_API_KEY = 'openroute_api_key';
+    public const ORDER_ENABLED_STATUSES = 'order_enabled_statuses';
+    public const ORDER_ENABLED_PAYMENT_METHODS = 'order_enabled_payment_methods';
 
     public function get(string $code, ?string $default = null): ?string
     {
@@ -122,5 +124,22 @@ class Setting extends Model
             self::DELIVERY_PRICING_MODE => getenv('DELIVERY_PRICING_MODE') ?: 'turf',
             self::OPENROUTE_API_KEY => getenv('OPENROUTE_API_KEY') ?: '',
         ];
+    }
+
+    public function getOrderDefaults(): array
+    {
+        return [
+            self::ORDER_ENABLED_STATUSES => getenv('ORDER_ENABLED_STATUSES') ?: 'new,confirmed,assembled,delivering,completed,cancelled,returned',
+            self::ORDER_ENABLED_PAYMENT_METHODS => getenv('ORDER_ENABLED_PAYMENT_METHODS') ?: 'cash,online',
+        ];
+    }
+
+    public function getCsvSetting(string $code, array $allowed, array $default): array
+    {
+        $value = $this->get($code, implode(',', $default));
+        $items = array_filter(array_map('trim', explode(',', (string) $value)));
+        $items = array_values(array_intersect($items, $allowed));
+
+        return $items !== [] ? $items : $default;
     }
 }

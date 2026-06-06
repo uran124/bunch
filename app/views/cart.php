@@ -2,12 +2,13 @@
 <?php /** @var array $totals */ ?>
 <?php /** @var array $accessories */ ?>
 <?php /** @var bool $onlinePaymentEnabled */ ?>
+<?php /** @var array $paymentMethods */ ?>
 
 <?php $isEmpty = empty($items); ?>
 <?php
 $onlinePaymentEnabled = $onlinePaymentEnabled ?? true;
-$primaryPaymentMethod = $onlinePaymentEnabled ? 'online' : 'sbp';
-$primaryPaymentLabel = $onlinePaymentEnabled ? 'Оплата онлайн' : 'Перевод СБП';
+$paymentMethods = $paymentMethods ?? ['cash' => 'Наличными при получении'];
+$paymentIcons = ['online' => 'credit_card', 'sbp' => 'account_balance', 'cash' => 'payments'];
 ?>
 
 <style>
@@ -448,22 +449,18 @@ $primaryPaymentLabel = $onlinePaymentEnabled ? 'Оплата онлайн' : 'П
                         <span>Выбор способа оплаты</span>
                     </div>
                     <div class="flex flex-wrap gap-2">
-                        <button
-                            type="button"
-                            class="payment-method-btn inline-flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700 shadow-sm transition sm:px-4 sm:py-2.5 sm:text-sm"
-                            data-payment-method="<?php echo htmlspecialchars($primaryPaymentMethod, ENT_QUOTES, 'UTF-8'); ?>"
-                        >
-                            <span class="material-symbols-rounded text-base">credit_card</span>
-                            <?php echo htmlspecialchars($primaryPaymentLabel, ENT_QUOTES, 'UTF-8'); ?>
-                        </button>
-                        <button
-                            type="button"
-                            class="payment-method-btn inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-rose-200 hover:text-rose-700 sm:px-4 sm:py-2.5 sm:text-sm"
-                            data-payment-method="cash"
-                        >
-                            <span class="material-symbols-rounded text-base">payments</span>
-                            Наличными при получении
-                        </button>
+                        <?php $index = 0; ?>
+                        <?php foreach ($paymentMethods as $methodCode => $methodLabel): ?>
+                            <button
+                                type="button"
+                                class="payment-method-btn inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold shadow-sm transition sm:px-4 sm:py-2.5 sm:text-sm <?php echo $index === 0 ? 'border-rose-200 bg-rose-50 text-rose-700' : 'border-slate-200 bg-white text-slate-700 hover:-translate-y-0.5 hover:border-rose-200 hover:text-rose-700'; ?>"
+                                data-payment-method="<?php echo htmlspecialchars($methodCode, ENT_QUOTES, 'UTF-8'); ?>"
+                            >
+                                <span class="material-symbols-rounded text-base"><?php echo htmlspecialchars($paymentIcons[$methodCode] ?? 'payments', ENT_QUOTES, 'UTF-8'); ?></span>
+                                <?php echo htmlspecialchars($methodLabel, ENT_QUOTES, 'UTF-8'); ?>
+                            </button>
+                            <?php $index++; ?>
+                        <?php endforeach; ?>
                     </div>
                 </div>
 

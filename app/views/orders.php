@@ -70,8 +70,9 @@
                                     'confirmed' => 'bg-emerald-50 text-emerald-700 ring-emerald-100',
                                     'assembled' => 'bg-sky-50 text-sky-700 ring-sky-100',
                                     'delivering' => 'bg-amber-50 text-amber-700 ring-amber-100',
-                                    'delivered' => 'bg-white text-slate-700 ring-slate-200',
+                                    'completed', 'delivered' => 'bg-white text-slate-700 ring-slate-200',
                                     'cancelled' => 'bg-slate-100 text-slate-500 ring-slate-200',
+                                    'returned' => 'bg-orange-50 text-orange-700 ring-orange-100',
                                     default => 'bg-slate-50 text-slate-700 ring-slate-100',
                                 };
                                 ?>
@@ -173,8 +174,9 @@
                                 'confirmed' => 'bg-emerald-50 text-emerald-700 ring-emerald-100',
                                 'assembled' => 'bg-sky-50 text-sky-700 ring-sky-100',
                                 'delivering' => 'bg-amber-50 text-amber-700 ring-amber-100',
-                                'delivered' => 'bg-white text-slate-700 ring-slate-200',
+                                'completed', 'delivered' => 'bg-white text-slate-700 ring-slate-200',
                                 'cancelled' => 'bg-slate-100 text-slate-500 ring-slate-200',
+                                'returned' => 'bg-orange-50 text-orange-700 ring-orange-100',
                                 default => 'bg-slate-50 text-slate-700 ring-slate-100',
                             };
                             ?>

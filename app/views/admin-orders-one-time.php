@@ -125,9 +125,10 @@ $returnQuery = [
                             <input type="hidden" name="return_url" value="<?php echo htmlspecialchars('/admin-orders-one-time' . '?' . http_build_query($returnQuery), ENT_QUOTES, 'UTF-8'); ?>">
                             <label class="flex items-center gap-2 text-sm font-semibold text-slate-700">
                                 <select name="status" class="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-rose-300 focus:outline-none focus:ring-2 focus:ring-rose-200" data-order-status>
-                                    <?php foreach ($filters['status'] as $value => $label): ?>
+                                    <?php foreach (($filters['editableStatus'] ?? $filters['status']) as $value => $label): ?>
                                         <?php if ($value === 'all') { continue; } ?>
-                                        <option value="<?php echo htmlspecialchars($value, ENT_QUOTES, 'UTF-8'); ?>" <?php echo $order['status'] === $value ? 'selected' : ''; ?>>
+                                        <?php $statusEnabled = in_array($value, $filters['enabledStatusValues'] ?? [], true) || $order['status'] === $value; ?>
+                                        <option value="<?php echo htmlspecialchars($value, ENT_QUOTES, 'UTF-8'); ?>" <?php echo $order['status'] === $value ? 'selected' : ''; ?> <?php echo $statusEnabled ? '' : 'disabled'; ?>>
                                             <?php echo htmlspecialchars($label, ENT_QUOTES, 'UTF-8'); ?>
                                         </option>
                                     <?php endforeach; ?>

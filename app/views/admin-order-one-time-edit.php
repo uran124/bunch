@@ -65,9 +65,10 @@
                 <label class="flex flex-col gap-2">
                     <span class="text-sm font-semibold text-slate-700">Статус</span>
                     <select name="status" class="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-900 shadow-sm focus:border-rose-300 focus:outline-none focus:ring-2 focus:ring-rose-200">
-                        <?php foreach ($filters['status'] as $value => $label): ?>
+                        <?php foreach (($filters['editableStatus'] ?? $filters['status']) as $value => $label): ?>
                             <?php if ($value === 'all') { continue; } ?>
-                            <option value="<?php echo htmlspecialchars($value, ENT_QUOTES, 'UTF-8'); ?>" <?php echo $selectedOrder['status'] === $value ? 'selected' : ''; ?>>
+                            <?php $statusEnabled = in_array($value, $filters['enabledStatusValues'] ?? [], true) || $selectedOrder['status'] === $value; ?>
+                            <option value="<?php echo htmlspecialchars($value, ENT_QUOTES, 'UTF-8'); ?>" <?php echo $selectedOrder['status'] === $value ? 'selected' : ''; ?> <?php echo $statusEnabled ? '' : 'disabled'; ?>>
                                 <?php echo htmlspecialchars($label, ENT_QUOTES, 'UTF-8'); ?>
                             </option>
                         <?php endforeach; ?>

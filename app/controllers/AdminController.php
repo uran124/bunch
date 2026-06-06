@@ -81,6 +81,12 @@ class AdminController extends Controller
                         'href' => '/admin-orders-one-time',
                     ],
                     [
+                        'label' => 'Настройки заказов',
+                        'description' => 'Статусы заказа и способы оплаты',
+                        'cta' => 'Настроить',
+                        'href' => '/admin-orders-settings',
+                    ],
+                    [
                         'label' => 'Подписки',
                         'description' => 'Регулярные доставки, паузы и скидки по периодичности',
                         'cta' => 'Настройка подписок',
@@ -382,9 +388,10 @@ class AdminController extends Controller
             'new' => 'Новый',
             'confirmed' => 'Подтверждён',
             'assembled' => 'Собран',
-            'delivering' => 'В доставке',
-            'delivered' => 'Доставлен',
-            'cancelled' => 'Отменён',
+            'delivering' => 'В пути',
+            'completed' => 'Выполнен',
+            'cancelled' => 'Отменен',
+            'returned' => 'Возврат',
         ];
 
         if ($userRecord) {
@@ -2460,19 +2467,13 @@ class AdminController extends Controller
             'pageMeta' => $pageMeta,
             'orders' => $orderModel->getAdminOrders($query, $statusFilter, $paymentFilter),
             'filters' => [
-                'status' => [
-                    'all' => 'Все',
-                    'new' => 'Новый',
-                    'confirmed' => 'Принят',
-                    'assembled' => 'Собран',
-                    'delivering' => 'В доставке',
-                    'delivered' => 'Доставлен',
-                    'cancelled' => 'Отменён',
-                ],
+                'status' => ['all' => 'Все'] + $orderModel->getOrderStatusOptions(false),
+                'editableStatus' => $orderModel->getOrderStatusOptions(false),
+                'enabledStatusValues' => array_keys($orderModel->getOrderStatusOptions(true)),
                 'payment' => [
                     'all' => 'Все',
-                    'paid' => 'Оплачен',
-                    'pending' => 'Ожидает',
+                    'paid' => 'Оплачен / наличные при получении',
+                    'pending' => 'Не оплачен',
                     'refund' => 'Возврат',
                 ],
             ],
@@ -2517,15 +2518,9 @@ class AdminController extends Controller
             'pageMeta' => $pageMeta,
             'selectedOrder' => $order,
             'filters' => [
-                'status' => [
-                    'all' => 'Все',
-                    'new' => 'Новый',
-                    'confirmed' => 'Принят',
-                    'assembled' => 'Собран',
-                    'delivering' => 'В доставке',
-                    'delivered' => 'Доставлен',
-                    'cancelled' => 'Отменён',
-                ],
+                'status' => ['all' => 'Все'] + $orderModel->getOrderStatusOptions(false),
+                'editableStatus' => $orderModel->getOrderStatusOptions(false),
+                'enabledStatusValues' => array_keys($orderModel->getOrderStatusOptions(true, $order['status'] ?? null)),
             ],
             'returnPath' => '/admin-orders-one-time',
             'returnQuery' => [
@@ -2962,6 +2957,60 @@ class AdminController extends Controller
 
         header('Location: /admin-services-telegram?status=saved');
         exit;
+    }
+
+    public function orderSettings(): void
+    {
+        $orderModel = new Order();
+        $settings = new Setting();
+        $defaults = $settings->getOrderDefaults();
+
+        $pageMeta = [
+            'title' => 'Настройки заказов — админ-панель Bunch',
+            'description' => 'Управление статусами заказа и способами оплаты.',
+            'h1' => 'Настройки заказов',
+            'headerTitle' => 'Bunch Admin',
+            'headerSubtitle' => 'Заказы · Настройки',
+        ];
+
+        $this->render('admin-orders-settings', [
+            'pageMeta' => $pageMeta,
+            'statusOptions' => $orderModel->getOrderStatusOptions(false),
+            'enabledStatuses' => $settings->getCsvSetting(
+                Setting::ORDER_ENABLED_STATUSES,
+                array_keys($orderModel->getOrderStatusOptions(false)),
+                explode(',', $defaults[Setting::ORDER_ENABLED_STATUSES])
+            ),
+            'paymentMethodOptions' => $orderModel->getPaymentMethodOptions(false),
+            'enabledPaymentMethods' => $settings->getCsvSetting(
+                Setting::ORDER_ENABLED_PAYMENT_METHODS,
+                array_keys($orderModel->getPaymentMethodOptions(false)),
+                explode(',', $defaults[Setting::ORDER_ENABLED_PAYMENT_METHODS])
+            ),
+            'message' => $_GET['status'] ?? null,
+        ]);
+    }
+
+    public function saveOrderSettings(): void
+    {
+        $orderModel = new Order();
+        $statusOptions = $orderModel->getOrderStatusOptions(false);
+        $methodOptions = $orderModel->getPaymentMethodOptions(false);
+
+        $statuses = array_values(array_intersect((array) ($_POST['statuses'] ?? []), array_keys($statusOptions)));
+        $methods = array_values(array_intersect((array) ($_POST['payment_methods'] ?? []), array_keys($methodOptions)));
+
+        $requiredStatuses = ['new', 'confirmed', 'completed', 'cancelled', 'returned'];
+        $statuses = array_values(array_unique(array_merge($requiredStatuses, $statuses)));
+        if ($methods === []) {
+            $methods = ['cash'];
+        }
+
+        $settings = new Setting();
+        $settings->set(Setting::ORDER_ENABLED_STATUSES, implode(',', $statuses));
+        $settings->set(Setting::ORDER_ENABLED_PAYMENT_METHODS, implode(',', $methods));
+
+        header('Location: /admin-orders-settings?status=saved');
     }
 
     public function serviceOnlinePayment(): void
@@ -3589,21 +3638,21 @@ class AdminController extends Controller
     private function getUserOrders(int $userId): array
     {
         $templateOrders = [
-            ['number' => 'A-2109', 'date' => '2024-05-31', 'sum' => '2 350 ₽', 'status' => 'Доставлен'],
-            ['number' => 'A-2108', 'date' => '2024-05-24', 'sum' => '4 120 ₽', 'status' => 'Доставлен'],
-            ['number' => 'A-2107', 'date' => '2024-05-17', 'sum' => '1 980 ₽', 'status' => 'Доставлен'],
-            ['number' => 'A-2106', 'date' => '2024-05-10', 'sum' => '3 550 ₽', 'status' => 'Доставлен'],
-            ['number' => 'A-2105', 'date' => '2024-05-03', 'sum' => '2 740 ₽', 'status' => 'Доставлен'],
-            ['number' => 'A-2104', 'date' => '2024-04-26', 'sum' => '1 450 ₽', 'status' => 'Доставлен'],
-            ['number' => 'A-2103', 'date' => '2024-04-19', 'sum' => '3 980 ₽', 'status' => 'Доставлен'],
-            ['number' => 'A-2102', 'date' => '2024-04-12', 'sum' => '2 120 ₽', 'status' => 'Доставлен'],
-            ['number' => 'A-2101', 'date' => '2024-04-05', 'sum' => '4 430 ₽', 'status' => 'Доставлен'],
-            ['number' => 'A-2100', 'date' => '2024-03-29', 'sum' => '2 990 ₽', 'status' => 'Доставлен'],
+            ['number' => 'A-2109', 'date' => '2024-05-31', 'sum' => '2 350 ₽', 'status' => 'Выполнен'],
+            ['number' => 'A-2108', 'date' => '2024-05-24', 'sum' => '4 120 ₽', 'status' => 'Выполнен'],
+            ['number' => 'A-2107', 'date' => '2024-05-17', 'sum' => '1 980 ₽', 'status' => 'Выполнен'],
+            ['number' => 'A-2106', 'date' => '2024-05-10', 'sum' => '3 550 ₽', 'status' => 'Выполнен'],
+            ['number' => 'A-2105', 'date' => '2024-05-03', 'sum' => '2 740 ₽', 'status' => 'Выполнен'],
+            ['number' => 'A-2104', 'date' => '2024-04-26', 'sum' => '1 450 ₽', 'status' => 'Выполнен'],
+            ['number' => 'A-2103', 'date' => '2024-04-19', 'sum' => '3 980 ₽', 'status' => 'Выполнен'],
+            ['number' => 'A-2102', 'date' => '2024-04-12', 'sum' => '2 120 ₽', 'status' => 'Выполнен'],
+            ['number' => 'A-2101', 'date' => '2024-04-05', 'sum' => '4 430 ₽', 'status' => 'Выполнен'],
+            ['number' => 'A-2100', 'date' => '2024-03-29', 'sum' => '2 990 ₽', 'status' => 'Выполнен'],
             ['number' => 'A-2099', 'date' => '2024-03-22', 'sum' => '1 870 ₽', 'status' => 'Отменён'],
-            ['number' => 'A-2098', 'date' => '2024-03-15', 'sum' => '3 330 ₽', 'status' => 'Доставлен'],
-            ['number' => 'A-2097', 'date' => '2024-03-08', 'sum' => '5 120 ₽', 'status' => 'Доставлен'],
-            ['number' => 'A-2096', 'date' => '2024-03-01', 'sum' => '1 640 ₽', 'status' => 'Доставлен'],
-            ['number' => 'A-2095', 'date' => '2024-02-22', 'sum' => '3 880 ₽', 'status' => 'Доставлен'],
+            ['number' => 'A-2098', 'date' => '2024-03-15', 'sum' => '3 330 ₽', 'status' => 'Выполнен'],
+            ['number' => 'A-2097', 'date' => '2024-03-08', 'sum' => '5 120 ₽', 'status' => 'Выполнен'],
+            ['number' => 'A-2096', 'date' => '2024-03-01', 'sum' => '1 640 ₽', 'status' => 'Выполнен'],
+            ['number' => 'A-2095', 'date' => '2024-02-22', 'sum' => '3 880 ₽', 'status' => 'Выполнен'],
         ];
 
         return array_map(static function ($order) use ($userId) {
