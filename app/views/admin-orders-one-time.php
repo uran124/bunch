@@ -4,6 +4,7 @@
 <?php $query = $query ?? ''; ?>
 <?php $activeFilters = $activeFilters ?? ['status' => 'all', 'payment' => 'all']; ?>
 <?php $message = $message ?? null; ?>
+<?php $canDeleteOrders = $canDeleteOrders ?? true; ?>
 <?php
 $returnQuery = [
     'q' => $query,
@@ -90,6 +91,16 @@ $returnQuery = [
                 'status_filter' => $activeFilters['status'] ?? 'all',
                 'payment_filter' => $activeFilters['payment'] ?? 'all',
             ];
+            $statusBadgeClasses = match ($order['status']) {
+                'new' => 'bg-rose-50 text-rose-700 ring-rose-100',
+                'confirmed' => 'bg-emerald-50 text-emerald-700 ring-emerald-100',
+                'assembled' => 'bg-sky-50 text-sky-700 ring-sky-100',
+                'delivering' => 'bg-amber-50 text-amber-700 ring-amber-100',
+                'completed', 'delivered' => 'bg-white text-slate-700 ring-slate-200',
+                'cancelled' => 'bg-slate-100 text-slate-500 ring-slate-200',
+                'returned' => 'bg-orange-50 text-orange-700 ring-orange-100',
+                default => 'bg-slate-50 text-slate-700 ring-slate-100',
+            };
             ?>
             <article class="space-y-4 border-b border-slate-100 last:border-b-0 rounded-xl bg-slate-50 p-3">
                 <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -113,35 +124,41 @@ $returnQuery = [
                         <?php endif; ?>
                     </div>
                     <div class="flex flex-wrap items-center gap-2">
-                        <form method="post" action="/admin-order-update" class="flex flex-wrap items-center gap-2">
-                            <input type="hidden" name="order_id" value="<?php echo (int) $order['id']; ?>">
-                            <input type="hidden" name="delivery_type" value="<?php echo htmlspecialchars($order['deliveryTypeValue'], ENT_QUOTES, 'UTF-8'); ?>">
-                            <input type="hidden" name="scheduled_date" value="<?php echo htmlspecialchars($order['scheduled_date_raw'] ?? '', ENT_QUOTES, 'UTF-8'); ?>">
-                            <input type="hidden" name="scheduled_time" value="<?php echo htmlspecialchars($order['scheduled_time_raw'] ?? '', ENT_QUOTES, 'UTF-8'); ?>">
-                            <input type="hidden" name="recipient_name" value="<?php echo htmlspecialchars($order['recipientNameRaw'] ?? '', ENT_QUOTES, 'UTF-8'); ?>">
-                            <input type="hidden" name="recipient_phone" value="<?php echo htmlspecialchars($order['recipientPhoneRaw'] ?? '', ENT_QUOTES, 'UTF-8'); ?>">
-                            <input type="hidden" name="address_text" value="<?php echo htmlspecialchars($order['addressTextRaw'] ?? '', ENT_QUOTES, 'UTF-8'); ?>">
-                            <input type="hidden" name="comment" value="<?php echo htmlspecialchars($order['commentRaw'] ?? '', ENT_QUOTES, 'UTF-8'); ?>">
-                            <input type="hidden" name="return_url" value="<?php echo htmlspecialchars('/admin-orders-one-time' . '?' . http_build_query($returnQuery), ENT_QUOTES, 'UTF-8'); ?>">
-                            <label class="flex items-center gap-2 text-sm font-semibold text-slate-700">
-                                <select name="status" class="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-rose-300 focus:outline-none focus:ring-2 focus:ring-rose-200" data-order-status>
-                                    <?php foreach (($filters['editableStatus'] ?? $filters['status']) as $value => $label): ?>
-                                        <?php if ($value === 'all') { continue; } ?>
-                                        <?php $statusEnabled = in_array($value, $filters['enabledStatusValues'] ?? [], true) || $order['status'] === $value; ?>
-                                        <option value="<?php echo htmlspecialchars($value, ENT_QUOTES, 'UTF-8'); ?>" <?php echo $order['status'] === $value ? 'selected' : ''; ?> <?php echo $statusEnabled ? '' : 'disabled'; ?>>
-                                            <?php echo htmlspecialchars($label, ENT_QUOTES, 'UTF-8'); ?>
-                                        </option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </label>
-                        </form>
-                        <form method="post" action="/admin-order-delete">
+                        <form method="post" action="/admin-order-status" class="relative flex flex-wrap items-center gap-2" data-order-status-menu>
                             <input type="hidden" name="order_id" value="<?php echo (int) $order['id']; ?>">
                             <input type="hidden" name="return_url" value="<?php echo htmlspecialchars('/admin-orders-one-time' . '?' . http_build_query($returnQuery), ENT_QUOTES, 'UTF-8'); ?>">
-                            <button type="submit" class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-rose-200 bg-rose-50 text-rose-700 shadow-sm transition hover:-translate-y-0.5 hover:border-rose-300 hover:text-rose-800" data-order-delete aria-label="Удалить заказ">
-                                <span class="material-symbols-rounded text-base">delete</span>
+                            <button type="button" class="inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold ring-1 transition hover:-translate-y-0.5 hover:shadow-sm <?php echo htmlspecialchars($statusBadgeClasses, ENT_QUOTES, 'UTF-8'); ?>" data-order-status-toggle aria-expanded="false" title="Сменить статус">
+                                <span class="material-symbols-rounded text-base">sync_alt</span>
+                                <?php echo htmlspecialchars($order['statusLabel'], ENT_QUOTES, 'UTF-8'); ?>
                             </button>
+                            <div class="absolute right-0 top-full z-20 mt-2 hidden min-w-52 overflow-hidden rounded-2xl border border-slate-200 bg-white p-1.5 text-sm shadow-xl shadow-slate-200/70" data-order-status-options>
+                                <?php foreach (($filters['editableStatus'] ?? $filters['status']) as $value => $label): ?>
+                                    <?php if ($value === 'all') { continue; } ?>
+                                    <?php $statusEnabled = in_array($value, $filters['enabledStatusValues'] ?? [], true) || $order['status'] === $value; ?>
+                                    <button
+                                        type="submit"
+                                        name="status"
+                                        value="<?php echo htmlspecialchars($value, ENT_QUOTES, 'UTF-8'); ?>"
+                                        class="flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2 text-left font-semibold transition <?php echo $order['status'] === $value ? 'bg-rose-50 text-rose-700' : 'text-slate-700 hover:bg-slate-50 hover:text-rose-700'; ?> <?php echo $statusEnabled ? '' : 'cursor-not-allowed opacity-45'; ?>"
+                                        <?php echo $statusEnabled ? '' : 'disabled'; ?>
+                                    >
+                                        <span><?php echo htmlspecialchars($label, ENT_QUOTES, 'UTF-8'); ?></span>
+                                        <?php if ($order['status'] === $value): ?>
+                                            <span class="material-symbols-rounded text-base">check</span>
+                                        <?php endif; ?>
+                                    </button>
+                                <?php endforeach; ?>
+                            </div>
                         </form>
+                        <?php if ($canDeleteOrders): ?>
+                            <form method="post" action="/admin-order-delete">
+                                <input type="hidden" name="order_id" value="<?php echo (int) $order['id']; ?>">
+                                <input type="hidden" name="return_url" value="<?php echo htmlspecialchars('/admin-orders-one-time' . '?' . http_build_query($returnQuery), ENT_QUOTES, 'UTF-8'); ?>">
+                                <button type="submit" class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-rose-200 bg-rose-50 text-rose-700 shadow-sm transition hover:-translate-y-0.5 hover:border-rose-300 hover:text-rose-800" data-order-delete aria-label="Удалить заказ">
+                                    <span class="material-symbols-rounded text-base">delete</span>
+                                </button>
+                            </form>
+                        <?php endif; ?>
                     </div>
                 </div>
 
@@ -288,12 +305,30 @@ if (filterForm) {
     }
 }
 
-document.querySelectorAll('[data-order-status]').forEach((statusSelect) => {
-    statusSelect.addEventListener('change', (event) => {
-        const form = event.target.closest('form');
-        if (form) {
-            form.submit();
+document.addEventListener('click', (event) => {
+    const toggle = event.target.closest('[data-order-status-toggle]');
+
+    document.querySelectorAll('[data-order-status-menu]').forEach((menu) => {
+        if (toggle && menu.contains(toggle)) {
+            return;
         }
+
+        menu.querySelector('[data-order-status-options]')?.classList.add('hidden');
+        menu.querySelector('[data-order-status-toggle]')?.setAttribute('aria-expanded', 'false');
     });
+
+    if (!toggle) {
+        return;
+    }
+
+    event.preventDefault();
+    const menu = toggle.closest('[data-order-status-menu]');
+    const options = menu?.querySelector('[data-order-status-options]');
+    if (!options) {
+        return;
+    }
+
+    const isHidden = options.classList.toggle('hidden');
+    toggle.setAttribute('aria-expanded', isHidden ? 'false' : 'true');
 });
 </script>

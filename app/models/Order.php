@@ -369,6 +369,40 @@ class Order extends Model
         }
     }
 
+    public function updateAdminOrderStatus(int $orderId, string $status): bool
+    {
+        $allowedStatuses = array_keys(self::ORDER_STATUSES);
+        if (!in_array($status, $allowedStatuses, true)) {
+            return false;
+        }
+
+        $orderBefore = $this->findById($orderId);
+        if (!$orderBefore) {
+            return false;
+        }
+
+        $previousStatus = (string) ($orderBefore['status'] ?? '');
+        $stmt = $this->db->prepare('UPDATE orders SET status = :status, updated_at = NOW() WHERE id = :id');
+        $stmt->execute([
+            'id' => $orderId,
+            'status' => $status,
+        ]);
+
+        if ($stmt->rowCount() <= 0) {
+            return $previousStatus === $status;
+        }
+
+        if ($this->normalizeOrderStatus($previousStatus) !== 'completed' && $status === 'completed') {
+            $this->awardCashbackForDeliveredOrder($orderId, (int) ($orderBefore['user_id'] ?? 0));
+        }
+
+        if ($this->normalizeOrderStatus($previousStatus) === 'completed' && $status !== 'completed') {
+            $this->rollbackCashbackForOrder($orderId);
+        }
+
+        return true;
+    }
+
     public function deleteAdminOrder(int $orderId): bool
     {
         $this->rollbackCashbackForOrder($orderId);

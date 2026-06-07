@@ -2483,6 +2483,7 @@ class AdminController extends Controller
                 'payment' => $paymentFilter,
             ],
             'message' => $_GET['result'] ?? null,
+            'canDeleteOrders' => $this->hasAnyRole('admin'),
         ]);
     }
 
@@ -2537,7 +2538,7 @@ class AdminController extends Controller
         $orderId = (int) ($_POST['order_id'] ?? 0);
 
         if ($orderId <= 0) {
-            header('Location: /admin-orders-one-time?status=error');
+            header('Location: /admin-orders-one-time?result=error');
             return;
         }
 
@@ -2545,7 +2546,7 @@ class AdminController extends Controller
         $order = $orderModel->findById($orderId);
 
         if (!$order || $order['delivery_type'] === 'subscription') {
-            header('Location: /admin-orders-one-time?status=error');
+            header('Location: /admin-orders-one-time?result=error');
             return;
         }
 
@@ -2591,12 +2592,14 @@ class AdminController extends Controller
         header('Location: /admin-orders-one-time?' . http_build_query($defaultQuery));
     }
 
-    public function deleteOneTimeOrder(): void
+    public function updateOneTimeOrderStatus(): void
     {
         $orderId = (int) ($_POST['order_id'] ?? 0);
+        $status = trim((string) ($_POST['status'] ?? ''));
+        $returnUrl = trim($_POST['return_url'] ?? '');
 
-        if ($orderId <= 0) {
-            header('Location: /admin-orders-one-time?status=error');
+        if ($orderId <= 0 || $status === '') {
+            header('Location: /admin-orders-one-time?result=error');
             return;
         }
 
@@ -2604,7 +2607,52 @@ class AdminController extends Controller
         $order = $orderModel->findById($orderId);
 
         if (!$order || $order['delivery_type'] === 'subscription') {
-            header('Location: /admin-orders-one-time?status=error');
+            header('Location: /admin-orders-one-time?result=error');
+            return;
+        }
+
+        $enabledStatuses = $orderModel->getOrderStatusOptions(true, $order['status'] ?? null);
+        if (!array_key_exists($status, $enabledStatuses)) {
+            header('Location: /admin-orders-one-time?result=error');
+            return;
+        }
+
+        $updated = $orderModel->updateAdminOrderStatus($orderId, $status);
+        if ($updated && $order['status'] !== $status) {
+            $orderModel->notifyUserOrderStatus($orderId, (int) $order['user_id'], $status);
+        }
+
+        $redirect = '/admin-orders-one-time?' . http_build_query(['result' => $updated ? 'updated' : 'error']);
+        if ($returnUrl !== '') {
+            $parsedUrl = parse_url($returnUrl);
+            $redirectPath = $parsedUrl['path'] ?? '/admin-orders-one-time';
+            $returnParams = [];
+
+            if (!empty($parsedUrl['query'])) {
+                parse_str($parsedUrl['query'], $returnParams);
+            }
+
+            $returnParams['result'] = $updated ? 'updated' : 'error';
+            $redirect = $redirectPath . ($returnParams ? '?' . http_build_query($returnParams) : '');
+        }
+
+        header('Location: ' . $redirect);
+    }
+
+    public function deleteOneTimeOrder(): void
+    {
+        $orderId = (int) ($_POST['order_id'] ?? 0);
+
+        if ($orderId <= 0) {
+            header('Location: /admin-orders-one-time?result=error');
+            return;
+        }
+
+        $orderModel = new Order();
+        $order = $orderModel->findById($orderId);
+
+        if (!$order || $order['delivery_type'] === 'subscription') {
+            header('Location: /admin-orders-one-time?result=error');
             return;
         }
 
