@@ -16,6 +16,8 @@ $isAdminPage = str_starts_with($currentPage, 'admin');
 $isAuthenticated = class_exists('Auth') ? Auth::check() : false;
 $currentUserRole = $currentUserRole ?? 'customer';
 $isAdminUser = $currentUserRole === 'admin';
+$canAccessBackoffice = in_array($currentUserRole, ['admin', 'manager'], true);
+$backofficeHref = $isAdminUser ? '/admin' : '/admin-orders-one-time';
 $csrfToken = class_exists('Csrf') ? Csrf::token() : '';
 $mainClasses = 'mx-auto flex w-full max-w-6xl flex-1 flex-col gap-4 px-3 py-3 pb-[calc(6.5rem+env(safe-area-inset-bottom))] sm:gap-6 sm:px-4 sm:pt-8 sm:pb-[calc(6.5rem+env(safe-area-inset-bottom))]';
 if ($currentPage === 'home') {
@@ -509,10 +511,10 @@ $adminNavigation = [
                         На сайт
                     </a>
                 <?php else: ?>
-                    <?php if ($isAdminUser): ?>
+                    <?php if ($canAccessBackoffice): ?>
                         <a
                             class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:-translate-y-0.5 hover:text-rose-600 sm:h-auto sm:w-auto sm:justify-start sm:gap-2 sm:px-3 sm:py-2 sm:text-sm sm:font-semibold sm:text-slate-700 sm:shadow-sm sm:hover:shadow-md"
-                            href="/admin"
+                            href="<?php echo htmlspecialchars($backofficeHref, ENT_QUOTES, 'UTF-8'); ?>"
                             aria-label="Админка"
                         >
                             <span class="material-symbols-rounded text-lg text-emerald-500">admin_panel_settings</span>
@@ -690,8 +692,8 @@ $adminNavigation = [
                     </button>
                 </div>
                 <div class="space-y-3">
-                    <?php if ($isAdminUser): ?>
-                        <a class="flex w-full items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md" href="/admin">
+                    <?php if ($canAccessBackoffice): ?>
+                        <a class="flex w-full items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md" href="<?php echo htmlspecialchars($backofficeHref, ENT_QUOTES, 'UTF-8'); ?>">
                             <span class="material-symbols-rounded text-base text-emerald-500">admin_panel_settings</span>
                             Админка
                         </a>

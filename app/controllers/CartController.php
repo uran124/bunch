@@ -62,6 +62,7 @@ class CartController extends Controller
             'dadataConfig' => $this->getDadataSettings(),
             'testAddresses' => $deliveryZoneModel->getTestAddresses(),
             'onlinePaymentEnabled' => $this->isOnlinePaymentEnabled(),
+            'paymentMethods' => (new Order())->getPaymentMethodOptions(true),
             'pageMeta' => [
                 'title' => 'Корзина — Bunch flowers',
                 'description' => 'Проверьте позиции перед оформлением заказа.',
@@ -205,13 +206,13 @@ class CartController extends Controller
         $recipientPhone = trim((string) ($recipient['phone'] ?? ''));
         $comment = trim((string) ($payload['comment'] ?? ''));
         $paymentMethod = trim((string) ($payload['payment_method'] ?? 'cash'));
-        $allowedPaymentMethods = ['online', 'sbp', 'cash'];
+        $allowedPaymentMethods = array_keys((new Order())->getPaymentMethodOptions(true));
         if (!in_array($paymentMethod, $allowedPaymentMethods, true)) {
             $paymentMethod = 'cash';
         }
         $tulipSpend = max(0, (int) floor((float) ($payload['tulip_spend'] ?? 0)));
         if ($paymentMethod === 'online' && !$this->isOnlinePaymentEnabled()) {
-            $paymentMethod = 'sbp';
+            $paymentMethod = in_array('sbp', $allowedPaymentMethods, true) ? 'sbp' : 'cash';
         }
 
         $addressModel = new UserAddress();
@@ -360,12 +361,6 @@ class CartController extends Controller
 
             $cart->clear();
             $paymentLink = null;
-            if ($paymentMethod === 'online') {
-                $paymentLink = $orderModel->getOnlinePaymentLink($orderId);
-                if ($paymentLink === null) {
-                    $paymentLink = '/order-payment?id=' . $orderId;
-                }
-            }
 
             echo json_encode([
                 'ok' => true,

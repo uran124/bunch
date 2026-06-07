@@ -683,8 +683,10 @@ CREATE TABLE orders (
     ON DELETE SET NULL,
 
   total_amount INT NOT NULL,         -- итоговая сумма
-  status ENUM('new', 'confirmed', 'assembled', 'delivering', 'delivered', 'cancelled')
+  status ENUM('new', 'confirmed', 'assembled', 'delivering', 'completed', 'cancelled', 'returned')
     NOT NULL DEFAULT 'new',
+  payment_status TINYINT UNSIGNED NOT NULL DEFAULT 0, -- 0 не оплачен, 1 наличными при получении, 2 оплачен картой на сайте
+  payment_method ENUM('cash', 'online', 'sbp') NOT NULL DEFAULT 'cash',
 
   delivery_type ENUM('pickup', 'delivery', 'subscription') NOT NULL DEFAULT 'pickup',
   delivery_price INT NULL,
@@ -1108,5 +1110,7 @@ INSERT INTO settings (code, value)
 VALUES
   ('telegram_bot_token', '8385667370:AAER94mzvJLtTtI1IWj2tHnQuen55xfrNsE'),
   ('telegram_bot_username', '@bunchflowersBot'),
-  ('telegram_webhook_secret', 'bfb')
+  ('telegram_webhook_secret', 'bfb'),
+  ('order_enabled_statuses', 'new,confirmed,assembled,delivering,completed,cancelled,returned'),
+  ('order_enabled_payment_methods', 'cash,online')
 ON DUPLICATE KEY UPDATE value = VALUES(value);

@@ -6,16 +6,37 @@ class Order extends Model
     private const FRONTPAD_DELIVERY_ARTICLE = '999999';
     private const TELEGRAM_ADMIN_CHAT_ID = -1002055168794;
     private const TELEGRAM_ADMIN_THREAD_ORDERS = 1096;
+    public const PAYMENT_UNPAID = 0;
+    public const PAYMENT_CASH_ON_DELIVERY = 1;
+    public const PAYMENT_PAID_ONLINE = 2;
+
+    private const ORDER_STATUSES = [
+        'new' => 'Новый',
+        'confirmed' => 'Подтверждён',
+        'assembled' => 'Собран',
+        'delivering' => 'В пути',
+        'completed' => 'Выполнен',
+        'cancelled' => 'Отменен',
+        'returned' => 'Возврат',
+    ];
+
+    private const LEGACY_STATUS_MAP = [
+        'delivered' => 'completed',
+    ];
+
+    private const ACTIVE_STATUSES = ['new', 'confirmed', 'assembled', 'delivering'];
+    private const COMPLETED_STATUSES = ['completed', 'cancelled', 'returned', 'delivered'];
+
     private array $statusPaymentMap = [
-        'paid' => ['confirmed', 'assembled', 'delivering', 'delivered'],
-        'pending' => ['new'],
-        'refund' => ['cancelled'],
+        'paid' => [self::PAYMENT_CASH_ON_DELIVERY, self::PAYMENT_PAID_ONLINE],
+        'pending' => [self::PAYMENT_UNPAID],
+        'refund' => [],
     ];
 
     public function getLatestActiveForUser(int $userId): ?array
     {
         $stmt = $this->db->prepare(
-            "SELECT * FROM orders WHERE user_id = :user_id AND status IN ('new', 'confirmed', 'delivering') ORDER BY created_at DESC LIMIT 1"
+            "SELECT * FROM orders WHERE user_id = :user_id AND status IN ('new', 'confirmed', 'assembled', 'delivering') ORDER BY created_at DESC LIMIT 1"
         );
         $stmt->execute(['user_id' => $userId]);
 
@@ -40,12 +61,12 @@ class Order extends Model
 
     public function getActiveOrdersForUser(int $userId): array
     {
-        return $this->getOrdersByStatuses($userId, ['new', 'confirmed', 'delivering']);
+        return $this->getOrdersByStatuses($userId, self::ACTIVE_STATUSES);
     }
 
     public function getCompletedOrdersForUser(int $userId, int $limit = 10, int $offset = 0): array
     {
-        return $this->getOrdersByStatuses($userId, ['delivered', 'cancelled'], $limit, $offset);
+        return $this->getOrdersByStatuses($userId, self::COMPLETED_STATUSES, $limit, $offset);
     }
 
     public function getUserOrderDetail(int $orderId, int $userId): ?array
@@ -118,14 +139,14 @@ class Order extends Model
     public function markPaidForUser(int $orderId, int $userId): bool
     {
         $stmt = $this->db->prepare(
-            'UPDATE orders SET status = :status, updated_at = NOW() WHERE id = :id AND user_id = :user_id AND status = :current_status'
+            'UPDATE orders SET payment_status = :payment_status, updated_at = NOW() WHERE id = :id AND user_id = :user_id AND status = :current_status'
         );
 
         $stmt->execute([
             'id' => $orderId,
             'user_id' => $userId,
-            'status' => 'confirmed',
-            'current_status' => 'new',
+            'payment_status' => self::PAYMENT_PAID_ONLINE,
+            'current_status' => 'confirmed',
         ]);
 
         if ($stmt->rowCount() <= 0) {
@@ -133,7 +154,7 @@ class Order extends Model
         }
 
         $this->notifyAdminOrderPaid($orderId);
-        $this->notifyUserOrderStatus($orderId, $userId, 'confirmed');
+        $this->notifyUserOrderPayment($orderId, $userId);
 
         return true;
     }
@@ -141,13 +162,13 @@ class Order extends Model
     public function markPaidById(int $orderId): bool
     {
         $stmt = $this->db->prepare(
-            'UPDATE orders SET status = :status, updated_at = NOW() WHERE id = :id AND status = :current_status'
+            'UPDATE orders SET payment_status = :payment_status, updated_at = NOW() WHERE id = :id AND status = :current_status'
         );
 
         $stmt->execute([
             'id' => $orderId,
-            'status' => 'confirmed',
-            'current_status' => 'new',
+            'payment_status' => self::PAYMENT_PAID_ONLINE,
+            'current_status' => 'confirmed',
         ]);
 
         if ($stmt->rowCount() <= 0) {
@@ -157,7 +178,7 @@ class Order extends Model
         $order = $this->findById($orderId);
         $userId = $order['user_id'] ?? null;
         if ($userId) {
-            $this->notifyUserOrderStatus($orderId, (int) $userId, 'confirmed');
+            $this->notifyUserOrderPayment($orderId, (int) $userId);
         }
 
         $this->notifyAdminOrderPaid($orderId);
@@ -168,7 +189,7 @@ class Order extends Model
     public function countCompletedOrdersForUser(int $userId): int
     {
         $stmt = $this->db->prepare(
-            "SELECT COUNT(*) FROM orders WHERE user_id = :user_id AND status IN ('delivered', 'cancelled')"
+            "SELECT COUNT(*) FROM orders WHERE user_id = :user_id AND status IN ('completed', 'cancelled', 'returned', 'delivered')"
         );
         $stmt->execute(['user_id' => $userId]);
 
@@ -192,11 +213,17 @@ class Order extends Model
             return null;
         }
 
+        if (($order['status'] ?? '') !== 'confirmed') {
+            return null;
+        }
+
         $settings = new Setting();
         $paymentDefaults = $settings->getPaymentDefaults();
         $gateway = $settings->get(Setting::ONLINE_PAYMENT_GATEWAY, $paymentDefaults[Setting::ONLINE_PAYMENT_GATEWAY] ?? 'robokassa');
 
-        if ($gateway !== 'robokassa') {
+        $onlineEnabled = filter_var($settings->get(Setting::ONLINE_PAYMENT_ENABLED, $paymentDefaults[Setting::ONLINE_PAYMENT_ENABLED] ?? '1'), FILTER_VALIDATE_BOOLEAN);
+        $enabledMethods = $settings->getCsvSetting(Setting::ORDER_ENABLED_PAYMENT_METHODS, array_keys($this->getPaymentMethodOptions(false)), ['cash', 'online']);
+        if (!$onlineEnabled || !in_array('online', $enabledMethods, true) || $gateway !== 'robokassa') {
             return null;
         }
 
@@ -250,7 +277,9 @@ class Order extends Model
         if ($paymentFilter && $paymentFilter !== 'all') {
             $statuses = $this->mapPaymentFilterToStatuses($paymentFilter);
 
-            if (!empty($statuses)) {
+            if ($paymentFilter === 'refund') {
+                $sql .= " AND o.status = 'returned'";
+            } elseif (!empty($statuses)) {
                 $placeholders = [];
                 foreach ($statuses as $index => $status) {
                     $key = ':payment_status_' . $index;
@@ -258,7 +287,7 @@ class Order extends Model
                     $params[$key] = $status;
                 }
 
-                $sql .= ' AND o.status IN (' . implode(', ', $placeholders) . ')';
+                $sql .= ' AND COALESCE(o.payment_status, 0) IN (' . implode(', ', $placeholders) . ')';
             }
         }
 
@@ -297,7 +326,7 @@ class Order extends Model
 
     public function updateAdminOrder(int $orderId, array $data): void
     {
-        $allowedStatuses = ['new', 'confirmed', 'assembled', 'delivering', 'delivered', 'cancelled'];
+        $allowedStatuses = array_keys(self::ORDER_STATUSES);
         $allowedDeliveryTypes = ['pickup', 'delivery'];
 
         $status = in_array($data['status'] ?? 'new', $allowedStatuses, true) ? $data['status'] : 'new';
@@ -331,13 +360,47 @@ class Order extends Model
             return;
         }
 
-        if ($previousStatus !== 'delivered' && $status === 'delivered') {
+        if ($this->normalizeOrderStatus($previousStatus) !== 'completed' && $status === 'completed') {
             $this->awardCashbackForDeliveredOrder($orderId, (int) ($orderBefore['user_id'] ?? 0));
         }
 
-        if ($previousStatus === 'delivered' && $status !== 'delivered') {
+        if ($this->normalizeOrderStatus($previousStatus) === 'completed' && $status !== 'completed') {
             $this->rollbackCashbackForOrder($orderId);
         }
+    }
+
+    public function updateAdminOrderStatus(int $orderId, string $status): bool
+    {
+        $allowedStatuses = array_keys(self::ORDER_STATUSES);
+        if (!in_array($status, $allowedStatuses, true)) {
+            return false;
+        }
+
+        $orderBefore = $this->findById($orderId);
+        if (!$orderBefore) {
+            return false;
+        }
+
+        $previousStatus = (string) ($orderBefore['status'] ?? '');
+        $stmt = $this->db->prepare('UPDATE orders SET status = :status, updated_at = NOW() WHERE id = :id');
+        $stmt->execute([
+            'id' => $orderId,
+            'status' => $status,
+        ]);
+
+        if ($stmt->rowCount() <= 0) {
+            return $previousStatus === $status;
+        }
+
+        if ($this->normalizeOrderStatus($previousStatus) !== 'completed' && $status === 'completed') {
+            $this->awardCashbackForDeliveredOrder($orderId, (int) ($orderBefore['user_id'] ?? 0));
+        }
+
+        if ($this->normalizeOrderStatus($previousStatus) === 'completed' && $status !== 'completed') {
+            $this->rollbackCashbackForOrder($orderId);
+        }
+
+        return true;
     }
 
     public function deleteAdminOrder(int $orderId): bool
@@ -506,13 +569,15 @@ class Order extends Model
             }
 
             $orderStmt = $this->db->prepare(
-                'INSERT INTO orders (user_id, address_id, total_amount, status, delivery_type, delivery_price, zone_id, delivery_pricing_version, scheduled_date, scheduled_time, address_text, recipient_name, recipient_phone, comment) VALUES (:user_id, :address_id, :total_amount, :status, :delivery_type, :delivery_price, :zone_id, :delivery_pricing_version, :scheduled_date, :scheduled_time, :address_text, :recipient_name, :recipient_phone, :comment)'            );
+                'INSERT INTO orders (user_id, address_id, total_amount, status, payment_status, payment_method, delivery_type, delivery_price, zone_id, delivery_pricing_version, scheduled_date, scheduled_time, address_text, recipient_name, recipient_phone, comment) VALUES (:user_id, :address_id, :total_amount, :status, :payment_status, :payment_method, :delivery_type, :delivery_price, :zone_id, :delivery_pricing_version, :scheduled_date, :scheduled_time, :address_text, :recipient_name, :recipient_phone, :comment)'            );
 
             $orderStmt->execute([
                 'user_id' => $userId,
                 'address_id' => $deliveryType === 'delivery' ? $addressId : null,
                 'total_amount' => $totalAmount,
                 'status' => 'new',
+                'payment_status' => ($payload['payment_method'] ?? 'cash') === 'cash' ? self::PAYMENT_CASH_ON_DELIVERY : self::PAYMENT_UNPAID,
+                'payment_method' => $payload['payment_method'] ?? 'cash',
                 'delivery_type' => $deliveryType,
                 'delivery_price' => $deliveryType === 'delivery' ? $deliveryPrice : null,
                 'zone_id' => $deliveryType === 'delivery' ? $zoneId : null,
@@ -823,7 +888,7 @@ class Order extends Model
             'cashbackSpent' => $this->formatPrice((float) $this->getCashbackSpendForOrder($orderId)),
             'status' => $order['status'],
             'statusLabel' => $this->mapOrderStatus($order['status']),
-            'payment' => $this->mapPaymentStatus($order['status']),
+            'payment' => $this->mapPaymentStatus((int) ($order['payment_status'] ?? self::PAYMENT_UNPAID), $order['payment_method'] ?? null, $order['status']),
             'delivery' => $scheduled,
             'deliveryType' => $this->mapDeliveryType($order['delivery_type'] ?? 'pickup'),
             'deliveryTypeValue' => $order['delivery_type'] ?? 'pickup',
@@ -931,17 +996,61 @@ class Order extends Model
         return $parts ? implode(', ', $parts) : '—';
     }
 
+    public function getOrderStatusOptions(bool $enabledOnly = false, ?string $includeStatus = null): array
+    {
+        $statuses = self::ORDER_STATUSES;
+        if (!$enabledOnly) {
+            return $statuses;
+        }
+
+        $settings = new Setting();
+        $defaults = $settings->getOrderDefaults();
+        $enabled = $settings->getCsvSetting(
+            Setting::ORDER_ENABLED_STATUSES,
+            array_keys(self::ORDER_STATUSES),
+            explode(',', $defaults[Setting::ORDER_ENABLED_STATUSES])
+        );
+
+        if ($includeStatus) {
+            $enabled[] = $this->normalizeOrderStatus($includeStatus);
+        }
+
+        $enabled = array_values(array_unique($enabled));
+        return array_intersect_key($statuses, array_flip($enabled));
+    }
+
+    public function getPaymentMethodOptions(bool $enabledOnly = false): array
+    {
+        $methods = [
+            'cash' => 'Наличными при получении',
+            'online' => 'Картой на сайте',
+            'sbp' => 'Перевод СБП',
+        ];
+
+        if (!$enabledOnly) {
+            return $methods;
+        }
+
+        $settings = new Setting();
+        $defaults = $settings->getOrderDefaults();
+        $enabled = $settings->getCsvSetting(
+            Setting::ORDER_ENABLED_PAYMENT_METHODS,
+            array_keys($methods),
+            explode(',', $defaults[Setting::ORDER_ENABLED_PAYMENT_METHODS])
+        );
+
+        return array_intersect_key($methods, array_flip($enabled));
+    }
+
     private function mapOrderStatus(string $status): string
     {
-        return match ($status) {
-            'new' => 'Новый',
-            'confirmed' => 'Принят',
-            'assembled' => 'Собран',
-            'delivering' => 'В доставке',
-            'delivered' => 'Доставлен',
-            'cancelled' => 'Отменён',
-            default => 'В обработке',
-        };
+        $status = $this->normalizeOrderStatus($status);
+        return self::ORDER_STATUSES[$status] ?? 'В обработке';
+    }
+
+    private function normalizeOrderStatus(string $status): string
+    {
+        return self::LEGACY_STATUS_MAP[$status] ?? $status;
     }
 
     private function mapDeliveryType(string $type): string
@@ -953,18 +1062,35 @@ class Order extends Model
         };
     }
 
-    private function mapPaymentStatus(string $status): string
+    private function mapPaymentStatus(int $paymentStatus, ?string $paymentMethod = null, ?string $orderStatus = null): string
     {
-        return match ($status) {
-            'cancelled' => 'Возврат',
-            'new' => 'Ожидает',
-            default => 'Оплачен',
+        if ($orderStatus === 'returned') {
+            return 'Возврат';
+        }
+        if ($orderStatus === 'cancelled') {
+            return 'Отменен';
+        }
+
+        return match ($paymentStatus) {
+            self::PAYMENT_CASH_ON_DELIVERY => 'Наличными при получении',
+            self::PAYMENT_PAID_ONLINE => 'Оплачен картой на сайте',
+            default => $paymentMethod === 'online' ? 'Ожидает оплату картой' : 'Не оплачен',
         };
     }
 
     private function mapPaymentFilterToStatuses(string $filter): array
     {
         return $this->statusPaymentMap[$filter] ?? [];
+    }
+
+    private function notifyUserOrderPayment(int $orderId, int $userId): void
+    {
+        $message = 'Ваш заказ ' . $this->formatOrderNumber($orderId) . ' оплачен.';
+        $chatId = $this->getUserTelegramChatId($userId);
+        if ($chatId) {
+            $this->sendTelegramMessage($chatId, $message);
+        }
+        $this->sendOrderStatusEmail($userId, $orderId, 'paid', $message);
     }
 
     public function notifyUserOrderStatus(int $orderId, int $userId, string $status): void
@@ -1328,11 +1454,12 @@ class Order extends Model
         $number = $this->formatOrderNumber($orderId);
 
         return match ($status) {
-            'confirmed' => "Ваш заказ {$number} принят!",
+            'confirmed' => "Ваш заказ {$number} подтверждён. Можно переходить к оплате.",
             'assembled' => "Ваш заказ {$number} собран.",
-            'delivering' => "Ваш заказ {$number} передан на доставку.",
-            'delivered' => "Ваш заказ {$number} вручен.",
+            'delivering' => "Ваш заказ {$number} в пути.",
+            'completed', 'delivered' => "Ваш заказ {$number} выполнен.",
             'cancelled' => "Ваш заказ {$number} отменен.",
+            'returned' => "По заказу {$number} оформлен возврат.",
             default => null,
         };
     }

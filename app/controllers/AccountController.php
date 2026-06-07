@@ -437,10 +437,12 @@ class AccountController extends Controller
     {
         return match ($status) {
             'new' => 'Новый',
-            'confirmed' => 'Подтвержден',
+            'confirmed' => 'Подтверждён',
+            'assembled' => 'Собран',
             'delivering' => 'В пути',
-            'delivered' => 'Доставлен',
+            'completed', 'delivered' => 'Выполнен',
             'cancelled' => 'Отменен',
+            'returned' => 'Возврат',
             default => 'В обработке',
         };
     }

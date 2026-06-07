@@ -145,8 +145,8 @@ class OrdersController extends Controller
             exit;
         }
 
-        if ($order['status'] !== 'new') {
-            Session::set('auth_notice', 'Этот заказ уже оплачен или в работе.');
+        if ($order['status'] !== 'confirmed') {
+            Session::set('auth_notice', 'Оплата доступна после подтверждения заказа специалистом.');
             header('Location: /orders');
             exit;
         }
@@ -193,7 +193,7 @@ class OrdersController extends Controller
         $paid = $this->orderModel->markPaidForUser($orderId, $userId);
 
         if (!$paid) {
-            Session::set('auth_notice', 'Оплата доступна только для новых заказов.');
+            Session::set('auth_notice', 'Оплата доступна только для подтверждённых заказов.');
             header('Location: /orders');
             exit;
         }
@@ -251,7 +251,7 @@ class OrdersController extends Controller
             'editLink' => '/order-edit?id=' . (int) $order['id'],
             'paymentLink' => '/order-payment?id=' . (int) $order['id'],
             'canEdit' => $order['status'] === 'new',
-            'canPay' => $order['status'] === 'new',
+            'canPay' => $order['status'] === 'confirmed',
             'item' => $firstItem,
             'items' => $mappedItems,
         ];
@@ -317,11 +317,12 @@ class OrdersController extends Controller
     {
         return match ($status) {
             'new' => 'Новый',
-            'confirmed' => 'Принят',
+            'confirmed' => 'Подтверждён',
             'assembled' => 'Собран',
-            'delivering' => 'В доставке',
-            'delivered' => 'Выполнен',
+            'delivering' => 'В пути',
+            'completed', 'delivered' => 'Выполнен',
             'cancelled' => 'Отменен',
+            'returned' => 'Возврат',
             default => 'В обработке',
         };
     }
